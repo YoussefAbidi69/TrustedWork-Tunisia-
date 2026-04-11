@@ -94,3 +94,5 @@ backoffice/.scannerwork/
 frontoffice/.scannerwork/
 freelancer-profile-service/src/.claude/
 *.zip
+
+freelancer-profile-service/.claude/
