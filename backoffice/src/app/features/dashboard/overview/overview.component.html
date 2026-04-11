@@ -1,131 +1,392 @@
-<div class="overview">
-
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Platform Overview</h1>
-      <p class="page-subtitle">TrustedWork Tunisia — Admin Dashboard</p>
-    </div>
-    <div class="page-actions">
-      <button class="btn btn-primary btn-sm" (click)="loadStats()">
-        <i class="fas fa-rotate-right"></i>
-        Refresh
-      </button>
-    </div>
+<div class="hq-command-center">
+  
+  <!-- ════════════════════════════════════════
+       ATMOSPHERIC BACKGROUND LAYERS
+  ════════════════════════════════════════ -->
+  <div class="atmosphere">
+    <div class="grid-overlay"></div>
+    <div class="scan-line"></div>
+    <div class="glow-orb glow-orb--cyan"></div>
+    <div class="glow-orb glow-orb--purple"></div>
+    <div class="particle-field"></div>
   </div>
 
-  <div class="stats-grid">
-    <div class="stat-card" *ngFor="let stat of stats">
-      <div class="stat-top">
-        <div class="stat-icon-wrap" [ngClass]="'stat-icon--' + stat.iconClass">
-          <i class="fas" [ngClass]="stat.icon"></i>
+  <!-- ════════════════════════════════════════
+       MAIN CONTAINER
+  ════════════════════════════════════════ -->
+  <div class="hq-container">
+
+    <!-- ════════════════════════════════════════
+         TOP BAR - COMMAND HEADER
+    ════════════════════════════════════════ -->
+    <header class="command-header">
+      <div class="command-header__left">
+        <div class="system-logo">
+          <div class="logo-ring"></div>
+          <i class="fas fa-shield-halved"></i>
         </div>
-        <span class="stat-change"
-          [ngClass]="{
-            'trend-up': stat.changeType === 'up',
-            'trend-down': stat.changeType === 'down',
-            'trend-flat': stat.changeType === 'flat'
-          }">
-          <i class="fas"
-            [ngClass]="{
-              'fa-arrow-trend-up': stat.changeType === 'up',
-              'fa-arrow-trend-down': stat.changeType === 'down',
-              'fa-minus': stat.changeType === 'flat'
-            }">
-          </i>
-          {{ stat.change || 'Live' }}
-        </span>
-      </div>
-      <div class="stat-value">{{ stat.value }}</div>
-      <div class="stat-label">{{ stat.label }}</div>
-    </div>
-  </div>
-
-  <div class="main-grid">
-
-    <div class="card activity-card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">Recent Activity</div>
-          <div class="card-subtitle">Live platform events</div>
-        </div>
-        <span class="badge badge-success">
-          <span class="pulse-dot green" style="width:6px;height:6px;display:inline-block"></span>
-          Live
-        </span>
-      </div>
-
-      <div class="activity-list">
-        <div class="activity-item" *ngFor="let act of recentActivities">
-          <div class="activity-avatar avatar avatar-sm"
-            [ngClass]="'avatar-' + getActivityClass(act.type)">
-            {{ act.initials }}
-          </div>
-          <div class="activity-body">
-            <div class="activity-user">{{ act.user }}</div>
-            <div class="activity-action">{{ act.action }}</div>
-          </div>
-          <div class="activity-meta">
-            <span class="activity-time">{{ act.time }}</span>
-            <span class="activity-type-icon">
-              <i class="fas" [ngClass]="getActivityIcon(act.type)"></i>
-            </span>
-          </div>
+        <div class="system-info">
+          <h1>TRUSTEDWORK <span class="accent-text">COMMAND CENTER</span></h1>
+          <p>Admin Dashboard v3.0 — Tunisia Operations</p>
         </div>
       </div>
-    </div>
 
-    <div class="right-col">
-
-      <div class="card services-card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Microservices</div>
-            <div class="card-subtitle">Service health status</div>
-          </div>
-          <span class="badge badge-accent">6 modules</span>
+      <div class="command-header__center">
+        <div class="status-ticker">
+          <span class="ticker-label">SYSTEM STATUS</span>
+          <span class="ticker-value status-online">
+            <span class="pulse-ring"></span>
+            ALL SYSTEMS NOMINAL
+          </span>
         </div>
+      </div>
 
-        <div class="services-list">
-          <div class="service-item" *ngFor="let svc of modules">
-            <div class="service-left">
-              <div class="service-icon">
-                <i class="fas" [ngClass]="svc.icon"></i>
-              </div>
-              <div class="service-info">
-                <strong>{{ svc.name }}</strong>
-                <span>port {{ svc.port }} · {{ svc.endpoints }} endpoints</span>
-              </div>
+      <div class="command-header__right">
+        <div class="chrono-display">
+          <i class="fas fa-clock"></i>
+          <span class="chrono-time">{{ currentTime }}</span>
+        </div>
+        <button class="action-btn action-btn--refresh" (click)="loadStats(); loadModule02Stats()">
+          <i class="fas fa-arrows-rotate"></i>
+          <span>SYNC</span>
+        </button>
+        <div class="operator-badge">
+          <span class="badge-rank">ADMIN</span>
+          <span class="badge-level">LVL 5</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ════════════════════════════════════════
+         MODULE 01 — USER SERVICE COMMAND MODULE
+    ════════════════════════════════════════ -->
+    <section class="command-module">
+      <div class="module-header">
+        <div class="module-identifier">
+          <span class="module-id">MOD-01</span>
+          <span class="module-name">USER SERVICE</span>
+        </div>
+        <div class="module-meta">
+          <span class="live-indicator">
+            <span class="live-dot"></span>
+            LIVE FEED
+          </span>
+          <span class="endpoint-count">6 METRICS ACTIVE</span>
+        </div>
+      </div>
+
+      <div class="metrics-grid metrics-grid--primary">
+        <div class="metric-card" *ngFor="let stat of stats; let i = index"
+             [class]="'metric-card metric-card--' + stat.iconClass"
+             [style.animation-delay]="(i * 0.08) + 's'">
+          
+          <!-- Card Glow Effect -->
+          <div class="card-glow" [ngClass]="'glow-' + stat.iconClass"></div>
+          
+          <!-- Top Section: Icon + Live Badge -->
+          <div class="metric-top">
+            <div class="metric-icon-frame" [ngClass]="'frame-' + stat.iconClass">
+              <i class="fas" [ngClass]="stat.icon"></i>
+              <div class="icon-scanline"></div>
             </div>
-            <div class="service-status">
-              <span class="pulse-dot"
-                [ngClass]="svc.status === 'online' ? 'green' : 'red'">
-              </span>
-              <span [ngClass]="svc.status === 'online' ? 'text-success' : 'text-danger'"
-                style="font-size:11px;font-weight:600">
-                {{ svc.status }}
-              </span>
+            <div class="metric-status">
+              <span class="status-pulse"></span>
+              <span class="status-text">ACTIVE</span>
             </div>
           </div>
+
+          <!-- Value Display -->
+          <div class="metric-value-container">
+            <span class="metric-value">{{ stat.value }}</span>
+            <div class="value-glow"></div>
+          </div>
+
+          <!-- Label -->
+          <div class="metric-label">{{ stat.label }}</div>
+
+          <!-- Sparkline Chart -->
+          <div class="sparkline-container">
+            <canvas [id]="'spark-' + stat.iconClass" class="spark-canvas"></canvas>
+            <div class="spark-overlay"></div>
+          </div>
+
+          <!-- Corner Decorations -->
+          <div class="corner-decor corner-tl"></div>
+          <div class="corner-decor corner-tr"></div>
+          <div class="corner-decor corner-bl"></div>
+          <div class="corner-decor corner-br"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+         MODULE 02 — FREELANCER INTELLIGENCE
+    ════════════════════════════════════════ -->
+    <section class="command-module">
+      <div class="module-header module-header--secondary">
+        <div class="module-identifier">
+          <span class="module-id module-id--purple">MOD-02</span>
+          <span class="module-name">FREELANCER INTELLIGENCE</span>
+        </div>
+        <div class="module-meta">
+          <span class="live-indicator">
+            <span class="live-dot live-dot--purple"></span>
+            LIVE FEED
+          </span>
         </div>
       </div>
 
-      <div class="card quick-actions-card">
-        <div class="card-header">
-          <div class="card-title">Quick Actions</div>
+      <!-- Loading State -->
+      <div class="intel-loading" *ngIf="module02Loading">
+        <div class="loading-hexagon">
+          <div class="hex-spin"></div>
         </div>
-        <div class="quick-actions-grid">
-          <a routerLink="/admin/users/kyc" class="qa-btn">
-            <i class="fas fa-id-card"></i>
-            <span>Review KYC</span>
-          </a>
-          <a routerLink="/admin/users" class="qa-btn">
-            <i class="fas fa-users"></i>
-            <span>All Users</span>
-          </a>
+        <span>ACQUIRING FREELANCER DATA...</span>
+      </div>
+
+      <!-- Intelligence Grid -->
+      <div class="intel-grid" *ngIf="!module02Loading">
+        <div class="intel-card" *ngFor="let stat of module02Stats; let i = index"
+             [style.animation-delay]="(i * 0.1) + 's'">
+          
+          <div class="intel-glow" [style.background]="stat.color"></div>
+          
+          <div class="intel-icon">
+            <i class="fas" [ngClass]="stat.icon" [style.color]="stat.color"></i>
+          </div>
+          
+          <div class="intel-data">
+            <span class="intel-value" [style.color]="stat.color">{{ stat.value }}</span>
+            <span class="intel-label">{{ stat.label }}</span>
+          </div>
+
+          <div class="intel-bar-track">
+            <div class="intel-bar-fill"
+                 [style.background]="'linear-gradient(90deg, ' + stat.color + '88, ' + stat.color + ')'"
+                 [style.width]="getRandomBarWidth(i) + '%'"></div>
+            <div class="intel-bar-glow" [style.box-shadow]="'0 0 10px ' + stat.color"></div>
+          </div>
+
+          <div class="intel-corner intel-corner--tl"></div>
+          <div class="intel-corner intel-corner--br"></div>
         </div>
       </div>
 
+      <!-- Quick Action Buttons -->
+      <div class="intel-actions">
+        <a routerLink="/admin/freelancers" class="intel-btn intel-btn--blue">
+          <i class="fas fa-database"></i>
+          <span>ALL PROFILES</span>
+          <span class="btn-arrow">→</span>
+        </a>
+      
+        <a routerLink="/admin/freelancers/reports" class="intel-btn intel-btn--red">
+          <i class="fas fa-triangle-exclamation"></i>
+          <span>REPORTS</span>
+          <span class="btn-count">
+            {{ getModule02Value(1) }}
+          </span>
+        </a>
+      
+        <a routerLink="/admin/freelancers/reviews" class="intel-btn intel-btn--yellow">
+          <i class="fas fa-star"></i>
+          <span>REVIEWS</span>
+          <span class="btn-arrow">→</span>
+        </a>
+      
+        <a routerLink="/admin/freelancers/stats" class="intel-btn intel-btn--purple">
+          <i class="fas fa-chart-pie"></i>
+          <span>ANALYTICS</span>
+          <span class="btn-arrow">→</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+         MAIN OPERATIONS GRID
+    ════════════════════════════════════════ -->
+    <div class="operations-grid">
+
+      <!-- LEFT: ACTIVITY FEED -->
+      <div class="ops-panel ops-panel--activity">
+        <div class="panel-chassis">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <i class="fas fa-satellite-dish"></i>
+              <h2>LIVE ACTIVITY FEED</h2>
+            </div>
+            <div class="panel-badge panel-badge--success">
+              <span class="badge-pulse"></span>
+              REAL-TIME
+            </div>
+          </div>
+
+          <div class="activity-feed">
+            <div class="feed-item" *ngFor="let act of recentActivities; let i = index"
+                 [style.animation-delay]="(i * 0.15) + 's'">
+              
+              <div class="feed-avatar" [ngClass]="'avatar-' + getActivityClass(act.type)">
+                <span class="avatar-initials">{{ act.initials }}</span>
+                <div class="avatar-ring"></div>
+              </div>
+
+              <div class="feed-content">
+                <span class="feed-user">{{ act.user }}</span>
+                <span class="feed-action">{{ act.action }}</span>
+              </div>
+
+              <div class="feed-meta">
+                <span class="feed-time">{{ act.time }}</span>
+                <div class="feed-icon-wrap" [ngClass]="'icon-' + getActivityClass(act.type)">
+                  <i class="fas" [ngClass]="getActivityIcon(act.type)"></i>
+                </div>
+              </div>
+
+              <div class="feed-line"></div>
+            </div>
+          </div>
+
+          <div class="panel-footer">
+            <a routerLink="#" class="view-all-link">
+              VIEW ALL ACTIVITY
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="ops-right-col">
+
+        <!-- MICROSERVICES STATUS -->
+        <div class="ops-panel ops-panel--services">
+          <div class="panel-chassis">
+            <div class="panel-header">
+              <div class="panel-title-group">
+                <i class="fas fa-network-wired"></i>
+                <h2>MICROSERVICES GRID</h2>
+              </div>
+              <span class="panel-badge">{{ modules.length }} MODULES</span>
+            </div>
+
+            <div class="services-matrix">
+              <div class="service-node" *ngFor="let svc of modules"
+                   [class.node-online]="svc.status === 'online'"
+                   [class.node-offline]="svc.status !== 'online'">
+                
+                <div class="node-icon">
+                  <i class="fas" [ngClass]="svc.icon"></i>
+                  <div class="node-status-light" 
+                       [class.light-green]="svc.status === 'online'"
+                       [class.light-red]="svc.status !== 'online'"></div>
+                </div>
+
+                <div class="node-info">
+                  <strong>{{ svc.name }}</strong>
+                  <span>:{{ svc.port }} · {{ svc.endpoints }} EP</span>
+                </div>
+
+                <div class="node-status">
+                  <span [class]="svc.status === 'online' ? 'status-tag status-tag--online' : 'status-tag status-tag--offline'">
+                    {{ svc.status.toUpperCase() }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUICK ACTIONS LAUNCHPAD -->
+        <div class="ops-panel ops-panel--actions">
+          <div class="panel-chassis">
+            <div class="panel-header">
+              <div class="panel-title-group">
+                <i class="fas fa-rocket"></i>
+                <h2>QUICK LAUNCH</h2>
+              </div>
+            </div>
+
+            <div class="launchpad-grid">
+              <a routerLink="/admin/users/kyc" class="launch-btn launch-btn--danger">
+                <div class="launch-icon">
+                  <i class="fas fa-id-card-clip"></i>
+                  <span class="launch-badge">{{ kycCount }}</span>
+                </div>
+                <span class="launch-label">KYC REVIEW</span>
+                <div class="launch-glow"></div>
+              </a>
+
+              <a routerLink="/admin/users" class="launch-btn launch-btn--accent">
+                <div class="launch-icon"><i class="fas fa-users"></i></div>
+                <span class="launch-label">USER MGMT</span>
+                <div class="launch-glow"></div>
+              </a>
+
+              <a routerLink="/admin/freelancers/reports" class="launch-btn launch-btn--warning">
+                <div class="launch-icon"><i class="fas fa-flag"></i></div>
+                <span class="launch-label">REPORTS</span>
+                <div class="launch-glow"></div>
+              </a>
+
+              <a routerLink="/admin/freelancers/stats" class="launch-btn launch-btn--success">
+                <div class="launch-icon"><i class="fas fa-chart-line"></i></div>
+                <span class="launch-label">STATISTICS</span>
+                <div class="launch-glow"></div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
-  </div>
 
+    <!-- ════════════════════════════════════════
+         FOOTER STATUS BAR
+    ════════════════════════════════════════ -->
+    <footer class="status-bar">
+      <div class="status-left">
+        <span class="sys-info">
+          <i class="fas fa-server"></i> TRUSTEDWORK v3.0.1
+        </span>
+        <span class="sys-divider">|</span>
+        <span class="sys-info">
+          <i class="fas fa-database"></i> PostgreSQL Cluster
+        </span>
+      </div>
+      
+      <div class="status-center">
+        <div class="bandwidth-meter">
+          <span class="meter-label">BANDWIDTH</span>
+          <div class="meter-bar">
+            <div class="meter-fill meter-fill--good"></div>
+          </div>
+          <span class="meter-value">847 MB/s</span>
+        </div>
+        <div class="cpu-meter">
+          <span class="meter-label">CPU</span>
+          <div class="meter-bar">
+            <div class="meter-fill meter-fill--warn" style="width: 67%"></div>
+          </div>
+          <span class="meter-value">67%</span>
+        </div>
+        <div class="memory-meter">
+          <span class="meter-label">RAM</span>
+          <div class="meter-bar">
+            <div class="meter-fill meter-fill--good" style="width: 42%"></div>
+          </div>
+          <span class="meter-value">12.4 GB</span>
+        </div>
+      </div>
+
+      <div class="status-right">
+        <span class="uptime">
+          <i class="fas fa-clock"></i> UPTIME: 14d 7h 23m
+        </span>
+        <span class="last-sync">
+          LAST SYNC: {{ currentTime }}
+        </span>
+      </div>
+    </footer>
+
+  </div>
 </div>
