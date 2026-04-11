@@ -21,6 +21,8 @@ export interface FreelancerProfile {
 export interface Skill {
   id: number;
   name: string;
+  normalizedName?: string;
+  category?: string;
   level: string;
   authenticityScore: number;
   examScore: number;
@@ -36,6 +38,8 @@ export interface PortfolioItem {
   imageUrl: string;
   technologies: string;
   completionDate: string;
+  pinned: boolean;
+  projectScore: number;
 }
 
 // --- CertificationResponse ---
@@ -64,24 +68,47 @@ export interface ProfileReview {
   clientId: number;
   rating: number;
   comment: string;
-  status: string;
+  freelancerReply?: string | null;
+  flagged?: boolean;
+  flagReason?: string | null;
+  status: 'VISIBLE' | 'HIDDEN' | 'FLAGGED';
   reviewedAt: string;
+  updatedAt?: string | null;
+}
+
+// --- Review Summary ---
+export interface ProfileReviewSummary {
+  profileId: number;
+  averageRating: number;
+  totalReviews: number;
+  fiveStarCount: number;
+  fourStarCount: number;
+  threeStarCount: number;
+  twoStarCount: number;
+  oneStarCount: number;
 }
 
 // --- ProfileReport ---
 export interface ProfileReport {
   id: number;
+
   reporterId: number;
-  reason: string;
-  status: 'PENDING' | 'RESOLVED' | 'REJECTED';
-  reportedAt: string;
-  resolvedAt: string | null;
-  profile?: {
-    id: number;
-    userId: number;
-    headline: string;
-    region: string;
-  };
+  reporterName: string;
+
+  profileId: number;
+  freelancerUserId: number;
+  freelancerName: string;
+
+  category: 'FAKE_SKILLS' | 'SPAM' | 'IDENTITY_THEFT' | 'INAPPROPRIATE_CONTENT' | 'OTHER';
+  description: string;
+  status: 'PENDING' | 'IN_REVIEW' | 'RESOLVED' | 'REJECTED';
+
+  createdAt: string;
+  updatedAt?: string | null;
+  resolvedAt?: string | null;
+
+  riskScore: number;
+  suspended: boolean;
 }
 
 // --- WorkExperienceResponse ---
@@ -89,10 +116,16 @@ export interface WorkExperience {
   id: number;
   jobTitle: string;
   company: string;
-  description: string;
+  location?: string;
+  description?: string;
   startDate: string;
-  endDate: string;
+  endDate?: string | null;
   isCurrent: boolean;
+  periodLabel?: string;
+  durationLabel?: string;
+  durationInMonths?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // --- EducationResponse ---
@@ -133,7 +166,7 @@ export interface SkillGapResponse {
   gapCount: number;
 }
 
-// --- SkillGapRecommendation (endpoint recommendations/skill-gap) ---
+// --- SkillGapRecommendation ---
 export interface SkillGapRecommendation {
   missingSkills: string[];
   recommendedCourses: string[];

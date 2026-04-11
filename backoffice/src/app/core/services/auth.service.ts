@@ -7,8 +7,7 @@ import { Router } from '@angular/router';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 
-  private baseUrl = 'http://localhost:8081/api';
-
+  private baseUrl = '/api';
   // URL du frontoffice — landing page
   private readonly FRONTOFFICE_URL = 'http://localhost:4200';
 
