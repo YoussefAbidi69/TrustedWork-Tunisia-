@@ -1,0 +1,131 @@
+<div class="overview">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Platform Overview</h1>
+      <p class="page-subtitle">TrustedWork Tunisia — Admin Dashboard</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-primary btn-sm" (click)="loadStats()">
+        <i class="fas fa-rotate-right"></i>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card" *ngFor="let stat of stats">
+      <div class="stat-top">
+        <div class="stat-icon-wrap" [ngClass]="'stat-icon--' + stat.iconClass">
+          <i class="fas" [ngClass]="stat.icon"></i>
+        </div>
+        <span class="stat-change"
+          [ngClass]="{
+            'trend-up': stat.changeType === 'up',
+            'trend-down': stat.changeType === 'down',
+            'trend-flat': stat.changeType === 'flat'
+          }">
+          <i class="fas"
+            [ngClass]="{
+              'fa-arrow-trend-up': stat.changeType === 'up',
+              'fa-arrow-trend-down': stat.changeType === 'down',
+              'fa-minus': stat.changeType === 'flat'
+            }">
+          </i>
+          {{ stat.change || 'Live' }}
+        </span>
+      </div>
+      <div class="stat-value">{{ stat.value }}</div>
+      <div class="stat-label">{{ stat.label }}</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+
+    <div class="card activity-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Recent Activity</div>
+          <div class="card-subtitle">Live platform events</div>
+        </div>
+        <span class="badge badge-success">
+          <span class="pulse-dot green" style="width:6px;height:6px;display:inline-block"></span>
+          Live
+        </span>
+      </div>
+
+      <div class="activity-list">
+        <div class="activity-item" *ngFor="let act of recentActivities">
+          <div class="activity-avatar avatar avatar-sm"
+            [ngClass]="'avatar-' + getActivityClass(act.type)">
+            {{ act.initials }}
+          </div>
+          <div class="activity-body">
+            <div class="activity-user">{{ act.user }}</div>
+            <div class="activity-action">{{ act.action }}</div>
+          </div>
+          <div class="activity-meta">
+            <span class="activity-time">{{ act.time }}</span>
+            <span class="activity-type-icon">
+              <i class="fas" [ngClass]="getActivityIcon(act.type)"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-col">
+
+      <div class="card services-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Microservices</div>
+            <div class="card-subtitle">Service health status</div>
+          </div>
+          <span class="badge badge-accent">6 modules</span>
+        </div>
+
+        <div class="services-list">
+          <div class="service-item" *ngFor="let svc of modules">
+            <div class="service-left">
+              <div class="service-icon">
+                <i class="fas" [ngClass]="svc.icon"></i>
+              </div>
+              <div class="service-info">
+                <strong>{{ svc.name }}</strong>
+                <span>port {{ svc.port }} · {{ svc.endpoints }} endpoints</span>
+              </div>
+            </div>
+            <div class="service-status">
+              <span class="pulse-dot"
+                [ngClass]="svc.status === 'online' ? 'green' : 'red'">
+              </span>
+              <span [ngClass]="svc.status === 'online' ? 'text-success' : 'text-danger'"
+                style="font-size:11px;font-weight:600">
+                {{ svc.status }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card quick-actions-card">
+        <div class="card-header">
+          <div class="card-title">Quick Actions</div>
+        </div>
+        <div class="quick-actions-grid">
+          <a routerLink="/admin/users/kyc" class="qa-btn">
+            <i class="fas fa-id-card"></i>
+            <span>Review KYC</span>
+          </a>
+          <a routerLink="/admin/users" class="qa-btn">
+            <i class="fas fa-users"></i>
+            <span>All Users</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
