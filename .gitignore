@@ -88,3 +88,9 @@ build/
 
 .DS_Store
 Thumbs.db
+
+backend/
+backoffice/.scannerwork/
+frontoffice/.scannerwork/
+freelancer-profile-service/src/.claude/
+*.zip
