@@ -17,6 +17,8 @@ import { TopbarComponent } from './shared/components/topbar/topbar.component';
 import { StatCardComponent } from './shared/components/stat-card/stat-card.component';
 
 import { LoginComponent } from './features/auth/login/login.component';
+// ✅ AutoLoginComponent ajouté — manquant dans la version précédente
+import { AutoLoginComponent } from './features/auth/auto-login/auto-login.component';
 import { OverviewComponent } from './features/dashboard/overview/overview.component';
 import { UsersListComponent } from './features/users/users-list/users-list.component';
 import { UserDetailComponent } from './features/users/user-detail/user-detail.component';
@@ -24,6 +26,7 @@ import { KycManagementComponent } from './features/users/kyc-management/kyc-mana
 
 import { AuditLogsComponent } from './features/admin/audit-logs/audit-logs.component';
 import { SuspensionsComponent } from './features/admin/suspensions/suspensions.component';
+import { SchedulerManagementComponent } from './features/admin/scheduler-management/scheduler-management.component';
 
 import { FilterCatPipe } from './shared/pipes/filter-cat.pipe';
 
@@ -32,6 +35,14 @@ import { ProfilesListComponent } from './features/freelancer/profiles-list/profi
 import { ProfileDetailComponent } from './features/freelancer/profile-detail/profile-detail.component';
 import { ReportsManagementComponent } from './features/freelancer/reports-management/reports-management.component';
 import { PlatformStatsComponent } from './features/freelancer/platform-stats/platform-stats.component';
+import { ProfileSkillsTabComponent } from './features/freelancer/profile-detail/components/profile-skills-tab/profile-skills-tab.component';
+import { ProfileExperienceTabComponent } from './features/freelancer/profile-detail/components/profile-experience-tab/profile-experience-tab.component';
+import { ProfilePortfolioTabComponent } from './features/freelancer/profile-detail/components/profile-portfolio-tab/profile-portfolio-tab.component';
+import { ProfileReputationTabComponent } from './features/freelancer/profile-detail/components/profile-reputation-tab/profile-reputation-tab.component';
+import { ProfileInsightsTabComponent } from './features/freelancer/profile-detail/components/profile-insights-tab/profile-insights-tab.component';
+import { ReviewsManagementComponent } from './features/freelancer/reviews-management/reviews-management.component';
+import { ProfileOverviewTabComponent } from './features/freelancer/profile-detail/components/profile-overview-tab/profile-overview-tab.component';
+import { TrendingProfilesComponent } from './features/freelancer/trending-profiles/trending-profiles.component';
 
 @NgModule({
   declarations: [
@@ -42,18 +53,29 @@ import { PlatformStatsComponent } from './features/freelancer/platform-stats/pla
     TopbarComponent,
     StatCardComponent,
     LoginComponent,
+    AutoLoginComponent, // ✅ déclaré ici
     OverviewComponent,
     UsersListComponent,
     UserDetailComponent,
     KycManagementComponent,
     AuditLogsComponent,
     SuspensionsComponent,
+    ProfileExperienceTabComponent,
     FilterCatPipe,
     // ── Module 02 ──
     ProfilesListComponent,
     ProfileDetailComponent,
     ReportsManagementComponent,
-    PlatformStatsComponent
+    PlatformStatsComponent,
+    ProfileSkillsTabComponent,
+    ProfilePortfolioTabComponent,
+    ProfileReputationTabComponent,
+    ProfileInsightsTabComponent,
+    ReviewsManagementComponent,
+    ProfileOverviewTabComponent,
+    TrendingProfilesComponent,
+    // ── Système ──
+    SchedulerManagementComponent
   ],
   imports: [
     BrowserModule,
