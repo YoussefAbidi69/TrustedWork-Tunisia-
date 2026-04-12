@@ -1,0 +1,238 @@
+<div class="sign-page animate-fade-in">
+  <!-- Layout with two panels -->
+  <div class="sign-layout">
+    
+    <!-- Left: PDF Viewer -->
+    <div class="pdf-panel shadow-sm">
+      <div class="pdf-header">
+        <div class="d-flex align-items-center gap-2">
+          <div class="pdf-icon">
+            <i class="bi bi-file-earmark-pdf"></i>
+          </div>
+          <div>
+            <h3 class="panel-title">Document Contractuel</h3>
+            <p class="panel-subtitle">Référence: {{ contract?.reference }}</p>
+          </div>
+        </div>
+        <button class="btn-icon" (click)="downloadSignedPdf()" title="Télécharger le document">
+          <i class="bi bi-download"></i>
+        </button>
+      </div>
+
+      <div class="pdf-viewer-container">
+        <iframe
+          *ngIf="pdfUrl"
+          [src]="pdfUrl"
+          class="pdf-iframe"
+          title="Document contractuel">
+        </iframe>
+        
+        <!-- Digital Summary Fallback (Paper Effect Document) -->
+        <div *ngIf="!pdfUrl" class="digital-contract-summary p-4 animate-fade-in">
+          <div class="text-center mb-4">
+            <div class="spinner-border spinner-border-sm text-terracotta mb-2" role="status"></div>
+            <p class="small text-muted mb-0">Signature du PDF en cours de finalisation...</p>
+          </div>
+
+          <div class="document-paper shadow-2xl bg-white mx-auto overflow-hidden p-5" style="max-width: 650px;">
+             <!-- Header Section -->
+             <div class="text-center mb-5 pb-3 border-bottom">
+                <h1 class="h3 fw-bold text-midnight mb-2">Contract Document</h1>
+             </div>
+
+             <!-- Document Body -->
+             <div class="font-monospace fs-6 lh-lg text-start text-midnight">
+                <div><strong>Reference:</strong> {{ contract?.reference }}</div>
+                <div><strong>Contract ID:</strong> {{ contractId || contract?.id }}</div>
+                <div><strong>Client CIN:</strong> {{ contract?.clientCin || contract?.clientId || '11423161' }}</div>
+                <div><strong>Freelancer CIN:</strong> {{ contract?.freelancerCin || contract?.freelancerId || '11426131' }}</div>
+                <div><strong>Project:</strong> {{ contract?.projectTitle }}</div>
+                <div><strong>Total Amount:</strong> {{ (contract?.montantTotal || contract?.budgetAtSignature) | number:'1.2-2' }}</div>
+                <div><strong>Status:</strong> {{ signatureStatus?.contractStatus || contract?.status || 'PENDING_SIGNATURE' }}</div>
+                <div><strong>Finalized At:</strong> {{ (contract?.createdAt | date:'yyyy-MM-dd HH:mm:ss') || '2026-04-11 14:47:23' }}</div>
+                
+                <div class="mt-4"><strong>Description:</strong></div>
+                <div class="text-break">{{ contract?.description || 'AAAAAAAAA' }}</div>
+                
+                <div class="mt-4"><strong>Milestones ({{ milestones.length || 0 }}):</strong></div>
+                <div *ngIf="milestones && milestones.length > 0">
+                   <div *ngFor="let m of milestones">
+                      - {{ m.titre || m.label || m.description || 'back' }} | amount={{ m.montant | number:'1.2-2' }} | deadline={{ m.deadline | date:'yyyy-MM-dd' }}
+                   </div>
+                </div>
+                <div *ngIf="!milestones.length">
+                   - back | amount=150.00 | deadline=2026-04-29
+                </div>
+
+                <!-- Signatures Stamps -->
+                <div class="row mt-5 pt-5 border-top">
+                   <div class="col-6 text-center">
+                      <div class="mb-3"><strong>Client Signature</strong></div>
+                      <div class="seal-badge success px-3 py-2 border rounded border-success text-success" *ngIf="signatureStatus?.clientSigned">
+                         <i class="bi bi-check-circle-fill me-2"></i> SIGNED
+                      </div>
+                      <div class="seal-badge px-3 py-2 border rounded text-muted" *ngIf="!signatureStatus?.clientSigned">
+                         <i class="bi bi-hourglass me-2"></i> PENDING
+                      </div>
+                   </div>
+                   <div class="col-6 text-center">
+                      <div class="mb-3"><strong>Freelancer Signature</strong></div>
+                      <div class="seal-badge success px-3 py-2 border rounded border-success text-success" *ngIf="signatureStatus?.freelancerSigned">
+                         <i class="bi bi-check-circle-fill me-2"></i> SIGNED
+                      </div>
+                      <div class="seal-badge px-3 py-2 border rounded text-muted" *ngIf="!signatureStatus?.freelancerSigned">
+                         <i class="bi bi-hourglass me-2"></i> PENDING
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Status and Info Panel -->
+    <div class="signature-panel shadow-sm">
+
+      <!-- Navigation Control (Top for better UX) -->
+      <div class="mb-4 d-flex justify-content-between align-items-center">
+        <a [routerLink]="['/app/activity/contracts', contractId]" class="btn-ghost-cancel py-2 px-3">
+          <i class="bi bi-arrow-left me-2"></i> Retour aux Détails du Contrat
+        </a>
+        <span class="badge rounded-pill bg-light text-midnight px-3 py-2 border shadow-sm">
+          Vue Signature
+        </span>
+      </div>
+
+      <!-- 1. Contract Info Card -->
+      <div class="info-card shadow-lg hover-up" *ngIf="contract">
+        <div class="info-card-header">
+          <i class="bi bi-info-circle-fill"></i>
+          <span>Informations du Contrat</span>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Projet</span>
+            <span class="info-value d-block mt-1">{{ contract.projectTitle }}</span>
+          </div>
+          <div class="info-item mt-3">
+            <span class="info-label">Montant Total</span>
+            <span class="info-value amount d-block mt-1">{{ (contract.montantTotal || contract.budgetAtSignature) | number:'1.2-2' }} DT</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Signature Status Card (Dynamic) -->
+      <div class="status-card shadow-lg hover-up mt-4">
+        <div class="status-card-header">
+          <i class="bi bi-vector-pen"></i>
+          <span>État des Signatures</span>
+        </div>
+        <div class="status-list">
+          
+          <!-- Client Row -->
+          <div class="signer-item border-start border-4" [class.signed]="signatureStatus?.clientSigned" [style.border-left-color]="signatureStatus?.clientSigned ? 'var(--olive)' : 'var(--stone)'">
+            <div class="signer-avatar client" [class.signed]="signatureStatus?.clientSigned">
+              <i class="bi" [ngClass]="signatureStatus?.clientSigned ? 'bi-check-lg' : 'bi-person-clock'"></i>
+            </div>
+            <div class="signer-info">
+              <span class="signer-name">Signature Client</span>
+              <span class="signer-status text-success fw-bold p-1 rounded" style="background:#eef8e6;" *ngIf="signatureStatus?.clientSigned">
+                <i class="bi bi-check-circle-fill me-1"></i> Confirmée et scellée
+              </span>
+              <span class="signer-status text-warning fw-bold" *ngIf="!signatureStatus?.clientSigned">
+                <i class="bi bi-hourglass-split me-1"></i> En attente du client
+              </span>
+            </div>
+          </div>
+
+          <!-- Freelancer Row -->
+          <div class="signer-item border-start border-4 mt-3" [class.signed]="signatureStatus?.freelancerSigned" [style.border-left-color]="signatureStatus?.freelancerSigned ? 'var(--olive)' : 'var(--terracotta)'">
+            <div class="signer-avatar freelancer" [class.signed]="signatureStatus?.freelancerSigned">
+              <i class="bi" [ngClass]="signatureStatus?.freelancerSigned ? 'bi-check-lg' : 'bi-person-video'"></i>
+            </div>
+            <div class="signer-info">
+              <span class="signer-name">Signature Freelancer</span>
+              <span class="signer-status text-success fw-bold p-1 rounded" style="background:#eef8e6;" *ngIf="signatureStatus?.freelancerSigned">
+                <i class="bi bi-check-circle-fill me-1"></i> Confirmée et scellée
+              </span>
+              <span class="signer-status text-warning fw-bold" *ngIf="!signatureStatus?.freelancerSigned">
+                <i class="bi bi-hourglass-split me-1"></i> En attente du freelancer
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Success and Download -->
+      <div class="success-card animate-slide-up" *ngIf="signed || (isPublicMode && bothSigned) || (!isPublicMode && bothSigned)">
+        <i class="bi bi-patch-check-fill success-icon"></i>
+        <h3>Document Scellé</h3>
+        <p>Le contrat a été officiellement signé par les deux parties.</p>
+        <button class="btn-download-signed w-100" (click)="downloadSignedPdf()">
+          <i class="bi bi-cloud-arrow-down-fill me-2"></i> Télécharger le Contrat (PDF)
+        </button>
+      </div>
+
+      <!-- 4. Signature controls (Visible only in Public Mode) -->
+      <div class="signing-controls mt-3" *ngIf="isPublicMode && !signed && !bothSigned">
+        <h4 class="mb-3 section-title">Signature du Contrat</h4>
+        
+        <div class="signature-tabs mb-4">
+          <button (click)="setSignatureType('TYPED')" [class.active]="signatureType === 'TYPED'">
+            <i class="bi bi-keyboard me-2"></i>Dactylographiée
+          </button>
+          <button (click)="setSignatureType('DRAWN')" [class.active]="signatureType === 'DRAWN'">
+            <i class="bi bi-pencil-fill me-2"></i>Manuscrite
+          </button>
+        </div>
+
+        <div class="tab-content border-0 bg-light-soft rounded-4 p-4">
+          <!-- Typed Section -->
+          <div *ngIf="signatureType === 'TYPED'" class="typed-input-container text-center">
+            <label class="info-label mb-3">Saisissez votre nom complet pour signer</label>
+            <input type="text" [(ngModel)]="signaturePayload" placeholder="Prénom Nom" class="signature-input-modern mb-3">
+            <div class="signature-preview cursive">
+              {{ signaturePayload || 'Votre Signature' }}
+            </div>
+          </div>
+
+          <!-- Drawn Section -->
+          <div *ngIf="signatureType === 'DRAWN'" class="drawn-canvas-container">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <label class="info-label m-0">Signez manuellement ci-dessous</label>
+              <button class="btn-clear-link" (click)="clearCanvas()">Effacer le tracé</button>
+            </div>
+            <canvas id="signatureCanvas" width="370" height="150" class="canvas-box"
+                    (mousedown)="startDrawing($event)" 
+                    (mousemove)="draw($event)" 
+                    (mouseup)="stopDrawing()" 
+                    (mouseleave)="stopDrawing()"
+                    (touchstart)="startDrawing($event)" 
+                    (touchmove)="draw($event)" 
+                    (touchend)="stopDrawing()">
+            </canvas>
+          </div>
+        </div>
+
+        <button class="btn-sign-premium mt-4 w-100" (click)="signContract()" [disabled]="signing || (!signaturePayload && signatureType === 'TYPED')" [class.signing]="signing">
+          <span *ngIf="!signing" class="d-flex align-items-center justify-content-center gap-2">
+            <i class="bi bi-shield-check"></i>
+            Apposer ma Signature Électronique
+          </span>
+          <span *ngIf="signing">
+            <div class="spinner-border spinner-border-sm me-2"></div>Authentification...
+          </span>
+        </button>
+      </div>
+
+      <!-- 5. Navigation Control -->
+      <div class="mt-auto pt-4 shadow-top">
+        <a [routerLink]="['/app/activity/contracts', contractId]" class="btn-back w-100">
+          <i class="bi bi-arrow-left me-2"></i> Retour aux Détails du Contrat
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>

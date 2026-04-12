@@ -1,0 +1,81 @@
+<aside class="dashboard-sidebar" [class.collapsed]="collapsed">
+  <a routerLink="/app/dashboard" class="sb-brand" [title]="collapsed ? 'TrustedWork' : ''">
+    <div class="sb-logo">TW</div>
+    <div class="sb-brand-text" *ngIf="!collapsed">
+      <strong>TrustedWork</strong>
+      <small>Freelancer Space</small>
+    </div>
+  </a>
+
+  <div class="sb-profile">
+    <div class="profile-avatar">
+      {{ authService.getUserInitials() }}
+    </div>
+    <div class="profile-meta" *ngIf="!collapsed">
+      <strong>{{ currentUser?.email || 'User' }}</strong>
+      <span>Session active</span>
+    </div>
+  </div>
+
+  <div class="sidebar-trust">
+    <div class="sidebar-trust__head">
+      <span *ngIf="!collapsed">Trust Score</span>
+      <strong>--</strong>
+    </div>
+    <div class="sidebar-trust__bar" *ngIf="!collapsed">
+      <div class="fill"></div>
+    </div>
+  </div>
+
+  <button
+    type="button"
+    class="sb-collapse-btn"
+    (click)="onToggleCollapse()"
+    [title]="collapsed ? 'Déplier la sidebar' : 'Réduire la sidebar'">
+    <span class="sidebar-link__icon">
+      <i class="fas" [ngClass]="collapsed ? 'fa-angles-right' : 'fa-angles-left'"></i>
+    </span>
+    <span class="sb-collapse-label" *ngIf="!collapsed">
+      {{ collapsed ? 'Déplier' : 'Réduire' }}
+    </span>
+  </button>
+
+  <nav class="sidebar-nav">
+    <ng-container *ngFor="let item of filteredQuickItems">
+      <!-- HEADER ITEM -->
+      <div *ngIf="item.isHeader && !collapsed" class="sidebar-section-label mt-3">
+        {{ item.label }}
+      </div>
+
+      <!-- NAV LINK -->
+      <a
+        *ngIf="!item.disabled && !item.isHeader"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="sidebar-link"
+        [title]="item.label">
+
+        <span class="sidebar-link__icon">
+          <i class="fas" [ngClass]="item.icon"></i>
+        </span>
+
+        <span class="sidebar-link__label" *ngIf="!collapsed">{{ item.label }}</span>
+        <span class="sidebar-link__badge" *ngIf="!collapsed && item.badge">{{ item.badge }}</span>
+      </a>
+    </ng-container>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button
+      type="button"
+      class="sidebar-link sidebar-link--logout"
+      (click)="onLogout()"
+      [title]="logoutItem.label">
+      <span class="sidebar-link__icon">
+        <i class="fas" [ngClass]="logoutItem.icon"></i>
+      </span>
+      <span class="sidebar-link__label" *ngIf="!collapsed">{{ logoutItem.label }}</span>
+    </button>
+  </div>
+</aside>

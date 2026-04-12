@@ -1,0 +1,226 @@
+<div class="profile-overview-page">
+  <section class="profile-hero-card">
+    <div class="profile-hero-card__glow"></div>
+
+    <div class="profile-hero-card__content">
+      <div class="profile-identity">
+        <div class="avatar-shell">
+          <div class="avatar-ring"></div>
+
+          <img
+            class="avatar-image"
+            [src]="editMode ? draftProfile.avatar : profile.avatar"
+            [alt]="(editMode ? draftProfile.fullName : profile.fullName) + ' avatar'"
+          />
+
+          <span class="avatar-status"></span>
+
+          <label *ngIf="editMode" class="avatar-edit-btn" for="profileAvatarInput" title="Change avatar">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 17.25V20h2.75L17.81 8.94l-2.75-2.75L4 17.25Zm15.71-9.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.96 1.96 3.92 3.92 1.96-1.96Z"/>
+            </svg>
+          </label>
+
+          <input
+            id="profileAvatarInput"
+            type="file"
+            accept="image/*"
+            class="avatar-input"
+            (change)="onAvatarSelected($event)"
+          />
+        </div>
+
+        <div class="profile-main-copy" *ngIf="!editMode">
+          <div class="profile-badge-row">
+            <span class="eyebrow-badge">Freelancer Profile</span>
+            <span class="trust-pill">
+              <span class="trust-pill__dot"></span>
+              Strong Trust Presence
+            </span>
+          </div>
+
+          <h1>{{ profile.fullName }}</h1>
+          <p class="profile-headline">{{ profile.headline }}</p>
+          <div class="profile-meta">
+            <span>{{ profile.location }}</span>
+            <span class="meta-divider"></span>
+            <span>{{ profile.skills.length }} skills listed</span>
+          </div>
+        </div>
+
+        <div class="profile-main-copy profile-main-copy--edit" *ngIf="editMode">
+          <div class="field-grid">
+            <div class="form-field">
+              <label>Full name</label>
+              <input type="text" [(ngModel)]="draftProfile.fullName" placeholder="Enter your full name" />
+            </div>
+
+            <div class="form-field">
+              <label>Location</label>
+              <input type="text" [(ngModel)]="draftProfile.location" placeholder="Enter your location" />
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>Headline</label>
+            <input type="text" [(ngModel)]="draftProfile.headline" placeholder="Your professional title" />
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-actions">
+        <button *ngIf="!editMode" class="primary-btn" (click)="toggleEdit()">
+          Edit Profile
+        </button>
+
+        <div *ngIf="editMode" class="action-group">
+          <button class="success-btn" (click)="saveProfile()">Save</button>
+          <button class="ghost-btn" (click)="cancelEdit()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="completion-card">
+    <div class="section-heading">
+      <div>
+        <h2>Profile Strength</h2>
+        <p>Complete your profile to unlock more visibility and opportunities.</p>
+      </div>
+
+      <div class="completion-score">{{ completion }}%</div>
+    </div>
+
+    <div class="progress-track">
+      <div class="progress-bar" [style.width.%]="completion"></div>
+    </div>
+
+    <div class="completion-steps">
+      <span
+        *ngFor="let item of completionItems"
+        [class.is-done]="item.done"
+        [class.is-pending]="!item.done"
+      >
+        <span class="step-icon">{{ item.done ? '✓' : '•' }}</span>
+        {{ item.label }}
+      </span>
+    </div>
+  </section>
+
+  <div class="content-grid">
+    <section class="content-card about-card">
+      <div class="card-header">
+        <div>
+          <h2>About</h2>
+          <p>Tell clients who you are and how you create value.</p>
+        </div>
+      </div>
+
+      <div *ngIf="!editMode" class="about-content">
+        <p>{{ profile.bio }}</p>
+      </div>
+
+      <div *ngIf="editMode" class="about-editor">
+        <label>Professional bio</label>
+        <textarea
+          [(ngModel)]="draftProfile.bio"
+          placeholder="Write a strong introduction about your expertise, positioning and delivery style."
+        ></textarea>
+      </div>
+    </section>
+
+    <section class="content-card quick-stats-card">
+      <div class="card-header">
+        <div>
+          <h2>Profile Signals</h2>
+          <p>What makes your profile look trustworthy and complete.</p>
+        </div>
+      </div>
+
+      <div class="signal-list">
+        <div class="signal-item">
+          <div class="signal-item__icon">TS</div>
+          <div>
+            <strong>Trust Passport</strong>
+            <span>{{ profile.trustPassportCompleted ? 'Completed' : 'Pending' }}</span>
+          </div>
+        </div>
+
+        <div class="signal-item">
+          <div class="signal-item__icon">CF</div>
+          <div>
+            <strong>Certifications</strong>
+            <span>{{ profile.certificationsAdded ? 'Added' : 'Missing' }}</span>
+          </div>
+        </div>
+
+        <div class="signal-item">
+          <div class="signal-item__icon">PF</div>
+          <div>
+            <strong>Portfolio</strong>
+            <span>{{ profile.portfolioAttached ? 'Attached' : 'Not added yet' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="toggle-list" *ngIf="editMode">
+        <label class="toggle-row">
+          <span>Portfolio attached</span>
+          <input type="checkbox" [(ngModel)]="draftProfile.portfolioAttached" />
+        </label>
+
+        <label class="toggle-row">
+          <span>Certifications added</span>
+          <input type="checkbox" [(ngModel)]="draftProfile.certificationsAdded" />
+        </label>
+
+        <label class="toggle-row">
+          <span>Trust Passport completed</span>
+          <input type="checkbox" [(ngModel)]="draftProfile.trustPassportCompleted" />
+        </label>
+      </div>
+    </section>
+  </div>
+
+  <section class="content-card skills-card">
+    <div class="card-header">
+      <div>
+        <h2>Skills</h2>
+        <p>Highlight your core stack and expertise areas.</p>
+      </div>
+    </div>
+
+    <div class="skills-cloud">
+      <ng-container *ngIf="!editMode">
+        <span
+          class="skill-chip"
+          *ngFor="let skill of profile.skills; trackBy: trackBySkill"
+        >
+          {{ skill }}
+        </span>
+      </ng-container>
+
+      <ng-container *ngIf="editMode">
+        <span
+          class="skill-chip skill-chip--editable"
+          *ngFor="let skill of draftProfile.skills; trackBy: trackBySkill"
+        >
+          {{ skill }}
+          <button type="button" class="remove-skill-btn" (click)="removeSkill(skill)">
+            ×
+          </button>
+        </span>
+      </ng-container>
+    </div>
+
+    <div class="skill-input-row" *ngIf="editMode">
+      <input
+        type="text"
+        [(ngModel)]="newSkill"
+        (keydown)="onSkillInputKeydown($event)"
+        placeholder="Add a skill and press Enter"
+      />
+      <button type="button" class="secondary-btn" (click)="addSkill()">Add Skill</button>
+    </div>
+  </section>
+</div>

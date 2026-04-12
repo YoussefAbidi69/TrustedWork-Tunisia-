@@ -1,0 +1,303 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:host {
+  --terracotta: #c85c3b;
+  --midnight: #1b1f2a;
+  --stone: #94a3b8;
+  --olive: #7e9a71;
+  --cream: #fcfaf8;
+  font-family: 'Inter', sans-serif;
+}
+
+.sign-page {
+  background-color: var(--cream);
+  min-height: 100vh;
+  padding: 40px;
+}
+
+.sign-layout {
+  display: grid;
+  grid-template-columns: 1.6fr 420px;
+  gap: 32px;
+  max-width: 1750px;
+  margin: 0 auto;
+}
+
+/* PDF Panel Modernized */
+.pdf-panel {
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 15px 45px rgba(27, 31, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  height: 90vh;
+  overflow: hidden;
+  border: 1px solid #eef2f6;
+}
+
+.pdf-header {
+  padding: 24px 32px;
+  background: white;
+  border-bottom: 2px solid var(--cream);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-title {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--midnight);
+  margin: 0;
+}
+
+.pdf-viewer-container {
+  flex: 1;
+  background: #f1f5f9;
+  overflow-y: auto;
+}
+
+.digital-contract-summary {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.document-paper {
+  background: white;
+  min-height: 1000px;
+  border: 1px solid #eef2f6;
+  position: relative;
+}
+
+.shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(27, 31, 42, 0.15);
+}
+
+.section-doc-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--stone);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+.seal-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: rgba(27, 31, 42, 0.05);
+  color: var(--midnight);
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  border: 1px solid var(--midnight);
+}
+
+.seal-badge.success {
+  background: rgba(126, 154, 113, 0.1);
+  color: var(--olive);
+  border-color: var(--olive);
+}
+
+.letter-spacing-2 {
+  letter-spacing: 2px;
+}
+
+.milestone-doc-item:last-child {
+  border-bottom: none !important;
+}
+
+.qr-placeholder {
+  opacity: 0.4;
+}
+
+.pdf-iframe { width: 100%; height: 100%; border: none; }
+
+/* Signature Panel Right */
+.signature-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.info-card, .status-card, .signing-controls, .success-card {
+  background: white;
+  border-radius: 24px;
+  padding: 28px;
+  border: 1px solid #eef2f6;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+}
+
+.section-title {
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--midnight);
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 16px;
+}
+
+.info-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--stone);
+  letter-spacing: 0.5px;
+}
+
+/* Signer Elements */
+.signer-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--cream);
+  margin-bottom: 12px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.signer-item.signed {
+  background: white;
+  border-color: var(--olive);
+  box-shadow: 0 4px 12px rgba(126, 154, 113, 0.1);
+}
+
+.signer-avatar {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  background: white; border: 1px solid #eef2f6;
+}
+
+.signer-item.signed .signer-avatar.client { 
+  background: var(--midnight); color: white; border-color: var(--midnight);
+}
+
+.signer-item.signed .signer-avatar.freelancer { 
+  background: var(--terracotta); color: white; border-color: var(--terracotta);
+}
+
+/* Custom Signature Input */
+.bg-light-soft {
+  background: #f8fafc;
+}
+
+.signature-input-modern {
+  width: 100%;
+  border: none;
+  background: transparent;
+  border-bottom: 2px solid #eef2f6;
+  padding: 12px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--midnight);
+  text-align: center;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.signature-input-modern:focus {
+  border-bottom-color: var(--terracotta);
+}
+
+.signature-preview {
+  font-family: 'Dancing Script', cursive;
+  font-size: 2.2rem;
+  color: var(--midnight);
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #eef2f6 !important;
+  border-radius: 16px;
+  background: white;
+}
+
+/* Canvas Area */
+.canvas-box {
+  background: white;
+  border-radius: 16px;
+  border: 2px solid #eef2f6;
+  width: 100%;
+  cursor: crosshair;
+}
+
+.btn-clear-link {
+  background: none; border: none; font-size: 0.75rem; 
+  color: #dc2626; font-weight: 700; cursor: pointer;
+}
+
+/* Tabs */
+.signature-tabs {
+  display: flex; background: var(--cream); 
+  padding: 5px; border-radius: 12px; gap: 5px;
+}
+
+.signature-tabs button {
+  flex: 1; padding: 12px; border: none; background: transparent;
+  font-weight: 700; font-size: 0.8rem; color: var(--stone); border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.signature-tabs button.active {
+  background: white; color: var(--midnight); 
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* CTA Button */
+.btn-sign-premium {
+  padding: 20px; border-radius: 18px; border: none;
+  background: var(--midnight); color: white;
+  font-weight: 800; font-size: 1.05rem; cursor: pointer;
+  box-shadow: 0 10px 25px rgba(27, 31, 42, 0.25);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-sign-premium:hover:not(:disabled) {
+  transform: translateY(-4px);
+  background: #000;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+}
+
+.btn-sign-premium:disabled {
+  opacity: 0.6; cursor: not-allowed;
+}
+
+/* Premium Global Styles (Synced with project) */
+.hover-up {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.hover-up:hover {
+  transform: translateY(-5px);
+}
+
+.btn-ghost-cancel {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(27, 31, 42, 0.05);
+  color: var(--midnight);
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.btn-ghost-cancel:hover {
+  background: var(--midnight);
+  color: white;
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 25px rgba(27, 31, 42, 0.1) !important;
+}
+
+.bg-light-soft {
+  background: #f8fafc;
+}

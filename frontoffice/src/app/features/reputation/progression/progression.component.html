@@ -1,0 +1,81 @@
+<div class="progression-page">
+
+  <!-- HERO -->
+  <section class="progression-hero">
+    <div class="hero-content">
+
+      <div class="hero-left">
+        <h1>Performance Progression</h1>
+        <p>
+          Analyze your growth over time, track performance signals
+          and understand how your activity impacts your reputation.
+        </p>
+
+        <div class="hero-stats">
+          <div class="stat">
+            <strong>{{ totalXp }}</strong>
+            <span>Total XP</span>
+          </div>
+
+          <div class="stat">
+            <strong>+{{ weeklyGain }}</strong>
+            <span>This week</span>
+          </div>
+
+          <div class="stat">
+            <strong>{{ streakDays }} days</strong>
+            <span>Activity streak</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-level">
+        <span>LEVEL</span>
+        <strong>{{ currentLevel }}</strong>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CHART -->
+  <section class="chart-card">
+    <div class="card-header">
+      <h2>XP Evolution</h2>
+      <p>Growth trend over the last months</p>
+    </div>
+
+    <div class="chart-container">
+      <div
+        class="bar"
+        *ngFor="let point of progressData; trackBy: trackByLabel"
+      >
+        <div
+          class="bar-fill"
+          [style.height.%]="getBarHeight(point.xp)"
+        ></div>
+
+        <span class="bar-label">{{ point.label }}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSIGHTS -->
+  <section class="insights-card">
+    <div class="card-header">
+      <h2>Performance Insights</h2>
+      <p>AI-driven interpretation of your activity</p>
+    </div>
+
+    <div class="insights-grid">
+      <div
+        class="insight"
+        *ngFor="let insight of insights"
+        [ngClass]="insight.type"
+      >
+        <h3>{{ insight.title }}</h3>
+        <p>{{ insight.description }}</p>
+      </div>
+    </div>
+  </section>
+
+</div>

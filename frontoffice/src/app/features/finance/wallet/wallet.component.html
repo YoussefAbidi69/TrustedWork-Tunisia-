@@ -1,0 +1,145 @@
+<div class="home-feed-page">
+
+  <!-- Wallet Header: Match Dashboard Hero -->
+  <section class="feed-hero">
+    <div class="feed-hero__glow feed-hero__glow--one"></div>
+    <div class="feed-hero__glow feed-hero__glow--two"></div>
+
+    <div class="feed-hero__content">
+      <span class="feed-badge">Mon Portefeuille</span>
+      <h1 *ngIf="wallet">{{ wallet.balance | number:'1.2-2' }} <span>DT</span></h1>
+      <h1 *ngIf="loading">Chargement...</h1>
+      <p>
+        Votre solde est mis à jour en temps réel. Gérez vos revenus, suivez vos dépenses
+        et configurez vos paiements Stripe en toute sécurité.
+      </p>
+
+      <div class="feed-hero__actions">
+        <button *ngIf="authService.getCurrentAuthUser()?.role === 'CLIENT'" 
+                (click)="addTestFunds()" class="btn btn-primary">
+          Alimenter mon compte (DEV)
+        </button>
+        <button (click)="refresh()" class="btn btn-secondary">
+          Actualiser le solde
+        </button>
+      </div>
+    </div>
+
+    <div class="feed-hero__side">
+      <div class="hero-glass-card" *ngIf="wallet">
+        <div class="hero-glass-card__top">
+          <span class="small-label">Propriétaire</span>
+          <strong>CIN {{ userCin }}</strong>
+        </div>
+
+        <div class="hero-metric">
+          <span>Total Gagné</span>
+          <strong class="text-success">+{{ wallet.totalEarned | number:'1.0-0' }} DT</strong>
+        </div>
+
+        <div class="hero-metric">
+          <span>Dépensé</span>
+          <strong class="text-danger">-{{ wallet.totalSpent | number:'1.0-0' }} DT</strong>
+        </div>
+
+        <div class="hero-metric">
+          <span>Commissions</span>
+          <strong>{{ wallet.totalCommissionPaid | number:'1.0-0' }} DT</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="feed-layout">
+    <!-- Main Feed: Transactions -->
+    <div class="feed-main">
+      
+      <section class="feed-section">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Historique</span>
+            <h2>Transactions récentes</h2>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+             <button (click)="loadTransactions()" class="btn-link p-0 text-stone text-decoration-none">Rafraîchir</button>
+             <a routerLink="/app/finance/payments-history" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold">
+               Consulter l'historique complet
+             </a>
+          </div>
+        </div>
+
+        <div *ngIf="txLoading" class="text-center py-4">
+          <div class="spinner-border text-terracotta"></div>
+        </div>
+
+        <div class="job-list" *ngIf="!txLoading">
+          <article class="job-card" *ngFor="let tr of transactions">
+            <div class="job-card__left">
+              <div class="job-card__topline">
+                <span class="job-match" [ngClass]="tr.status === 'PROCESSED' ? 'bg-success text-white' : ''">
+                  {{ tr.status || 'PENDING' }}
+                </span>
+              </div>
+              <h3>{{ tr.description }}</h3>
+              <p>Référence: #{{ tr.reference }}</p>
+              <span>{{ tr.createdAt | date:'dd MMMM yyyy, HH:mm' }}</span>
+            </div>
+
+            <div class="job-card__right">
+              <strong [ngClass]="tr.type === 'CREDIT' ? 'text-success' : 'text-danger'">
+                {{ tr.type === 'CREDIT' ? '+' : '-' }} {{ tr.montant | number:'1.2-2' }} DT
+              </strong>
+              <span class="small text-muted">{{ tr.type }}</span>
+            </div>
+          </article>
+
+          <div *ngIf="transactions.length === 0" class="empty-state-simple">
+            <p>Aucune transaction trouvée.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Sidebar: Stripe & Info -->
+    <aside class="feed-sidebar">
+      
+      <!-- Stripe Panel -->
+      <div class="side-panel profile-panel" *ngIf="authService.getCurrentAuthUser()?.role !== 'CLIENT'">
+        <span class="section-kicker">Paiements Extérieurs</span>
+        <h3>Stripe Connect</h3>
+
+        <div class="mini-score mt-3">
+          <div class="mini-score__circle" [style.background]="stripeStatus === 'ACTIVE' ? 'conic-gradient(#5b7553 0% 100%, #ece7e2 100% 100%)' : 'conic-gradient(#d4a843 0% 50%, #ece7e2 50% 100%)'">
+            <span><i class="bi" [ngClass]="stripeStatus === 'ACTIVE' ? 'bi-check-all' : 'bi-hourglass-split'"></i></span>
+          </div>
+          <div>
+            <strong>{{ stripeStatus }}</strong>
+            <p>{{ stripeStatusMessage }}</p>
+          </div>
+        </div>
+
+        <div class="mini-list mt-3">
+           <button class="btn btn-primary w-100" (click)="setupStripe()" *ngIf="stripeStatus !== 'ACTIVE'">
+             Configurer Stripe
+           </button>
+           <p class="small text-center text-muted mt-2" *ngIf="stripeStatus === 'ACTIVE'">
+             Votre compte est prêt à recevoir des fonds.
+           </p>
+        </div>
+      </div>
+
+      <!-- Info Panel -->
+      <div class="side-panel side-panel--accent">
+        <span class="section-kicker">Sécurité</span>
+        <h3>Protection des fonds</h3>
+        <p class="side-text">
+          Toutes les transactions sont sécurisées par notre système d'Escrow. 
+          Les fonds ne sont libérés qu'après validation mutuelle des jalons.
+        </p>
+        <a href="#" class="side-link">Comment ça marche ?</a>
+      </div>
+
+    </aside>
+  </div>
+</div>

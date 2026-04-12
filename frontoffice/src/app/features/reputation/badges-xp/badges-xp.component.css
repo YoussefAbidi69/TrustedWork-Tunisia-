@@ -1,0 +1,558 @@
+:host {
+  display: block;
+}
+
+.badges-xp-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: #ecf3ff;
+}
+
+/* ---------- SHARED ---------- */
+
+.xp-hero-card,
+.stat-card,
+.panel-card,
+.reward-card,
+.milestone-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 255, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 22px 60px rgba(1, 8, 20, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(16px);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.xp-hero-card:hover,
+.stat-card:hover,
+.panel-card:hover,
+.reward-card:hover,
+.milestone-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 28px 70px rgba(1, 8, 20, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62);
+  border-color: rgba(200, 92, 59, 0.18);
+}
+
+/* ---------- HERO ---------- */
+
+.xp-hero-card {
+  padding: 32px;
+}
+
+.xp-hero-card__glow {
+  position: absolute;
+  left: -90px;
+  top: -90px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(200, 92, 59, 0.16) 0%, rgba(200, 92, 59, 0) 72%);
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.hero-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(16, 32, 58, 0.08);
+  color: #10203a;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.hero-badge--orange {
+  background: rgba(200, 92, 59, 0.12);
+  color: #b65839;
+}
+
+.hero-copy h1 {
+  margin: 0 0 10px;
+  color: #0f1b2d;
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.hero-copy p {
+  margin: 0;
+  max-width: 760px;
+  color: #5f6f82;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.hero-inline-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.inline-stat {
+  min-width: 120px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(16, 32, 58, 0.045);
+  border: 1px solid rgba(16, 32, 58, 0.06);
+}
+
+.inline-stat strong {
+  display: block;
+  color: #10203a;
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.inline-stat span {
+  color: #7a8797;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hero-level-card {
+  width: 230px;
+  flex-shrink: 0;
+  border-radius: 24px;
+  padding: 22px;
+  background: linear-gradient(135deg, #10203a, #213a63);
+  color: #ffffff;
+  box-shadow: 0 18px 34px rgba(16, 32, 58, 0.22);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero-level-card__label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.hero-level-card strong {
+  font-size: 40px;
+  line-height: 1;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.hero-level-card__subtext {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+}
+
+/* ---------- STATS ---------- */
+
+.xp-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.stat-card {
+  padding: 22px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.stat-card__icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #c85c3b, #e88861);
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 800;
+  box-shadow: 0 14px 24px rgba(200, 92, 59, 0.24);
+}
+
+.stat-card__content span {
+  display: block;
+  color: #6d7b8c;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.stat-card__content strong {
+  color: #10203a;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+/* ---------- GRID ---------- */
+
+.xp-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 24px;
+}
+
+.panel-card {
+  padding: 28px 30px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.panel-header h2 {
+  margin: 0 0 6px;
+  color: #10203a;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.panel-header p {
+  margin: 0;
+  color: #768395;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.progress-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 16px;
+  background: rgba(200, 92, 59, 0.12);
+  color: #b65839;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+/* ---------- PROGRESS PANEL ---------- */
+
+.xp-range {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 18px;
+  color: #7a8797;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.xp-progress-bar {
+  margin-top: 10px;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(16, 32, 58, 0.08);
+  overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(16, 32, 58, 0.06);
+}
+
+.xp-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #c85c3b 0%, #f29067 100%);
+  box-shadow: 0 8px 18px rgba(200, 92, 59, 0.25);
+}
+
+.xp-progress-copy {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.xp-progress-copy strong {
+  color: #10203a;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.xp-progress-copy span {
+  color: #718093;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.milestone-rate-card {
+  margin-top: 22px;
+  border-radius: 22px;
+  padding: 20px;
+  background: rgba(16, 32, 58, 0.05);
+  border: 1px solid rgba(16, 32, 58, 0.07);
+}
+
+.milestone-rate-card__label {
+  display: block;
+  color: #748294;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.milestone-rate-card strong {
+  color: #10203a;
+  font-size: 34px;
+  font-weight: 800;
+}
+
+/* ---------- REWARDS ---------- */
+
+.rewards-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.reward-card {
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.reward-card__icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #10203a, #27446f);
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 800;
+  box-shadow: 0 12px 22px rgba(16, 32, 58, 0.18);
+  flex-shrink: 0;
+}
+
+.reward-card__copy {
+  flex: 1;
+}
+
+.reward-card__copy h3 {
+  margin: 0 0 6px;
+  color: #10203a;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.reward-card__copy p {
+  margin: 0;
+  color: #627084;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.reward-state {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+  font-size: 12px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.reward-card--locked {
+  opacity: 0.78;
+}
+
+.reward-state--locked {
+  background: rgba(107, 114, 128, 0.14);
+  color: #4b5563;
+}
+
+/* ---------- TIMELINE ---------- */
+
+.timeline-panel {
+  padding: 28px 30px;
+}
+
+.milestone-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.milestone-card {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+}
+
+.milestone-level {
+  width: 96px;
+  height: 96px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 32, 58, 0.06);
+}
+
+.milestone-level span {
+  color: #7a8797;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.milestone-level strong {
+  color: #10203a;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 4px;
+}
+
+.milestone-copy h3 {
+  margin: 0 0 6px;
+  color: #10203a;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.milestone-copy p {
+  margin: 0;
+  color: #667487;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.milestone-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.milestone-xp,
+.milestone-status {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.milestone-xp {
+  background: rgba(16, 32, 58, 0.06);
+  color: #10203a;
+}
+
+/* ---------- STATUS ---------- */
+
+.status-completed .milestone-status {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+
+.status-current {
+  border-color: rgba(200, 92, 59, 0.2);
+  box-shadow:
+    0 24px 48px rgba(200, 92, 59, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.status-current .milestone-status {
+  background: rgba(200, 92, 59, 0.12);
+  color: #b65839;
+}
+
+.status-current .milestone-level {
+  background: rgba(200, 92, 59, 0.1);
+}
+
+.status-locked {
+  opacity: 0.8;
+}
+
+.status-locked .milestone-status {
+  background: rgba(107, 114, 128, 0.14);
+  color: #4b5563;
+}
+
+/* ---------- SAFE ADAPTATION ---------- */
+
+@media (max-width: 1280px) {
+  .xp-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .xp-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1100px) {
+  .hero-content {
+    flex-direction: column;
+  }
+
+  .hero-level-card {
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .milestone-card {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .milestone-meta {
+    align-items: flex-start;
+  }
+
+  .reward-card {
+    flex-direction: column;
+  }
+}

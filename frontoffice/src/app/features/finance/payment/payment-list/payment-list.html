@@ -1,0 +1,162 @@
+<div class="home-feed-page animate-fade-in">
+
+  <!-- Payment Hero: Premium Branding -->
+  <section class="feed-hero shadow-xl">
+    <div class="feed-hero__glow feed-hero__glow--one"></div>
+    <div class="feed-hero__glow feed-hero__glow--two"></div>
+
+    <div class="feed-hero__content">
+      <span class="feed-badge">Solutions de Paiement</span>
+      <h1>Sécurisez vos <span>projets</span></h1>
+      <p>
+        Utilisez notre système d'Escrow (séquestre) pour garantir que vos fonds sont 
+        protégés jusqu'à ce que le travail soit validé selon vos exigences.
+      </p>
+
+      <div class="feed-hero__actions">
+        <a routerLink="/app/activity/contracts" class="btn btn-primary">
+          Mes contrats actifs
+        </a>
+        <button (click)="loadContracts()" class="btn btn-secondary">
+          <i class="bi bi-arrow-clockwise me-2"></i> Actualiser
+        </button>
+      </div>
+    </div>
+
+    <div class="feed-hero__side">
+      <div class="hero-glass-card">
+        <div class="hero-glass-card__top">
+          <span class="small-label">Protection TwCore</span>
+          <strong>Confiance Maximale</strong>
+        </div>
+        <div class="hero-metric mt-3">
+          <i class="bi bi-shield-lock-fill text-terracotta fs-3 me-3"></i>
+          <p class="small mb-0 opacity-80">Vos données et transactions sont chiffrées de bout en bout via Stripe.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="feed-layout">
+    <!-- Main Section: Contracts requiring payment -->
+    <div class="feed-main">
+      <section class="feed-section">
+        <div class="section-head mb-4">
+          <div>
+            <span class="section-kicker">À régler</span>
+            <h2>Contrats en attente de fonds</h2>
+          </div>
+        </div>
+
+        <div *ngIf="loading" class="text-center py-5">
+          <div class="spinner-border text-terracotta"></div>
+        </div>
+
+        <div *ngIf="error" class="alert alert-danger border-0 rounded-4 shadow-sm p-4">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+        </div>
+
+        <div class="job-list" *ngIf="!loading && contracts.length > 0">
+           <article class="job-card" *ngFor="let contract of contracts">
+             <div class="job-card__left">
+               <div class="job-card__topline mb-2">
+                 <span class="job-match" [ngClass]="contract.status.toLowerCase()">
+                    {{ contract.status }}
+                 </span>
+               </div>
+               <h3>{{ contract.projectTitle }}</h3>
+               <p class="mb-3 text-stone">Ref: #{{ contract.reference || contract.id }}</p>
+               
+               <!-- Configuration tracker for Drafts -->
+               <div *ngIf="contract.status === 'DRAFT'" class="mt-2">
+                 <div class="d-flex justify-content-between x-small mb-1 font-monospace">
+                   <span class="text-stone">CONFIG JALONS:</span>
+                   <span [ngClass]="isReadyToPay(contract) ? 'text-success fw-bold' : 'text-stone'">
+                      {{ milestonesSum[contract.id] || 0 }} / {{ contract.montantTotal }} DT
+                   </span>
+                 </div>
+                 <div class="progress-premium" style="height: 6px;">
+                    <div class="progress-bar-premium" 
+                         [style.width.%]="((milestonesSum[contract.id] || 0) / contract.montantTotal) * 100"
+                         [style.background]="isReadyToPay(contract) ? 'var(--olive)' : 'var(--terracotta)'"></div>
+                 </div>
+               </div>
+
+               <div *ngIf="contract.status !== 'DRAFT'" class="mt-2 small text-olive fw-bold">
+                 <i class="bi bi-patch-check-fill me-1"></i> Sécurisé et Actif
+               </div>
+             </div>
+
+             <div class="job-card__right">
+               <strong class="h3 mb-3">{{ contract.montantTotal | number:'1.0-2' }} DT</strong>
+               
+               <div class="d-flex flex-column gap-2">
+                 <!-- Payment Action -->
+                 <button *ngIf="contract.status === 'DRAFT' && isReadyToPay(contract)" 
+                         (click)="goToCheckout(contract.id)"
+                         class="btn btn-primary w-100 py-2">
+                   Payer & Activer
+                 </button>
+                 
+                 <button *ngIf="contract.status === 'DRAFT' && !isReadyToPay(contract)" 
+                         [routerLink]="['/app/activity/contracts', contract.id]"
+                         class="btn btn-secondary w-100 py-2 small">
+                   Gérer les jalons
+                 </button>
+
+                 <a *ngIf="contract.status !== 'DRAFT'" 
+                    [routerLink]="['/app/activity/contracts', contract.id]"
+                    class="btn btn-secondary w-100 py-2 small">
+                   Voir Détails
+                 </a>
+               </div>
+             </div>
+           </article>
+        </div>
+
+        <div *ngIf="!loading && contracts.length === 0" class="text-center py-5">
+           <i class="bi bi-file-earmark-check display-1 text-stone opacity-25"></i>
+           <p class="h4 mt-4 text-midnight">Tout est à jour !</p>
+           <p class="text-stone">Vous n'avez aucun contrat en attente de paiement immédiat.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Sidebar: Helpful Tips -->
+    <aside class="feed-sidebar">
+      <div class="side-panel profile-panel">
+        <span class="section-kicker">Votre Sécurité</span>
+        <h3>Comment ça marche ?</h3>
+        <ul class="list-unstyled mt-4 d-flex flex-column gap-3 small">
+          <li class="d-flex gap-3">
+             <i class="bi bi-1-circle-fill text-terracotta fs-5"></i>
+             <span>Configurez vos jalons pour atteindre le montant total.</span>
+          </li>
+          <li class="d-flex gap-3">
+             <i class="bi bi-2-circle-fill text-terracotta fs-5"></i>
+             <span>Dépôt des fonds sur un compte de séquestre (Escrow).</span>
+          </li>
+          <li class="d-flex gap-3">
+             <i class="bi bi-3-circle-fill text-terracotta fs-5"></i>
+             <span>Le Freelancer démarre le travail en toute confiance.</span>
+          </li>
+          <li class="d-flex gap-3">
+             <i class="bi bi-4-circle-fill text-terracotta fs-5"></i>
+             <span>Libération des fonds après votre validation de livraison.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="side-panel side-panel--accent">
+        <span class="section-kicker">Besoin d'aide ?</span>
+        <h3>Litiges & Support</h3>
+        <p class="side-text">
+          En cas de problème sur une livraison, ne validez pas le jalon et contactez le support 
+          pour une conciliation via notre centre de résolution.
+        </p>
+        <a routerLink="/app/support/reclamations" class="side-link">Ouvrir un ticket</a>
+      </div>
+    </aside>
+  </div>
+
+</div>

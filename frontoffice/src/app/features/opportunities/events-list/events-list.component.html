@@ -1,0 +1,55 @@
+<div class="events-list-page">
+  <section class="topbar premium-card">
+    <div>
+      <span class="eyebrow">Events directory</span>
+      <h1>Explore all professional events on TrustedWork.</h1>
+    </div>
+
+    <div class="filters">
+      <button
+        type="button"
+        *ngFor="let filter of filters; trackBy: trackByFilter"
+        class="filter-btn"
+        [class.active]="selectedFilter === filter"
+        (click)="setFilter(filter)"
+      >
+        {{ filter }}
+      </button>
+    </div>
+  </section>
+
+  <section class="events-feed">
+    <article class="event-row premium-card" *ngFor="let event of filteredEvents; trackBy: trackByEvent">
+      <div class="event-row__main">
+        <div class="event-row__meta">
+          <span class="pill">{{ event.category }}</span>
+          <span class="status-pill" [ngClass]="getStatusClass(event.status)">
+            {{ event.status }}
+          </span>
+        </div>
+
+        <h2>{{ event.title }}</h2>
+        <p>{{ event.summary }}</p>
+
+        <div class="event-info">
+          <span><i class="fas fa-calendar"></i>{{ event.date }}</span>
+          <span><i class="fas fa-clock"></i>{{ event.time }}</span>
+          <span><i class="fas fa-location-dot"></i>{{ event.location }}</span>
+          <span><i class="fas fa-user-group"></i>{{ event.attendees }} attendees</span>
+        </div>
+      </div>
+
+      <div class="event-row__side">
+        <strong>{{ event.organizer }}</strong>
+        <button type="button" class="action-btn action-btn--primary">Register</button>
+        <button type="button" class="action-btn action-btn--ghost">Save</button>
+      </div>
+    </article>
+
+    <div class="empty-state premium-card" *ngIf="!filteredEvents.length">
+      <i class="fas fa-calendar-days"></i>
+      <h3>No events found</h3>
+      <p>Try another category to see more opportunities.</p>
+    </div>
+  </section>
+</div>

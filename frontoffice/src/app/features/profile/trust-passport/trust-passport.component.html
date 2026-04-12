@@ -1,0 +1,179 @@
+<div class="passport-page">
+  <section class="passport-hero">
+    <div class="passport-hero__glow passport-hero__glow--one"></div>
+    <div class="passport-hero__glow passport-hero__glow--two"></div>
+
+    <div class="passport-hero__content">
+      <div class="passport-hero__copy">
+        <div class="eyebrow-group">
+          <span class="eyebrow">Trust Layer</span>
+          <span class="eyebrow eyebrow--accent">Premium Passport</span>
+        </div>
+
+        <h1>Activate a premium trust identity that validates your profile beyond a simple freelancer account.</h1>
+
+        <p>
+          Your Trust Passport combines verification, reputation, expertise and business
+          reliability into one premium credibility layer designed to inspire confidence
+          and unlock stronger opportunities on TrustedWork Tunisia.
+        </p>
+
+        <div class="hero-actions">
+          <button type="button" class="hero-btn hero-btn--primary">
+            <i class="fas fa-shield-halved"></i>
+            <span>View trust status</span>
+          </button>
+
+          <button type="button" class="hero-btn hero-btn--ghost">
+            <i class="fas fa-arrow-trend-up"></i>
+            <span>Improve passport</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-spotlight-card">
+        <span class="card-kicker">Passport overview</span>
+        <h2>Your premium trust identity is already a powerful differentiator.</h2>
+
+        <div class="spotlight-score">
+          <strong>91/100</strong>
+          <span>Overall Trust Passport</span>
+        </div>
+
+        <div class="spotlight-chip">
+          <span class="spotlight-chip__dot"></span>
+          Premium profile authority active
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <article class="stat-card" *ngFor="let stat of stats">
+      <div class="stat-card__label">{{ stat.label }}</div>
+      <strong [ngClass]="getStatToneClass(stat.tone)">{{ stat.value }}</strong>
+    </article>
+  </section>
+
+  <section class="passport-layout">
+    <div class="passport-main">
+      <div class="panel-card">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Trust architecture</span>
+            <h2>Passport pillars</h2>
+          </div>
+
+          <div class="panel-head__filters">
+            <span class="filter-chip active">All pillars</span>
+            <span class="filter-chip">Strong</span>
+            <span class="filter-chip">Improve</span>
+          </div>
+        </div>
+
+        <div class="pillars-grid">
+          <article class="pillar-card" *ngFor="let pillar of pillars">
+            <div class="pillar-card__top">
+              <div class="pillar-icon">
+                <i class="fas" [class]="pillar.icon"></i>
+              </div>
+
+              <span [ngClass]="getPillarStatusClass(pillar.status)">
+                {{ pillar.status }}
+              </span>
+            </div>
+
+            <h3>{{ pillar.title }}</h3>
+            <p>{{ pillar.description }}</p>
+
+            <div class="pillar-progress">
+              <div class="pillar-progress__bar">
+                <div
+                  class="pillar-progress__fill"
+                  [style.width.%]="pillar.score"
+                ></div>
+              </div>
+              <div class="pillar-progress__meta">
+                <span>Strength score</span>
+                <strong>{{ pillar.score }}%</strong>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Trust milestones</span>
+            <h2>Passport timeline</h2>
+          </div>
+        </div>
+
+        <div class="timeline-list">
+          <article class="timeline-card" *ngFor="let item of timeline">
+            <div class="timeline-card__marker"></div>
+
+            <div class="timeline-card__content">
+              <div class="timeline-card__top">
+                <div>
+                  <h3>{{ item.title }}</h3>
+                  <p>{{ item.description }}</p>
+                </div>
+
+                <span [ngClass]="getTimelineStatusClass(item.status)">
+                  {{ item.status }}
+                </span>
+              </div>
+
+              <div class="timeline-date">{{ item.date }}</div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <aside class="passport-side">
+      <div class="panel-card panel-card--detail">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Unlocked credentials</span>
+            <h2>Trust badges</h2>
+          </div>
+        </div>
+
+        <div class="badges-grid">
+          <article
+            class="passport-badge"
+            *ngFor="let badge of badges"
+            [class.passport-badge--locked]="!badge.unlocked"
+          >
+            <div class="passport-badge__icon">
+              <i class="fas" [class.fa-check]="badge.unlocked" [class.fa-lock]="!badge.unlocked"></i>
+            </div>
+            <div>
+              <strong>{{ badge.title }}</strong>
+              <span>{{ badge.category }}</span>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="panel-card panel-card--dark">
+        <div class="panel-head panel-head--dark">
+          <div>
+            <span class="card-kicker card-kicker--dark">Marketplace impact</span>
+            <h2>Why it matters</h2>
+          </div>
+        </div>
+
+        <div class="advantage-list">
+          <article class="advantage-item" *ngFor="let item of advantages">
+            <i class="fas fa-check-circle"></i>
+            <span>{{ item }}</span>
+          </article>
+        </div>
+      </div>
+    </aside>
+  </section>
+</div>

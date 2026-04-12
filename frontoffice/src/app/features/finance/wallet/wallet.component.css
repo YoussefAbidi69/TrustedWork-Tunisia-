@@ -1,0 +1,133 @@
+/* --- BASE FEED LAYOUT --- */
+.home-feed-page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding-top: 14px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.feed-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.45fr 0.8fr;
+  gap: 24px;
+  padding: 34px;
+  border-radius: 32px;
+  background: linear-gradient(135deg, #1b1f2a 0%, #1d2740 45%, #23283a 100%);
+  color: #fff;
+  overflow: hidden;
+  box-shadow: 0 18px 60px rgba(27, 31, 42, 0.18);
+}
+
+.feed-hero__glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(50px);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.feed-hero__glow--one { width: 280px; height: 280px; background: rgba(200, 92, 59, 0.28); top: -90px; right: 8%; }
+.feed-hero__glow--two { width: 220px; height: 220px; background: rgba(91, 117, 83, 0.22); left: -50px; bottom: -70px; }
+
+.feed-badge {
+  display: inline-flex;
+  padding: 9px 15px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f0d1c7;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.feed-hero h1 {
+  margin: 0 0 14px;
+  font-size: clamp(2.3rem, 4.2vw, 3.8rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.feed-hero h1 span { font-size: 1.5rem; opacity: 0.6; margin-left: 10px; }
+
+.feed-hero p { max-width: 740px; margin: 0; color: rgba(255, 255, 255, 0.8); font-size: 17px; line-height: 1.8; }
+
+.feed-hero__actions { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 30px; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  padding: 0 22px;
+  border-radius: 14px;
+  font-weight: 700;
+  transition: all 0.22s ease;
+  cursor: pointer;
+}
+
+.btn-primary { background: linear-gradient(135deg, #c85c3b, #df7a54); color: #fff; border: none; box-shadow: 0 16px 34px rgba(200, 92, 59, 0.3); }
+.btn-secondary { background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid rgba(255, 255, 255, 0.14); backdrop-filter: blur(10px); }
+
+.hero-glass-card {
+  width: 100%; max-width: 330px; padding: 24px; border-radius: 24px;
+  background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+}
+
+.small-label { display: block; color: rgba(255, 255, 255, 0.62); font-size: 12px; margin-bottom: 8px; }
+
+.hero-metric {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0; border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.hero-metric strong { color: #fff; }
+
+.feed-layout { display: grid; grid-template-columns: 1.55fr 0.9fr; gap: 22px; margin-top: 28px; }
+
+.feed-main, .feed-sidebar { display: flex; flex-direction: column; gap: 22px; }
+
+.feed-section, .side-panel {
+  background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(10px);
+  border: 1px solid rgba(0,0,0,0.04); border-radius: 24px;
+  padding: 26px; box-shadow: 0 10px 30px rgba(27, 31, 42, 0.05);
+}
+
+.section-kicker { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #c85c3b; }
+
+.side-panel h3 { margin: 8px 0 0; font-size: 1.7rem; color: #1b1f2a; }
+
+.job-list { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
+
+.job-card {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px; border-radius: 22px; background: #faf7f4; border: 1px solid rgba(0,0,0,0.04);
+  transition: all 0.22s ease;
+}
+
+.job-card:hover { transform: translateY(-2px); border-color: rgba(200, 92, 59, 0.14); }
+
+.job-card__right { min-width: 140px; text-align: right; }
+
+.job-card__right strong { display: block; font-size: 1.4rem; color: #1b1f2a; }
+
+.mini-score { display: flex; gap: 16px; align-items: center; margin-top: 16px; }
+
+.mini-score__circle {
+  width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--midnight); color: #fff; font-size: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+  .feed-hero { grid-template-columns: 1fr; }
+  .feed-layout { grid-template-columns: 1fr; }
+}
+
+.empty-state-simple { text-align: center; padding: 40px; opacity: 0.5; font-style: italic; }
+
+.btn-link { background: none; border: none; color: #c85c3b; font-weight: 700; cursor: pointer; }

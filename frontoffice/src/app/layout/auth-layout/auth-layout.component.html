@@ -1,0 +1,82 @@
+<div
+  class="auth-shell"
+  [ngClass]="{
+    'mode-login': currentMode === 'login',
+    'mode-register': currentMode === 'register',
+    'mode-forgot': currentMode === 'forgot',
+    'mode-reset': currentMode === 'reset'
+  }"
+>
+  <div class="auth-shell__panel auth-shell__panel--brand">
+    <a routerLink="/" class="brand">
+      <div class="brand__mark">TW</div>
+      <div class="brand__text">TrustedWork Tunisia</div>
+    </a>
+
+    <div class="brand-content">
+      <span class="brand-badge">Freelancing • Trust Score • KYC • Escrow</span>
+
+      <h1>
+        Rejoignez la plateforme freelance
+        <span>basée sur la confiance</span>
+      </h1>
+
+      <p>
+        Connectez-vous ou créez votre compte pour accéder à une expérience
+        moderne, sécurisée et pensée pour les talents tunisiens.
+      </p>
+
+      <div class="brand-points">
+        <div class="brand-point">
+          <span class="brand-point__icon">✓</span>
+          <div>
+            <strong>Profils vérifiés</strong>
+            <p>KYC, identité et crédibilité renforcée</p>
+          </div>
+        </div>
+
+        <div class="brand-point">
+          <span class="brand-point__icon">✓</span>
+          <div>
+            <strong>Trust Score transparent</strong>
+            <p>Décisions plus rapides, collaboration plus sereine</p>
+          </div>
+        </div>
+
+        <div class="brand-point">
+          <span class="brand-point__icon">✓</span>
+          <div>
+            <strong>Paiements sécurisés</strong>
+            <p>Escrow, traçabilité et meilleure confiance client</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="brand-stats">
+        <div class="brand-stat">
+          <strong>2400+</strong>
+          <span>freelancers</span>
+        </div>
+        <div class="brand-stat">
+          <strong>850+</strong>
+          <span>missions</span>
+        </div>
+        <div class="brand-stat">
+          <strong>98%</strong>
+          <span>satisfaction</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-shell__panel auth-shell__panel--form">
+    <div class="auth-floating-orb auth-floating-orb--one"></div>
+    <div class="auth-floating-orb auth-floating-orb--two"></div>
+
+    <div class="auth-shell__form-wrap" [@routeAnimation]="currentMode">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>
+
+<div class="auth-overlay" [class.active]="overlayActive"></div>

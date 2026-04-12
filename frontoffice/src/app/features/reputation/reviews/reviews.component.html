@@ -1,0 +1,163 @@
+<div class="reviews-page">
+  <section class="reviews-hero-card">
+    <div class="reviews-hero-card__glow"></div>
+
+    <div class="hero-content">
+      <div class="hero-copy">
+        <div class="hero-badges">
+          <span class="hero-badge">Client Feedback</span>
+          <span class="hero-badge hero-badge--green">Verified Reputation</span>
+        </div>
+
+        <h1>Reviews & Social Proof</h1>
+        <p>
+          A premium reputation is built through consistent delivery, verified feedback
+          and strong client experience across every project.
+        </p>
+      </div>
+
+      <div class="hero-rating-card">
+        <span class="hero-rating-card__label">Average Rating</span>
+        <strong>{{ stats.averageRating }}</strong>
+        <div class="hero-rating-stars">
+          <span class="filled">★</span>
+          <span class="filled">★</span>
+          <span class="filled">★</span>
+          <span class="filled">★</span>
+          <span class="filled">★</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="reviews-stats-grid">
+    <article class="stat-card">
+      <div class="stat-card__icon">★</div>
+      <div class="stat-card__content">
+        <span>Total Reviews</span>
+        <strong>{{ stats.totalReviews }}</strong>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-card__icon">↗</div>
+      <div class="stat-card__content">
+        <span>Positive Rate</span>
+        <strong>{{ stats.positiveRate }}%</strong>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-card__icon">✓</div>
+      <div class="stat-card__content">
+        <span>Verified Reviews</span>
+        <strong>{{ stats.verifiedRate }}%</strong>
+      </div>
+    </article>
+  </section>
+
+  <section class="reviews-panel">
+    <div class="panel-header">
+      <div>
+        <h2>Client Reviews</h2>
+        <p>Premium review cards with sentiment signals and clean pagination.</p>
+      </div>
+
+      <div class="review-filters">
+        <button
+          type="button"
+          [class.active]="selectedFilter === 'All'"
+          (click)="setFilter('All')"
+        >
+          All
+        </button>
+
+        <button
+          type="button"
+          [class.active]="selectedFilter === 'Positive'"
+          (click)="setFilter('Positive')"
+        >
+          Positive
+        </button>
+
+        <button
+          type="button"
+          [class.active]="selectedFilter === 'Neutral'"
+          (click)="setFilter('Neutral')"
+        >
+          Neutral
+        </button>
+
+        <button
+          type="button"
+          [class.active]="selectedFilter === 'Flagged'"
+          (click)="setFilter('Flagged')"
+        >
+          Flagged
+        </button>
+      </div>
+    </div>
+
+    <div class="reviews-list">
+      <article
+        class="review-card"
+        *ngFor="let review of paginatedReviews; trackBy: trackByReviewId"
+      >
+        <div class="review-card__top">
+          <div class="review-author">
+            <div class="review-avatar">
+              {{ review.clientName.charAt(0) }}
+            </div>
+
+            <div class="review-author__meta">
+              <div class="review-name-row">
+                <h3>{{ review.clientName }}</h3>
+                <span *ngIf="review.verified" class="verified-pill">Verified</span>
+              </div>
+
+              <span class="review-role">
+                {{ review.clientRole }} • {{ review.projectName }}
+              </span>
+            </div>
+          </div>
+
+          <div class="review-meta">
+            <span class="review-date">{{ review.date }}</span>
+            <span class="review-sentiment" [ngClass]="getSentimentClass(review.sentiment)">
+              {{ review.sentiment }}
+            </span>
+          </div>
+        </div>
+
+        <div class="review-rating">
+          <span class="star filled" *ngFor="let star of getStars(review.rating)">★</span>
+          <span class="star empty" *ngFor="let star of getEmptyStars(review.rating)">★</span>
+          <strong>{{ review.rating }}.0</strong>
+        </div>
+
+        <p class="review-comment">
+          {{ review.comment }}
+        </p>
+      </article>
+    </div>
+
+    <div class="pagination-bar" *ngIf="totalPages > 1">
+      <button type="button" (click)="goToPage(currentPage - 1)">
+        Previous
+      </button>
+
+      <button
+        type="button"
+        *ngFor="let page of pages"
+        [class.active]="page === currentPage"
+        (click)="goToPage(page)"
+      >
+        {{ page }}
+      </button>
+
+      <button type="button" (click)="goToPage(currentPage + 1)">
+        Next
+      </button>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,261 @@
+<div class="trust-score-page">
+  <section class="trust-hero">
+    <div class="trust-hero__glow trust-hero__glow--one"></div>
+    <div class="trust-hero__glow trust-hero__glow--two"></div>
+
+    <div class="trust-hero__content">
+      <span class="page-badge">Réputation • Trust Intelligence</span>
+      <h1>Votre Trust Score inspire confiance.</h1>
+      <p>
+        TrustedWork consolide vos avis, votre régularité de livraison,
+        vos signaux de fiabilité et votre historique d’activité pour produire
+        une mesure crédible de confiance visible par les clients et recruteurs.
+      </p>
+
+      <div class="trust-hero__actions">
+        <a routerLink="/app/reputation/reviews" class="btn btn-primary">Voir les avis</a>
+        <a routerLink="/app/profile" class="btn btn-secondary">Renforcer mon profil</a>
+      </div>
+    </div>
+
+    <div class="trust-hero__scorecard">
+      <div class="score-ring-card">
+        <div class="score-ring">
+          <svg viewBox="0 0 120 120">
+            <circle class="ring-bg" cx="60" cy="60" r="46"></circle>
+            <circle
+              class="ring-progress"
+              cx="60"
+              cy="60"
+              r="46"
+              [style.stroke-dasharray]="289"
+              [style.stroke-dashoffset]="289 - ((trustPercent / 100) * 289)">
+            </circle>
+          </svg>
+
+          <div class="score-ring__center">
+            <strong>{{ trustScore }}</strong>
+            <span>/100</span>
+          </div>
+        </div>
+
+        <div class="score-meta">
+          <span class="score-label">Niveau de confiance</span>
+          <h3>{{ trustCategory }}</h3>
+          <p>{{ trustTrendLabel }} • {{ trustTrend }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="trust-summary-grid">
+    <article class="premium-card summary-card summary-card--main">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Vue d’ensemble</span>
+          <h2>Comment votre score est perçu</h2>
+        </div>
+        <span class="status-pill status-pill--positive">Très crédible</span>
+      </div>
+
+      <p class="summary-text">
+        {{ scoreSummary }}
+      </p>
+
+      <div class="metrics-grid">
+        <article class="metric-card" *ngFor="let metric of metrics">
+          <div class="metric-card__top">
+            <span>{{ metric.label }}</span>
+            <i class="fas" [ngClass]="getTrendIcon(metric.trend)"></i>
+          </div>
+          <strong>{{ metric.value }}</strong>
+          <p>{{ metric.helper }}</p>
+        </article>
+      </div>
+    </article>
+
+    <article class="premium-card summary-card">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Signaux vérifiés</span>
+          <h2>Crédibilité du profil</h2>
+        </div>
+      </div>
+
+      <div class="signal-list">
+        <div class="signal-item" *ngFor="let signal of credibilitySignals">
+          <span class="signal-dot"></span>
+          <span>{{ signal }}</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="trust-main-grid">
+    <div class="trust-main-column">
+      <article class="premium-card">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Piliers du score</span>
+            <h2>Les dimensions qui influencent votre réputation</h2>
+          </div>
+        </div>
+
+        <div class="pillars-grid">
+          <article
+            class="pillar-card"
+            *ngFor="let pillar of pillars"
+            [ngClass]="getPillarToneClass(pillar.tone)">
+            <div class="pillar-visual">
+              <svg viewBox="0 0 120 120">
+                <circle class="pillar-ring-bg" cx="60" cy="60" r="50"></circle>
+                <circle
+                  class="pillar-ring-progress"
+                  cx="60"
+                  cy="60"
+                  r="50"
+                  [style.stroke-dasharray]="264"
+                  [style.stroke-dashoffset]="264 - getPillarStroke(pillar.score)">
+                </circle>
+              </svg>
+              <div class="pillar-visual__center">{{ pillar.score }}</div>
+            </div>
+
+            <div class="pillar-content">
+              <h3>{{ pillar.label }}</h3>
+              <p>{{ pillar.description }}</p>
+            </div>
+          </article>
+        </div>
+      </article>
+
+      <article class="premium-card">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Évolution</span>
+            <h2>Historique du Trust Score</h2>
+          </div>
+          <span class="ghost-badge">12 derniers mois</span>
+        </div>
+
+        <div class="timeline-chart">
+          <div class="timeline-chart__bars">
+            <div class="timeline-bar-item" *ngFor="let item of timeline">
+              <div class="timeline-bar-wrap">
+                <div class="timeline-bar" [style.height.px]="getBarHeight(item.score)"></div>
+              </div>
+              <strong>{{ item.score }}</strong>
+              <span>{{ item.month }}</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="premium-card">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Impact récent</span>
+            <h2>Éléments ayant influencé le score</h2>
+          </div>
+        </div>
+
+        <div class="impact-list">
+          <article
+            class="impact-card"
+            *ngFor="let item of impactReviews"
+            [ngClass]="getImpactClass(item.type)">
+            <div class="impact-card__left">
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.meta }}</p>
+            </div>
+
+            <div class="impact-card__right">
+              <span>{{ item.impact }}</span>
+            </div>
+          </article>
+        </div>
+      </article>
+    </div>
+
+    <aside class="trust-side-column">
+      <article class="premium-card side-card side-card--accent">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Lecture métier</span>
+            <h2>Interprétation plateforme</h2>
+          </div>
+        </div>
+
+        <p class="side-description">
+          Un score à {{ trustScore }}/100 positionne votre profil dans une zone
+          premium rassurante pour les clients. Il améliore la confiance perçue,
+          soutient le matching opportunités et valorise la continuité de vos collaborations.
+        </p>
+
+        <div class="insight-stack">
+          <div class="insight-row">
+            <span>Visibilité dans les recherches</span>
+            <strong>Élevée</strong>
+          </div>
+          <div class="insight-row">
+            <span>Confiance client initiale</span>
+            <strong>Très forte</strong>
+          </div>
+          <div class="insight-row">
+            <span>Risque modération</span>
+            <strong>Faible</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="premium-card side-card">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Plan d’amélioration</span>
+            <h2>Actions recommandées</h2>
+          </div>
+        </div>
+
+        <div class="action-list">
+          <article class="action-card" *ngFor="let action of actions">
+            <div class="action-card__top">
+              <span class="priority-pill" [ngClass]="getActionPriorityClass(action.priority)">
+                {{ action.priority }}
+              </span>
+            </div>
+            <h3>{{ action.title }}</h3>
+            <p>{{ action.description }}</p>
+          </article>
+        </div>
+      </article>
+
+      <article class="premium-card side-card">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Règles de calcul</span>
+            <h2>Logique plausible review-service</h2>
+          </div>
+        </div>
+
+        <div class="logic-list">
+          <div class="logic-row">
+            <span>Avis pondérés</span>
+            <strong>40%</strong>
+          </div>
+          <div class="logic-row">
+            <span>Respect des délais</span>
+            <strong>25%</strong>
+          </div>
+          <div class="logic-row">
+            <span>Communication</span>
+            <strong>20%</strong>
+          </div>
+          <div class="logic-row">
+            <span>Fiabilité / incidents</span>
+            <strong>15%</strong>
+          </div>
+        </div>
+      </article>
+    </aside>
+  </section>
+</div>

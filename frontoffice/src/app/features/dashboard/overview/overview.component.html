@@ -1,0 +1,183 @@
+<div class="home-feed-page">
+
+  <section class="feed-hero">
+    <div class="feed-hero__glow feed-hero__glow--one"></div>
+    <div class="feed-hero__glow feed-hero__glow--two"></div>
+
+    <div class="feed-hero__content">
+      <span class="feed-badge">Accueil freelancer</span>
+      <h1>Bonjour {{ displayName }} <span>👋</span></h1>
+      <p>
+        Voici ce qui bouge sur TrustedWork Tunisia aujourd’hui :
+        tendances du marché, opportunités recommandées et activité utile
+        pour faire avancer votre profil.
+      </p>
+
+      <div class="feed-hero__meta" *ngIf="!loadingUser">
+        <span>{{ displayEmail }}</span>
+        <span>•</span>
+        <span>{{ displayRole }}</span>
+      </div>
+
+      <div class="feed-hero__meta feed-hero__meta--error" *ngIf="userError">
+        {{ userError }}
+      </div>
+
+      <div class="feed-hero__actions">
+        <a routerLink="/app/opportunities/freelance-jobs" class="btn btn-primary">
+          Explorer les opportunités
+        </a>
+        <a routerLink="/app/profile/profile-overview" class="btn btn-secondary">
+          Compléter mon profil
+        </a>
+      </div>
+    </div>
+
+    <div class="feed-hero__side">
+      <div class="hero-glass-card">
+        <div class="hero-glass-card__top">
+          <span class="small-label">Visibilité profil</span>
+          <strong>+12 vues cette semaine</strong>
+        </div>
+
+        <div class="hero-metric">
+          <span>Trust Score</span>
+          <strong>{{ quickStats.trustScore }}</strong>
+        </div>
+
+        <div class="hero-metric">
+          <span>Complétion profil</span>
+          <strong>{{ quickStats.profileCompletion }}%</strong>
+        </div>
+
+        <div class="hero-metric">
+          <span>Disponibilité</span>
+          <strong>{{ quickStats.availability }}</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="feed-layout">
+    <div class="feed-main">
+
+      <section class="feed-section">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Tendances</span>
+            <h2>Ce qui évolue sur le marché</h2>
+          </div>
+        </div>
+
+        <div class="trend-list">
+          <article class="trend-card" *ngFor="let trend of marketTrends">
+            <span class="trend-tag">{{ trend.tag }}</span>
+            <h3>{{ trend.title }}</h3>
+            <p>{{ trend.description }}</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="feed-section">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Recommandé pour vous</span>
+            <h2>Opportunités à fort potentiel</h2>
+          </div>
+          <a routerLink="/app/opportunities/freelance-jobs">Voir tout</a>
+        </div>
+
+        <div class="job-list">
+          <article class="job-card" *ngFor="let job of recommendedJobs">
+            <div class="job-card__left">
+              <div class="job-card__topline">
+                <span class="job-match">{{ job.match }}</span>
+              </div>
+              <h3>{{ job.title }}</h3>
+              <p>{{ job.company }}</p>
+              <span>{{ job.location }}</span>
+            </div>
+
+            <div class="job-card__right">
+              <strong>{{ job.budget }}</strong>
+              <a routerLink="/app/opportunities/freelance-jobs" class="job-link">Voir l’offre</a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="feed-section">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Activité récente</span>
+            <h2>Ce qu’il faut savoir aujourd’hui</h2>
+          </div>
+        </div>
+
+        <ul class="activity-list">
+          <li *ngFor="let item of recentActivities">{{ item }}</li>
+        </ul>
+      </section>
+
+    </div>
+
+    <aside class="feed-sidebar">
+
+      <div class="side-panel profile-panel">
+        <span class="section-kicker">Votre espace</span>
+        <h3>Résumé personnel</h3>
+
+        <div class="profile-summary">
+          <strong>{{ displayFullName }}</strong>
+          <p>{{ displayEmail }}</p>
+          <span class="profile-role">{{ displayRole }}</span>
+        </div>
+
+        <div class="mini-score">
+          <div class="mini-score__circle">
+            <span>{{ quickStats.trustScore }}</span>
+          </div>
+          <div>
+            <strong>Excellent niveau</strong>
+            <p>{{ quickStats.visibility }} en visibilité plateforme</p>
+          </div>
+        </div>
+
+        <div class="mini-list">
+          <div>
+            <span>Disponibilité</span>
+            <strong>{{ quickStats.availability }}</strong>
+          </div>
+          <div>
+            <span>Profil complété</span>
+            <strong>{{ quickStats.profileCompletion }}%</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-panel">
+        <span class="section-kicker">À découvrir</span>
+        <h3>Events & challenges</h3>
+
+        <div class="event-list">
+          <article class="event-card" *ngFor="let event of featuredEvents">
+            <span class="event-type">{{ event.type }}</span>
+            <h4>{{ event.title }}</h4>
+            <p>{{ event.meta }}</p>
+          </article>
+        </div>
+      </div>
+
+      <div class="side-panel side-panel--accent">
+        <span class="section-kicker">Suggestion</span>
+        <h3>Action utile</h3>
+        <p class="side-text">
+          Ajoutez vos certifications et vos meilleurs projets pour améliorer
+          votre crédibilité et votre score de matching.
+        </p>
+        <a routerLink="/app/profile/profile-overview" class="side-link">Mettre à jour mon profil</a>
+      </div>
+
+    </aside>
+  </div>
+</div>

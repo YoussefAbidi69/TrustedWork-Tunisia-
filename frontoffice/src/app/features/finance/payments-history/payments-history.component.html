@@ -1,0 +1,143 @@
+<div class="payments-history-page animate-fade-in">
+  <section class="payments-history-hero shadow-sm">
+    <div class="payments-history-hero__glow payments-history-hero__glow--one"></div>
+    <div class="payments-history-hero__glow payments-history-hero__glow--two"></div>
+
+    <div class="payments-history-hero__content">
+      <div class="payments-history-hero__copy">
+        <div class="eyebrow-group">
+          <span class="eyebrow">Finance Operations</span>
+          <span class="eyebrow eyebrow--accent">Historique Client</span>
+        </div>
+
+        <h1>Relevé complet de vos mouvements financiers passés.</h1>
+
+        <p>
+          Retrouvez l'ensemble de vos transactions. Suivez l'évolution de vos paiements, téléchargez vos reçus et effectuez vos contrôles fiscaux mensuels avec précision.
+        </p>
+
+        <div class="hero-actions">
+          <button type="button" class="btn btn-primary px-4 py-2 rounded-pill">
+            <i class="bi bi-cloud-download me-2"></i> Exporter l'archive
+          </button>
+        </div>
+      </div>
+
+      <div class="payments-history-hero__panel bg-white rounded-4 shadow-sm p-4">
+        <span class="card-kicker card-kicker--dark">Résumé du Portefeuille</span>
+
+        <div class="hero-panel-list d-flex flex-column gap-3 mt-3">
+          <article class="hero-panel-item d-flex justify-content-between align-items-center">
+             <span class="text-stone">Historique total</span>
+             <strong class="fs-4">{{ filteredPayments.length }} ops</strong>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="payments-stats-grid my-4 row g-3">
+    <div class="col-md-4" *ngFor="let stat of paymentStats; trackBy: trackByLabel">
+      <div class="bg-white rounded-4 shadow-sm p-4 h-100 border-start border-4 border-primary stat-card">
+         <span class="text-stone small fw-bold text-uppercase">{{ stat.label }}</span>
+         <h3 class="mt-2 mb-1">{{ stat.value }}</h3>
+         <p class="small text-muted mb-0">{{ stat.caption }}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="payments-layout p-4 bg-white rounded-4 shadow-sm relative-box">
+    <div class="panel-head d-flex justify-content-between align-items-end border-bottom pb-3 mb-4">
+      <div>
+        <span class="text-primary small fw-bold text-uppercase">Audit Financier</span>
+        <h2 class="mb-0 mt-1">Livre des Enregistrements</h2>
+      </div>
+      <div class="filter-controls d-flex gap-3">
+         <select class="form-select border-0 bg-light rounded-pill px-4" [(ngModel)]="selectedStatus" (ngModelChange)="selectStatus($event)">
+           <option *ngFor="let status of statusFilters" [value]="status">Statut: {{ status }}</option>
+         </select>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="text-center py-5">
+       <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
+    <div class="table-responsive" *ngIf="!loading && filteredPayments.length">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="text-muted small text-uppercase bg-light">
+          <tr>
+            <th class="ps-3 py-3 border-0 rounded-start-pill">Réf Transaction</th>
+            <th class="py-3 border-0">Méthode & Client</th>
+            <th class="py-3 border-0">Date d'Enregistrement</th>
+            <th class="py-3 border-0">Montant Net</th>
+            <th class="py-3 border-0 rounded-end-pill">Statut Final</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let payment of filteredPayments; trackBy: trackByPayment" class="border-bottom clickable-row" (click)="selectPayment(payment)">
+            <td class="ps-3 py-3">
+              <strong class="text-midnight">{{ payment.id }}</strong>
+              <div class="small text-muted mt-1 text-truncate" style="max-width:200px;">{{ payment.description }}</div>
+            </td>
+            <td class="py-3">
+              <div class="fw-bold"><i class="bi bi-person-circle me-1 text-stone"></i> {{ payment.client }}</div>
+              <span class="badge bg-light text-dark border mt-1"><i class="bi bi-wallet2 me-1"></i>{{ payment.method }}</span>
+            </td>
+            <td class="py-3 text-stone">
+              <div class="fw-bold">{{ payment.period }}</div>
+              <small>{{ payment.paidAt }}</small>
+            </td>
+            <td class="py-3">
+               <strong class="fs-5">{{ payment.netAmount }}</strong>
+            </td>
+            <td class="py-3">
+              <span class="px-3 py-2 rounded-pill small fw-bold" [ngClass]="getStatusClass(payment.status)">
+                <i class="bi me-1" [ngClass]="payment.status === 'Paid' ? 'bi-check-circle-fill' : (payment.status === 'Processing' ? 'bi-hourglass-split' : 'bi-x-circle-fill')"></i>
+                {{ payment.status }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loading && !filteredPayments.length" class="empty-state">
+      <i class="bi bi-folder-x"></i>
+      <h3>Aucun historique</h3>
+      <p class="text-stone">Aucun historique de paiement ne correspond à ce filtre pour ce client.</p>
+    </div>
+  </section>
+
+  <!-- Detailed Timeline Overlay / Expand Mode (Optional visual polish) -->
+  <section class="payments-layout p-4 bg-white rounded-4 shadow-sm relative-box mt-4" *ngIf="selectedPayment && filteredPayments.length > 0">
+     <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h4 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i>Détails et Ligne du Temps - {{ selectedPayment.id }}</h4>
+        <span class="px-3 py-2 rounded-pill small fw-bold" [ngClass]="getStatusClass(selectedPayment.status)">{{ selectedPayment.status }}</span>
+     </div>
+     
+     <div class="row">
+       <div class="col-md-6 border-end">
+          <p class="text-stone mb-2 text-uppercase small fw-bold">Preuve du paiement</p>
+          <div class="p-3 bg-light rounded-3 mb-3">
+             <strong>Description:</strong> <br>
+             <span class="text-muted">{{ selectedPayment.description }}</span>
+          </div>
+          <div class="d-flex gap-2">
+             <button class="btn btn-outline-primary btn-sm rounded-pill"><i class="bi bi-printer me-1"></i> Imprimer le reçu</button>
+          </div>
+       </div>
+       <div class="col-md-6 ps-md-4">
+          <p class="text-stone mb-3 text-uppercase small fw-bold">Événements de la transaction</p>
+          <div class="timeline-container ps-3 border-start border-2 border-light">
+             <div *ngFor="let step of selectedPayment.timeline" class="mb-3 position-relative">
+                <div class="position-absolute top-0 start-0 translate-middle bg-primary rounded-circle" style="width: 12px; height: 12px; margin-left: -17px;"></div>
+                <h6 class="mb-1 fw-bold text-midnight">{{ step.title }}</h6>
+                <small class="text-primary d-block mb-1">{{ step.date }}</small>
+                <p class="small text-muted mb-0">{{ step.description }}</p>
+             </div>
+          </div>
+       </div>
+     </div>
+  </section>
+</div>

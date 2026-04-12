@@ -1,0 +1,353 @@
+:host {
+  display: block;
+}
+
+.profile-overview-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* === Hero Card === */
+
+.profile-hero-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  padding: 34px;
+  background: 
+    radial-gradient(circle at top right, rgba(200, 92, 59, 0.1), transparent 40%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(244, 248, 255, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 24px 60px rgba(1, 8, 20, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(18px);
+}
+
+.profile-hero-card__glow {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(200, 92, 59, 0.15), transparent 70%);
+  top: -100px;
+  right: -50px;
+  pointer-events: none;
+}
+
+.profile-hero-card__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex: 1;
+  min-width: 300px;
+}
+
+/* Avatar System */
+.avatar-shell {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  flex-shrink: 0;
+}
+
+.avatar-ring {
+  position: absolute;
+  inset: -8px;
+  border: 2px dashed rgba(200, 92, 59, 0.25);
+  border-radius: 50%;
+  animation: rotate 20s linear infinite;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid #ffffff;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.avatar-status {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 4px solid #ffffff;
+}
+
+.avatar-edit-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #c85c3b;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(200, 92, 59, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.avatar-edit-btn:hover { transform: scale(1.1); }
+.avatar-edit-btn svg { width: 20px; height: 20px; fill: currentColor; }
+.avatar-input { display: none; }
+
+/* Copy Styles */
+
+.profile-badge-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.eyebrow-badge {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(16, 32, 58, 0.08);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #10203a;
+}
+
+.trust-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #166534;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trust-pill__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15);
+}
+
+.profile-main-copy h1 {
+  margin: 0 0 6px;
+  font-size: 38px;
+  font-weight: 800;
+  color: #0f1b2d;
+  letter-spacing: -0.03em;
+}
+
+.profile-headline {
+  font-size: 18px;
+  color: #556377;
+  margin-bottom: 14px;
+}
+
+.profile-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #7a8797;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.meta-divider {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.3;
+}
+
+/* Hero Actions */
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.primary-btn, .success-btn, .secondary-btn, .ghost-btn {
+  padding: 14px 24px;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #c85c3b, #e1825e);
+  color: white;
+  box-shadow: 0 10px 25px rgba(200, 92, 59, 0.25);
+}
+
+.success-btn { background: #22c55e; color: white; }
+.ghost-btn { background: rgba(0,0,0,0.05); color: #556377; }
+.secondary-btn { background: #0f1b2d; color: white; }
+
+/* === Completion Card === */
+
+.completion-card {
+  padding: 26px;
+  border-radius: 24px;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-heading h2 { font-size: 20px; font-weight: 800; color: #10203a; margin-bottom: 4px; }
+.section-heading p { margin: 0; color: #7a8797; font-size: 14px; }
+
+.completion-score {
+  font-size: 32px;
+  font-weight: 800;
+  color: #c85c3b;
+}
+
+.progress-track {
+  height: 10px;
+  background: #f0f3ff;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #10203a, #c85c3b);
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.completion-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.completion-steps span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.is-done { color: #22c55e; }
+.is-pending { color: #7a8797; opacity: 0.7; }
+
+/* === Content Grid === */
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr;
+  gap: 24px;
+}
+
+.content-card {
+  padding: 26px;
+  border-radius: 24px;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.card-header h2 { font-size: 18px; font-weight: 800; color: #10203a; margin-bottom: 4px; }
+.card-header p { margin: 0 0 20px; color: #7a8797; font-size: 13px; }
+
+.about-content p { color: #556377; line-height: 1.8; margin: 0; }
+.about-editor textarea {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #efe8e4;
+  min-height: 180px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+/* Signal List */
+
+.signal-list { display: flex; flex-direction: column; gap: 16px; }
+
+.signal-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.signal-item__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #10203a;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.signal-item strong { display: block; font-size: 14px; color: #10203a; }
+.signal-item span { font-size: 12px; color: #7a8797; }
+
+/* Skills Card */
+
+.skills-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.skill-chip {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #f0f3ff;
+  color: #10203a;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid rgba(16, 32, 58, 0.05);
+}
+
+.skill-chip--editable { background: #faf7f4; border-color: #efe8e4; display: flex; align-items: center; gap: 8px; }
+.remove-skill-btn { border: none; background: none; color: #c85c3b; cursor: pointer; font-size: 18px; padding: 0 0 2px; }
+
+@keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+@media (max-width: 992px) {
+  .content-grid { grid-template-columns: 1fr; }
+  .profile-identity { flex-direction: column; text-align: center; }
+  .profile-hero-card__content { justify-content: center; text-align: center; }
+}

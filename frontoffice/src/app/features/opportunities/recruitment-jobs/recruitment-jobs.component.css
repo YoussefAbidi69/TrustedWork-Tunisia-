@@ -1,0 +1,151 @@
+:host {
+  display: block;
+}
+
+.recruitment-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.premium-card {
+  border-radius: 28px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(145deg, rgba(255,255,255,0.96), rgba(244,247,255,0.9));
+  box-shadow: 0 24px 60px rgba(9,16,30,0.16);
+}
+
+.page-head {
+  padding: 32px;
+}
+
+.eyebrow,
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(16,32,58,0.08);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.page-head h1 {
+  margin: 14px 0 10px;
+  font-size: 36px;
+  color: #10203a;
+}
+
+.page-head p,
+.summary,
+.company {
+  margin: 0;
+  color: #607084;
+  line-height: 1.8;
+}
+
+.jobs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.job-card {
+  padding: 24px;
+}
+
+.top-meta,
+.requirements,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.job-card h2 {
+  margin: 14px 0 8px;
+  color: #10203a;
+  font-size: 24px;
+}
+
+.requirements {
+  margin-top: 18px;
+}
+
+.requirements span {
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(16,32,58,0.05);
+  color: #24364c;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.job-infos {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.info-box {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(16,32,58,0.05);
+}
+
+.info-box span {
+  display: block;
+  color: #7a899d;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.info-box strong {
+  color: #10203a;
+}
+
+.actions {
+  margin-top: 20px;
+}
+
+.btn {
+  height: 44px;
+  min-width: 140px;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.btn--primary {
+  background: linear-gradient(135deg, #c85c3b, #a94a2e);
+  color: #fff;
+}
+
+.btn--ghost {
+  background: rgba(16,32,58,0.05);
+  color: #24364c;
+}
+
+.status-pill {
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.status-priority {
+  color: #b13f53;
+  background: rgba(219,82,125,0.15);
+}
+
+.status-screening {
+  color: #2558a0;
+  background: rgba(37,88,160,0.14);
+}
+
+.status-open {
+  color: #1e7a53;
+  background: rgba(57,191,124,0.14);
+}

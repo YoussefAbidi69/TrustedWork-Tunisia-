@@ -1,0 +1,81 @@
+<div class="challenge-page">
+  <section class="page-hero premium-card">
+    <div>
+      <div class="eyebrow-group">
+        <span class="eyebrow">Challenges</span>
+        <span class="eyebrow eyebrow--accent">Gamified progression</span>
+      </div>
+
+      <h1>Turn platform activity into measurable reputation growth.</h1>
+      <p>
+        Complete curated challenges to unlock XP, improve profile visibility and accelerate your
+        journey toward premium freelancer positioning.
+      </p>
+    </div>
+
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span>Active challenges</span>
+        <strong>06</strong>
+      </div>
+      <div class="hero-stat">
+        <span>XP available</span>
+        <strong>820</strong>
+      </div>
+      <div class="hero-stat">
+        <span>Completion rate</span>
+        <strong>74%</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="challenge-grid">
+    <article class="challenge-card premium-card" *ngFor="let challenge of challenges; trackBy: trackByChallenge">
+      <div class="challenge-card__top">
+        <div>
+          <div class="challenge-meta">
+            <span class="pill">{{ challenge.category }}</span>
+            <span class="pill" [ngClass]="getDifficultyClass(challenge.difficulty)">
+              {{ challenge.difficulty }}
+            </span>
+          </div>
+          <h2>{{ challenge.title }}</h2>
+        </div>
+
+        <span class="status-pill" [ngClass]="getStatusClass(challenge.status)">
+          {{ challenge.status }}
+        </span>
+      </div>
+
+      <p>{{ challenge.description }}</p>
+
+      <div class="progress-block">
+        <div class="progress-head">
+          <span>Progress</span>
+          <strong>{{ challenge.progress }}%</strong>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="challenge.progress"></div>
+        </div>
+      </div>
+
+      <div class="goals-list">
+        <div class="goal-item" *ngFor="let goal of challenge.goals; trackBy: trackByText">
+          <i class="fas fa-check"></i>
+          <span>{{ goal }}</span>
+        </div>
+      </div>
+
+      <div class="challenge-bottom">
+        <div class="info-box">
+          <span>Reward</span>
+          <strong>{{ challenge.reward }}</strong>
+        </div>
+        <div class="info-box">
+          <span>Deadline</span>
+          <strong>{{ challenge.deadline }}</strong>
+        </div>
+      </div>
+    </article>
+  </section>
+</div>

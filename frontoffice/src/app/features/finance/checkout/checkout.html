@@ -1,0 +1,143 @@
+<div class="checkout-page py-5 bg-cream">
+  <div class="container animate-fade-in">
+    
+    <div class="row justify-content-center">
+      <div class="col-xl-11 col-lg-12">
+        
+        <div class="checkout-card shadow-xl rounded-4 overflow-hidden border-0 bg-white d-flex flex-column flex-md-row position-relative">
+          
+          <!-- Summary Section (Left) - Clean & Bright -->
+          <div class="summary-aside p-4 p-md-5 bg-midnight text-white d-flex flex-column justify-content-between position-relative z-1">
+            <div class="summary-pattern-overlay"></div>
+            <div class="position-relative z-2">
+              <div class="feed-badge mb-4">
+                <i class="bi bi-shield-check me-2"></i> Protection Escrow
+              </div>
+              <h1 class="h3 fw-bold mb-2">{{ contract?.projectTitle || 'Paiement de projet' }}</h1>
+              <p class="summary-subtitle mb-4">Sécurisez votre collaboration. Les fonds restent bloqués jusqu'à la validation du jalon.</p>
+
+              <div class="total-badge p-4 rounded-4 mb-4">
+                 <span class="small-label d-block mb-2">Montant à déposer en séquestre</span>
+                 <div class="total-amount d-flex align-items-baseline gap-2">
+                   <span class="number text-white fw-900">{{ amount | number:'1.2-2' }}</span>
+                   <span class="currency text-white-50 fw-bold">DT</span>
+                 </div>
+              </div>
+
+              <div class="security-list mt-4">
+                 <h6 class="text-white-50 text-uppercase fw-bold mb-4 ls-1 fs-7">Vos garanties TrustedWork</h6>
+                 <div class="security-item d-flex align-items-center gap-4 mb-4">
+                   <div class="icon-box bg-white bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center">
+                     <i class="bi bi-lock-fill fs-5"></i>
+                   </div>
+                   <div class="flex-grow-1">
+                     <span class="fw-bold d-block text-white">Fonds 100% sécurisés</span>
+                     <span class="text-white-50 small">Protégés par notre système Escrow.</span>
+                   </div>
+                 </div>
+                 <div class="security-item d-flex align-items-center gap-4 mb-4">
+                   <div class="icon-box bg-white bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center">
+                     <i class="bi bi-clock-history fs-5"></i>
+                   </div>
+                   <div class="flex-grow-1">
+                     <span class="fw-bold d-block text-white">Paiement juste</span>
+                     <span class="text-white-50 small">Déblocage uniquement après accord.</span>
+                   </div>
+                 </div>
+                 <div class="security-item d-flex align-items-center gap-4">
+                   <div class="icon-box bg-white bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center">
+                     <i class="bi bi-patch-check-fill fs-5"></i>
+                   </div>
+                   <div class="flex-grow-1">
+                     <span class="fw-bold d-block text-white">Médiation incluse</span>
+                     <span class="text-white-50 small">Assistance en cas de désaccord.</span>
+                   </div>
+                 </div>
+              </div>
+            </div>
+
+            <div class="mt-5 pt-4 border-top border-white border-opacity-10 d-none d-md-block position-relative z-2">
+               <div class="d-flex align-items-center gap-3">
+                 <i class="bi bi-shield-lock text-white-50 fs-2"></i>
+                 <p class="x-small text-white-50 mb-0">Transaction sécurisée par chiffrement SSL 256 bits.<br>Vos données sensibles ne sont pas stockées sur nos serveurs.</p>
+               </div>
+            </div>
+          </div>
+
+          <!-- Form Section (Right) - High Readability -->
+          <div class="form-aside p-4 p-md-5 flex-grow-1 position-relative z-1">
+            <h2 class="h4 fw-bold text-midnight mb-4">Informations de paiement</h2>
+            
+            <div class="test-cards-flow mb-4">
+               <span class="small-label text-stone fw-bold mb-3 d-block text-uppercase">Raccourcis de test</span>
+               <div class="d-flex flex-wrap gap-2">
+                 <button type="button" class="quick-fill-btn" (click)="fillTestCard('4242')" [class.active]="cardNumber.startsWith('4242')">Visa Test</button>
+                 <button type="button" class="quick-fill-btn" (click)="fillTestCard('4000')" [class.active]="cardNumber.startsWith('4000 0025')">Mastercard Test</button>
+                 <button type="button" class="quick-fill-btn decline" (click)="fillTestCard('0002')">Simulation Échec</button>
+               </div>
+            </div>
+
+            <form (ngSubmit)="onSubmit()" class="checkout-form">
+              
+              <div class="form-floating-premium mb-4">
+                <label>Nom du titulaire</label>
+                <div class="input-group-premium">
+                  <i class="bi bi-person"></i>
+                  <input type="text" [(ngModel)]="cardName" name="cardName" placeholder="EX: MOHAMED AMINE" required>
+                </div>
+              </div>
+
+              <div class="form-floating-premium mb-4">
+                <label>Numéro de carte</label>
+                <div class="input-group-premium">
+                  <i class="bi bi-credit-card"></i>
+                  <input type="text" [(ngModel)]="cardNumber" name="cardNumber" placeholder="0000 0000 0000 0000" required>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                  <div class="form-floating-premium">
+                    <label>Date d'expiration</label>
+                    <div class="input-group-premium">
+                      <i class="bi bi-calendar2"></i>
+                      <input type="text" [(ngModel)]="expiryDate" name="expiryDate" placeholder="MM / YY" required>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-floating-premium">
+                    <label>Code de sécurité (CVC)</label>
+                    <div class="input-group-premium">
+                      <i class="bi bi-shield-lock"></i>
+                      <input type="text" [(ngModel)]="cvc" name="cvc" placeholder="***" required>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="error" class="alert alert-danger border-0 rounded-3 mb-4 shadow-sm py-3 px-4 animate-shake">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+              </div>
+
+              <button type="submit" class="btn-checkout-pay w-100" [disabled]="loading || contract?.status === 'ACTIVE' || contract?.status === 'COMPLETED'">
+                <span *ngIf="!loading" class="d-flex align-items-center justify-content-center gap-2">
+                   <i class="bi bi-lock-fill"></i> VALIDER LE PAIEMENT ({{ amount | number:'1.2-2' }} DT)
+                </span>
+                <span *ngIf="loading" class="spinner-border spinner-border-sm"></span>
+              </button>
+
+              <div class="text-center mt-4">
+                 <img src="https://stripe.com/favicon.ico" class="grayscale me-2" alt="Stripe" width="16">
+                 <span class="x-small text-stone fw-bold opacity-75">TRAITEMENT SÉCURISÉ VIA STRIPE</span>
+              </div>
+            </form>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
