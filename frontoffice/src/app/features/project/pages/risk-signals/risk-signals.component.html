@@ -1,0 +1,156 @@
+<div class="risks-page" *ngIf="!loading">
+
+  <!-- ══ HEADER ══ -->
+  <div class="risks-header">
+    <div class="risks-header__left">
+      <button class="back-btn" (click)="goBack()"><i class="fas fa-arrow-left"></i></button>
+      <div>
+        <h1><i class="fas fa-brain"></i> Risques IA</h1>
+        <p>{{ project.title }} — {{ risks.length }} signal(aux) actif(s)</p>
+      </div>
+    </div>
+    <button class="btn-analyze" (click)="triggerAnalysis()" [disabled]="analyzingRisks">
+      <i class="fas" [ngClass]="analyzingRisks ? 'fa-spinner fa-spin' : 'fa-wand-magic-sparkles'"></i>
+      {{ analyzingRisks ? 'Analyse en cours...' : 'Lancer l\'analyse IA' }}
+    </button>
+  </div>
+
+  <!-- ══ HEALTH SCORE + STATS ══ -->
+  <div class="risks-top-grid">
+
+    <!-- Health Score -->
+    <div class="health-card">
+      <div class="health-ring">
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" class="ring-bg"/>
+          <circle cx="50" cy="50" r="42" class="ring-fill"
+                  [style.stroke]="getHealthColor()"
+                  [style.stroke-dasharray]="(getHealthScore() * 2.64) + ' 264'"/>
+        </svg>
+        <div class="health-label">
+          <strong [style.color]="getHealthColor()">{{ getHealthScore() }}</strong>
+          <small>Santé</small>
+        </div>
+      </div>
+      <div class="health-info">
+        <h3>Score de santé projet</h3>
+        <p *ngIf="getHealthScore() >= 80">Le projet est en bonne santé. Continuez ainsi !</p>
+        <p *ngIf="getHealthScore() >= 50 && getHealthScore() < 80">Attention, des risques nécessitent votre attention.</p>
+        <p *ngIf="getHealthScore() < 50">Alerte ! Plusieurs risques critiques détectés.</p>
+      </div>
+    </div>
+
+    <!-- Severity Stats -->
+    <div class="severity-cards">
+      <div class="sev-card sev-card--critical" (click)="setSeverityFilter('CRITICAL')">
+        <i class="fas fa-fire"></i>
+        <strong>{{ countBySeverity['CRITICAL'] }}</strong>
+        <span>Critique</span>
+      </div>
+      <div class="sev-card sev-card--high" (click)="setSeverityFilter('HIGH')">
+        <i class="fas fa-arrow-up"></i>
+        <strong>{{ countBySeverity['HIGH'] }}</strong>
+        <span>Élevé</span>
+      </div>
+      <div class="sev-card sev-card--medium" (click)="setSeverityFilter('MEDIUM')">
+        <i class="fas fa-minus"></i>
+        <strong>{{ countBySeverity['MEDIUM'] }}</strong>
+        <span>Moyen</span>
+      </div>
+      <div class="sev-card sev-card--low" (click)="setSeverityFilter('LOW')">
+        <i class="fas fa-arrow-down"></i>
+        <strong>{{ countBySeverity['LOW'] }}</strong>
+        <span>Bas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TYPE FILTER TABS ══ -->
+  <div class="type-filters">
+    <button class="type-tab" [class.type-tab--active]="activeTypeFilter === 'ALL'" (click)="setTypeFilter('ALL')">
+      <i class="fas fa-layer-group"></i> Tous <span>{{ countByType['ALL'] }}</span>
+    </button>
+    <button class="type-tab type-tab--delay" [class.type-tab--active]="activeTypeFilter === 'DELAY_RISK'" (click)="setTypeFilter('DELAY_RISK')">
+      <i class="fas fa-clock"></i> Retards <span>{{ countByType['DELAY_RISK'] }}</span>
+    </button>
+    <button class="type-tab type-tab--bottleneck" [class.type-tab--active]="activeTypeFilter === 'BOTTLENECK'" (click)="setTypeFilter('BOTTLENECK')">
+      <i class="fas fa-traffic-light"></i> Blocages <span>{{ countByType['BOTTLENECK'] }}</span>
+    </button>
+    <button class="type-tab type-tab--inactivity" [class.type-tab--active]="activeTypeFilter === 'INACTIVITY'" (click)="setTypeFilter('INACTIVITY')">
+      <i class="fas fa-moon"></i> Inactivité <span>{{ countByType['INACTIVITY'] }}</span>
+    </button>
+    <button class="type-tab type-tab--scope" [class.type-tab--active]="activeTypeFilter === 'SCOPE_CREEP'" (click)="setTypeFilter('SCOPE_CREEP')">
+      <i class="fas fa-expand"></i> Scope Creep <span>{{ countByType['SCOPE_CREEP'] }}</span>
+    </button>
+  </div>
+
+  <!-- ══ SEVERITY FILTER (pill row) ══ -->
+  <div class="sev-filters">
+    <button class="sev-pill" [class.sev-pill--active]="activeFilter === 'ALL'" (click)="setSeverityFilter('ALL')">Tous</button>
+    <button class="sev-pill sev-pill--critical" [class.sev-pill--active]="activeFilter === 'CRITICAL'" (click)="setSeverityFilter('CRITICAL')">Critique</button>
+    <button class="sev-pill sev-pill--high" [class.sev-pill--active]="activeFilter === 'HIGH'" (click)="setSeverityFilter('HIGH')">Élevé</button>
+    <button class="sev-pill sev-pill--medium" [class.sev-pill--active]="activeFilter === 'MEDIUM'" (click)="setSeverityFilter('MEDIUM')">Moyen</button>
+    <button class="sev-pill sev-pill--low" [class.sev-pill--active]="activeFilter === 'LOW'" (click)="setSeverityFilter('LOW')">Bas</button>
+  </div>
+
+  <!-- ══ RISK LIST ══ -->
+  <div class="risk-list" *ngIf="filteredRisks.length > 0">
+    <div class="risk-card" *ngFor="let risk of filteredRisks" [ngClass]="getSeverityClass(risk.severity)">
+
+      <div class="risk-card__bar" [ngClass]="getSeverityClass(risk.severity)"></div>
+
+      <div class="risk-card__body">
+        <div class="risk-card__top">
+          <div class="risk-card__icon" [ngClass]="getTypeClass(risk.riskType)">
+            <i class="fas" [ngClass]="getRiskIcon(risk.riskType)"></i>
+          </div>
+          <div class="risk-card__info">
+            <div class="risk-card__title-row">
+              <h3>{{ getRiskLabel(risk.riskType) }}</h3>
+              <span class="sev-badge" [ngClass]="getSeverityClass(risk.severity)">
+                {{ getSeverityLabel(risk.severity) }}
+              </span>
+            </div>
+            <p class="risk-card__type-desc">{{ getRiskDescription(risk.riskType) }}</p>
+          </div>
+        </div>
+
+        <!-- Message IA -->
+        <div class="risk-card__message">
+          <i class="fas fa-robot"></i>
+          <p>{{ risk.message }}</p>
+        </div>
+
+        <!-- Tâche affectée -->
+        <div class="risk-card__affected" *ngIf="risk.affectedTaskId">
+          <i class="fas fa-link"></i>
+          <span>Tâche concernée : <strong>{{ getAffectedTaskTitle(risk.affectedTaskId) }}</strong></span>
+        </div>
+
+        <!-- Footer -->
+        <div class="risk-card__footer">
+          <span class="risk-date">
+            <i class="fas fa-clock"></i> Détecté le {{ formatDate(risk.detectedAt) }}
+          </span>
+          <button class="btn-resolve" (click)="resolveRisk(risk, $event)">
+            <i class="fas fa-check"></i> Marquer comme résolu
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ EMPTY ══ -->
+  <div *ngIf="filteredRisks.length === 0" class="risks-empty">
+    <div class="risks-empty__icon"><i class="fas fa-shield-check"></i></div>
+    <h3 *ngIf="risks.length === 0">Aucun risque détecté</h3>
+    <h3 *ngIf="risks.length > 0">Aucun risque pour ce filtre</h3>
+    <p *ngIf="risks.length === 0">L'IA n'a détecté aucun problème. Votre projet est en bonne santé !</p>
+    <p *ngIf="risks.length > 0">Essayez un autre filtre ou affichez tous les risques.</p>
+    <button *ngIf="risks.length === 0" class="btn-analyze btn-analyze--sm" (click)="triggerAnalysis()" [disabled]="analyzingRisks">
+      <i class="fas fa-wand-magic-sparkles"></i> Lancer une analyse
+    </button>
+  </div>
+</div>
+
+<div *ngIf="loading" class="loading-full"><i class="fas fa-spinner fa-spin"></i> Chargement des risques...</div>

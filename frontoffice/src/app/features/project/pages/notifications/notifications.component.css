@@ -1,0 +1,61 @@
+.notif-page { padding: 24px; max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+/* ── HEADER ── */
+.notif-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.notif-header h1 { font-size: 20px; font-weight: 900; color: #0f1b2d; margin: 0 0 4px; display: flex; align-items: center; gap: 9px; }
+.notif-header h1 i { color: #c85c3b; }
+.notif-header p { margin: 0; font-size: 13px; color: #8a95a3; font-weight: 600; }
+
+.btn-readall { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 11px; background: rgba(34,197,94,.1); color: #16a34a; font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: all .18s; }
+.btn-readall:hover { background: rgba(34,197,94,.2); }
+
+/* ── FILTERS ── */
+.notif-filters { display: flex; gap: 8px; }
+.nf-tab { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 10px; border: 1.5px solid rgba(15,27,45,.08); background: #fff; color: #6d7a8d; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .18s; }
+.nf-tab span { padding: 2px 7px; border-radius: 6px; font-size: 11px; font-weight: 800; background: rgba(15,27,45,.06); }
+.nf-tab:hover { border-color: rgba(15,27,45,.15); }
+.nf-tab--active { border-color: #c85c3b; background: rgba(200,92,59,.05); color: #c85c3b; }
+.nf-tab--active span { background: rgba(200,92,59,.15); color: #c85c3b; }
+
+/* ── LIST ── */
+.notif-list { display: flex; flex-direction: column; gap: 8px; }
+
+.notif-item { position: relative; display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 16px; background: #fff; border: 1.5px solid rgba(15,27,45,.06); cursor: pointer; transition: all .2s; }
+.notif-item:hover { border-color: rgba(200,92,59,.2); box-shadow: 0 4px 16px rgba(200,92,59,.06); transform: translateX(4px); }
+.notif-item--unread { background: rgba(200,92,59,.02); border-color: rgba(200,92,59,.12); }
+
+.notif-item__dot { position: absolute; top: 20px; left: 8px; width: 8px; height: 8px; border-radius: 50%; background: #c85c3b; }
+
+.notif-item__icon { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 16px; flex-shrink: 0; }
+.nicon--red { background: rgba(239,68,68,.1); color: #ef4444; }
+.nicon--amber { background: rgba(245,158,11,.1); color: #f59e0b; }
+.nicon--green { background: rgba(34,197,94,.1); color: #22c55e; }
+.nicon--blue { background: rgba(59,130,246,.1); color: #3b82f6; }
+.nicon--purple { background: rgba(124,58,237,.1); color: #7c3aed; }
+.nicon--gray { background: rgba(15,27,45,.06); color: #6d7a8d; }
+
+.notif-item__body { flex: 1; min-width: 0; }
+.notif-item__top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+
+.notif-type-tag { padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+
+.notif-time { font-size: 11px; color: #9aa3b0; font-weight: 600; margin-left: auto; white-space: nowrap; }
+
+.notif-item h4 { font-size: 14px; font-weight: 700; color: #0f1b2d; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.notif-item p { font-size: 12px; color: #6d7a8d; margin: 0; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+.notif-action { width: 30px; height: 30px; border-radius: 8px; border: none; background: rgba(34,197,94,.08); color: #22c55e; cursor: pointer; display: grid; place-items: center; font-size: 12px; flex-shrink: 0; transition: all .18s; }
+.notif-action:hover { background: rgba(34,197,94,.2); }
+
+.notif-arrow { color: #c0c8d4; font-size: 12px; flex-shrink: 0; transition: color .18s; }
+.notif-item:hover .notif-arrow { color: #c85c3b; }
+
+/* ── EMPTY ── */
+.notif-empty { text-align: center; padding: 60px 20px; }
+.notif-empty__icon { font-size: 3rem; color: #c85c3b; opacity: .35; margin-bottom: 16px; }
+.notif-empty h3 { font-size: 18px; font-weight: 800; color: #0f1b2d; margin: 0 0 8px; }
+.notif-empty p { font-size: 14px; color: #6d7a8d; margin: 0; line-height: 1.7; }
+
+.loading-full { text-align: center; padding: 80px 20px; color: #6d7a8d; font-size: 15px; }
+
+@media (max-width: 600px) { .notif-page { padding: 16px; } .notif-item { padding: 14px; } }

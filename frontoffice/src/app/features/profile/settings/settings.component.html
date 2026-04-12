@@ -1,0 +1,273 @@
+<div class="settings-page">
+  <section class="settings-hero">
+    <div class="settings-hero__glow settings-hero__glow--one"></div>
+    <div class="settings-hero__glow settings-hero__glow--two"></div>
+
+    <div class="settings-hero__content">
+      <div class="settings-hero__copy">
+        <div class="eyebrow-group">
+          <span class="eyebrow">Account Center</span>
+          <span class="eyebrow eyebrow--accent">Premium Settings</span>
+        </div>
+
+        <h1>Control your profile, security and visibility with a premium account workspace.</h1>
+
+        <p>
+          Manage your experience, adjust your profile exposure and keep your account
+          aligned with premium client expectations in one polished settings hub.
+        </p>
+
+        <div class="hero-actions">
+          <button type="button" class="hero-btn hero-btn--primary">
+            <i class="fas fa-floppy-disk"></i>
+            <span>Save changes</span>
+          </button>
+
+          <button type="button" class="hero-btn hero-btn--ghost">
+            <i class="fas fa-rotate"></i>
+            <span>Reset preferences</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-spotlight-card">
+        <span class="card-kicker">Workspace status</span>
+        <h2>Your account is optimized for trust, visibility and secure activity.</h2>
+
+        <div class="spotlight-score">
+          <strong>Advanced</strong>
+          <span>Security posture</span>
+        </div>
+
+        <div class="spotlight-chip">
+          <span class="spotlight-chip__dot"></span>
+          Premium account configuration active
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <article class="stat-card" *ngFor="let stat of stats">
+      <div class="stat-card__label">{{ stat.label }}</div>
+      <strong>{{ stat.value }}</strong>
+    </article>
+  </section>
+
+  <section class="settings-layout">
+    <div class="settings-main">
+      <div class="panel-card">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Identity settings</span>
+            <h2>Account information</h2>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Full name</span>
+            <input type="text" value="Oussema Msehli" />
+          </label>
+
+          <label class="field">
+            <span>Professional title</span>
+            <input type="text" value="Senior Freelance Product Designer" />
+          </label>
+
+          <label class="field">
+            <span>Email address</span>
+            <input type="email" value="oussema.msehli@trustedwork.io" />
+          </label>
+
+          <label class="field">
+            <span>Phone number</span>
+            <input type="text" value="+216 XX XXX XXX" />
+          </label>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Notifications</span>
+            <h2>Communication preferences</h2>
+          </div>
+        </div>
+
+        <div class="preference-list">
+          <article class="preference-card" *ngFor="let item of notificationPreferences">
+            <div class="preference-card__content">
+              <strong>{{ item.title }}</strong>
+              <p>{{ item.description }}</p>
+            </div>
+
+            <button
+              type="button"
+              class="toggle-btn"
+              [class.toggle-btn--active]="item.enabled"
+              (click)="togglePreference(notificationPreferences, item.id)"
+            >
+              <span></span>
+            </button>
+          </article>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Privacy & visibility</span>
+            <h2>Profile exposure controls</h2>
+          </div>
+        </div>
+
+        <div class="preference-list">
+          <article class="preference-card" *ngFor="let item of privacyPreferences">
+            <div class="preference-card__content">
+              <strong>{{ item.title }}</strong>
+              <p>{{ item.description }}</p>
+            </div>
+
+            <button
+              type="button"
+              class="toggle-btn"
+              [class.toggle-btn--active]="item.enabled"
+              (click)="togglePreference(privacyPreferences, item.id)"
+            >
+              <span></span>
+            </button>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <aside class="settings-side">
+      <div class="panel-card panel-card--detail">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Security center</span>
+            <h2>Protection overview</h2>
+          </div>
+        </div>
+
+        <div class="security-list">
+          <article class="security-item" *ngFor="let item of securityItems">
+            <div>
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </div>
+            <em>{{ item.status }}</em>
+          </article>
+        </div>
+
+        <div class="two-factor-box">
+          <div class="two-factor-box__head">
+            <strong>Two-factor authentication</strong>
+            <span [class.active-chip]="twoFactorEnabled" [class.inactive-chip]="!twoFactorEnabled">
+              {{ twoFactorEnabled ? 'Enabled' : 'Disabled' }}
+            </span>
+          </div>
+
+          <p class="two-factor-box__text">
+            Add an extra security layer to protect your account during login.
+          </p>
+
+          <div class="two-factor-box__actions" *ngIf="!twoFactorEnabled">
+            <button
+              type="button"
+              class="hero-btn hero-btn--primary"
+              (click)="startTwoFactorSetup()"
+              [disabled]="loading2FA"
+            >
+              <span *ngIf="!loading2FA">Activate 2FA</span>
+              <span *ngIf="loading2FA">Preparing...</span>
+            </button>
+          </div>
+
+          <div class="two-factor-box__actions" *ngIf="twoFactorEnabled">
+            <button
+              type="button"
+              class="hero-btn hero-btn--ghost"
+              (click)="disableTwoFactor()"
+              [disabled]="disabling2FA"
+            >
+              <span *ngIf="!disabling2FA">Disable 2FA</span>
+              <span *ngIf="disabling2FA">Disabling...</span>
+            </button>
+          </div>
+
+          <div class="two-factor-alert two-factor-alert--success" *ngIf="twoFactorMessage">
+            {{ twoFactorMessage }}
+          </div>
+
+          <div class="two-factor-alert two-factor-alert--error" *ngIf="twoFactorError">
+            {{ twoFactorError }}
+          </div>
+
+          <div class="two-factor-setup" *ngIf="setupStepVisible && !twoFactorEnabled">
+
+  <!-- 🔥 QR CODE -->
+  <div class="qr-preview" *ngIf="qrCodeUri">
+    <qrcode
+      [qrdata]="qrCodeUri"
+      [width]="200"
+      [errorCorrectionLevel]="'M'">
+    </qrcode>
+  </div>
+
+  <!-- URI -->
+ <!-- 
+<label class="field"> 
+  <span>Authenticator URI</span>
+  <textarea rows="4" [value]="qrCodeUri" readonly></textarea>
+</label>
+
+<label class="field" *ngIf="extractedSecret">
+  <span>Secret key</span>
+  <input type="text" [value]="extractedSecret" readonly />
+</label>
+-->
+  <!-- CODE -->
+  <label class="field">
+    <span>Enter verification code</span>
+    <input
+      type="text"
+      maxlength="6"
+      [(ngModel)]="confirmationCode"
+      placeholder="Ex: 123456"
+    />
+  </label>
+
+  <!-- BUTTON -->
+  <button
+    type="button"
+    class="hero-btn hero-btn--primary"
+    (click)="confirmTwoFactor()"
+    [disabled]="confirming2FA"
+  >
+    <span *ngIf="!confirming2FA">Confirm activation</span>
+    <span *ngIf="confirming2FA">Confirming...</span>
+  </button>
+</div>
+        </div>
+      </div>
+
+      <div class="panel-card panel-card--dark">
+        <div class="panel-head panel-head--dark">
+          <div>
+            <span class="card-kicker card-kicker--dark">Workspace</span>
+            <h2>Environment preferences</h2>
+          </div>
+        </div>
+
+        <div class="workspace-list">
+          <article class="workspace-item" *ngFor="let item of workspacePreferences">
+            <i class="fas fa-check"></i>
+            <span>{{ item }}</span>
+          </article>
+        </div>
+      </div>
+    </aside>
+  </section>
+</div>
