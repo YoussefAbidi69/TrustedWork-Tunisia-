@@ -26,6 +26,13 @@ export class ProjectDetailComponent implements OnInit {
   error = '';
   analyzingRisks = false;
 
+  // ── Rôles ──
+  currentUserId = 0;
+  currentRole = '';
+  isClient = false;
+  isFreelancer = false;
+  isAdmin = false;
+
   // Modal création tâche
   showTaskModal = false;
   newTask = { title: '', description: '', priority: 'MEDIUM' as TaskPriority, deadline: '', estimatedHours: 8 };
@@ -39,36 +46,74 @@ export class ProjectDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.projectId = Number(this.route.snapshot.paramMap.get('id'));
+
+    const user = this.authService.getCurrentAuthUser();
+    this.currentUserId = user?.userId || 0;
+    this.currentRole = user?.role?.toUpperCase() || '';
+    this.isAdmin = this.currentRole === 'ADMIN';
+
     this.loadAll();
   }
 
-  private loadAll(): void {
-    this.loading = true;
-    forkJoin({
-      project: this.projectApi.getProjectById(this.projectId),
-      tasks: this.projectApi.getTasksByProjectId(this.projectId),
-      deliverables: this.projectApi.getDeliverablesByProjectId(this.projectId),
-      risks: this.projectApi.getActiveRisks(this.projectId),
-      report: this.projectApi.generateReport(this.projectId)
-    }).subscribe({
-      next: (data) => {
-        this.project = data.project;
-        this.tasks = data.tasks;
-        this.deliverables = data.deliverables;
-        this.risks = data.risks;
-        this.report = data.report;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.error = 'Impossible de charger le projet.';
-        this.loading = false;
-        console.error(err);
-      }
-    });
+ private loadAll(): void {
+  this.loading = true;
+  forkJoin({
+    project: this.projectApi.getProjectById(this.projectId),
+    tasks: this.projectApi.getTasksByProjectId(this.projectId),
+    deliverables: this.projectApi.getDeliverablesByProjectId(this.projectId),
+    risks: this.projectApi.getActiveRisks(this.projectId),
+    report: this.projectApi.generateReport(this.projectId)
+  }).subscribe({
+    next: (data) => {
+      this.project = data.project;
+      this.tasks = data.tasks;
+      this.deliverables = data.deliverables;
+      this.risks = data.risks;
+      this.report = data.report;
+
+      // ✅ CORRECTION : Le rôle vient du JWT, PAS de la comparaison clientId/freelancerId
+      // On garde isClient/isFreelancer basés sur le rôle JWT
+      this.isClient = this.currentRole === 'CLIENT';
+      this.isFreelancer = this.currentRole === 'FREELANCER';
+      // isAdmin est déjà set dans ngOnInit
+
+      this.loading = false;
+    },
+    error: (err) => {
+      this.error = 'Impossible de charger le projet.';
+      this.loading = false;
+      console.error(err);
+    }
+  });
+}
+
+  /** Le freelancer et l'admin peuvent créer des tâches, pas le client */
+  get canCreateTask(): boolean {
+    return this.isFreelancer || this.isAdmin;
+  }
+
+  /** Le client peut reviewer les livrables */
+  get canReviewDeliverables(): boolean {
+    return this.isClient || this.isAdmin;
+  }
+
+  /** Le freelancer peut soumettre des livrables */
+  get canSubmitDeliverables(): boolean {
+    return this.isFreelancer || this.isAdmin;
+  }
+
+  /** L'admin peut supprimer / modifier */
+  get canDelete(): boolean {
+    return this.isAdmin;
+  }
+
+  /** L'admin et le freelancer peuvent lancer l'analyse IA */
+  get canAnalyzeRisks(): boolean {
+    return this.isFreelancer || this.isAdmin;
   }
 
   // ══════════════════════════════════════
-  // STATS CALCULÉES
+  // STATS CALCULÉES (inchangées)
   // ══════════════════════════════════════
 
   get tasksByStatus(): Record<TaskStatus, Task[]> {
@@ -104,7 +149,7 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   // ══════════════════════════════════════
-  // ACTIONS
+  // ACTIONS (inchangées)
   // ══════════════════════════════════════
 
   goToKanban(): void {
@@ -190,7 +235,7 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   // ══════════════════════════════════════
-  // HELPERS
+  // HELPERS (inchangés)
   // ══════════════════════════════════════
 
   getStatusLabel(status: string): string {
@@ -246,7 +291,8 @@ export class ProjectDetailComponent implements OnInit {
     };
     return map[severity] || '';
   }
+
   goToRisks() {
-  this.router.navigate(['/app/projects', this.projectId, 'risks']);
-}
+    this.router.navigate(['/app/projects', this.projectId, 'risks']);
+  }
 }

@@ -2,8 +2,17 @@
 
   <div class="page-header">
     <div>
-      <h1><i class="fas fa-diagram-project"></i> Mes Projets</h1>
-      <p>Gérez et suivez l'avancement de vos projets TrustedWork</p>
+      <h1>
+        <i class="fas fa-diagram-project"></i>
+        {{ isAdmin ? 'Tous les Projets' : (isClient ? 'Mes Projets' : 'Projets Assignés') }}
+      </h1>
+      <p>
+        {{ isAdmin
+          ? 'Vue administrateur — Tous les projets de la plateforme'
+          : (isClient
+            ? 'Suivez l\'avancement de vos projets confiés aux freelancers'
+            : 'Tous les projets auxquels vous êtes assigné comme freelancer') }}
+      </p>
     </div>
   </div>
 
@@ -21,7 +30,11 @@
   <div *ngIf="!loading && !error && projects.length === 0" class="empty-state">
     <i class="fas fa-folder-open"></i>
     <h3>Aucun projet</h3>
-    <p>Vous n'avez pas encore de projets. Un projet est créé automatiquement après la signature d'un contrat.</p>
+    <p>{{ isAdmin
+      ? 'Aucun projet sur la plateforme pour le moment.'
+      : (isClient
+        ? 'Vous n\'avez pas encore de projets. Un projet est créé automatiquement après la signature d\'un contrat.'
+        : 'Aucun projet ne vous est assigné pour le moment.') }}</p>
   </div>
 
   <!-- Project Cards -->
@@ -38,7 +51,45 @@
       </div>
 
       <h3 class="project-card__title">{{ project.title }}</h3>
-      <p class="project-card__desc">{{ project.description | slice:0:100 }}{{ project.description.length > 100 ? '...' : '' }}</p>
+      <p class="project-card__desc">
+        {{ project.description | slice:0:100 }}{{ project.description.length > 100 ? '...' : '' }}
+      </p>
+
+      <!-- Participant : affiche l'AUTRE partie selon le rôle -->
+      <div class="project-card__participants">
+
+        <!-- Client connecté → affiche le freelancer -->
+        <div class="participant" *ngIf="isClient && project.freelancerFirstName">
+          <i class="fas fa-briefcase"></i>
+          <span>
+            <strong>Freelancer :</strong> {{ project.freelancerFirstName }} {{ project.freelancerLastName }}
+          </span>
+        </div>
+
+        <!-- Freelancer connecté → affiche le client -->
+        <div class="participant" *ngIf="isFreelancer && project.clientFirstName">
+          <i class="fas fa-user"></i>
+          <span>
+            <strong>Client :</strong> {{ project.clientFirstName }} {{ project.clientLastName }}
+          </span>
+        </div>
+
+        <!-- Admin → affiche les deux -->
+        <ng-container *ngIf="isAdmin">
+          <div class="participant" *ngIf="project.clientFirstName">
+            <i class="fas fa-user"></i>
+            <span>
+              <strong>Client :</strong> {{ project.clientFirstName }} {{ project.clientLastName }}
+            </span>
+          </div>
+          <div class="participant" *ngIf="project.freelancerFirstName">
+            <i class="fas fa-briefcase"></i>
+            <span>
+              <strong>Freelancer :</strong> {{ project.freelancerFirstName }} {{ project.freelancerLastName }}
+            </span>
+          </div>
+        </ng-container>
+      </div>
 
       <div class="project-card__progress">
         <div class="progress-bar">

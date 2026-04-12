@@ -2,8 +2,6 @@
 // Models — Module 08 : Project Management
 // ══════════════════════════════════════════════
 
-// ── Enums ────────────────────────────────────
-
 export type ProjectStatus = 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'CANCELLED';
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'IN_REVIEW' | 'DONE';
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
@@ -28,12 +26,22 @@ export interface Project {
   contractId: number;
   clientId: number;
   freelancerId: number;
-  startDate: string;       // LocalDate → "2026-04-01"
+  startDate: string;
   endDate: string;
-  completionRate: number;  // 0-100
+  completionRate: number;
   budget: number;
-  createdAt: string;       // LocalDateTime → ISO string
+  createdAt: string;
   updatedAt: string;
+
+  // Champs enrichis depuis le User Service (présents sur /my et /enriched)
+  clientCin?: number;
+  clientFirstName?: string;
+  clientLastName?: string;
+  clientEmail?: string;
+  freelancerCin?: number;
+  freelancerFirstName?: string;
+  freelancerLastName?: string;
+  freelancerEmail?: string;
 }
 
 // ── Task ─────────────────────────────────────

@@ -177,3 +177,34 @@
   .page-projects { padding: 16px; }
   .projects-grid { grid-template-columns: 1fr; }
 }
+/* ── Participants enrichis ── */
+.project-card__participants {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: rgba(15, 27, 45, 0.03);
+  border-radius: 10px;
+  border: 1px solid rgba(15, 27, 45, 0.05);
+}
+
+.participant {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #4a5568;
+}
+
+.participant i {
+  color: #c85c3b;
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.participant-cin {
+  color: #9aa3b0;
+  font-size: 11px;
+}

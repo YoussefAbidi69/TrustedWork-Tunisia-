@@ -42,7 +42,8 @@ export class DeliverablesComponent implements OnInit {
   currentUserId = 0;
   isClient = false;
   isFreelancer = false;
-
+  isAdmin = false;
+currentRole = '';
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -51,22 +52,25 @@ export class DeliverablesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.projectId = Number(this.route.snapshot.paramMap.get('id'));
-    const user = this.authService.getCurrentAuthUser();
-    this.currentUserId = user?.userId || 0;
-    this.loadData();
+  this.projectId = Number(this.route.snapshot.paramMap.get('id'));
+  const user = this.authService.getCurrentAuthUser();
+  this.currentUserId = user?.userId || 0;
+  this.currentRole = user?.role?.toUpperCase() || '';
+  this.loadData();
   }
 
   private loadData(): void {
-    this.loading = true;
+  this.loading = true;
 
-    this.projectApi.getProjectById(this.projectId).subscribe({
-      next: (p) => {
-        this.project = p;
-        this.isClient = p.clientId === this.currentUserId;
-        this.isFreelancer = p.freelancerId === this.currentUserId;
-      }
-    });
+this.projectApi.getProjectById(this.projectId).subscribe({
+  next: (p) => {
+    this.project = p;
+    // ✅ Rôle basé sur le JWT
+    this.isClient = this.currentRole === 'CLIENT';
+    this.isFreelancer = this.currentRole === 'FREELANCER';
+    this.isAdmin = this.currentRole === 'ADMIN';
+  }
+});
 
     this.projectApi.getTasksByProjectId(this.projectId).subscribe({
       next: (tasks) => this.tasks = tasks

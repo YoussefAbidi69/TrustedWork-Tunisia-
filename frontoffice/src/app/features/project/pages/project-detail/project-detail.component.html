@@ -51,21 +51,24 @@
         <button class="btn-ghost" (click)="goToDeliverables()">
           <i class="fas fa-file-arrow-up"></i> Livrables
         </button>
-        <button class="btn-ghost" (click)="openTaskModal()">
+
+        <!-- ✅ Freelancer + Admin seulement -->
+        <button class="btn-ghost" (click)="openTaskModal()" *ngIf="canCreateTask">
           <i class="fas fa-plus"></i> Nouvelle tâche
         </button>
+
         <button class="btn-ghost" (click)="exportPdf()">
           <i class="fas fa-file-pdf"></i> Export PDF
         </button>
         <button class="btn-ghost" (click)="exportCsv()">
           <i class="fas fa-file-csv"></i> Export CSV
         </button>
-             <button class="btn-ghost" (click)="goToRisks()">
-        <i class="fas fa-brain"></i> Risques IA
-      </button>
-      <button class="btn-ghost" (click)="router.navigate(['/app/projects', projectId, 'gantt'])">
-  <i class="fas fa-chart-gantt"></i> Gantt Chart
-</button>
+        <button class="btn-ghost" (click)="goToRisks()">
+          <i class="fas fa-brain"></i> Risques IA
+        </button>
+        <button class="btn-ghost" (click)="router.navigate(['/app/projects', projectId, 'gantt'])">
+          <i class="fas fa-chart-gantt"></i> Gantt Chart
+        </button>
       </div>
     </div>
   </section>
@@ -191,7 +194,10 @@
             <h2><i class="fas fa-brain"></i> Risques IA</h2>
             <p>{{ risks.length }} signal(aux) actif(s)</p>
           </div>
-          <button class="btn-sm btn-sm--ai" (click)="triggerAiAnalysis()" [disabled]="analyzingRisks">
+          <!-- ✅ Freelancer + Admin seulement -->
+          <button class="btn-sm btn-sm--ai" (click)="triggerAiAnalysis()"
+                  [disabled]="analyzingRisks"
+                  *ngIf="canAnalyzeRisks">
             <i class="fas" [ngClass]="analyzingRisks ? 'fa-spinner fa-spin' : 'fa-wand-magic-sparkles'"></i>
             {{ analyzingRisks ? 'Analyse...' : 'Analyser' }}
           </button>
@@ -215,7 +221,10 @@
               <p>{{ risk.message }}</p>
               <span class="risk-date"><i class="fas fa-clock"></i> {{ risk.detectedAt | slice:0:10 }}</span>
             </div>
-            <button class="risk-resolve-btn" (click)="resolveRisk(risk.id)" title="Marquer comme résolu">
+            <!-- ✅ Freelancer + Admin seulement -->
+            <button class="risk-resolve-btn" (click)="resolveRisk(risk.id)"
+                    title="Marquer comme résolu"
+                    *ngIf="isFreelancer || isAdmin">
               <i class="fas fa-check"></i>
             </button>
           </div>
@@ -314,4 +323,10 @@
       </button>
     </div>
   </div>
+</div>
+<!-- 🔍 DEBUG — supprimer après vérification -->
+<div style="background: #1a1a2e; color: #fff; padding: 8px 16px; border-radius: 8px; margin-bottom: 12px; font-family: monospace; font-size: 13px;">
+  userId={{ currentUserId }} | role="{{ currentRole }}" |
+  isClient={{ isClient }} | isFreelancer={{ isFreelancer }} | isAdmin={{ isAdmin }} |
+  canCreateTask={{ canCreateTask }}
 </div>

@@ -132,7 +132,7 @@
           <span class="risk-date">
             <i class="fas fa-clock"></i> Détecté le {{ formatDate(risk.detectedAt) }}
           </span>
-          <button class="btn-resolve" (click)="resolveRisk(risk, $event)">
+          <button class="btn-resolve" *ngIf="canResolve" (click)="resolveRisk(risk, $event)">
             <i class="fas fa-check"></i> Marquer comme résolu
           </button>
         </div>
@@ -147,7 +147,7 @@
     <h3 *ngIf="risks.length > 0">Aucun risque pour ce filtre</h3>
     <p *ngIf="risks.length === 0">L'IA n'a détecté aucun problème. Votre projet est en bonne santé !</p>
     <p *ngIf="risks.length > 0">Essayez un autre filtre ou affichez tous les risques.</p>
-    <button *ngIf="risks.length === 0" class="btn-analyze btn-analyze--sm" (click)="triggerAnalysis()" [disabled]="analyzingRisks">
+    <button *ngIf="risks.length === 0 && canAnalyze" class="btn-analyze btn-analyze--sm" (click)="triggerAnalysis()" [disabled]="analyzingRisks">
       <i class="fas fa-wand-magic-sparkles"></i> Lancer une analyse
     </button>
   </div>

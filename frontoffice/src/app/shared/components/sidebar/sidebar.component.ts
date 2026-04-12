@@ -11,6 +11,7 @@ interface NavItem {
   disabled?: boolean;
   isLogout?: boolean;
   comingSoon?: boolean;
+  roles?: string[]; // ← NOUVEAU : rôles autorisés (vide = tous)
 }
 
 @Component({
@@ -23,20 +24,20 @@ export class SidebarComponent implements OnInit {
   @Output() toggleCollapse = new EventEmitter<void>();
 
   currentUser: AuthUser | null = null;
-  trustLevel = 1; // ← chargé depuis le backend
+  trustLevel = 1;
 
-  // ── Module 01 — actifs ──────────────────────────────
-activeItems: NavItem[] = [
-  { label: 'Dashboard',      icon: 'fa-house',             route: '/app/dashboard' },
-  { label: 'Mon Profil',     icon: 'fa-user',              route: '/app/profile/overview' },
-  { label: 'Mes Projets',    icon: 'fa-diagram-project',   route: '/app/projects' },
-  { label: 'Notifications',  icon: 'fa-bell',              route: '/app/projects/notifications' },
-  { label: 'KYC',            icon: 'fa-id-card',           route: '/app/profile/kyc' },
-  { label: 'Trust Passport', icon: 'fa-passport',          route: '/app/profile/trust-passport' },
-  { label: 'Paramètres',     icon: 'fa-gear',              route: '/app/profile/settings' }
-];
+  // ── Tous les items avec filtrage par rôle ──
+  allActiveItems: NavItem[] = [
+    { label: 'Dashboard',      icon: 'fa-house',           route: '/app/dashboard' },
+    { label: 'Mon Profil',     icon: 'fa-user',            route: '/app/profile/overview' },
+    { label: 'Mes Projets',    icon: 'fa-diagram-project', route: '/app/projects',              roles: ['CLIENT', 'FREELANCER'] },
+    { label: 'Tous les Projets', icon: 'fa-folder-tree',   route: '/app/projects',              roles: ['ADMIN'] },
+    { label: 'Notifications',  icon: 'fa-bell',            route: '/app/projects/notifications', roles: ['CLIENT', 'FREELANCER'] },
+    { label: 'KYC',            icon: 'fa-id-card',         route: '/app/profile/kyc' },
+    { label: 'Trust Passport', icon: 'fa-passport',        route: '/app/profile/trust-passport' },
+    { label: 'Paramètres',     icon: 'fa-gear',            route: '/app/profile/settings' }
+  ];
 
-  // ── Autres modules — désactivés (coming soon) ──────
   comingSoonItems: NavItem[] = [
     { label: 'Offres Freelance', icon: 'fa-briefcase',     comingSoon: true },
     { label: 'Contrats',         icon: 'fa-file-contract', comingSoon: true },
@@ -55,7 +56,6 @@ activeItems: NavItem[] = [
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentAuthUser();
 
-    // Chargement du trust level réel depuis le backend
     this.userService.getMyProfile().subscribe({
       next: (data: UserProfileResponse) => {
         this.trustLevel = (data as any).trustLevel ?? 1;
@@ -66,13 +66,21 @@ activeItems: NavItem[] = [
     });
   }
 
+  /** Filtre les items selon le rôle de l'utilisateur connecté */
+  get activeItems(): NavItem[] {
+    const role = this.currentUser?.role?.toUpperCase() || '';
+    return this.allActiveItems.filter(item => {
+      if (!item.roles || item.roles.length === 0) return true; // visible pour tous
+      return item.roles.includes(role);
+    });
+  }
+
   onToggleCollapse(): void {
     this.toggleCollapse.emit();
   }
 
   onLogout(): void {
     this.authService.logout();
-    // Redirige vers la landing page (frontoffice)
     window.location.href = '/';
   }
 }

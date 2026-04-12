@@ -1,6 +1,7 @@
 package tn.esprit.msprojectservice.dto;
-import tn.esprit.msprojectservice.entities.Project;
+
 import lombok.*;
+import tn.esprit.msprojectservice.entities.Project;
 import tn.esprit.msprojectservice.entities.ProjectStatus;
 
 import java.time.LocalDate;
@@ -26,7 +27,18 @@ public class ProjectDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // --- Mapping manuel Entity -> DTO ---
+    // ===== Infos enrichies Client (depuis User Service) =====
+    private Integer clientCin;
+    private String clientFirstName;
+    private String clientLastName;
+    private String clientEmail;
+
+    // ===== Infos enrichies Freelancer (depuis User Service) =====
+    private Integer freelancerCin;
+    private String freelancerFirstName;
+    private String freelancerLastName;
+    private String freelancerEmail;
+
     public static ProjectDTO fromEntity(Project project) {
         return ProjectDTO.builder()
                 .id(project.getId())
@@ -45,7 +57,6 @@ public class ProjectDTO {
                 .build();
     }
 
-    // --- Mapping manuel DTO -> Entity ---
     public static Project toEntity(ProjectDTO dto) {
         return Project.builder()
                 .id(dto.getId())

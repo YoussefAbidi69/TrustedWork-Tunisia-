@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectApiService } from '../../services/project-api.service';
+import { AuthService } from '../../../../core/services/auth.service';
+
 import {
   Project, DeliveryRiskSignal, Task, RiskType, RiskSeverity
 } from '../../models/project.models';
@@ -20,6 +22,13 @@ export class RiskSignalsComponent implements OnInit {
   error = '';
   analyzingRisks = false;
 
+  currentUserId = 0;
+currentRole = '';
+isClient = false;
+isFreelancer = false;
+isAdmin = false;
+
+
   // Filtres
   activeFilter: 'ALL' | RiskSeverity = 'ALL';
   activeTypeFilter: 'ALL' | RiskType = 'ALL';
@@ -27,12 +36,18 @@ export class RiskSignalsComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private projectApi: ProjectApiService
+    private projectApi: ProjectApiService,
+      private authService: AuthService  // ← AJOUTER
+
   ) {}
 
   ngOnInit(): void {
-    this.projectId = Number(this.route.snapshot.paramMap.get('id'));
-    this.loadData();
+  this.projectId = Number(this.route.snapshot.paramMap.get('id'));
+  const user = this.authService.getCurrentAuthUser();
+  this.currentUserId = user?.userId || 0;
+  this.currentRole = user?.role?.toUpperCase() || '';
+  this.isAdmin = this.currentRole === 'ADMIN';
+  this.loadData();
   }
 
   private loadData(): void {
@@ -56,6 +71,17 @@ export class RiskSignalsComponent implements OnInit {
         this.loading = false;
       }
     });
+
+this.projectApi.getProjectById(this.projectId).subscribe({
+  next: (p) => {
+    this.project = p;
+    // ✅ Rôle basé sur le JWT
+    this.isClient = this.currentRole === 'CLIENT';
+    this.isFreelancer = this.currentRole === 'FREELANCER';
+  }
+});
+
+
   }
 
   // ══════════════════════════════════════
@@ -202,4 +228,13 @@ export class RiskSignalsComponent implements OnInit {
     if (score >= 50) return '#f59e0b';
     return '#ef4444';
   }
+
+
+  get canAnalyze(): boolean {
+  return this.isFreelancer || this.isAdmin;
+}
+
+get canResolve(): boolean {
+  return this.isFreelancer || this.isAdmin;
+}
 }

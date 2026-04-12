@@ -11,9 +11,10 @@
         <p>{{ project.title }} — {{ deliverables.length }} livrable(s)</p>
       </div>
     </div>
-    <button class="btn-submit" (click)="openSubmitModal()">
-      <i class="fas fa-plus"></i> Soumettre un livrable
-    </button>
+<!-- Dans del-header, remplace le bouton -->
+<button class="btn-submit" (click)="openSubmitModal()" *ngIf="isFreelancer || isAdmin">
+  <i class="fas fa-plus"></i> Soumettre un livrable
+</button>
   </div>
 
   <!-- ══ STATS ROW ══ -->
@@ -114,11 +115,12 @@
         <!-- Actions -->
         <div class="del-card__actions">
           <!-- Client : review si SUBMITTED -->
-          <button *ngIf="del.status === 'SUBMITTED'"
-                  class="btn-review"
-                  (click)="openReviewModal(del); $event.stopPropagation()">
-            <i class="fas fa-gavel"></i> Reviewer
-          </button>
+<!-- Dans del-card__actions, remplace le bouton review -->
+<button *ngIf="del.status === 'SUBMITTED' && (isClient || isAdmin)"
+        class="btn-review"
+        (click)="openReviewModal(del); $event.stopPropagation()">
+  <i class="fas fa-gavel"></i> Reviewer
+</button>
 
           <!-- Ouvrir le fichier -->
           <a *ngIf="del.fileUrl" [href]="del.fileUrl" target="_blank"
@@ -127,9 +129,11 @@
           </a>
 
           <!-- Supprimer -->
-          <button class="btn-del" (click)="deleteDeliverable(del, $event)">
-            <i class="fas fa-trash"></i>
-          </button>
+<!-- Remplace le bouton supprimer -->
+<button class="btn-del" (click)="deleteDeliverable(del, $event)"
+        *ngIf="isAdmin || (isFreelancer && del.status === 'SUBMITTED')">
+  <i class="fas fa-trash"></i>
+</button>
         </div>
       </div>
     </div>
@@ -141,9 +145,9 @@
     <h3 *ngIf="activeFilter === 'ALL'">Aucun livrable soumis</h3>
     <h3 *ngIf="activeFilter !== 'ALL'">Aucun livrable {{ getStatusLabel(activeFilter).toLowerCase() }}</h3>
     <p>Les livrables sont soumis par le freelancer et validés par le client.</p>
-    <button class="btn-submit" (click)="openSubmitModal()">
-      <i class="fas fa-plus"></i> Soumettre un livrable
-    </button>
+<button class="btn-submit" (click)="openSubmitModal()" *ngIf="isFreelancer || isAdmin">
+  <i class="fas fa-plus"></i> Soumettre un livrable
+</button>
   </div>
 </div>
 
@@ -301,10 +305,11 @@
     </div>
 
     <div class="modal-footer">
-      <button *ngIf="selectedDeliverable.status === 'SUBMITTED'"
-              class="btn-review" (click)="closeDetail(); openReviewModal(selectedDeliverable)">
-        <i class="fas fa-gavel"></i> Reviewer
-      </button>
+<!-- Dans modal-footer du détail -->
+<button *ngIf="selectedDeliverable.status === 'SUBMITTED' && (isClient || isAdmin)"
+        class="btn-review" (click)="closeDetail(); openReviewModal(selectedDeliverable)">
+  <i class="fas fa-gavel"></i> Reviewer
+</button>
       <a *ngIf="selectedDeliverable.fileUrl" [href]="selectedDeliverable.fileUrl" target="_blank" class="btn-open-lg">
         <i class="fas fa-external-link"></i> Ouvrir le fichier
       </a>

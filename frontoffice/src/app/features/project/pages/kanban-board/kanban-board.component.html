@@ -14,9 +14,10 @@
         </p>
       </div>
     </div>
-    <button class="btn-add" (click)="openTaskModal()">
-      <i class="fas fa-plus"></i> Nouvelle tâche
-    </button>
+<!-- Remplace le bouton dans kanban-header -->
+<button class="btn-add" (click)="openTaskModal()" *ngIf="canEditTasks">
+  <i class="fas fa-plus"></i> Nouvelle tâche
+</button>
   </div>
 
   <!-- ══ PROGRESS BAR MINI ══ -->
@@ -47,9 +48,11 @@
            (cdkDropListDropped)="onDrop($event, col.key)">
 
         <!-- Task Card -->
-        <div class="task-card" *ngFor="let task of tasksByColumn[col.key]"
-             cdkDrag
-             [class.task-card--overdue]="isOverdue(task)">
+<!-- Remplace la ligne cdkDrag sur task-card -->
+<div class="task-card" *ngFor="let task of tasksByColumn[col.key]"
+     [cdkDragDisabled]="!canDragTasks"
+     cdkDrag
+     [class.task-card--overdue]="isOverdue(task)">
 
           <!-- Drag Handle (visible au survol) -->
           <div class="drag-handle" cdkDragHandle>
@@ -62,14 +65,15 @@
                   [title]="getPriorityLabel(task.priority)">
               <i class="fas" [ngClass]="getPriorityIcon(task.priority)"></i>
             </span>
-            <div class="task-card__actions">
-              <button class="card-action" (click)="openEditModal(task, $event)" title="Modifier">
-                <i class="fas fa-pen"></i>
-              </button>
-              <button class="card-action card-action--del" (click)="deleteTask(task, $event)" title="Supprimer">
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
+<!-- Remplace task-card__actions -->
+<div class="task-card__actions" *ngIf="canEditTasks">
+  <button class="card-action" (click)="openEditModal(task, $event)" title="Modifier">
+    <i class="fas fa-pen"></i>
+  </button>
+  <button class="card-action card-action--del" (click)="deleteTask(task, $event)" title="Supprimer">
+    <i class="fas fa-trash"></i>
+  </button>
+</div>
           </div>
 
           <h4 class="task-card__title">{{ task.title }}</h4>
@@ -106,23 +110,25 @@
                   <i class="fas" [ngClass]="sub.done ? 'fa-square-check' : 'fa-square'"></i>
                 </button>
                 <span class="subtask-title">{{ sub.title }}</span>
-                <button class="subtask-del" (click)="deleteSubTask(sub)">
-                  <i class="fas fa-xmark"></i>
-                </button>
+<!-- Remplace subtask-del -->
+<button class="subtask-del" (click)="deleteSubTask(sub)" *ngIf="canEditTasks">
+  <i class="fas fa-xmark"></i>
+</button>
               </div>
             </div>
 
             <!-- Ajouter sous-tâche -->
-            <div class="subtask-add">
-              <input type="text"
-                     [(ngModel)]="newSubTaskTitle[task.id]"
-                     placeholder="Ajouter une sous-tâche..."
-                     (keyup.enter)="addSubTask(task.id)"
-                     class="subtask-input">
-              <button class="subtask-add-btn" (click)="addSubTask(task.id)">
-                <i class="fas fa-plus"></i>
-              </button>
-            </div>
+<!-- Remplace subtask-add -->
+<div class="subtask-add" *ngIf="canEditTasks">
+  <input type="text"
+         [(ngModel)]="newSubTaskTitle[task.id]"
+         placeholder="Ajouter une sous-tâche..."
+         (keyup.enter)="addSubTask(task.id)"
+         class="subtask-input">
+  <button class="subtask-add-btn" (click)="addSubTask(task.id)">
+    <i class="fas fa-plus"></i>
+  </button>
+</div>
           </div>
 
         </div>

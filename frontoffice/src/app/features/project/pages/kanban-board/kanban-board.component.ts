@@ -15,6 +15,12 @@ import {
 })
 export class KanbanBoardComponent implements OnInit {
 
+
+    currentUserId = 0;
+  currentRole = '';
+  isClient = false;
+  isFreelancer = false;
+  isAdmin = false;
   projectId!: number;
   project!: Project;
   loading = true;
@@ -56,29 +62,41 @@ export class KanbanBoardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.projectId = Number(this.route.snapshot.paramMap.get('id'));
-    this.loadData();
+  this.projectId = Number(this.route.snapshot.paramMap.get('id'));
+
+  // Récupérer le rôle
+  const user = this.authService.getCurrentAuthUser();
+  this.currentUserId = user?.userId || 0;
+  this.currentRole = user?.role?.toUpperCase() || '';
+  this.isAdmin = this.currentRole === 'ADMIN';
+
+  this.loadData();
   }
 
-  private loadData(): void {
-    this.loading = true;
+private loadData(): void {
+  this.loading = true;
 
-    this.projectApi.getProjectById(this.projectId).subscribe({
-      next: (p) => this.project = p,
-      error: () => this.error = 'Projet introuvable.'
-    });
+  this.projectApi.getProjectById(this.projectId).subscribe({
+    next: (p) => {
+      this.project = p;
+      // ✅ Rôle basé sur le JWT
+      this.isClient = this.currentRole === 'CLIENT';
+      this.isFreelancer = this.currentRole === 'FREELANCER';
+    },
+    error: () => this.error = 'Projet introuvable.'
+  });
 
-    this.projectApi.getTasksByProjectId(this.projectId).subscribe({
-      next: (tasks) => {
-        this.distributeTasksToColumns(tasks);
-        this.loading = false;
-      },
-      error: () => {
-        this.error = 'Impossible de charger les tâches.';
-        this.loading = false;
-      }
-    });
-  }
+  this.projectApi.getTasksByProjectId(this.projectId).subscribe({
+    next: (tasks) => {
+      this.distributeTasksToColumns(tasks);
+      this.loading = false;
+    },
+    error: () => {
+      this.error = 'Impossible de charger les tâches.';
+      this.loading = false;
+    }
+  });
+}
 
   private distributeTasksToColumns(tasks: Task[]): void {
     this.tasksByColumn = { TODO: [], IN_PROGRESS: [], IN_REVIEW: [], DONE: [] };
@@ -289,4 +307,14 @@ export class KanbanBoardComponent implements OnInit {
   goBack(): void {
     this.router.navigate(['/app/projects', this.projectId]);
   }
+
+  /** Le freelancer et l'admin peuvent créer/modifier/supprimer des tâches */
+get canEditTasks(): boolean {
+  return this.isFreelancer || this.isAdmin;
+}
+
+/** Le client ne peut que consulter, pas déplacer */
+get canDragTasks(): boolean {
+  return this.isFreelancer || this.isAdmin;
+}
 }

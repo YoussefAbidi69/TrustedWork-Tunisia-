@@ -12,12 +12,8 @@ import {
   ProjectStatus
 } from '../models/project.models';
 
-/**
- * Service HTTP — Module 08 : Project Management
- * Appelle l'API Gateway (port 8080) qui route vers ms-project-service (port 8089)
- * Le token JWT est ajouté automatiquement par le tokenInterceptor existant.
- */
 const GATEWAY_URL = 'http://localhost:8089/project';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -37,8 +33,22 @@ export class ProjectApiService {
     return this.http.get<Project>(`${GATEWAY_URL}/api/projects/${id}`);
   }
 
+  /** Endpoint enrichi : retourne le projet avec CIN + nom + prénom */
+  getProjectByIdEnriched(id: number): Observable<Project> {
+    return this.http.get<Project>(`${GATEWAY_URL}/api/projects/${id}/enriched`);
+  }
+
   getProjectsByUserId(userId: number): Observable<Project[]> {
     return this.http.get<Project[]>(`${GATEWAY_URL}/api/projects/user/${userId}`);
+  }
+
+  /**
+   * Endpoint principal après login.
+   * Retourne les projets de l'utilisateur connecté (lu depuis le JWT côté backend).
+   * Token ajouté automatiquement par tokenInterceptor.
+   */
+  getMyProjects(): Observable<Project[]> {
+    return this.http.get<Project[]>(`${GATEWAY_URL}/api/projects/my`);
   }
 
   getAllProjects(): Observable<Project[]> {
