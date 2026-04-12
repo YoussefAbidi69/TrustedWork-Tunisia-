@@ -1,0 +1,76 @@
+<!-- Page Endorsements — vue propriétaire uniquement -->
+<div class="endorsements-container">
+
+  <div class="endorsements-header">
+    <h2>🤝 Endorsements</h2>
+    <p class="subtitle">Vos compétences validées par la communauté</p>
+  </div>
+
+  <div class="alert-success" *ngIf="successMessage">✅ {{ successMessage }}</div>
+  <div class="alert-error"   *ngIf="errorMessage">❌ {{ errorMessage }}</div>
+
+  <div class="loading" *ngIf="isLoading">Chargement...</div>
+
+  <div class="empty-state" *ngIf="!isLoading && skills.length === 0">
+    <div class="empty-icon">🤝</div>
+    <h3>Aucune compétence à valider</h3>
+    <p>Ajoutez d'abord des compétences dans l'onglet Skills</p>
+  </div>
+
+  <!-- Info propriétaire -->
+  <div class="owner-info-banner" *ngIf="!isLoading && skills.length > 0">
+    <span>💡 Les endorsements sont ajoutés par d'autres freelancers depuis votre profil public.</span>
+  </div>
+
+  <div class="skills-list" *ngIf="!isLoading && skills.length > 0">
+    <div class="skill-card" *ngFor="let skill of skills">
+
+      <div class="skill-header">
+        <div class="skill-info">
+          <h3 class="skill-name">{{ skill.name }}</h3>
+          <span class="skill-level" [style.color]="getLevelColor(skill.level)">
+            {{ getLevelLabel(skill.level) }}
+          </span>
+        </div>
+
+        <div class="skill-actions">
+          <div class="endorsement-count">
+            <span class="count-number">{{ getEndorsementCount(skill.id) }}</span>
+            <span class="count-label">endorsement(s)</span>
+          </div>
+          <div class="authenticity-score">
+            <span class="score-value">{{ (skill.authenticityScore * 100).toFixed(0) }}%</span>
+            <span class="score-label">authenticité</span>
+          </div>
+          <!-- PAS de bouton Valider ici — le propriétaire ne peut pas s'auto-endorser -->
+        </div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill"
+             [style.width.%]="skill.authenticityScore * 100"
+             [style.background]="getLevelColor(skill.level)">
+        </div>
+      </div>
+
+      <!-- Liste des endorsements reçus -->
+      <div class="endorsements-list"
+           *ngIf="(endorsementsBySkill[skill.id]?.length || 0) > 0">
+        <div class="endorsement-item" *ngFor="let e of endorsementsBySkill[skill.id]">
+          <div class="endorser-avatar">{{ e.endorserId }}</div>
+          <div class="endorsement-body">
+            <span class="endorser-id">Freelancer #{{ e.endorserId }}</span>
+            <p class="endorsement-comment" *ngIf="e.comment">"{{ e.comment }}"</p>
+            <span class="endorsement-date">{{ e.endorsedAt | date:'dd MMM yyyy' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="no-endorsements"
+           *ngIf="(endorsementsBySkill[skill.id]?.length || 0) === 0">
+        <span>Aucun endorsement reçu pour ce skill.</span>
+      </div>
+
+    </div>
+  </div>
+</div>

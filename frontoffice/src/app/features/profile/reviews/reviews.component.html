@@ -1,0 +1,112 @@
+<div class="reviews-container">
+
+  <!-- En-tête avec note moyenne -->
+  <div class="reviews-header">
+    <div class="header-left">
+      <h2>⭐ Avis Clients</h2>
+      <p class="subtitle">{{ reviews.length }} avis au total</p>
+    </div>
+
+    <!-- Note moyenne -->
+    <div class="average-card" *ngIf="reviews.length > 0">
+      <span class="average-number">{{ averageRating }}</span>
+      <div class="average-stars">
+        <span *ngFor="let star of getStarArray(averageRating)"
+              class="star"
+              [class.full]="star === 'full'"
+              [class.empty]="star === 'empty'">
+          {{ star === 'full' ? '★' : '☆' }}
+        </span>
+      </div>
+      <span class="average-label">Note moyenne</span>
+    </div>
+
+    <button class="btn-add" (click)="showForm = !showForm">
+      {{ showForm ? '✕ Annuler' : '+ Laisser un avis' }}
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div class="alert-success" *ngIf="successMessage">✅ {{ successMessage }}</div>
+  <div class="alert-error" *ngIf="errorMessage">❌ {{ errorMessage }}</div>
+
+  <!-- Formulaire d'avis -->
+  <div class="form-card" *ngIf="showForm">
+    <h3>Nouvel avis</h3>
+
+    <!-- Sélection des étoiles -->
+    <div class="rating-selector">
+      <label>Note *</label>
+      <div class="stars-input">
+        <span *ngFor="let star of stars"
+              class="star-btn"
+              [class.active]="star <= newReview.rating"
+              (click)="setRating(star)">
+          ★
+        </span>
+        <span class="rating-text">{{ newReview.rating }}/5</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Commentaire</label>
+      <textarea [(ngModel)]="newReview.comment"
+                placeholder="Partagez votre expérience..."
+                rows="3"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-save" (click)="submitReview()">
+        💾 Publier l'avis
+      </button>
+      <button class="btn-cancel" (click)="showForm = false; resetForm()">
+        Annuler
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" *ngIf="isLoading">Chargement...</div>
+
+  <!-- Etat vide -->
+  <div class="empty-state" *ngIf="!isLoading && reviews.length === 0">
+    <div class="empty-icon">⭐</div>
+    <h3>Aucun avis pour l'instant</h3>
+    <p>Les avis de vos clients apparaîtront ici</p>
+  </div>
+
+  <!-- Liste des avis -->
+  <div class="reviews-list" *ngIf="!isLoading && reviews.length > 0">
+    <div class="review-card" *ngFor="let review of reviews">
+
+      <div class="review-header">
+        <div class="reviewer-info">
+          <div class="reviewer-avatar">U{{ review.clientId }}</div>
+          <div>
+            <span class="reviewer-name">Client #{{ review.clientId }}</span>
+            <span class="review-date">
+              {{ review.reviewedAt | date:'dd MMM yyyy' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Etoiles -->
+        <div class="review-stars">
+          <span *ngFor="let star of getStarArray(review.rating)"
+                class="star"
+                [class.full]="star === 'full'"
+                [class.empty]="star === 'empty'">
+            {{ star === 'full' ? '★' : '☆' }}
+          </span>
+          <span class="rating-value">{{ review.rating }}/5</span>
+        </div>
+      </div>
+
+      <p class="review-comment" *ngIf="review.comment">
+        "{{ review.comment }}"
+      </p>
+
+    </div>
+  </div>
+
+</div>

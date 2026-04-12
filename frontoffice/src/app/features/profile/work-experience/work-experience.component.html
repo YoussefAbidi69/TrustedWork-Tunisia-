@@ -1,0 +1,117 @@
+<div class="we-container">
+
+  <!-- En-tête -->
+  <div class="we-header">
+    <div class="header-left">
+      <h2>💼 Expériences Professionnelles</h2>
+      <span class="badge-count">{{ experiences.length }} expérience(s)</span>
+    </div>
+    <button class="btn-add" (click)="showForm = !showForm">
+      {{ showForm ? '✕ Annuler' : '+ Ajouter' }}
+    </button>
+  </div>
+
+  <!-- Erreur -->
+  <div class="alert-error" *ngIf="errorMessage">
+    {{ errorMessage }}
+    <button (click)="errorMessage = ''">✕</button>
+  </div>
+
+  <!-- Formulaire -->
+  <div class="form-card" *ngIf="showForm">
+    <h3>Nouvelle expérience</h3>
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Titre du poste *</label>
+        <input type="text" [(ngModel)]="newExp.jobTitle"
+               placeholder="Ex: Développeur Backend" />
+      </div>
+
+      <div class="form-group">
+        <label>Entreprise *</label>
+        <input type="text" [(ngModel)]="newExp.company"
+               placeholder="Ex: Esprit Corp" />
+      </div>
+
+      <div class="form-group full-width">
+        <label>Description</label>
+        <textarea [(ngModel)]="newExp.description"
+                  placeholder="Décrivez vos responsabilités..." rows="3"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Date de début</label>
+        <input type="date" [(ngModel)]="newExp.startDate" />
+      </div>
+
+      <div class="form-group">
+        <label>Date de fin</label>
+        <input type="date" [(ngModel)]="newExp.endDate"
+               [disabled]="newExp.isCurrent" />
+      </div>
+
+      <div class="form-group full-width">
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="newExp.isCurrent" />
+          Poste actuel
+        </label>
+      </div>
+
+    </div>
+    <div class="form-actions">
+      <button class="btn-save" (click)="addExperience()"
+              [disabled]="!newExp.jobTitle.trim() || !newExp.company.trim()">
+        💾 Enregistrer
+      </button>
+      <button class="btn-cancel" (click)="showForm = false; resetForm()">
+        Annuler
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" *ngIf="isLoading">Chargement...</div>
+
+  <!-- Timeline des expériences -->
+  <div class="timeline" *ngIf="!isLoading">
+
+    <!-- Etat vide -->
+    <div class="empty-state" *ngIf="experiences.length === 0">
+      <div class="empty-icon">🏢</div>
+      <h3>Aucune expérience ajoutée</h3>
+      <p>Ajoutez vos expériences professionnelles pour renforcer votre crédibilité</p>
+      <button class="btn-add" (click)="showForm = true">+ Ajouter une expérience</button>
+    </div>
+
+    <!-- Items timeline -->
+    <div class="timeline-item" *ngFor="let exp of experiences">
+      <div class="timeline-dot" [class.dot-current]="exp.isCurrent"></div>
+      <div class="timeline-content">
+        <div class="exp-header">
+          <div>
+            <h3 class="exp-title">{{ exp.jobTitle }}</h3>
+            <p class="exp-company">🏢 {{ exp.company }}</p>
+          </div>
+          <div class="exp-meta">
+            <span class="badge-current" *ngIf="exp.isCurrent">En cours</span>
+            <span class="exp-duration">{{ getDuration(exp) }}</span>
+            <button class="btn-delete" (click)="deleteExperience(exp.id)">🗑</button>
+          </div>
+        </div>
+
+        <p class="exp-dates">
+          {{ exp.startDate | date:'MMM yyyy' }}
+          —
+          <span *ngIf="exp.isCurrent">Aujourd'hui</span>
+          <span *ngIf="!exp.isCurrent">{{ exp.endDate | date:'MMM yyyy' }}</span>
+        </p>
+
+        <p class="exp-description" *ngIf="exp.description">
+          {{ exp.description }}
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>

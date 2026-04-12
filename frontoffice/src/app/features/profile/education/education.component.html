@@ -1,0 +1,105 @@
+<!-- Section Education — parcours académique connecté au freelancer-profile-service -->
+<div class="edu-container">
+
+  <!-- En-tête -->
+  <div class="section-header">
+    <div class="header-left">
+      <h2>Parcours Académique</h2>
+      <p class="subtitle">{{ educations.length }} formation(s) déclarée(s)</p>
+    </div>
+    <button class="btn-primary" (click)="toggleForm()">
+      {{ showForm ? 'Annuler' : '+ Ajouter' }}
+    </button>
+  </div>
+
+  <!-- Message d'erreur -->
+  <div class="error-banner" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Formulaire d'ajout -->
+  <div class="add-form" *ngIf="showForm">
+    <h3>Nouvelle formation</h3>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Diplôme *</label>
+        <input
+          type="text"
+          [(ngModel)]="newEdu.degree"
+          placeholder="Ex: Licence en Informatique, Master Cloud..."
+          class="form-control"
+        />
+      </div>
+      <div class="form-group">
+        <label>Établissement *</label>
+        <input
+          type="text"
+          [(ngModel)]="newEdu.institution"
+          placeholder="Ex: ESPRIT, ENSI, Université de Tunis..."
+          class="form-control"
+        />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Domaine d'études</label>
+        <input
+          type="text"
+          [(ngModel)]="newEdu.fieldOfStudy"
+          placeholder="Ex: Génie Logiciel, Cloud Computing..."
+          class="form-control"
+        />
+      </div>
+      <div class="form-group">
+        <label>Année d'obtention</label>
+        <select [(ngModel)]="newEdu.graduationYear" class="form-control">
+          <option [ngValue]="null">-- Sélectionner --</option>
+          <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-primary" (click)="addEducation()">Enregistrer</button>
+  </div>
+
+  <!-- Loader -->
+  <div class="loading" *ngIf="isLoading">Chargement...</div>
+
+  <!-- Liste vide -->
+  <div class="empty-state" *ngIf="!isLoading && educations.length === 0">
+    <p>Aucune formation déclarée. Ajoutez votre parcours académique.</p>
+  </div>
+
+  <!-- Liste des formations -->
+  <div class="edu-list" *ngIf="!isLoading && educations.length > 0">
+    <div class="edu-card" *ngFor="let edu of educations">
+
+      <div class="edu-icon">
+        <i class="fa fa-graduation-cap"></i>
+      </div>
+
+      <div class="edu-content">
+        <div class="edu-header">
+          <span class="edu-degree">{{ edu.degree }}</span>
+          <span class="edu-year" *ngIf="edu.graduationYear">
+            {{ edu.graduationYear }}
+          </span>
+        </div>
+        <span class="edu-institution">{{ edu.institution }}</span>
+        <span class="edu-field" *ngIf="edu.fieldOfStudy">
+          {{ edu.fieldOfStudy }}
+        </span>
+      </div>
+
+      <div class="edu-actions">
+        <button class="btn-danger" (click)="deleteEducation(edu.id)">
+          Supprimer
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</div>

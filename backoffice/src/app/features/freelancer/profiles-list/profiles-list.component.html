@@ -1,0 +1,112 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Profils freelancers</h1>
+    <p class="page-subtitle">
+      {{ filteredProfiles.length }} profil(s) trouvé(s)
+    </p>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 20px;">
+  <div class="filters-row">
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Rechercher par titre ou bio..."
+        [(ngModel)]="searchTerm"
+        (input)="applyFilters()"
+      />
+    </div>
+
+    <select
+      class="form-control filter-select"
+      [(ngModel)]="selectedRegion"
+      (change)="applyFilters()"
+    >
+      <option value="">Toutes les régions</option>
+      <option *ngFor="let r of regions" [value]="r">{{ r }}</option>
+    </select>
+
+    <select
+      class="form-control filter-select"
+      [(ngModel)]="selectedStatus"
+      (change)="applyFilters()"
+    >
+      <option value="">Tous les statuts</option>
+      <option value="AVAILABLE">Disponible</option>
+      <option value="BUSY">Occupé</option>
+      <option value="ON_VACATION">En vacances</option>
+    </select>
+  </div>
+</div>
+
+<div *ngIf="loading" class="card">
+  <div class="empty-state">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Chargement des profils...</p>
+  </div>
+</div>
+
+<div *ngIf="errorMsg && !loading" class="card">
+  <div class="empty-state">
+    <i class="fas fa-exclamation-triangle text-danger"></i>
+    <p class="text-danger">{{ errorMsg }}</p>
+    <button class="btn btn-primary" style="margin-top: 12px;" (click)="loadProfiles()">
+      <i class="fas fa-refresh"></i> Réessayer
+    </button>
+  </div>
+</div>
+
+<div class="card" *ngIf="!loading && !errorMsg">
+
+  <div *ngIf="filteredProfiles.length === 0" class="empty-state">
+    <i class="fas fa-user-slash"></i>
+    <p>Aucun profil trouvé</p>
+  </div>
+
+  <table class="tw-table" *ngIf="filteredProfiles.length > 0">
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Headline</th>
+        <th>Région</th>
+        <th>Rang régional</th>
+        <th>Disponibilité</th>
+        <th>Complétude</th>
+        <th>Vues</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let p of filteredProfiles">
+        <td>#{{ p.userId }}</td>
+        <td>{{ p.headline || '—' }}</td>
+        <td>{{ p.region || '—' }}</td>
+        <td>
+          <span class="badge badge-accent">#{{ p.regionalRank || '—' }}</span>
+        </td>
+        <td>
+          <span class="badge" [ngClass]="getStatusBadge(p.availabilityStatus)">
+            {{ getStatusLabel(p.availabilityStatus) }}
+          </span>
+        </td>
+        <td>
+          <span [ngClass]="getScoreClass(p.completenessScore)">
+            {{ p.completenessScore }}%
+          </span>
+        </td>
+        <td>{{ p.totalViews || 0 }}</td>
+        <td>
+          <a
+            [routerLink]="['/admin/freelancers', p.id]"
+            class="btn btn-ghost btn-sm"
+          >
+            <i class="fas fa-eye"></i> Voir
+          </a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

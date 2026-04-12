@@ -1,0 +1,26 @@
+/* ── Barre de filtres ── */
+.filters-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-select {
+  width: 200px;
+}
+
+.search-bar input {
+  width: 280px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .filters-row {
+    flex-direction: column;
+  }
+  .filter-select,
+  .search-bar input {
+    width: 100%;
+  }
+}

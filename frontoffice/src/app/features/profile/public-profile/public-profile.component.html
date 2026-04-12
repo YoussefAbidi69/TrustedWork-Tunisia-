@@ -1,0 +1,186 @@
+<div class="public-profile-container">
+
+  <div class="loading" *ngIf="isLoading">Chargement du profil...</div>
+  <div class="error-banner" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="success-banner" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <ng-container *ngIf="!isLoading && profile">
+
+    <!-- EN-TÊTE PROFIL -->
+    <div class="profile-header-card">
+      <div class="profile-header-info">
+        <div class="profile-avatar">
+          {{ profile.headline.charAt(0) || 'F' }}
+        </div>
+        <div class="profile-main">
+          <h1>{{ profile.headline || 'Freelancer' }}</h1>
+          <p class="profile-bio">{{ profile.bio }}</p>
+          <div class="profile-meta">
+            <span *ngIf="profile.region">📍 {{ profile.region }}</span>
+            <span *ngIf="profile.hourlyRate">💰 {{ profile.hourlyRate }} TND/h</span>
+            <span class="availability"
+                  [class.available]="profile.availabilityStatus === 'AVAILABLE'">
+              {{ profile.availabilityStatus === 'AVAILABLE' ? '🟢 Disponible' :
+                 profile.availabilityStatus === 'BUSY' ? '🔴 Occupé' : '🟡 En vacances' }}
+            </span>
+          </div>
+          <div class="rating-row" *ngIf="averageRating > 0">
+            <span *ngFor="let s of getStars(averageRating)">⭐</span>
+            <span class="rating-value">{{ averageRating.toFixed(1) }}/5</span>
+            <span class="review-count">({{ reviews.length }} avis)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions visiteur -->
+      <div class="header-actions" *ngIf="!isOwner">
+        <button class="btn-primary"
+                (click)="showReviewForm = !showReviewForm; showReportForm = false">
+          {{ showReviewForm ? 'Annuler' : '⭐ Laisser un avis' }}
+        </button>
+        <button class="btn-danger-outline"
+                (click)="showReportForm = !showReportForm; showReviewForm = false">
+          {{ showReportForm ? 'Annuler' : '🚩 Signaler' }}
+        </button>
+      </div>
+
+      <div class="owner-badge" *ngIf="isOwner">
+        <span>👤 Votre profil public</span>
+      </div>
+    </div>
+
+    <!-- FORMULAIRE REVIEW -->
+    <div class="form-card" *ngIf="showReviewForm && !isOwner">
+      <h3>⭐ Laisser un avis</h3>
+      <div class="form-group">
+        <label>Note (1–5)</label>
+        <input type="number" [(ngModel)]="newReview.rating"
+               min="1" max="5" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label>Commentaire *</label>
+        <textarea [(ngModel)]="newReview.comment"
+                  placeholder="Décrivez votre expérience avec ce freelancer..."
+                  rows="3" class="form-control"></textarea>
+      </div>
+      <button class="btn-primary" (click)="submitReview()">Publier l'avis</button>
+    </div>
+
+    <!-- FORMULAIRE SIGNALEMENT -->
+    <div class="form-card form-card--danger" *ngIf="showReportForm && !isOwner">
+      <h3>🚩 Signaler ce profil</h3>
+      <p class="report-info">
+        Le signalement sera examiné par l'administration TrustedWork.
+      </p>
+      <div class="form-group">
+        <label>Raison du signalement *</label>
+        <textarea [(ngModel)]="reportReason"
+                  placeholder="Ex: Informations incorrectes, faux profil, contenu inapproprié..."
+                  rows="3" class="form-control"></textarea>
+      </div>
+      <button class="btn-danger" (click)="submitReport()">
+        Envoyer le signalement
+      </button>
+    </div>
+
+    <!-- SKILLS + ENDORSEMENTS -->
+    <div class="section-card" *ngIf="skills.length > 0">
+      <h2>Compétences</h2>
+      <div class="skills-list">
+        <div class="skill-row" *ngFor="let skill of skills">
+          <div class="skill-left">
+            <span class="skill-name">{{ skill.name }}</span>
+            <span class="skill-level">{{ skill.level }}</span>
+          </div>
+          <div class="skill-right">
+            <span class="endorse-count">{{ skill.endorsementCount }} endorsement(s)</span>
+            <div class="auth-bar-wrapper">
+              <div class="auth-bar" [style.width.%]="skill.authenticityScore * 100"></div>
+            </div>
+            <span class="auth-value">{{ (skill.authenticityScore * 100).toFixed(0) }}%</span>
+            <ng-container *ngIf="!isOwner">
+              <button class="btn-endorse"
+                      (click)="toggleEndorse(skill.id)"
+                      [class.active]="endorsingSkillId === skill.id">
+                {{ endorsingSkillId === skill.id ? 'Annuler' : '👍 Endorser' }}
+              </button>
+            </ng-container>
+            <span class="owner-label" *ngIf="isOwner">Vos skills</span>
+          </div>
+        </div>
+
+        <div class="endorse-form" *ngIf="endorsingSkillId">
+          <textarea [(ngModel)]="endorseComment"
+                    placeholder="Commentaire optionnel..."
+                    rows="2" class="form-control"></textarea>
+          <button class="btn-primary"
+                  (click)="submitEndorsement(endorsingSkillId!)">
+            Confirmer l'endorsement
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPERIENCES -->
+    <div class="section-card" *ngIf="experiences.length > 0">
+      <h2>Expériences</h2>
+      <div class="exp-list">
+        <div class="exp-item" *ngFor="let exp of experiences">
+          <div class="exp-left">
+            <span class="exp-title">{{ exp.jobTitle }}</span>
+            <span class="exp-company">{{ exp.company }}</span>
+          </div>
+          <div class="exp-right">
+            <span class="exp-date">
+              {{ exp.startDate | date:'MMM yyyy' }} —
+              {{ exp.isCurrent ? 'Présent' : (exp.endDate | date:'MMM yyyy') }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PORTFOLIO -->
+    <div class="section-card" *ngIf="portfolio.length > 0">
+      <h2>Portfolio</h2>
+      <div class="portfolio-grid">
+        <div class="portfolio-item" *ngFor="let item of portfolio">
+          <h4>{{ item.title }}</h4>
+          <p>{{ item.description }}</p>
+          <span class="tech-tags">{{ item.technologies }}</span>
+          <a *ngIf="item.projectUrl" [href]="item.projectUrl"
+             target="_blank" class="btn-link">Voir le projet →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- CERTIFICATIONS -->
+    <div class="section-card" *ngIf="certifications.length > 0">
+      <h2>Certifications</h2>
+      <div class="cert-list">
+        <div class="cert-item" *ngFor="let cert of certifications">
+          <span class="cert-title">{{ cert.title }}</span>
+          <span class="cert-issuer">{{ cert.issuer }}</span>
+          <span class="cert-status" [class.expired]="cert.isExpired">
+            {{ cert.isExpired ? 'Expirée' : 'Valide' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AVIS CLIENTS -->
+    <div class="section-card" *ngIf="reviews.length > 0">
+      <h2>Avis Clients</h2>
+      <div class="reviews-list">
+        <div class="review-item" *ngFor="let r of reviews">
+          <div class="review-header">
+            <span><span *ngFor="let s of getStars(r.rating)">⭐</span></span>
+            <span class="review-date">{{ r.reviewedAt | date:'dd MMM yyyy' }}</span>
+          </div>
+          <p class="review-comment">{{ r.comment }}</p>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+</div>

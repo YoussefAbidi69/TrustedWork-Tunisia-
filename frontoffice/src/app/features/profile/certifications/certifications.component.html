@@ -1,0 +1,140 @@
+<!-- Section Certifications — connectée au freelancer-profile-service -->
+<div class="certif-container">
+
+  <!-- En-tête -->
+  <div class="section-header">
+    <div class="header-left">
+      <h2>Mes Certifications</h2>
+      <p class="subtitle">
+        {{ validCount }} valide(s)
+        <span *ngIf="expiredCount > 0" class="expired-badge">
+          · {{ expiredCount }} expirée(s)
+        </span>
+      </p>
+    </div>
+    <button class="btn-primary" (click)="toggleForm()">
+      {{ showForm ? 'Annuler' : '+ Ajouter' }}
+    </button>
+  </div>
+
+  <!-- Message d'erreur -->
+  <div class="error-banner" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Formulaire d'ajout -->
+  <div class="add-form" *ngIf="showForm">
+    <h3>Nouvelle certification</h3>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Titre *</label>
+        <input
+          type="text"
+          [(ngModel)]="newCert.title"
+          placeholder="Ex: AWS Solutions Architect"
+          class="form-control"
+        />
+      </div>
+      <div class="form-group">
+        <label>Organisme émetteur *</label>
+        <input
+          type="text"
+          [(ngModel)]="newCert.issuer"
+          placeholder="Ex: Amazon Web Services"
+          class="form-control"
+        />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Type</label>
+        <select [(ngModel)]="newCert.type" class="form-control">
+          <option value="EXTERNAL">Externe (AWS, PMP, Microsoft...)</option>
+          <option value="ACADEMIC">Académique (Licence, Master, Ingénieur...)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>URL de vérification</label>
+        <input
+          type="url"
+          [(ngModel)]="newCert.certificateUrl"
+          placeholder="https://..."
+          class="form-control"
+        />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date d'obtention</label>
+        <input type="date" [(ngModel)]="newCert.issueDate" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label>Date d'expiration</label>
+        <input type="date" [(ngModel)]="newCert.expiryDate" class="form-control" />
+        <small>Laisser vide si pas d'expiration</small>
+      </div>
+    </div>
+
+    <button class="btn-primary" (click)="addCertification()">Enregistrer</button>
+  </div>
+
+  <!-- Loader -->
+  <div class="loading" *ngIf="isLoading">Chargement...</div>
+
+  <!-- Liste vide -->
+  <div class="empty-state" *ngIf="!isLoading && certifications.length === 0">
+    <p>Aucune certification déclarée. Ajoutez votre premier diplôme ou certification.</p>
+  </div>
+
+  <!-- Liste des certifications -->
+  <div class="certif-list" *ngIf="!isLoading && certifications.length > 0">
+    <div
+      class="certif-card"
+      *ngFor="let cert of certifications"
+      [class.expired]="cert.isExpired"
+    >
+      <div class="certif-header">
+        <div class="certif-title-block">
+          <span class="certif-title">{{ cert.title }}</span>
+          <span class="certif-issuer">{{ cert.issuer }}</span>
+        </div>
+        <div class="certif-badges">
+          <span class="type-badge" [ngClass]="getTypeClass(cert.type)">
+            {{ getTypeLabel(cert.type) }}
+          </span>
+          <span class="expired-label" *ngIf="cert.isExpired">Expirée</span>
+          <span class="valid-label" *ngIf="!cert.isExpired">Valide</span>
+        </div>
+      </div>
+
+      <div class="certif-dates">
+        <span *ngIf="cert.issueDate">
+          Obtenue le : {{ cert.issueDate | date:'dd/MM/yyyy' }}
+        </span>
+        <span *ngIf="cert.expiryDate">
+          · Expire le : {{ cert.expiryDate | date:'dd/MM/yyyy' }}
+        </span>
+        <span *ngIf="!cert.expiryDate"> · Sans expiration</span>
+      </div>
+
+      <div class="certif-footer">
+        <a
+          *ngIf="cert.certificateUrl"
+          [href]="cert.certificateUrl"
+          target="_blank"
+          class="btn-link"
+        >
+          Vérifier
+        </a>
+        <button class="btn-danger" (click)="deleteCertification(cert.id)">
+          Supprimer
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</div>

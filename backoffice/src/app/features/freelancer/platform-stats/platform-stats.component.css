@@ -1,0 +1,231 @@
+/* ── Grille 4 colonnes ── */
+.stats-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-mini {
+  text-align: center;
+  padding: 20px;
+}
+
+.stat-mini-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.stat-mini-value {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ── Grille 2 colonnes ── */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* ── Barres horizontales ── */
+.bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bar-label {
+  min-width: 130px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bar-rank {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  min-width: 22px;
+}
+
+.bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-input);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.bar-fill-info {
+  background: var(--info);
+}
+
+.bar-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 60px;
+  text-align: right;
+}
+
+/* ── Chips niveau ── */
+.level-chips {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.level-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.level-chip-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.level-chip-count {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .stats-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+/* ── Classement régional ── */
+.ranking-card {
+  margin-top: 20px;
+}
+
+.ranking-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ranking-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ranking-table-wrap {
+  overflow-x: auto;
+  margin-top: 4px;
+}
+
+/* Cellule profil */
+.profile-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.profile-region {
+  font-size: 11px;
+}
+
+/* Complétude inline */
+.completeness-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mini-bar-track {
+  width: 60px;
+  height: 6px;
+  background: var(--bg-input);
+  border-radius: 99px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.mini-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+  background: var(--accent);
+}
+
+.mini-bar-fill.text-success { background: var(--success); }
+.mini-bar-fill.text-warning { background: var(--warning); }
+.mini-bar-fill.text-danger  { background: var(--danger); }
+
+/* Badge rang */
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--bg-input);
+  color: var(--text-muted);
+}
+
+.rank-badge.rank-gold   { background: #FDE68A; color: #92400E; }
+.rank-badge.rank-silver { background: #E5E7EB; color: #374151; }
+.rank-badge.rank-bronze { background: #FDE4C8; color: #7C2D12; }
+
+.rank-regional {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Select taille sm */
+.form-select-sm {
+  font-size: 13px;
+  padding: 6px 10px;
+  min-width: 200px;
+}

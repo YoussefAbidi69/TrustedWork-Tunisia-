@@ -1,0 +1,104 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Signalements de profils</h1>
+    <p class="page-subtitle">
+      {{ reports.length }} signalement(s) en attente
+    </p>
+  </div>
+
+  <div class="page-actions">
+    <button class="btn btn-ghost btn-sm" (click)="loadReports()">
+      <i class="fas fa-refresh"></i> Rafraîchir
+    </button>
+  </div>
+</div>
+
+<!-- Message succès -->
+<div *ngIf="successMsg" class="alert-success">
+  <i class="fas fa-check-circle"></i>
+  {{ successMsg }}
+</div>
+
+<!-- Loading -->
+<div *ngIf="loading" class="card">
+  <div class="empty-state">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Chargement des signalements...</p>
+  </div>
+</div>
+
+<!-- Erreur -->
+<div *ngIf="errorMsg && !loading" class="card">
+  <div class="empty-state">
+    <i class="fas fa-exclamation-triangle text-danger"></i>
+    <p class="text-danger">{{ errorMsg }}</p>
+    <button class="btn btn-primary" style="margin-top: 12px;" (click)="loadReports()">
+      <i class="fas fa-refresh"></i> Réessayer
+    </button>
+  </div>
+</div>
+
+<!-- Aucun signalement -->
+<div *ngIf="!loading && !errorMsg && reports.length === 0" class="card">
+  <div class="empty-state">
+    <i class="fas fa-check-circle text-success"></i>
+    <p>Aucun signalement en attente</p>
+  </div>
+</div>
+
+<!-- Liste -->
+<div *ngIf="!loading && !errorMsg && reports.length > 0" class="card">
+  <table class="tw-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Profil</th>
+        <th>Signalé par</th>
+        <th>Raison</th>
+        <th>Date du signalement</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let r of reports">
+        <td>#{{ r.id }}</td>
+
+        <td>
+          <ng-container *ngIf="r.profile?.id; else noProfile">
+            <a [routerLink]="['/admin/freelancers', r.profile?.id]" class="text-accent">
+              Profil #{{ r.profile?.id }}
+            </a>
+          </ng-container>
+          <ng-template #noProfile>
+            <span class="text-muted">Profil indisponible</span>
+          </ng-template>
+        </td>
+
+        <td>User #{{ r.reporterId }}</td>
+
+        <td class="description-cell">
+          <span class="badge badge-warning">{{ r.reason }}</span>
+        </td>
+
+        <td>{{ r.reportedAt | date:'dd/MM/yyyy' }}</td>
+
+        <td>
+          <div class="action-btns">
+            <button
+              class="btn btn-success btn-sm"
+              (click)="resolve(r.id, 'RESOLVED')">
+              <i class="fas fa-check"></i> Résoudre
+            </button>
+
+            <button
+              class="btn btn-danger btn-sm"
+              (click)="resolve(r.id, 'REJECTED')">
+              <i class="fas fa-times"></i> Rejeter
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

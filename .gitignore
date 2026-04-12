@@ -1,0 +1,90 @@
+# ===============================
+
+# SPRING BOOT / MAVEN
+
+# ===============================
+
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Keep target inside src if needed
+
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# ===============================
+
+# ANGULAR / NODE
+
+# ===============================
+
+node_modules/
+dist/
+.angular/
+tmp/
+out-tsc/
+coverage/
+
+# Logs
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===============================
+
+# ENV FILES
+
+# ===============================
+
+.env
+.env.local
+.env.*
+
+# ===============================
+
+# IDE FILES
+
+# ===============================
+
+# IntelliJ
+
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# VS Code
+
+.vscode/
+
+# STS
+
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# NetBeans
+
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# ===============================
+
+# OS FILES
+
+# ===============================
+
+.DS_Store
+Thumbs.db

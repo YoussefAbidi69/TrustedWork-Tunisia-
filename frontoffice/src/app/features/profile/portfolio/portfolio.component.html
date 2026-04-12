@@ -1,0 +1,106 @@
+<div class="portfolio-container">
+
+  <!-- En-tête -->
+  <div class="portfolio-header">
+    <div class="header-left">
+      <h2>💼 Mon Portfolio</h2>
+      <span class="badge-count">{{ portfolioItems.length }} projet(s)</span>
+    </div>
+    <button class="btn-add" (click)="showForm = !showForm">
+      {{ showForm ? '✕ Annuler' : '+ Ajouter un projet' }}
+    </button>
+  </div>
+
+  <!-- Message d'erreur -->
+  <div class="alert-error" *ngIf="errorMessage">
+    {{ errorMessage }}
+    <button (click)="errorMessage = ''">✕</button>
+  </div>
+
+  <!-- Formulaire d'ajout -->
+  <div class="form-card" *ngIf="showForm">
+    <h3>Nouveau projet</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Titre *</label>
+        <input type="text" [(ngModel)]="newItem.title"
+               placeholder="Ex: Plateforme e-commerce" />
+      </div>
+      <div class="form-group">
+        <label>Technologies</label>
+        <input type="text" [(ngModel)]="newItem.technologies"
+               placeholder="Ex: Spring Boot, Angular, MySQL" />
+      </div>
+      <div class="form-group full-width">
+        <label>Description</label>
+        <textarea [(ngModel)]="newItem.description"
+                  placeholder="Décrivez votre projet..." rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label>URL du projet</label>
+        <input type="url" [(ngModel)]="newItem.projectUrl"
+               placeholder="https://github.com/..." />
+      </div>
+      <div class="form-group">
+        <label>Date de réalisation</label>
+        <input type="date" [(ngModel)]="newItem.completionDate" />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-save" (click)="addItem()"
+              [disabled]="!newItem.title.trim()">
+        💾 Enregistrer
+      </button>
+      <button class="btn-cancel" (click)="showForm = false; resetForm()">
+        Annuler
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" *ngIf="isLoading">
+    <span>Chargement...</span>
+  </div>
+
+  <!-- Liste des projets -->
+  <div class="projects-grid" *ngIf="!isLoading">
+
+    <!-- Etat vide -->
+    <div class="empty-state" *ngIf="portfolioItems.length === 0">
+      <div class="empty-icon">📁</div>
+      <h3>Aucun projet pour l'instant</h3>
+      <p>Ajoutez vos réalisations pour renforcer votre profil</p>
+      <button class="btn-add" (click)="showForm = true">
+        + Ajouter mon premier projet
+      </button>
+    </div>
+
+    <!-- Cards projets -->
+    <div class="project-card" *ngFor="let item of portfolioItems">
+      <div class="card-header">
+        <h3>{{ item.title }}</h3>
+        <button class="btn-delete" (click)="deleteItem(item.id)">🗑</button>
+      </div>
+
+      <p class="card-description">{{ item.description }}</p>
+
+      <!-- Technologies -->
+      <div class="tech-tags" *ngIf="item.technologies">
+        <span class="tech-tag" *ngFor="let tech of getTechArray(item.technologies)">
+          {{ tech }}
+        </span>
+      </div>
+
+      <div class="card-footer">
+        <span class="completion-date" *ngIf="item.completionDate">
+          📅 {{ item.completionDate | date:'MMM yyyy' }}
+        </span>
+        <a *ngIf="item.projectUrl" [href]="item.projectUrl"
+           target="_blank" class="btn-link">
+          🔗 Voir le projet
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>

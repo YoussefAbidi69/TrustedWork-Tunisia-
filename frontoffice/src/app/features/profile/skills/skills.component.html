@@ -1,0 +1,100 @@
+<!-- Section Skills — connectée au freelancer-profile-service -->
+<div class="skills-container">
+
+  <!-- En-tête -->
+  <div class="section-header">
+    <div class="header-left">
+      <h2>Mes Compétences</h2>
+      <p class="subtitle">{{ skills.length }} compétence(s) déclarée(s)</p>
+    </div>
+    <button class="btn-primary" (click)="toggleForm()">
+      {{ showForm ? 'Annuler' : '+ Ajouter' }}
+    </button>
+  </div>
+
+  <!-- Message d'erreur -->
+  <div class="error-banner" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Formulaire d'ajout -->
+  <div class="add-form" *ngIf="showForm">
+    <h3>Nouvelle compétence</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nom du skill *</label>
+        <input
+          type="text"
+          [(ngModel)]="newSkill.name"
+          placeholder="Ex: Spring Boot, Angular, Docker..."
+          class="form-control"
+        />
+      </div>
+      <div class="form-group">
+        <label>Score d'examen (0–100)</label>
+        <input
+          type="number"
+          [(ngModel)]="newSkill.examScore"
+          min="0"
+          max="100"
+          class="form-control"
+        />
+        <small>Correspond à votre score sur la plateforme Module 04</small>
+      </div>
+    </div>
+    <button class="btn-primary" (click)="addSkill()">Enregistrer</button>
+  </div>
+
+  <!-- Loader -->
+  <div class="loading" *ngIf="isLoading">Chargement...</div>
+
+  <!-- Liste vide -->
+  <div class="empty-state" *ngIf="!isLoading && skills.length === 0">
+    <p>Aucune compétence déclarée. Ajoutez votre premier skill.</p>
+  </div>
+
+  <!-- Liste des skills -->
+  <div class="skills-grid" *ngIf="!isLoading && skills.length > 0">
+    <div class="skill-card" *ngFor="let skill of skills">
+
+      <div class="skill-header">
+        <span class="skill-name">{{ skill.name }}</span>
+        <span class="skill-level" [ngClass]="getLevelClass(skill.level)">
+          {{ getLevelLabel(skill.level) }}
+        </span>
+      </div>
+
+      <div class="skill-scores">
+        <!-- Score d'authenticité -->
+        <div class="score-row">
+          <span class="score-label">Authenticité</span>
+          <div class="score-bar-wrapper">
+            <div
+              class="score-bar"
+              [ngClass]="getAuthenticityClass(skill.authenticityScore)"
+              [style.width.%]="skill.authenticityScore * 100"
+            ></div>
+          </div>
+          <span class="score-value">{{ (skill.authenticityScore * 100).toFixed(0) }}%</span>
+        </div>
+
+        <!-- Endorsements -->
+        <div class="score-row">
+          <span class="score-label">Endorsements</span>
+          <span class="score-value">{{ skill.endorsementCount }}</span>
+        </div>
+      </div>
+
+      <div class="skill-actions">
+        <button class="btn-secondary" (click)="refreshAuthenticity(skill.id)" title="Recalculer le score">
+          Recalculer
+        </button>
+        <button class="btn-danger" (click)="deleteSkill(skill.id)">
+          Supprimer
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,224 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Statistiques de la plateforme</h1>
+    <p class="page-subtitle">Vue d'ensemble des profils freelancer</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-ghost btn-sm" (click)="loadStats()">
+      <i class="fas fa-refresh"></i> Rafraîchir
+    </button>
+  </div>
+</div>
+
+<div *ngIf="loading" class="card">
+  <div class="empty-state">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Chargement des statistiques...</p>
+  </div>
+</div>
+
+<div *ngIf="errorMsg && !loading" class="card">
+  <div class="empty-state">
+    <i class="fas fa-exclamation-triangle text-danger"></i>
+    <p class="text-danger">{{ errorMsg }}</p>
+    <button class="btn btn-primary" style="margin-top: 12px;" (click)="loadStats()">
+      <i class="fas fa-refresh"></i> Réessayer
+    </button>
+  </div>
+</div>
+
+<ng-container *ngIf="!loading && !errorMsg">
+
+  <div class="stats-grid-4">
+    <div class="card stat-mini">
+      <div class="stat-mini-label">Total profils</div>
+      <div class="stat-mini-value text-accent">{{ totalProfiles }}</div>
+    </div>
+
+    <div class="card stat-mini">
+      <div class="stat-mini-label">Complétude moyenne</div>
+      <div class="stat-mini-value" [ngClass]="getScoreClass(avgCompleteness)">
+        {{ avgCompleteness }}%
+      </div>
+    </div>
+
+    <div class="card stat-mini">
+      <div class="stat-mini-label">Disponibles</div>
+      <div class="stat-mini-value text-success">{{ availableCount }}</div>
+    </div>
+
+    <div class="card stat-mini">
+      <div class="stat-mini-label">Occupés / En vacances</div>
+      <div class="stat-mini-value text-warning">
+        {{ busyCount }}
+        <span class="text-muted" style="font-size: 14px;">/</span>
+        <span class="text-danger">{{ vacationCount }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-code"></i> Top 10 Skills</span>
+      </div>
+      <div *ngIf="topSkills.length === 0" class="empty-state">
+        <p>Aucune compétence enregistrée</p>
+      </div>
+      <div class="bar-list" *ngIf="topSkills.length > 0">
+        <div class="bar-item" *ngFor="let s of topSkills; let i = index">
+          <div class="bar-label">
+            <span class="bar-rank">#{{ i + 1 }}</span>
+            <span>{{ s.name }}</span>
+          </div>
+          <div class="bar-track">
+            <div
+              class="bar-fill"
+              [style.width.%]="getPercent(s.count) > 5 ? getPercent(s.count) : 5"
+            ></div>
+          </div>
+          <span class="bar-count">{{ s.count }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-map-marker-alt"></i> Répartition par région</span>
+      </div>
+      <div *ngIf="regionStats.length === 0" class="empty-state">
+        <p>Aucune donnée de région</p>
+      </div>
+      <div class="bar-list" *ngIf="regionStats.length > 0">
+        <div class="bar-item" *ngFor="let r of regionStats">
+          <div class="bar-label">
+            <span>{{ r.region }}</span>
+          </div>
+          <div class="bar-track">
+            <div
+              class="bar-fill bar-fill-info"
+              [style.width.%]="getPercent(r.count) > 5 ? getPercent(r.count) : 5"
+            ></div>
+          </div>
+          <span class="bar-count">{{ r.count }} ({{ getPercent(r.count) }}%)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card ranking-card">
+    <div class="card-header ranking-header">
+      <span class="card-title"><i class="fas fa-trophy"></i> Classement par région</span>
+      <div class="ranking-controls">
+        <select
+          class="form-select form-select-sm"
+          [(ngModel)]="selectedRegion"
+          (ngModelChange)="onRegionChange($event)"
+        >
+          <option value="">— Sélectionner une région —</option>
+          <option *ngFor="let r of availableRegions" [value]="r">{{ r }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div *ngIf="!selectedRegion" class="empty-state">
+      <i class="fas fa-map-pin"></i>
+      <p>Sélectionnez une région pour voir le classement</p>
+    </div>
+
+    <div *ngIf="selectedRegion && rankingLoading" class="empty-state">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Chargement du classement...</p>
+    </div>
+
+    <div *ngIf="selectedRegion && rankingError && !rankingLoading" class="empty-state">
+      <i class="fas fa-exclamation-triangle text-danger"></i>
+      <p class="text-danger">{{ rankingError }}</p>
+      <button class="btn btn-ghost btn-sm" style="margin-top: 8px;" (click)="loadRegionRanking(selectedRegion)">
+        <i class="fas fa-refresh"></i> Réessayer
+      </button>
+    </div>
+
+    <div *ngIf="selectedRegion && !rankingLoading && !rankingError && regionRanking.length === 0" class="empty-state">
+      <i class="fas fa-user-slash"></i>
+      <p>Aucun profil trouvé pour cette région</p>
+    </div>
+
+    <div class="ranking-table-wrap" *ngIf="selectedRegion && !rankingLoading && !rankingError && regionRanking.length > 0">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width: 48px;">Rang</th>
+            <th>Freelancer</th>
+            <th>Titre</th>
+            <th>Complétude</th>
+            <th>Statut</th>
+            <th>Rang régional</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of regionRanking; let i = index">
+            <td>
+              <span class="rank-badge" [ngClass]="{'rank-gold': i === 0, 'rank-silver': i === 1, 'rank-bronze': i === 2}">
+                <i *ngIf="i < 3" class="fas fa-medal"></i>
+                <span *ngIf="i >= 3">{{ i + 1 }}</span>
+              </span>
+            </td>
+            <td>
+              <div class="profile-cell">
+                <div class="avatar avatar-sm avatar-accent">
+                  #{{ p.userId }}
+                </div>
+                <div>
+                  <div class="profile-name">Freelancer #{{ p.userId }}</div>
+                  <div class="profile-region text-muted">{{ p.region }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-secondary" style="font-size: 13px;">{{ p.headline || '—' }}</td>
+            <td>
+              <div class="completeness-cell">
+                <div class="mini-bar-track">
+                  <div
+                    class="mini-bar-fill"
+                    [style.width.%]="p.completenessScore || 0"
+                    [ngClass]="getScoreClass(p.completenessScore || 0)"
+                  ></div>
+                </div>
+                <span [ngClass]="getScoreClass(p.completenessScore || 0)">
+                  {{ p.completenessScore || 0 }}%
+                </span>
+              </div>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getAvailabilityClass(p.availabilityStatus)">
+                {{ getAvailabilityLabel(p.availabilityStatus) }}
+              </span>
+            </td>
+            <td>
+              <span class="rank-regional">#{{ p.regionalRank || (i + 1) }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 20px;">
+    <div class="card-header">
+      <span class="card-title"><i class="fas fa-briefcase"></i> Répartition par type de projet</span>
+    </div>
+    <div *ngIf="projectTypeStats.length === 0" class="empty-state">
+      <p>Aucune donnée</p>
+    </div>
+    <div class="level-chips" *ngIf="projectTypeStats.length > 0">
+      <div class="level-chip" *ngFor="let item of projectTypeStats">
+        <span class="level-chip-label">{{ getProjectTypeLabel(item.type) }}</span>
+        <span class="level-chip-count">{{ item.count }}</span>
+        <span class="text-muted" style="font-size: 11px;">({{ getPercent(item.count) }}%)</span>
+      </div>
+    </div>
+  </div>
+
+</ng-container>
