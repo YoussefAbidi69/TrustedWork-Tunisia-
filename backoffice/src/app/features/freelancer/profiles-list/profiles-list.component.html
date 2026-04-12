@@ -3,27 +3,31 @@
     <h1 class="page-title">Profils freelancers</h1>
     <p class="page-subtitle">
       {{ filteredProfiles.length }} profil(s) trouvé(s)
+      <span *ngIf="filteredProfiles.length > 0">
+        — affichage {{ startItem }} à {{ endItem }}
+      </span>
     </p>
   </div>
 </div>
 
 <div class="card" style="margin-bottom: 20px;">
   <div class="filters-row">
+
     <div class="search-bar">
       <i class="fas fa-search"></i>
       <input
         type="text"
         class="form-control"
-        placeholder="Rechercher par titre ou bio..."
+        placeholder="Rechercher par nom, headline, bio ou région..."
         [(ngModel)]="searchTerm"
-        (input)="applyFilters()"
+        (input)="applyFilters(false)"
       />
     </div>
 
     <select
       class="form-control filter-select"
       [(ngModel)]="selectedRegion"
-      (change)="applyFilters()"
+      (change)="onServerFilterChange()"
     >
       <option value="">Toutes les régions</option>
       <option *ngFor="let r of regions" [value]="r">{{ r }}</option>
@@ -32,13 +36,35 @@
     <select
       class="form-control filter-select"
       [(ngModel)]="selectedStatus"
-      (change)="applyFilters()"
+      (change)="onServerFilterChange()"
     >
       <option value="">Tous les statuts</option>
       <option value="AVAILABLE">Disponible</option>
       <option value="BUSY">Occupé</option>
       <option value="ON_VACATION">En vacances</option>
     </select>
+
+    <input
+      type="number"
+      class="form-control filter-select"
+      placeholder="Taux min"
+      [(ngModel)]="minRate"
+    />
+
+    <input
+      type="number"
+      class="form-control filter-select"
+      placeholder="Taux max"
+      [(ngModel)]="maxRate"
+    />
+
+    <button class="btn btn-primary btn-sm" (click)="onServerFilterChange()">
+      <i class="fas fa-filter"></i> Filtrer
+    </button>
+
+    <button class="btn btn-ghost btn-sm" (click)="resetFilters()">
+      <i class="fas fa-rotate-left"></i> Reset
+    </button>
   </div>
 </div>
 
@@ -61,6 +87,27 @@
 
 <div class="card" *ngIf="!loading && !errorMsg">
 
+  <div class="table-toolbar" *ngIf="filteredProfiles.length > 0">
+    <div class="toolbar-left">
+      <span class="results-info">
+        Résultats : <strong>{{ filteredProfiles.length }}</strong>
+      </span>
+    </div>
+
+    <div class="toolbar-right">
+      <label for="pageSize">Lignes / page</label>
+      <select
+        id="pageSize"
+        class="form-control filter-select"
+        style="width: 90px;"
+        [(ngModel)]="pageSize"
+        (change)="onPageSizeChange()"
+      >
+        <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+      </select>
+    </div>
+  </div>
+
   <div *ngIf="filteredProfiles.length === 0" class="empty-state">
     <i class="fas fa-user-slash"></i>
     <p>Aucun profil trouvé</p>
@@ -69,9 +116,10 @@
   <table class="tw-table" *ngIf="filteredProfiles.length > 0">
     <thead>
       <tr>
-        <th>User ID</th>
+        <th>Freelancer</th>
         <th>Headline</th>
         <th>Région</th>
+        <th>Taux</th>
         <th>Rang régional</th>
         <th>Disponibilité</th>
         <th>Complétude</th>
@@ -80,24 +128,41 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let p of filteredProfiles">
-        <td>#{{ p.userId }}</td>
+      <tr *ngFor="let p of paginatedProfiles">
+        <td>
+          <div class="freelancer-cell">
+            <div class="freelancer-avatar">
+              {{ p.initials }}
+            </div>
+            <div class="freelancer-identity">
+              <strong>{{ p.fullName }}</strong>
+              <small>#{{ p.id }}</small>
+            </div>
+          </div>
+        </td>
+
         <td>{{ p.headline || '—' }}</td>
         <td>{{ p.region || '—' }}</td>
+        <td>{{ p.hourlyRate ? (p.hourlyRate + ' TND/h') : '—' }}</td>
+
         <td>
           <span class="badge badge-accent">#{{ p.regionalRank || '—' }}</span>
         </td>
+
         <td>
           <span class="badge" [ngClass]="getStatusBadge(p.availabilityStatus)">
             {{ getStatusLabel(p.availabilityStatus) }}
           </span>
         </td>
+
         <td>
           <span [ngClass]="getScoreClass(p.completenessScore)">
             {{ p.completenessScore }}%
           </span>
         </td>
+
         <td>{{ p.totalViews || 0 }}</td>
+
         <td>
           <a
             [routerLink]="['/admin/freelancers', p.id]"
@@ -109,4 +174,38 @@
       </tr>
     </tbody>
   </table>
+
+  <div class="pagination-bar" *ngIf="filteredProfiles.length > 0">
+    <div class="pagination-info">
+      Affichage de {{ startItem }} à {{ endItem }} sur {{ filteredProfiles.length }}
+    </div>
+
+    <div class="pagination-controls">
+      <button
+        class="btn btn-ghost btn-sm"
+        (click)="previousPage()"
+        [disabled]="currentPage === 1"
+      >
+        <i class="fas fa-chevron-left"></i>
+      </button>
+
+      <button
+        *ngFor="let page of pageNumbers"
+        class="btn btn-sm"
+        [ngClass]="page === currentPage ? 'btn-primary' : 'btn-ghost'"
+        (click)="goToPage(page)"
+      >
+        {{ page }}
+      </button>
+
+      <button
+        class="btn btn-ghost btn-sm"
+        (click)="nextPage()"
+        [disabled]="currentPage === totalPages"
+      >
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+
 </div>
