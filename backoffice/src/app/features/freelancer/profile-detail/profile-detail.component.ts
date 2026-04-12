@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import {
   FreelancerProfile,
   Skill,
@@ -15,6 +16,17 @@ import {
   SkillGapRecommendation
 } from '../../../core/models/freelancer.model';
 import { FreelancerProfileService } from '../../../core/services/freelancer-profile.service';
+import { UserResolutionService } from '../../../core/services/user-resolution.service';
+
+interface ReviewViewModel extends ProfileReview {
+  clientFullName: string;
+  clientInitials: string;
+}
+
+interface EndorsementViewModel extends Endorsement {
+  endorserFullName: string;
+  endorserInitials: string;
+}
 
 @Component({
   selector: 'app-profile-detail',
@@ -22,48 +34,68 @@ import { FreelancerProfileService } from '../../../core/services/freelancer-prof
   styleUrls: ['./profile-detail.component.css']
 })
 export class ProfileDetailComponent implements OnInit {
-
   profile: FreelancerProfile | null = null;
+  profileOwnerName = '';
+
   skills: Skill[] = [];
   portfolio: PortfolioItem[] = [];
   certifications: Certification[] = [];
   workExperiences: WorkExperience[] = [];
   educations: Education[] = [];
-  reviews: ProfileReview[] = [];
+  reviews: ReviewViewModel[] = [];
+
   averageRating = 0;
 
   completeness: CompletenessResponse | null = null;
   careerPath: CareerPathResponse | null = null;
-
   skillGapDiagnostic: SkillGapResponse | null = null;
   skillGapRecommendations: SkillGapRecommendation | null = null;
 
   loading = true;
   errorMsg = '';
   successMsg = '';
-
   showDeleteConfirm = false;
 
   selectedSkill: Skill | null = null;
-  endorsements: Endorsement[] = [];
+  endorsements: EndorsementViewModel[] = [];
   endorsementsLoading = false;
   endorsementsError = '';
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private profileService: FreelancerProfileService
+    private profileService: FreelancerProfileService,
+    private userResolution: UserResolutionService
   ) {}
+
+  get pinnedPortfolio(): PortfolioItem[] {
+    return this.portfolio.filter(item => item.pinned);
+  }
+
+  get regularPortfolio(): PortfolioItem[] {
+    return this.portfolio.filter(item => !item.pinned);
+  }
+
+  get pinnedPortfolioCount(): number {
+    return this.pinnedPortfolio.length;
+  }
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (id) {
-      this.loadProfile(id);
-    } else {
+
+    if (!id) {
       this.loading = false;
       this.errorMsg = 'Identifiant de profil invalide.';
+      return;
     }
+
+    this.loadProfile(id);
   }
+  activeTab: string = 'overview';
+
+setTab(tab: string) {
+  this.activeTab = tab;
+}
 
   loadProfile(profileId: number): void {
     this.loading = true;
@@ -77,59 +109,139 @@ export class ProfileDetailComponent implements OnInit {
 
         const userId = data.userId;
 
+        this.userResolution.getFullName(userId).subscribe({
+          next: (name) => {
+            this.profileOwnerName = name;
+          },
+          error: () => {
+            this.profileOwnerName = `User #${userId}`;
+          }
+        });
+
         this.profileService.getSkillsByUserId(userId).subscribe({
-          next: (s) => this.skills = s,
-          error: () => this.skills = []
+          next: (skills) => {
+            this.skills = skills || [];
+          },
+          error: () => {
+            this.skills = [];
+          }
         });
 
         this.profileService.getPortfolio(userId).subscribe({
-          next: (p) => this.portfolio = p,
-          error: () => this.portfolio = []
+          next: (portfolio) => {
+            this.portfolio = this.sortPortfolioItems(portfolio || []);
+          },
+          error: () => {
+            this.portfolio = [];
+          }
         });
 
         this.profileService.getCertifications(userId).subscribe({
-          next: (c) => this.certifications = c,
-          error: () => this.certifications = []
+          next: (certifications) => {
+            this.certifications = (certifications || []).sort(
+              (a, b) => this.getSortableDateValue(b.issueDate) - this.getSortableDateValue(a.issueDate)
+            );
+          },
+          error: () => {
+            this.certifications = [];
+          }
         });
 
         this.profileService.getWorkExperiences(userId).subscribe({
-          next: (w) => this.workExperiences = w,
-          error: () => this.workExperiences = []
+          next: (workExperiences) => {
+            this.workExperiences = (workExperiences || []).sort((a, b) => {
+              if (!!b.isCurrent !== !!a.isCurrent) {
+                return Number(!!b.isCurrent) - Number(!!a.isCurrent);
+              }
+              return this.getSortableDateValue(b.startDate) - this.getSortableDateValue(a.startDate);
+            });
+          },
+          error: () => {
+            this.workExperiences = [];
+          }
         });
 
         this.profileService.getEducations(userId).subscribe({
-          next: (e) => this.educations = e,
-          error: () => this.educations = []
+          next: (educations) => {
+            this.educations = educations || [];
+          },
+          error: () => {
+            this.educations = [];
+          }
         });
 
         this.profileService.getReviewsByProfile(profileId).subscribe({
-          next: (r) => this.reviews = r,
-          error: () => this.reviews = []
+          next: (rawReviews) => {
+            if (!rawReviews || rawReviews.length === 0) {
+              this.reviews = [];
+              return;
+            }
+
+            forkJoin(rawReviews.map(r => this.userResolution.getFullName(r.clientId))).subscribe({
+              next: (names) => {
+                this.reviews = rawReviews.map((r, i) => ({
+                  ...r,
+                  clientFullName: names[i],
+                  clientInitials: this.userResolution.getInitials(names[i])
+                }));
+              },
+              error: () => {
+                this.reviews = rawReviews.map(r => ({
+                  ...r,
+                  clientFullName: `User #${r.clientId}`,
+                  clientInitials: 'U'
+                }));
+              }
+            });
+          },
+          error: () => {
+            this.reviews = [];
+          }
         });
 
         this.profileService.getAverageRating(profileId).subscribe({
-          next: (avg) => this.averageRating = avg,
-          error: () => this.averageRating = 0
+          next: (avg) => {
+            this.averageRating = avg;
+          },
+          error: () => {
+            this.averageRating = 0;
+          }
         });
 
         this.profileService.getCompleteness(userId).subscribe({
-          next: (c) => this.completeness = c,
-          error: () => this.completeness = null
+          next: (completeness) => {
+            this.completeness = completeness;
+          },
+          error: () => {
+            this.completeness = null;
+          }
         });
 
         this.profileService.getCareerPath(userId).subscribe({
-          next: (cp) => this.careerPath = cp,
-          error: () => this.careerPath = null
+          next: (careerPath) => {
+            this.careerPath = careerPath;
+          },
+          error: () => {
+            this.careerPath = null;
+          }
         });
 
         this.profileService.getSkillGaps(userId).subscribe({
-          next: (diag) => this.skillGapDiagnostic = diag,
-          error: () => this.skillGapDiagnostic = null
+          next: (diagnostic) => {
+            this.skillGapDiagnostic = diagnostic;
+          },
+          error: () => {
+            this.skillGapDiagnostic = null;
+          }
         });
 
         this.profileService.getSkillGapRecommendations(userId).subscribe({
-          next: (rec) => this.skillGapRecommendations = rec,
-          error: () => this.skillGapRecommendations = null
+          next: (recommendations) => {
+            this.skillGapRecommendations = recommendations;
+          },
+          error: () => {
+            this.skillGapRecommendations = null;
+          }
         });
       },
       error: (err) => {
@@ -138,11 +250,6 @@ export class ProfileDetailComponent implements OnInit {
         console.error(err);
       }
     });
-  }
-
-  private showSuccess(msg: string): void {
-    this.successMsg = msg;
-    setTimeout(() => this.successMsg = '', 3000);
   }
 
   confirmDeleteProfile(): void {
@@ -179,7 +286,12 @@ export class ProfileDetailComponent implements OnInit {
 
     this.profileService.deleteSkill(skillId, this.profile.userId).subscribe({
       next: () => {
-        this.skills = this.skills.filter(s => s.id !== skillId);
+        this.skills = this.skills.filter(skill => skill.id !== skillId);
+
+        if (this.selectedSkill?.id === skillId) {
+          this.closeEndorsements();
+        }
+
         this.showSuccess('Compétence supprimée');
       },
       error: (err) => {
@@ -189,16 +301,35 @@ export class ProfileDetailComponent implements OnInit {
     });
   }
 
-  deleteCertification(certId: number): void {
+  pinPortfolioItem(itemId: number): void {
     if (!this.profile) return;
 
-    this.profileService.deleteCertification(certId, this.profile.userId).subscribe({
-      next: () => {
-        this.certifications = this.certifications.filter(c => c.id !== certId);
-        this.showSuccess('Certification supprimée');
+    this.profileService.pinPortfolioItem(itemId, this.profile.userId).subscribe({
+      next: (updated) => {
+        this.portfolio = this.sortPortfolioItems(
+          this.portfolio.map(item => item.id === itemId ? updated : item)
+        );
+        this.showSuccess('Projet épinglé');
       },
       error: (err) => {
-        this.errorMsg = 'Erreur lors de la suppression de la certification';
+        this.errorMsg = err?.error?.message || 'Erreur lors de l’épinglage du projet';
+        console.error(err);
+      }
+    });
+  }
+
+  unpinPortfolioItem(itemId: number): void {
+    if (!this.profile) return;
+
+    this.profileService.unpinPortfolioItem(itemId, this.profile.userId).subscribe({
+      next: (updated) => {
+        this.portfolio = this.sortPortfolioItems(
+          this.portfolio.map(item => item.id === itemId ? updated : item)
+        );
+        this.showSuccess('Projet désépinglé');
+      },
+      error: (err) => {
+        this.errorMsg = err?.error?.message || 'Erreur lors du désépinglage du projet';
         console.error(err);
       }
     });
@@ -209,7 +340,7 @@ export class ProfileDetailComponent implements OnInit {
 
     this.profileService.deletePortfolioItem(itemId, this.profile.userId).subscribe({
       next: () => {
-        this.portfolio = this.portfolio.filter(p => p.id !== itemId);
+        this.portfolio = this.portfolio.filter(item => item.id !== itemId);
         this.showSuccess('Projet portfolio supprimé');
       },
       error: (err) => {
@@ -219,61 +350,56 @@ export class ProfileDetailComponent implements OnInit {
     });
   }
 
-  deleteWorkExperience(expId: number): void {
-    if (!this.profile) return;
+  openEndorsements(skill: Skill): void {
+    if (this.selectedSkill?.id === skill.id) {
+      this.closeEndorsements();
+      return;
+    }
 
-    this.profileService.deleteWorkExperience(expId, this.profile.userId).subscribe({
-      next: () => {
-        this.workExperiences = this.workExperiences.filter(w => w.id !== expId);
-        this.showSuccess('Expérience supprimée');
+    this.selectedSkill = skill;
+    this.endorsements = [];
+    this.endorsementsLoading = true;
+    this.endorsementsError = '';
+
+    this.profileService.getEndorsementsBySkill(skill.id).subscribe({
+      next: (rawList) => {
+        if (!rawList || rawList.length === 0) {
+          this.endorsements = [];
+          this.endorsementsLoading = false;
+          return;
+        }
+
+        forkJoin(rawList.map(e => this.userResolution.getFullName(e.endorserId))).subscribe({
+          next: (names) => {
+            this.endorsements = rawList.map((e, i) => ({
+              ...e,
+              endorserFullName: names[i],
+              endorserInitials: this.userResolution.getInitials(names[i])
+            }));
+            this.endorsementsLoading = false;
+          },
+          error: () => {
+            this.endorsements = rawList.map(e => ({
+              ...e,
+              endorserFullName: `User #${e.endorserId}`,
+              endorserInitials: 'U'
+            }));
+            this.endorsementsLoading = false;
+          }
+        });
       },
-      error: (err) => {
-        this.errorMsg = 'Erreur lors de la suppression de l’expérience';
-        console.error(err);
+      error: () => {
+        this.endorsementsError = 'Impossible de charger les endorsements.';
+        this.endorsementsLoading = false;
       }
     });
   }
 
-  deleteEducation(eduId: number): void {
-    if (!this.profile) return;
-
-    this.profileService.deleteEducation(eduId, this.profile.userId).subscribe({
-      next: () => {
-        this.educations = this.educations.filter(e => e.id !== eduId);
-        this.showSuccess('Formation supprimée');
-      },
-      error: (err) => {
-        this.errorMsg = 'Erreur lors de la suppression de la formation';
-        console.error(err);
-      }
-    });
-  }
-
-  getStars(rating: number): string[] {
-    const stars: string[] = [];
-    for (let i = 1; i <= 5; i++) {
-      if (i <= Math.floor(rating)) {
-        stars.push('fas fa-star');
-      } else if (i - rating < 1) {
-        stars.push('fas fa-star-half-alt');
-      } else {
-        stars.push('far fa-star');
-      }
-    }
-    return stars;
-  }
-
-  getStatusBadge(status: string): string {
-    switch (status) {
-      case 'AVAILABLE':
-        return 'badge-success';
-      case 'BUSY':
-        return 'badge-warning';
-      case 'ON_VACATION':
-        return 'badge-danger';
-      default:
-        return 'badge-muted';
-    }
+  closeEndorsements(): void {
+    this.selectedSkill = null;
+    this.endorsements = [];
+    this.endorsementsError = '';
+    this.endorsementsLoading = false;
   }
 
   getAvailabilityLabel(status: string): string {
@@ -289,68 +415,29 @@ export class ProfileDetailComponent implements OnInit {
     }
   }
 
-  getVisibilityLabel(value: string): string {
-    switch (value) {
-      case 'PUBLIC':
-        return 'Public';
-      case 'PRIVATE':
-        return 'Privé';
-      case 'CONNECTIONS_ONLY':
-        return 'Connexions uniquement';
-      default:
-        return value || '—';
-    }
+  private showSuccess(msg: string): void {
+    this.successMsg = msg;
+    setTimeout(() => {
+      this.successMsg = '';
+    }, 3000);
   }
 
-  getProjectTypeLabel(value: string): string {
-    switch (value) {
-      case 'SHORT_TERM':
-        return 'Court terme';
-      case 'LONG_TERM':
-        return 'Long terme';
-      case 'BOTH':
-        return 'Les deux';
-      default:
-        return value || '—';
-    }
+  private getSortableDateValue(date: string | Date | undefined | null): number {
+    if (!date) return 0;
+
+    const parsed = new Date(date);
+    return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
   }
 
-  getScoreClass(score: number): string {
-    if (score >= 80) return 'text-success';
-    if (score >= 50) return 'text-warning';
-    return 'text-danger';
-  }
-
-  openEndorsements(skill: Skill): void {
-    if (this.selectedSkill?.id === skill.id) {
-      this.closeEndorsements();
-      return;
-    }
-
-    this.selectedSkill = skill;
-    this.endorsements = [];
-    this.endorsementsLoading = true;
-    this.endorsementsError = '';
-
-    this.profileService.getEndorsementsBySkill(skill.id).subscribe({
-      next: (list) => {
-        this.endorsements = list;
-        this.endorsementsLoading = false;
-      },
-      error: () => {
-        this.endorsementsError = 'Impossible de charger les endorsements.';
-        this.endorsementsLoading = false;
+  private sortPortfolioItems(items: PortfolioItem[]): PortfolioItem[] {
+    return [...items].sort((a, b) => {
+      if (!!a.pinned !== !!b.pinned) {
+        return Number(!!b.pinned) - Number(!!a.pinned);
       }
+
+      return this.getSortableDateValue(b.completionDate) - this.getSortableDateValue(a.completionDate);
     });
   }
 
-  closeEndorsements(): void {
-    this.selectedSkill = null;
-    this.endorsements = [];
-    this.endorsementsError = '';
-  }
-
-  getCompletenessValue(value: number | null | undefined): number {
-    return value ?? 0;
-  }
+  
 }

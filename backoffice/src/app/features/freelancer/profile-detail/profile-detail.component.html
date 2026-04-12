@@ -29,7 +29,9 @@
 
     <div class="toolbar-actions">
       <div class="dropdown-group">
-        <span class="text-muted" style="font-size: 11px; margin-right: 6px;">Disponibilité :</span>
+        <span class="text-muted" style="font-size: 11px; margin-right: 6px;">
+          Disponibilité :
+        </span>
 
         <button
           class="btn btn-success btn-sm"
@@ -64,9 +66,11 @@
 
       <div *ngIf="showDeleteConfirm" class="confirm-delete">
         <span class="text-danger" style="font-size: 12px;">Confirmer ?</span>
+
         <button class="btn btn-danger btn-sm" (click)="confirmDeleteProfile()">
           <i class="fas fa-check"></i> Oui, supprimer
         </button>
+
         <button class="btn btn-ghost btn-sm" (click)="showDeleteConfirm = false">
           Annuler
         </button>
@@ -74,489 +78,110 @@
     </div>
   </div>
 
-  <!-- En-tête profil -->
-  <div class="card" style="margin-bottom: 20px;">
-    <div class="profile-header">
-      <div class="avatar avatar-lg avatar-accent">
-        {{ (profile.headline || 'U').charAt(0).toUpperCase() }}
-      </div>
+  <!-- Tabs -->
+  <div class="profile-tabs">
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'overview'"
+      (click)="setTab('overview')">
+      Overview
+    </button>
 
-      <div class="profile-header-info">
-        <h1 class="page-title">{{ profile.headline || 'Sans titre' }}</h1>
-        <p class="page-subtitle">
-          User #{{ profile.userId }} · {{ profile.region || 'Région non définie' }}
-          · Rang régional #{{ profile.regionalRank || '—' }}
-          · {{ profile.totalViews || 0 }} vues
-        </p>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'skills'"
+      (click)="setTab('skills')">
+      Skills
+    </button>
 
-        <div class="profile-badges">
-          <span class="badge" [ngClass]="getStatusBadge(profile.availabilityStatus)">
-            {{ profile.availabilityStatus }}
-          </span>
-          <span *ngIf="profile.hourlyRate" class="badge badge-info">
-            {{ profile.hourlyRate }} TND/h
-          </span>
-          <span *ngIf="profile.visibility" class="badge badge-muted">
-            {{ profile.visibility }}
-          </span>
-          <span *ngIf="profile.projectType" class="badge badge-accent">
-            {{ profile.projectType }}
-          </span>
-        </div>
-      </div>
-    </div>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'experience'"
+      (click)="setTab('experience')">
+      Experience
+    </button>
 
-    <div class="divider"></div>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'portfolio'"
+      (click)="setTab('portfolio')">
+      Portfolio
+    </button>
 
-    <p class="profile-bio">
-      {{ profile.bio || 'Aucune bio renseignée.' }}
-    </p>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'reputation'"
+      (click)="setTab('reputation')">
+      Reviews
+    </button>
+
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'insights'"
+      (click)="setTab('insights')">
+      Insights
+    </button>
   </div>
 
-  <!-- Stats -->
-  <div class="stats-grid">
-    <div class="card stat-mini">
-      <div class="stat-mini-label">Complétude</div>
-      <div class="stat-mini-value" [ngClass]="getScoreClass(profile.completenessScore)">
-        {{ profile.completenessScore }}%
-      </div>
-    </div>
+  <!-- Overview -->
+  <app-profile-overview-tab
+    *ngIf="activeTab === 'overview'"
+    [profile]="profile"
+    [profileOwnerName]="profileOwnerName"
+    [averageRating]="averageRating"
+    [reviewsCount]="reviews.length"
+    [skillsCount]="skills.length"
+    [certificationsCount]="certifications.length"
+    [completeness]="completeness">
+  </app-profile-overview-tab>
 
-    <div class="card stat-mini">
-      <div class="stat-mini-label">Note moyenne</div>
-      <div class="stat-mini-value">
-        <span *ngFor="let star of getStars(averageRating)">
-          <i [class]="star" style="color: var(--warning); font-size: 14px;"></i>
-        </span>
-        <span style="margin-left: 6px;">{{ averageRating | number:'1.1-1' }}</span>
-      </div>
-      <div class="stat-mini-hint">{{ reviews.length }} avis</div>
-    </div>
+  <!-- Skills -->
+  <app-profile-skills-tab
+    *ngIf="activeTab === 'skills'"
+    [skills]="skills"
+    [selectedSkill]="selectedSkill"
+    [endorsements]="endorsements"
+    [endorsementsLoading]="endorsementsLoading"
+    [endorsementsError]="endorsementsError"
+    (skillSelected)="openEndorsements($event)"
+    (endorsementsClosed)="closeEndorsements()"
+    (skillDeleted)="deleteSkill($event)">
+  </app-profile-skills-tab>
 
-    <div class="card stat-mini">
-      <div class="stat-mini-label">Compétences</div>
-      <div class="stat-mini-value">{{ skills.length }}</div>
-    </div>
+  <!-- Experience -->
+  <app-profile-experience-tab
+    *ngIf="activeTab === 'experience'"
+    [certifications]="certifications"
+    [workExperiences]="workExperiences"
+    [educations]="educations">
+  </app-profile-experience-tab>
 
-    <div class="card stat-mini">
-      <div class="stat-mini-label">Certifications</div>
-      <div class="stat-mini-value">{{ certifications.length }}</div>
-    </div>
-  </div>
+  <!-- Portfolio -->
+  <app-profile-portfolio-tab
+    *ngIf="activeTab === 'portfolio'"
+    [portfolio]="portfolio"
+    [pinnedPortfolio]="pinnedPortfolio"
+    [regularPortfolio]="regularPortfolio"
+    [pinnedPortfolioCount]="pinnedPortfolioCount"
+    (pin)="pinPortfolioItem($event)"
+    (unpin)="unpinPortfolioItem($event)"
+    (delete)="deletePortfolioItem($event)">
+  </app-profile-portfolio-tab>
 
-  <!-- ════ COMPÉTENCES ════ -->
-  <div class="card section-card" *ngIf="skills.length > 0">
-    <div class="card-header">
-      <span class="card-title"><i class="fas fa-code"></i> Compétences ({{ skills.length }})</span>
-    </div>
+  <!-- Reputation -->
+  <app-profile-reputation-tab
+    *ngIf="activeTab === 'reputation'"
+    [reviews]="reviews"
+    [averageRating]="averageRating">
+  </app-profile-reputation-tab>
 
-    <table class="tw-table">
-      <thead>
-        <tr>
-          <th>Skill</th>
-          <th>Niveau</th>
-          <th>Authenticité</th>
-          <th>Exam</th>
-          <th>Endorsements</th>
-          <th>Admin</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let s of skills" [class.row-selected]="selectedSkill?.id === s.id">
-          <td>{{ s.name }}</td>
-          <td><span class="badge badge-accent">{{ s.level || '—' }}</span></td>
-          <td>{{ s.authenticityScore | number:'1.0-0' }}%</td>
-          <td>{{ s.examScore || '—' }}</td>
-          <td>
-            <button
-              class="btn btn-ghost btn-sm endorsement-btn"
-              [class.endorsement-btn--active]="selectedSkill?.id === s.id"
-              (click)="openEndorsements(s)"
-              [title]="s.endorsementCount + ' endorsement(s) — cliquer pour voir'">
-              <i class="fas fa-thumbs-up"></i>
-              {{ s.endorsementCount }}
-            </button>
-          </td>
-          <td>
-            <button
-              class="btn btn-danger btn-sm btn-icon"
-              title="Supprimer ce skill"
-              (click)="deleteSkill(s.id)">
-              <i class="fas fa-trash"></i>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- Panneau endorsements -->
-    <div class="endorsement-panel" *ngIf="selectedSkill">
-      <div class="endorsement-panel-header">
-        <span>
-          <i class="fas fa-thumbs-up"></i>
-          Endorsements pour <strong>{{ selectedSkill.name }}</strong>
-        </span>
-        <button class="btn btn-ghost btn-sm btn-icon" (click)="closeEndorsements()">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-
-      <div class="endorsement-loading" *ngIf="endorsementsLoading">
-        <i class="fas fa-spinner fa-spin"></i> Chargement...
-      </div>
-
-      <div class="endorsement-error" *ngIf="endorsementsError && !endorsementsLoading">
-        <i class="fas fa-exclamation-triangle"></i> {{ endorsementsError }}
-      </div>
-
-      <div class="endorsement-empty" *ngIf="!endorsementsLoading && !endorsementsError && endorsements.length === 0">
-        <i class="fas fa-inbox"></i> Aucun endorsement pour ce skill.
-      </div>
-
-      <div class="endorsement-list" *ngIf="!endorsementsLoading && !endorsementsError && endorsements.length > 0">
-        <div class="endorsement-item" *ngFor="let e of endorsements">
-          <div class="endorsement-meta">
-            <div class="avatar avatar-sm avatar-accent" style="font-size: 11px;">
-              #{{ e.endorserId }}
-            </div>
-            <div>
-              <div class="endorsement-endorser">Endorser #{{ e.endorserId }}</div>
-              <div class="endorsement-date text-muted">{{ e.endorsedAt | date:'dd MMM yyyy' }}</div>
-            </div>
-          </div>
-          <div class="endorsement-comment" *ngIf="e.comment">
-            "{{ e.comment }}"
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ════ CERTIFICATIONS ════ -->
-  <div class="card section-card" *ngIf="certifications.length > 0">
-    <div class="card-header">
-      <span class="card-title"><i class="fas fa-certificate"></i> Certifications ({{ certifications.length }})</span>
-    </div>
-
-    <table class="tw-table">
-      <thead>
-        <tr>
-          <th>Titre</th>
-          <th>Organisme</th>
-          <th>Type</th>
-          <th>Date</th>
-          <th>Statut</th>
-          <th>Lien</th>
-          <th>Admin</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let c of certifications">
-          <td>{{ c.title }}</td>
-          <td>{{ c.issuer }}</td>
-          <td><span class="badge badge-muted">{{ c.type }}</span></td>
-          <td>{{ c.issueDate | date:'dd/MM/yyyy' }}</td>
-          <td>
-            <span class="badge" [ngClass]="c.isExpired ? 'badge-danger' : 'badge-success'">
-              {{ c.isExpired ? 'Expirée' : 'Valide' }}
-            </span>
-          </td>
-          <td>
-            <a *ngIf="c.certificateUrl" [href]="c.certificateUrl" target="_blank" class="btn btn-ghost btn-sm">
-              <i class="fas fa-external-link-alt"></i>
-            </a>
-          </td>
-          <td>
-            <button
-              class="btn btn-danger btn-sm btn-icon"
-              title="Supprimer cette certification"
-              (click)="deleteCertification(c.id)">
-              <i class="fas fa-trash"></i>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- ════ EXPÉRIENCES ════ -->
-  <div class="card section-card" *ngIf="workExperiences.length > 0">
-    <div class="card-header">
-      <span class="card-title"><i class="fas fa-building"></i> Expériences ({{ workExperiences.length }})</span>
-    </div>
-
-    <div class="timeline-list">
-      <div class="timeline-item" *ngFor="let w of workExperiences">
-        <div class="timeline-header">
-          <div>
-            <strong>{{ w.jobTitle }}</strong> — {{ w.company }}
-            <span *ngIf="w.isCurrent" class="badge badge-success" style="margin-left: 8px;">En poste</span>
-          </div>
-          <button class="btn btn-danger btn-sm btn-icon" title="Supprimer" (click)="deleteWorkExperience(w.id)">
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
-        <div class="text-muted" style="font-size: 12px;">
-          {{ w.startDate | date:'MM/yyyy' }} — {{ w.isCurrent ? 'Présent' : (w.endDate | date:'MM/yyyy') }}
-        </div>
-        <p *ngIf="w.description" class="text-secondary" style="margin-top: 4px;">{{ w.description }}</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ════ FORMATIONS ════ -->
-  <div class="card section-card" *ngIf="educations.length > 0">
-    <div class="card-header">
-      <span class="card-title"><i class="fas fa-graduation-cap"></i> Formations ({{ educations.length }})</span>
-    </div>
-
-    <div class="timeline-list">
-      <div class="timeline-item" *ngFor="let e of educations">
-        <div class="timeline-header">
-          <div><strong>{{ e.degree }}</strong> — {{ e.institution }}</div>
-          <button class="btn btn-danger btn-sm btn-icon" title="Supprimer" (click)="deleteEducation(e.id)">
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
-        <div class="text-muted" style="font-size: 12px;">
-          {{ e.fieldOfStudy }} · Promotion {{ e.graduationYear }}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ════ PORTFOLIO ════ -->
-  <div class="card section-card" *ngIf="portfolio.length > 0">
-    <div class="card-header">
-      <span class="card-title"><i class="fas fa-briefcase"></i> Portfolio ({{ portfolio.length }})</span>
-    </div>
-
-    <div class="portfolio-grid">
-      <div class="portfolio-item" *ngFor="let item of portfolio">
-        <div class="portfolio-item-header">
-          <h4>{{ item.title }}</h4>
-          <button class="btn btn-danger btn-sm btn-icon" title="Supprimer" (click)="deletePortfolioItem(item.id)">
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
-        <p class="text-secondary">{{ item.description || '' }}</p>
-        <div *ngIf="item.technologies" class="text-muted" style="font-size: 12px; margin-top: 4px;">
-          <i class="fas fa-wrench"></i> {{ item.technologies }}
-        </div>
-        <a *ngIf="item.projectUrl" [href]="item.projectUrl" target="_blank" class="btn btn-ghost btn-sm" style="margin-top: 8px;">
-          <i class="fas fa-external-link-alt"></i> Voir le projet
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <!-- ════ AVIS ════ -->
-  <div class="card section-card" *ngIf="reviews.length > 0">
-    <div class="card-header">
-      <span class="card-title"><i class="fas fa-star"></i> Avis ({{ reviews.length }})</span>
-    </div>
-
-    <div class="reviews-list">
-      <div class="review-item" *ngFor="let r of reviews">
-        <div class="review-header">
-          <span>
-            <span *ngFor="let star of getStars(r.rating)">
-              <i [class]="star" style="color: var(--warning); font-size: 12px;"></i>
-            </span>
-            <span class="badge badge-muted" style="margin-left: 8px;">{{ r.status }}</span>
-          </span>
-          <span class="text-muted" style="font-size: 12px;">{{ r.reviewedAt | date:'dd/MM/yyyy' }}</span>
-        </div>
-        <p class="text-secondary" style="margin-top: 6px;">{{ r.comment || 'Pas de commentaire' }}</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ════ SKILL GAP ANALYSIS ════ -->
-  <div *ngIf="skillGapDiagnostic || skillGapRecommendations" class="card section-card">
-    <div class="card-header">
-      <span class="card-title">
-        <i class="fas fa-brain text-accent"></i> Analyse des compétences
-      </span>
-    </div>
-
-    <div class="skillgap-layout">
-
-      <!-- Colonne gauche : Diagnostic (SkillGapServiceImpl) -->
-      <div class="skillgap-col" *ngIf="skillGapDiagnostic">
-        <div class="skillgap-col-header">
-          <i class="fas fa-chart-bar text-warning"></i>
-          <span>Diagnostic plateforme</span>
-          <span class="badge badge-warning" style="margin-left: auto;">
-            {{ skillGapDiagnostic.gapCount }} gap{{ skillGapDiagnostic.gapCount !== 1 ? 's' : '' }}
-          </span>
-        </div>
-
-        <div class="skillgap-block" *ngIf="skillGapDiagnostic.mySkills.length > 0">
-          <div class="skillgap-block-label text-success">
-            <i class="fas fa-check-circle"></i> Compétences actuelles
-          </div>
-          <div class="chip-list">
-            <span class="chip chip-success" *ngFor="let s of skillGapDiagnostic.mySkills">{{ s }}</span>
-          </div>
-        </div>
-
-        <div class="skillgap-block" *ngIf="skillGapDiagnostic.topSkills.length > 0">
-          <div class="skillgap-block-label text-accent">
-            <i class="fas fa-fire"></i> Top compétences du marché
-          </div>
-          <div class="gap-compare-list">
-            <div class="gap-compare-item" *ngFor="let s of skillGapDiagnostic.topSkills"
-                 [class.gap-has]="skillGapDiagnostic.mySkills.includes(s)"
-                 [class.gap-missing]="!skillGapDiagnostic.mySkills.includes(s)">
-              <i class="fas" [ngClass]="skillGapDiagnostic.mySkills.includes(s) ? 'fa-check' : 'fa-xmark'"></i>
-              {{ s }}
-            </div>
-          </div>
-        </div>
-
-        <div class="skillgap-block" *ngIf="skillGapDiagnostic.gapSkills.length > 0">
-          <div class="skillgap-block-label text-danger">
-            <i class="fas fa-triangle-exclamation"></i> Compétences manquantes
-          </div>
-          <div class="chip-list">
-            <span class="chip chip-danger" *ngFor="let s of skillGapDiagnostic.gapSkills">{{ s }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Colonne droite : Recommandations (RecommendationService) -->
-      <div class="skillgap-col" *ngIf="skillGapRecommendations">
-        <div class="skillgap-col-header">
-          <i class="fas fa-lightbulb text-accent"></i>
-          <span>Recommandations</span>
-        </div>
-
-        <div class="skillgap-block" *ngIf="skillGapRecommendations.missingSkills && skillGapRecommendations.missingSkills.length > 0">
-          <div class="skillgap-block-label text-danger">
-            <i class="fas fa-triangle-exclamation"></i> Compétences manquantes
-          </div>
-          <div class="chip-list">
-            <span class="chip chip-danger" *ngFor="let s of skillGapRecommendations.missingSkills">{{ s }}</span>
-          </div>
-        </div>
-
-        <div class="skillgap-block" *ngIf="skillGapRecommendations.recommendedCourses && skillGapRecommendations.recommendedCourses.length > 0">
-          <div class="skillgap-block-label text-accent">
-            <i class="fas fa-book"></i> Cours recommandés
-          </div>
-          <ul class="suggestions-list">
-            <li *ngFor="let course of skillGapRecommendations.recommendedCourses">
-              <i class="fas fa-arrow-right text-accent"></i> {{ course }}
-            </li>
-          </ul>
-        </div>
-
-        <div class="skillgap-block" *ngIf="skillGapRecommendations.marketDemand && (skillGapRecommendations.marketDemand | keyvalue).length > 0">
-          <div class="skillgap-block-label text-warning">
-            <i class="fas fa-chart-line"></i> Demande du marché
-          </div>
-          <div class="market-demand-list">
-            <div class="market-demand-item" *ngFor="let entry of skillGapRecommendations.marketDemand | keyvalue">
-              <span class="market-skill">{{ entry.key }}</span>
-              <div class="mini-bar-track">
-                <div class="mini-bar-fill" [style.width.%]="entry.value"></div>
-              </div>
-              <span class="market-score">{{ entry.value }}%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ════ COMPLÉTUDE DÉTAILLÉE ════ -->
-  <div class="card section-card" *ngIf="completeness">
-    <div class="card-header">
-      <span class="card-title"><i class="fas fa-chart-pie text-accent"></i> Analyse de complétude</span>
-    </div>
-
-    <div class="stats-grid">
-      <div class="card stat-mini">
-        <div class="stat-mini-label">Score global</div>
-        <div class="stat-mini-value" [ngClass]="getScoreClass(completeness.score)">{{ completeness.score }}%</div>
-      </div>
-      <div class="card stat-mini">
-        <div class="stat-mini-label">Bio</div>
-        <div class="stat-mini-value">{{ completeness.bioScore }}%</div>
-      </div>
-      <div class="card stat-mini">
-        <div class="stat-mini-label">Avatar</div>
-        <div class="stat-mini-value">{{ completeness.avatarScore }}%</div>
-      </div>
-      <div class="card stat-mini">
-        <div class="stat-mini-label">Skills</div>
-        <div class="stat-mini-value">{{ completeness.skillsScore }}%</div>
-      </div>
-      <div class="card stat-mini">
-        <div class="stat-mini-label">Portfolio</div>
-        <div class="stat-mini-value">{{ completeness.portfolioScore }}%</div>
-      </div>
-      <div class="card stat-mini">
-        <div class="stat-mini-label">Certifications</div>
-        <div class="stat-mini-value">{{ completeness.certifScore }}%</div>
-      </div>
-      <div class="card stat-mini">
-        <div class="stat-mini-label">Expérience</div>
-        <div class="stat-mini-value">{{ completeness.workExpScore }}%</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Suggestions de complétude -->
-  <div class="card section-card" *ngIf="completeness && completeness.suggestions.length > 0">
-    <div class="card-header">
-      <span class="card-title"><i class="fas fa-lightbulb text-warning"></i> Suggestions d'amélioration</span>
-    </div>
-    <ul class="suggestions-list">
-      <li *ngFor="let s of completeness.suggestions">
-        <i class="fas fa-arrow-right text-accent"></i> {{ s }}
-      </li>
-    </ul>
-  </div>
-
-  <!-- ════ PARCOURS DE CARRIÈRE ════ -->
-  <div class="card section-card" *ngIf="careerPath">
-    <div class="card-header">
-      <span class="card-title"><i class="fas fa-route text-accent"></i> Parcours de carrière</span>
-    </div>
-
-    <div class="career-info">
-      <p>
-        <strong>Parcours détecté :</strong>
-        <span class="badge badge-accent">{{ careerPath.detectedPath }}</span>
-      </p>
-      <p *ngIf="careerPath.description" class="text-secondary">{{ careerPath.description }}</p>
-
-      <div *ngIf="careerPath.currentSkills.length > 0" style="margin-top: 12px;">
-        <strong>Compétences actuelles :</strong>
-        <div class="chip-list" style="margin-top: 8px;">
-          <span class="chip chip-success" *ngFor="let s of careerPath.currentSkills">{{ s }}</span>
-        </div>
-      </div>
-
-      <div *ngIf="careerPath.missingSkills.length > 0" style="margin-top: 12px;">
-        <strong>Compétences à acquérir :</strong>
-        <div class="chip-list" style="margin-top: 8px;">
-          <span class="chip chip-danger" *ngFor="let s of careerPath.missingSkills">{{ s }}</span>
-        </div>
-      </div>
-
-      <div *ngIf="careerPath.nextSteps.length > 0" style="margin-top: 12px;">
-        <strong>Prochaines étapes :</strong>
-        <ul class="suggestions-list">
-          <li *ngFor="let step of careerPath.nextSteps">
-            <i class="fas fa-check text-success"></i> {{ step }}
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
+  <!-- Insights -->
+  <app-profile-insights-tab
+    *ngIf="activeTab === 'insights'"
+    [skillGapDiagnostic]="skillGapDiagnostic"
+    [skillGapRecommendations]="skillGapRecommendations"
+    [completeness]="completeness"
+    [careerPath]="careerPath">
+  </app-profile-insights-tab>
 
 </ng-container>
