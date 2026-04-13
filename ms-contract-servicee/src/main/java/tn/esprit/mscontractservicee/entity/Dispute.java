@@ -28,9 +28,21 @@ public class Dispute implements Serializable {
     Long plaignantId;
     Long defendantId;
     Long arbitreId;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     String motif;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     String preuvesPlaignant;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     String preuvesDefense;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     String decision;
     BigDecimal montantRembourse;
     BigDecimal montantLibere;

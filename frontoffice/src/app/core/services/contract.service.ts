@@ -41,8 +41,8 @@ export class ContractService {
     return this.api.delete<void>(`${this.endpoint}/${id}`);
   }
 
-  getMyContracts(): Observable<Contract[]> {
-    return this.api.get<Contract[]>(`${this.endpoint}/me`);
+  getMyContracts(): Observable<any> {
+    return this.api.get<any>(`${this.endpoint}/me`, { size: 100 });
   }
 
   getSignedByFreelancer(freelancerCin: string): Observable<Contract[]> {

@@ -90,6 +90,11 @@ export class SidebarComponent implements OnInit {
       route: '/app/activity/contracts'
     },
     {
+      label: 'Litiges',
+      icon: 'fa-scale-balanced',
+      route: '/app/activity/disputes'
+    },
+    {
       label: 'Portefeuille',
       icon: 'fa-wallet',
       route: '/app/finance/wallet'

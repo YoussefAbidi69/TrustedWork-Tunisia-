@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
@@ -29,12 +31,32 @@ public class JwtService {
     }
 
     public Long extractCinAsLong(String token) {
-        Integer cin = extractAllClaims(token).get("cin", Integer.class);
-        return cin != null ? cin.longValue() : null;
+        Object cinObj = extractAllClaims(token).get("cin");
+        if (cinObj instanceof Integer i) {
+            return i.longValue();
+        }
+        if (cinObj instanceof Long l) {
+            return l;
+        }
+        if (cinObj instanceof String s) {
+            try {
+                return Long.parseLong(s.trim());
+            } catch (Exception ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 
     public String extractRoles(String token) {
-        return extractAllClaims(token).get("roles", String.class);
+        Object rolesObj = extractAllClaims(token).get("roles");
+        if (rolesObj instanceof String s) {
+            return s;
+        }
+        if (rolesObj instanceof Collection<?> c) {
+            return c.stream().map(String::valueOf).collect(Collectors.joining(","));
+        }
+        return null;
     }
 
     private Claims extractAllClaims(String token) {
@@ -50,4 +72,3 @@ public class JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }
-

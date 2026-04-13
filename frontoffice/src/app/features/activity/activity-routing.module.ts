@@ -5,6 +5,9 @@ import { ContractsComponent } from './contracts/contracts.component';
 import { ContractFormComponent } from './contract-form/contract-form';
 import { MilestoneFormComponent } from './milestones/milestone-form/milestone-form';
 import { ContractSignComponent } from './contract-sign/contract-sign.component';
+import { DisputeListComponent } from './disputes/dispute-list/dispute-list.component';
+import { DisputeCreateComponent } from './disputes/dispute-create/dispute-create.component';
+import { DisputeDetailComponent } from './disputes/dispute-detail/dispute-detail.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'contracts', pathMatch: 'full' },
@@ -14,7 +17,10 @@ const routes: Routes = [
   { path: 'contracts/:id/edit', component: ContractFormComponent },
   { path: 'contracts/:id/milestones/new', component: MilestoneFormComponent },
   { path: 'contracts/:id/milestones/:mId/edit', component: MilestoneFormComponent },
-  { path: 'contracts/:id/sign', component: ContractSignComponent }
+  { path: 'contracts/:id/sign', component: ContractSignComponent },
+  { path: 'disputes', component: DisputeListComponent },
+  { path: 'disputes/new', component: DisputeCreateComponent },
+  { path: 'disputes/:disputeId', component: DisputeDetailComponent }
 ];
 
 @NgModule({

@@ -277,6 +277,10 @@ public class PaymentServiceImpl implements IPaymentService {
         EscrowAccount escrow = escrowAccountRepository.findByContractId(contract.getId())
                 .orElseThrow(() -> new RuntimeException("Escrow not found"));
 
+        if (escrow.getStatus() == EscrowStatus.DISPUTED) {
+            throw new RuntimeException("Escrow is disputed. Payments are frozen until the dispute is resolved.");
+        }
+
         if (escrow.getMontantBloque() == null || escrow.getMontantBloque().compareTo(amount) < 0) {
             throw new RuntimeException("Insufficient escrow balance");
         }

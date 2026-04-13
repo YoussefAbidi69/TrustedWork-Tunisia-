@@ -76,8 +76,7 @@ export class ContractFormComponent implements OnInit {
     if (payload.dateFin === '') payload.dateFin = null;
     if (payload.projectId === 0 || payload.projectId === '') payload.projectId = null;
     
-    // We don't send these to creation as they may be inferred or handled by back
-    delete payload.clientCin;
+    // We don't send wallet CINs to creation as they may be inferred or handled by back
     delete payload.clientWalletCin;
     delete payload.freelancerWalletCin;
     
