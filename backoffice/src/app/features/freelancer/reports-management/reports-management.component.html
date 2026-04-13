@@ -1,104 +1,269 @@
 <div class="page-header">
   <div>
-    <h1 class="page-title">Signalements de profils</h1>
-    <p class="page-subtitle">
-      {{ reports.length }} signalement(s) en attente
-    </p>
+    <h1 class="page-title">Signalements</h1>
+    <p class="page-subtitle">Modération des profils freelancers</p>
   </div>
-
   <div class="page-actions">
-    <button class="btn btn-ghost btn-sm" (click)="loadReports()">
-      <i class="fas fa-refresh"></i> Rafraîchir
+    <button class="btn btn-ghost btn-sm" [disabled]="loading" (click)="refreshReports()">
+      <i class="fas fa-arrows-rotate" [class.fa-spin]="loading"></i>
+      Rafraîchir
     </button>
   </div>
 </div>
 
-<!-- Message succès -->
-<div *ngIf="successMsg" class="alert-success">
-  <i class="fas fa-check-circle"></i>
-  {{ successMsg }}
+<div *ngIf="showNotification" class="reports-toast">
+  <div class="reports-toast-icon"><i class="fas fa-bell"></i></div>
+  <span>{{ notificationMessage }}</span>
 </div>
 
-<!-- Loading -->
-<div *ngIf="loading" class="card">
-  <div class="empty-state">
-    <i class="fas fa-spinner fa-spin"></i>
-    <p>Chargement des signalements...</p>
+<div class="reports-stats-row" *ngIf="!loading && reports.length > 0">
+  <div class="reports-stat">
+    <span class="reports-stat-value">{{ reports.length }}</span>
+    <span class="reports-stat-label">Total</span>
+  </div>
+  <div class="reports-stat reports-stat--warning">
+    <span class="reports-stat-value">{{ pendingCount }}</span>
+    <span class="reports-stat-label">En attente</span>
+  </div>
+  <div class="reports-stat reports-stat--info">
+    <span class="reports-stat-value">{{ inReviewCount }}</span>
+    <span class="reports-stat-label">En cours</span>
+  </div>
+  <div class="reports-stat reports-stat--success">
+    <span class="reports-stat-value">{{ resolvedCount }}</span>
+    <span class="reports-stat-label">Résolus</span>
   </div>
 </div>
 
-<!-- Erreur -->
-<div *ngIf="errorMsg && !loading" class="card">
-  <div class="empty-state">
-    <i class="fas fa-exclamation-triangle text-danger"></i>
-    <p class="text-danger">{{ errorMsg }}</p>
-    <button class="btn btn-primary" style="margin-top: 12px;" (click)="loadReports()">
-      <i class="fas fa-refresh"></i> Réessayer
+<div class="reports-toolbar" *ngIf="!loading">
+  <div class="reports-search">
+    <i class="fas fa-search"></i>
+    <input
+      type="text"
+      [(ngModel)]="searchQuery"
+      (ngModelChange)="onSearchChange()"
+      placeholder="Rechercher par description, freelancer, reporter...">
+    <button class="reports-search-clear" *ngIf="searchQuery" (click)="searchQuery=''; onSearchChange()">
+      <i class="fas fa-xmark"></i>
     </button>
   </div>
+
+  <div class="reports-filters">
+    <button class="btn btn-sm" [ngClass]="selectedStatus === 'ALL' ? 'btn-primary' : 'btn-ghost'" (click)="filterByStatus('ALL')">Tous</button>
+    <button class="btn btn-sm" [ngClass]="selectedStatus === 'PENDING' ? 'btn-primary' : 'btn-ghost'" (click)="filterByStatus('PENDING')">
+      <span class="filter-dot filter-dot--warning"></span>En attente
+    </button>
+    <button class="btn btn-sm" [ngClass]="selectedStatus === 'IN_REVIEW' ? 'btn-primary' : 'btn-ghost'" (click)="filterByStatus('IN_REVIEW')">
+      <span class="filter-dot filter-dot--info"></span>En cours
+    </button>
+    <button class="btn btn-sm" [ngClass]="selectedStatus === 'RESOLVED' ? 'btn-primary' : 'btn-ghost'" (click)="filterByStatus('RESOLVED')">Résolu</button>
+    <button class="btn btn-sm" [ngClass]="selectedStatus === 'REJECTED' ? 'btn-primary' : 'btn-ghost'" (click)="filterByStatus('REJECTED')">Rejeté</button>
+  </div>
+
+  <select class="reports-category-select" [(ngModel)]="selectedCategory" (ngModelChange)="filterByCategory($event)">
+    <option value="ALL">Toutes catégories</option>
+    <option value="FAKE_SKILLS">Compétences fausses</option>
+    <option value="SPAM">Spam</option>
+    <option value="IDENTITY_THEFT">Usurpation d'identité</option>
+    <option value="INAPPROPRIATE_CONTENT">Contenu inapproprié</option>
+    <option value="OTHER">Autre</option>
+  </select>
+
+  <button class="btn btn-ghost btn-sm" *ngIf="hasActiveFilters" (click)="clearFilters()" title="Effacer les filtres">
+    <i class="fas fa-filter-circle-xmark"></i>
+    Effacer
+  </button>
 </div>
 
-<!-- Aucun signalement -->
-<div *ngIf="!loading && !errorMsg && reports.length === 0" class="card">
-  <div class="empty-state">
-    <i class="fas fa-check-circle text-success"></i>
-    <p>Aucun signalement en attente</p>
+<div *ngIf="loading" class="card reports-state-card">
+  <div class="reports-state">
+    <div class="reports-state-icon"><i class="fas fa-spinner fa-spin"></i></div>
+    <div class="reports-state-body">
+      <p class="reports-state-title">Chargement des signalements...</p>
+      <p class="reports-state-desc text-muted">Veuillez patienter quelques secondes.</p>
+    </div>
   </div>
 </div>
 
-<!-- Liste -->
-<div *ngIf="!loading && !errorMsg && reports.length > 0" class="card">
-  <table class="tw-table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Profil</th>
-        <th>Signalé par</th>
-        <th>Raison</th>
-        <th>Date du signalement</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
+<div *ngIf="!loading && reports.length === 0" class="card reports-state-card">
+  <div class="reports-state reports-state--empty">
+    <div class="reports-state-icon"><i class="fas fa-shield-halved"></i></div>
+    <div class="reports-state-body">
+      <p class="reports-state-title">Aucun signalement</p>
+      <p class="reports-state-desc text-muted">Aucun report à traiter pour le moment.</p>
+    </div>
+  </div>
+</div>
 
-    <tbody>
-      <tr *ngFor="let r of reports">
-        <td>#{{ r.id }}</td>
+<div *ngIf="!loading && reports.length > 0 && filteredReports.length === 0" class="card reports-state-card">
+  <div class="reports-state reports-state--empty">
+    <div class="reports-state-icon"><i class="fas fa-filter-circle-xmark"></i></div>
+    <div class="reports-state-body">
+      <p class="reports-state-title">Aucun résultat</p>
+      <p class="reports-state-desc text-muted">Modifie ta recherche ou tes filtres.</p>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" (click)="clearFilters()">
+        <i class="fas fa-rotate-left"></i> Réinitialiser
+      </button>
+    </div>
+  </div>
+</div>
 
-        <td>
-          <ng-container *ngIf="r.profile?.id; else noProfile">
-            <a [routerLink]="['/admin/freelancers', r.profile?.id]" class="text-accent">
-              Profil #{{ r.profile?.id }}
-            </a>
-          </ng-container>
-          <ng-template #noProfile>
-            <span class="text-muted">Profil indisponible</span>
-          </ng-template>
-        </td>
+<div *ngIf="!loading && pagedReports.length > 0" class="card reports-table-card">
 
-        <td>User #{{ r.reporterId }}</td>
+  <div class="reports-table-info">
+    <span class="text-muted" style="font-size:12px;">
+      {{ startIndex }}–{{ endIndex }} sur {{ filteredReports.length }} signalement{{ filteredReports.length > 1 ? 's' : '' }}
+    </span>
+    <select class="reports-page-size" [(ngModel)]="pageSize" (ngModelChange)="currentPage=1; applyFilters()">
+      <option [value]="5">5 / page</option>
+      <option [value]="10">10 / page</option>
+      <option [value]="25">25 / page</option>
+      <option [value]="50">50 / page</option>
+    </select>
+  </div>
 
-        <td class="description-cell">
-          <span class="badge badge-warning">{{ r.reason }}</span>
-        </td>
+  <div style="width: 100%; overflow-x: auto;">
+    <table class="tw-table reports-table" style="min-width: 1300px;">
+      <thead>
+        <tr>
+          <th>Profil signalé</th>
+          <th>Reporter</th>
+          <th>Catégorie</th>
+          <th>Description</th>
+          <th>Risque</th>
+          <th>Compte</th>
+          <th>Statut</th>
+          <th>Date</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
 
-        <td>{{ r.reportedAt | date:'dd/MM/yyyy' }}</td>
+      <tbody>
+        <tr *ngFor="let report of pagedReports; trackBy: trackByReportId" class="report-row">
 
-        <td>
-          <div class="action-btns">
-            <button
-              class="btn btn-success btn-sm"
-              (click)="resolve(r.id, 'RESOLVED')">
-              <i class="fas fa-check"></i> Résoudre
-            </button>
+          <td>
+            <div class="person-cell">
+              <div class="person-avatar person-avatar--accent">
+                {{ getFreelancerInitials(report) }}
+              </div>
+              <div class="person-info">
+                <span class="person-name">{{ getFreelancerName(report) }}</span>
+                <span class="person-id text-muted">
+                  {{ getFreelancerRegion(report) }}
+                </span>
+              </div>
+            </div>
+          </td>
 
-            <button
-              class="btn btn-danger btn-sm"
-              (click)="resolve(r.id, 'REJECTED')">
-              <i class="fas fa-times"></i> Rejeter
-            </button>
-          </div>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+          <td>
+            <div class="person-cell">
+              <div class="person-avatar">
+                {{ getReporterInitials(report) }}
+              </div>
+              <div class="person-info">
+                <span class="person-name">{{ getReporterDisplayName(report) }}</span>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            <span [ngClass]="getCategoryClass(report.category)">
+              {{ getCategoryLabel(report.category) }}
+            </span>
+          </td>
+
+          <td class="report-description-cell">
+            <span class="report-desc-text" [title]="report.description">
+              {{ report.description | slice:0:60 }}{{ report.description?.length > 60 ? '...' : '' }}
+            </span>
+          </td>
+
+          <td>
+            <span [ngClass]="getRiskClass(report)">
+              {{ getRiskScore(report) }}%
+            </span>
+          </td>
+
+          <td>
+            <span [ngClass]="getSuspensionClass(report)">
+              {{ getSuspensionLabel(report) }}
+            </span>
+          </td>
+
+          <td>
+            <span [ngClass]="getStatusClass(report.status)">
+              {{ getStatusLabel(report.status) }}
+            </span>
+          </td>
+
+          <td class="text-muted reports-date-cell">
+            {{ report.createdAt | date:'dd MMM yyyy' }}<br>
+            <small>{{ report.createdAt | date:'HH:mm' }}</small>
+          </td>
+
+          <td>
+            <div class="report-actions" style="display:flex; justify-content:flex-end; gap:8px; min-width:180px;">
+              <button
+                class="action-icon"
+                title="Voir profil"
+                (click)="viewProfile(report)">
+                <i class="fas fa-eye"></i>
+              </button>
+
+              <button
+                class="action-icon"
+                title="Marquer en cours"
+                (click)="markInReview(report)"
+                [disabled]="report.status === 'IN_REVIEW' || report.status === 'RESOLVED' || report.status === 'REJECTED'">
+                <i class="fas fa-hourglass-half"></i>
+              </button>
+
+              <button
+                class="action-icon action-icon--resolve"
+                title="Résoudre"
+                (click)="resolveReport(report)"
+                [disabled]="report.status === 'RESOLVED'">
+                <i class="fas fa-check"></i>
+              </button>
+
+              <button
+                class="action-icon action-icon--reject"
+                title="Rejeter"
+                (click)="rejectReport(report)"
+                [disabled]="report.status === 'REJECTED'">
+                <i class="fas fa-xmark"></i>
+              </button>
+            </div>
+          </td>
+
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="reports-pagination" *ngIf="totalPages > 1">
+    <button class="page-btn" (click)="goToPage(1)" [disabled]="currentPage === 1" title="Première page">
+      <i class="fas fa-angles-left"></i>
+    </button>
+
+    <button class="page-btn" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1" title="Page précédente">
+      <i class="fas fa-angle-left"></i>
+    </button>
+
+    <button
+      *ngFor="let p of pages"
+      class="page-btn"
+      [class.page-btn--active]="p === currentPage"
+      (click)="goToPage(p)">
+      {{ p }}
+    </button>
+
+    <button class="page-btn" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages" title="Page suivante">
+      <i class="fas fa-angle-right"></i>
+    </button>
+
+    <button class="page-btn" (click)="goToPage(totalPages)" [disabled]="currentPage === totalPages" title="Dernière page">
+      <i class="fas fa-angles-right"></i>
+    </button>
+  </div>
 </div>
