@@ -1,16 +1,20 @@
 <div class="gantt-page" *ngIf="!loading">
 
-  <!-- ══ HEADER ══ -->
+  <!-- ═══ HEADER ═══ -->
   <div class="gantt-header">
     <div class="gantt-header__left">
-      <button class="back-btn" (click)="goBack()"><i class="fas fa-arrow-left"></i></button>
+      <button class="back-btn" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div class="header-icon-box">
+        <i class="fas fa-chart-gantt"></i>
+      </div>
       <div>
-        <h1><i class="fas fa-chart-gantt"></i> Gantt Chart</h1>
-        <p>{{ project.title }} — {{ tasks.length }} tâche(s) · {{ project.startDate }} → {{ project.endDate }}</p>
+        <h1>Gantt Chart</h1>
+        <p>{{ project.title }} — <span class="mono">{{ tasks.length }}</span> tâche(s) · {{ formatShortDate(project.startDate) }} → {{ formatShortDate(project.endDate) }}</p>
       </div>
     </div>
     <div class="gantt-controls">
-      <!-- Zoom -->
       <div class="zoom-btns">
         <button [class.zoom-active]="zoomLevel === 'compact'" (click)="zoomLevel = 'compact'" title="Compact">
           <i class="fas fa-compress"></i>
@@ -25,18 +29,27 @@
     </div>
   </div>
 
-  <!-- ══ FILTERS ══ -->
+  <!-- ═══ PROGRESS STRIP ═══ -->
+  <div class="progress-strip">
+    <span class="strip-label">Progression globale</span>
+    <div class="strip-track">
+      <div class="strip-fill" [style.width.%]="project.completionRate"></div>
+    </div>
+    <span class="strip-pct mono">{{ project.completionRate }}%</span>
+  </div>
+
+  <!-- ═══ FILTERS ═══ -->
   <div class="gantt-filters">
     <div class="filter-group">
-      <span class="filter-label">Statut :</span>
+      <span class="filter-label">Statut</span>
       <button class="gf-pill" [class.gf-pill--active]="statusFilter === 'ALL'" (click)="setStatusFilter('ALL')">Tous</button>
-      <button class="gf-pill gf-pill--todo" [class.gf-pill--active]="statusFilter === 'TODO'" (click)="setStatusFilter('TODO')">À faire</button>
-      <button class="gf-pill gf-pill--progress" [class.gf-pill--active]="statusFilter === 'IN_PROGRESS'" (click)="setStatusFilter('IN_PROGRESS')">En cours</button>
-      <button class="gf-pill gf-pill--review" [class.gf-pill--active]="statusFilter === 'IN_REVIEW'" (click)="setStatusFilter('IN_REVIEW')">En review</button>
-      <button class="gf-pill gf-pill--done" [class.gf-pill--active]="statusFilter === 'DONE'" (click)="setStatusFilter('DONE')">Terminée</button>
+      <button class="gf-pill" [class.gf-pill--active]="statusFilter === 'TODO'" (click)="setStatusFilter('TODO')">À faire</button>
+      <button class="gf-pill" [class.gf-pill--active]="statusFilter === 'IN_PROGRESS'" (click)="setStatusFilter('IN_PROGRESS')">En cours</button>
+      <button class="gf-pill" [class.gf-pill--active]="statusFilter === 'IN_REVIEW'" (click)="setStatusFilter('IN_REVIEW')">En review</button>
+      <button class="gf-pill" [class.gf-pill--active]="statusFilter === 'DONE'" (click)="setStatusFilter('DONE')">Terminée</button>
     </div>
     <div class="filter-group">
-      <span class="filter-label">Priorité :</span>
+      <span class="filter-label">Priorité</span>
       <button class="gf-pill" [class.gf-pill--active]="priorityFilter === 'ALL'" (click)="setPriorityFilter('ALL')">Toutes</button>
       <button class="gf-pill" [class.gf-pill--active]="priorityFilter === 'CRITICAL'" (click)="setPriorityFilter('CRITICAL')">Critique</button>
       <button class="gf-pill" [class.gf-pill--active]="priorityFilter === 'HIGH'" (click)="setPriorityFilter('HIGH')">Haute</button>
@@ -45,26 +58,28 @@
     </div>
   </div>
 
-  <!-- ══ LEGEND ══ -->
+  <!-- ═══ LEGEND ═══ -->
   <div class="gantt-legend">
-    <div class="legend-item"><span class="legend-dot" style="background:#94a3b8"></span> À faire</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span> En cours</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span> En review</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#22c55e"></span> Terminée</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span> En retard</div>
+    <div class="legend-item"><span class="legend-dot lg-todo"></span> À faire</div>
+    <div class="legend-item"><span class="legend-dot lg-progress"></span> En cours</div>
+    <div class="legend-item"><span class="legend-dot lg-review"></span> En review</div>
+    <div class="legend-item"><span class="legend-dot lg-done"></span> Terminée</div>
+    <div class="legend-item"><span class="legend-dot lg-overdue"></span> En retard</div>
     <div class="legend-item"><span class="legend-line"></span> Aujourd'hui</div>
   </div>
 
-  <!-- ══ GANTT CHART ══ -->
+  <!-- ═══ GANTT CHART ═══ -->
   <div class="gantt-scroll-wrapper">
     <div class="gantt-container" [style.width]="getZoomWidth()">
 
-      <!-- Timeline Header (mois) -->
+      <!-- Timeline Header -->
       <div class="gantt-timeline-header">
         <div class="gantt-label-col">Tâche</div>
         <div class="gantt-timeline-months">
-          <div class="gantt-month" *ngFor="let month of ganttMonths"
-               [style.left.%]="month.startPct" [style.width.%]="month.widthPct">
+          <div class="gantt-month" *ngFor="let month of ganttMonths; let mi = index"
+               [style.left.%]="month.startPct"
+               [style.width.%]="month.widthPct"
+               [class.gantt-month--first]="mi === 0">
             {{ month.label }}
           </div>
         </div>
@@ -73,15 +88,24 @@
       <!-- Rows -->
       <div class="gantt-rows">
 
+        <!-- Month grid lines -->
+        <ng-container *ngFor="let month of ganttMonths; let mi = index">
+          <div class="grid-line" *ngIf="mi > 0"
+               [style.left]="'calc(240px + (100% - 240px) * ' + (month.startPct / 100) + ')'">
+          </div>
+        </ng-container>
+
         <!-- Today line -->
         <div class="gantt-today-line" *ngIf="todayPct > 0 && todayPct < 100"
-             [style.left]="'calc(220px + (100% - 220px) * ' + todayPct / 100 + ')'">
+             [style.left]="'calc(240px + (100% - 240px) * ' + todayPct / 100 + ')'">
+          <div class="today-gradient"></div>
           <span class="today-tag">Aujourd'hui</span>
         </div>
 
         <!-- Task rows -->
         <div class="gantt-row" *ngFor="let gt of filteredGanttTasks; let i = index"
              [class.gantt-row--overdue]="gt.isOverdue"
+             [class.gantt-row--even]="i % 2 !== 0"
              [routerLink]="['/app/projects', projectId, 'kanban']">
 
           <!-- Label column -->
@@ -92,7 +116,7 @@
               <strong>{{ gt.task.title }}</strong>
               <span>
                 <span class="mini-status" [ngClass]="getStatusClass(gt.task.status)">{{ getStatusLabel(gt.task.status) }}</span>
-                · {{ gt.daysTotal }}j
+                <span class="mono row-days">{{ gt.daysTotal }}j</span>
                 <span *ngIf="gt.task.deadline"> · {{ formatShortDate(gt.task.deadline) }}</span>
               </span>
             </div>
@@ -100,11 +124,13 @@
 
           <!-- Bar area -->
           <div class="gantt-row__bar-area">
+
             <!-- Background track -->
             <div class="gantt-bar-track"
                  [style.left.%]="gt.startX"
                  [style.width.%]="gt.widthPct"
-                 [style.background]="getBarBg(gt)">
+                 [style.background]="getBarBg(gt)"
+                 [class.bar-track--overdue]="gt.isOverdue">
 
               <!-- Progress fill -->
               <div class="gantt-bar-fill"
@@ -113,24 +139,24 @@
               </div>
 
               <!-- Bar label -->
-              <span class="gantt-bar-label" *ngIf="gt.widthPct > 8">
-                {{ gt.task.title | slice:0:20 }}{{ gt.task.title.length > 20 ? '...' : '' }}
+              <span class="gantt-bar-label" *ngIf="gt.widthPct > 8"
+                    [class.bar-label--dark]="gt.progress < 35">
+                {{ gt.task.title | slice:0:20 }}{{ gt.task.title.length > 20 ? '…' : '' }}
               </span>
             </div>
 
-            <!-- Deadline marker -->
-            <div class="deadline-marker" *ngIf="gt.task.deadline"
+            <!-- Deadline diamond -->
+            <div class="deadline-diamond" *ngIf="gt.task.deadline"
                  [style.left.%]="gt.startX + gt.widthPct"
-                 [class.deadline-marker--overdue]="gt.isOverdue"
+                 [class.deadline-diamond--overdue]="gt.isOverdue"
                  [title]="'Deadline : ' + gt.task.deadline">
-              <i class="fas fa-diamond"></i>
             </div>
           </div>
         </div>
 
         <!-- Empty -->
         <div *ngIf="filteredGanttTasks.length === 0" class="gantt-empty">
-          <i class="fas fa-inbox"></i>
+          <div class="empty-diamond">◇</div>
           <span>Aucune tâche pour ces filtres</span>
         </div>
       </div>
@@ -138,4 +164,8 @@
   </div>
 </div>
 
-<div *ngIf="loading" class="loading-full"><i class="fas fa-spinner fa-spin"></i> Chargement du Gantt...</div>
+<!-- Loading -->
+<div *ngIf="loading" class="loading-screen">
+  <div class="loading-spinner"></div>
+  <span>Chargement du Gantt…</span>
+</div>
