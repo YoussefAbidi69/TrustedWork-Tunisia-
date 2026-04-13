@@ -103,4 +103,16 @@ export class UserService {
       cin: user.cin
     };
   }
+
+  checkProfileComplete(): Observable<{ incomplete: boolean }> {
+    return this.getMyProfile().pipe(
+      map(profile => {
+        return { incomplete: false }; // or appropriate logic
+      })
+    );
+  }
+
+  completeGoogleProfile(payload: any): Observable<any> {
+    return this.api.post('/auth/complete-google-profile', payload, undefined, this.api.getAuthUrl());
+  }
 }

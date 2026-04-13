@@ -1,183 +1,213 @@
-<div class="home-feed-page">
+<div class="dash-home">
 
-  <section class="feed-hero">
-    <div class="feed-hero__glow feed-hero__glow--one"></div>
-    <div class="feed-hero__glow feed-hero__glow--two"></div>
+  <!-- HERO -->
+  <section class="dash-hero">
+    <div class="dash-hero__bg"></div>
 
-    <div class="feed-hero__content">
-      <span class="feed-badge">Accueil freelancer</span>
-      <h1>Bonjour {{ displayName }} <span>👋</span></h1>
-      <p>
-        Voici ce qui bouge sur TrustedWork Tunisia aujourd’hui :
-        tendances du marché, opportunités recommandées et activité utile
-        pour faire avancer votre profil.
-      </p>
+    <div class="dash-hero__left">
+      <span class="dash-tag">
+        <i class="fas fa-circle-dot" style="color:#22c55e"></i>
+        TrustedWork Tunisia
+      </span>
 
-      <div class="feed-hero__meta" *ngIf="!loadingUser">
-        <span>{{ displayEmail }}</span>
-        <span>•</span>
-        <span>{{ displayRole }}</span>
+{{ getGreeting() }}, <span class="name-hl">{{ displayName }}</span> <span class="wave">👋</span>
+      <p>Gérez votre identité digitale, explorez les meilleures missions et construisez votre réputation.</p>
+
+      <div class="dash-stats-row">
+        <div class="hstat">
+          <strong [style.color]="trustLevel >= 4 ? '#22c55e' : '#f97316'">{{ trustLevel }}/5</strong>
+          <span>Trust Level</span>
+        </div>
+        <div class="hstat-div"></div>
+        <div class="hstat">
+          <strong>{{ kycStatusLabel }}</strong>
+          <span>KYC</span>
+        </div>
+        <div class="hstat-div"></div>
+        <div class="hstat">
+          <strong>{{ profileCompletionScore }}%</strong>
+          <span>Profil</span>
+        </div>
+        <div class="hstat-div"></div>
+        <div class="hstat">
+          <strong [style.color]="twoFactorEnabled ? '#22c55e' : '#ef4444'">
+            {{ twoFactorEnabled ? 'Actif' : 'Inactif' }}
+          </strong>
+          <span>2FA</span>
+        </div>
       </div>
 
-      <div class="feed-hero__meta feed-hero__meta--error" *ngIf="userError">
-        {{ userError }}
-      </div>
-
-      <div class="feed-hero__actions">
-        <a routerLink="/app/opportunities/freelance-jobs" class="btn btn-primary">
-          Explorer les opportunités
+      <div class="dash-actions">
+        <a [routerLink]="nextAction.route" class="btn-primary">
+          <i class="fas" [ngClass]="nextAction.icon"></i>
+          {{ nextAction.label }}
         </a>
-        <a routerLink="/app/profile/profile-overview" class="btn btn-secondary">
-          Compléter mon profil
+        <a routerLink="/app/profile/overview" class="btn-ghost">
+          <i class="fas fa-user-pen"></i>
+          Mon profil
         </a>
       </div>
     </div>
 
-    <div class="feed-hero__side">
-      <div class="hero-glass-card">
-        <div class="hero-glass-card__top">
-          <span class="small-label">Visibilité profil</span>
-          <strong>+12 vues cette semaine</strong>
+    <div class="dash-hero__right">
+      <div class="trust-card">
+        <div class="tc-head">
+          <i class="fas fa-shield-halved"></i>
+          <span>Identity Trust Score</span>
         </div>
-
-        <div class="hero-metric">
-          <span>Trust Score</span>
-          <strong>{{ quickStats.trustScore }}</strong>
+        <div class="tc-ring-wrap">
+          <div class="tc-ring">
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" class="ring-bg"/>
+              <circle cx="50" cy="50" r="42" class="ring-fill"
+                [style.stroke-dasharray]="(profileCompletionScore * 2.64) + ' 264'"/>
+            </svg>
+            <div class="tc-label">
+              <strong>{{ profileCompletionScore }}%</strong>
+              <small>Score</small>
+            </div>
+          </div>
         </div>
-
-        <div class="hero-metric">
-          <span>Complétion profil</span>
-          <strong>{{ quickStats.profileCompletion }}%</strong>
-        </div>
-
-        <div class="hero-metric">
-          <span>Disponibilité</span>
-          <strong>{{ quickStats.availability }}</strong>
+        <div class="tc-items">
+          <div class="tc-item" [class.tc-item--on]="kycStatus === 'APPROVED'">
+            <i class="fas" [ngClass]="kycStatus === 'APPROVED' ? 'fa-circle-check' : 'fa-circle'"></i>
+            KYC Validé
+          </div>
+          <div class="tc-item" [class.tc-item--on]="twoFactorEnabled">
+            <i class="fas" [ngClass]="twoFactorEnabled ? 'fa-circle-check' : 'fa-circle'"></i>
+            2FA Actif
+          </div>
+          <div class="tc-item" [class.tc-item--on]="livenessPassed">
+            <i class="fas" [ngClass]="livenessPassed ? 'fa-circle-check' : 'fa-circle'"></i>
+            Liveness OK
+          </div>
+          <div class="tc-item" [class.tc-item--on]="trustLevel >= 3">
+            <i class="fas" [ngClass]="trustLevel >= 3 ? 'fa-circle-check' : 'fa-circle'"></i>
+            Trust Level ≥ 3
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <div class="feed-layout">
-    <div class="feed-main">
+  <!-- PLATFORM STATS -->
+  <section class="pstats-row">
+    <div class="pstat" *ngFor="let s of platformStats">
+      <div class="pstat-icon"><i class="fas" [ngClass]="s.icon"></i></div>
+      <div>
+        <strong>{{ s.value }}</strong>
+        <span>{{ s.label }}</span>
+      </div>
+    </div>
+  </section>
 
-      <section class="feed-section">
-        <div class="section-head">
-          <div>
-            <span class="section-kicker">Tendances</span>
-            <h2>Ce qui évolue sur le marché</h2>
-          </div>
+  <!-- MAIN GRID -->
+  <div class="dash-grid">
+
+    <!-- OFFRES -->
+    <section class="dcard">
+      <div class="dcard-head">
+        <div>
+          <h2><i class="fas fa-fire"></i> Offres recommandées</h2>
+          <p>Missions adaptées à votre Trust Level ({{ trustLevel }}/5)</p>
         </div>
+        <span class="badge-live">● Live</span>
+      </div>
 
-        <div class="trend-list">
-          <article class="trend-card" *ngFor="let trend of marketTrends">
-            <span class="trend-tag">{{ trend.tag }}</span>
-            <h3>{{ trend.title }}</h3>
-            <p>{{ trend.description }}</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="feed-section">
-        <div class="section-head">
-          <div>
-            <span class="section-kicker">Recommandé pour vous</span>
-            <h2>Opportunités à fort potentiel</h2>
-          </div>
-          <a routerLink="/app/opportunities/freelance-jobs">Voir tout</a>
-        </div>
-
-        <div class="job-list">
-          <article class="job-card" *ngFor="let job of recommendedJobs">
-            <div class="job-card__left">
-              <div class="job-card__topline">
-                <span class="job-match">{{ job.match }}</span>
+      <div class="jobs-list">
+        <article class="job" *ngFor="let job of featuredJobs" [class.job--locked]="!canApply(job.trustRequired)">
+          <div class="job-top">
+            <div>
+              <div class="job-title-row">
+                <h3>{{ job.title }}</h3>
+                <span *ngIf="job.urgency" class="jbadge"
+                  [class.jbadge--urgent]="job.urgency==='Urgent'"
+                  [class.jbadge--premium]="job.urgency==='Premium'">
+                  {{ job.urgency }}
+                </span>
               </div>
-              <h3>{{ job.title }}</h3>
-              <p>{{ job.company }}</p>
-              <span>{{ job.location }}</span>
+              <span class="job-co"><i class="fas fa-building"></i> {{ job.company }}</span>
             </div>
+            <strong class="job-budget">{{ job.budget }}</strong>
+          </div>
+          <div class="job-tags">
+            <span *ngFor="let tag of job.tags" class="jtag">{{ tag }}</span>
+          </div>
+          <div class="job-foot">
+            <span class="job-time"><i class="fas fa-clock"></i> {{ job.posted }}</span>
+            <div class="job-actions">
+              <span *ngIf="!canApply(job.trustRequired)" class="job-lock">
+                <i class="fas fa-lock"></i> Trust ≥ {{ job.trustRequired }}
+              </span>
+              <button class="job-btn" [class.job-btn--off]="!canApply(job.trustRequired)" [disabled]="!canApply(job.trustRequired)">
+                <i class="fas" [ngClass]="canApply(job.trustRequired) ? 'fa-paper-plane' : 'fa-lock'"></i>
+                {{ canApply(job.trustRequired) ? 'Postuler' : 'Verrouillé' }}
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
 
-            <div class="job-card__right">
-              <strong>{{ job.budget }}</strong>
-              <a routerLink="/app/opportunities/freelance-jobs" class="job-link">Voir l’offre</a>
+      <a routerLink="/app/dashboard" class="dcard-more">
+        Voir toutes les offres <i class="fas fa-arrow-right"></i>
+      </a>
+    </section>
+
+    <!-- COLONNE DROITE -->
+    <div class="dash-col-r">
+
+      <!-- TENDANCES -->
+      <section class="dcard">
+        <div class="dcard-head">
+          <div>
+            <h2><i class="fas fa-chart-line"></i> Tendances marché</h2>
+            <p>Compétences demandées en Tunisie</p>
+          </div>
+        </div>
+        <div class="trends">
+          <div class="trend" *ngFor="let t of trends">
+            <div class="trend-ico"><i class="fas" [ngClass]="t.icon"></i></div>
+            <div class="trend-info">
+              <strong>{{ t.label }}</strong>
+              <span *ngIf="t.hot" class="trend-hot">🔥 Tendance</span>
+              <span *ngIf="!t.hot" class="trend-up">↗ En hausse</span>
             </div>
-          </article>
+            <span class="trend-pct">{{ t.growth }}</span>
+          </div>
         </div>
       </section>
 
-      <section class="feed-section">
-        <div class="section-head">
-          <div>
-            <span class="section-kicker">Activité récente</span>
-            <h2>Ce qu’il faut savoir aujourd’hui</h2>
+      <!-- ACTIVITÉ -->
+      <section class="dcard">
+        <div class="dcard-head">
+          <div><h2><i class="fas fa-bolt"></i> Activité récente</h2></div>
+        </div>
+        <div class="activity">
+          <div class="act-item" *ngFor="let a of recentActivity">
+            <div class="act-ico" [style.background]="a.color + '22'">
+              <i class="fas" [ngClass]="a.icon" [style.color]="a.color"></i>
+            </div>
+            <div>
+              <span>{{ a.text }}</span>
+              <small>{{ a.time }}</small>
+            </div>
           </div>
         </div>
+      </section>
 
-        <ul class="activity-list">
-          <li *ngFor="let item of recentActivities">{{ item }}</li>
-        </ul>
+      <!-- ACTIONS RAPIDES -->
+      <section class="dcard">
+        <div class="dcard-head">
+          <div><h2><i class="fas fa-rocket"></i> Actions rapides</h2></div>
+        </div>
+        <div class="qactions">
+          <a routerLink="/app/profile/kyc"           class="qa"><i class="fas fa-id-card"></i><span>KYC</span></a>
+          <a routerLink="/app/profile/trust-passport" class="qa"><i class="fas fa-passport"></i><span>Trust</span></a>
+          <a routerLink="/app/profile/settings"       class="qa"><i class="fas fa-lock"></i><span>Sécurité</span></a>
+          <a routerLink="/app/profile/overview"       class="qa"><i class="fas fa-user-pen"></i><span>Profil</span></a>
+        </div>
       </section>
 
     </div>
-
-    <aside class="feed-sidebar">
-
-      <div class="side-panel profile-panel">
-        <span class="section-kicker">Votre espace</span>
-        <h3>Résumé personnel</h3>
-
-        <div class="profile-summary">
-          <strong>{{ displayFullName }}</strong>
-          <p>{{ displayEmail }}</p>
-          <span class="profile-role">{{ displayRole }}</span>
-        </div>
-
-        <div class="mini-score">
-          <div class="mini-score__circle">
-            <span>{{ quickStats.trustScore }}</span>
-          </div>
-          <div>
-            <strong>Excellent niveau</strong>
-            <p>{{ quickStats.visibility }} en visibilité plateforme</p>
-          </div>
-        </div>
-
-        <div class="mini-list">
-          <div>
-            <span>Disponibilité</span>
-            <strong>{{ quickStats.availability }}</strong>
-          </div>
-          <div>
-            <span>Profil complété</span>
-            <strong>{{ quickStats.profileCompletion }}%</strong>
-          </div>
-        </div>
-      </div>
-
-      <div class="side-panel">
-        <span class="section-kicker">À découvrir</span>
-        <h3>Events & challenges</h3>
-
-        <div class="event-list">
-          <article class="event-card" *ngFor="let event of featuredEvents">
-            <span class="event-type">{{ event.type }}</span>
-            <h4>{{ event.title }}</h4>
-            <p>{{ event.meta }}</p>
-          </article>
-        </div>
-      </div>
-
-      <div class="side-panel side-panel--accent">
-        <span class="section-kicker">Suggestion</span>
-        <h3>Action utile</h3>
-        <p class="side-text">
-          Ajoutez vos certifications et vos meilleurs projets pour améliorer
-          votre crédibilité et votre score de matching.
-        </p>
-        <a routerLink="/app/profile/profile-overview" class="side-link">Mettre à jour mon profil</a>
-      </div>
-
-    </aside>
   </div>
 </div>

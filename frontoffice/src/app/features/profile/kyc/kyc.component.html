@@ -1,4 +1,5 @@
 <div class="kyc-page">
+
   <section class="kyc-hero">
     <div class="kyc-hero__glow kyc-hero__glow--one"></div>
     <div class="kyc-hero__glow kyc-hero__glow--two"></div>
@@ -9,43 +10,49 @@
           <span class="eyebrow">Verification Center</span>
           <span class="eyebrow eyebrow--accent">KYC & Trust</span>
         </div>
-
-        <h1>Secure your profile with a premium KYC process built for trust and credibility.</h1>
-
+        <h1>Sécurisez votre profil avec un processus KYC premium conçu pour la confiance.</h1>
         <p>
-          Complete your identity and compliance verification to unlock stronger trust
-          indicators, improve client confidence and access higher-value opportunities
-          on TrustedWork Tunisia.
+          Complétez votre vérification d'identité pour débloquer des indicateurs
+          de confiance, améliorer la crédibilité client et accéder aux meilleures
+          opportunités sur TrustedWork Tunisia.
         </p>
 
         <div class="hero-actions">
-          <button type="button" class="hero-btn hero-btn--primary">
+          <button
+            type="button"
+            class="hero-btn hero-btn--primary"
+            (click)="toggleSubmitForm()"
+            *ngIf="kycStatus === 'PENDING' || kycStatus === 'REJECTED'">
             <i class="fas fa-upload"></i>
-            <span>Upload document</span>
+            <span>{{ showSubmitForm ? 'Annuler' : 'Soumettre mon KYC' }}</span>
           </button>
 
           <button type="button" class="hero-btn hero-btn--ghost">
             <i class="fas fa-shield-halved"></i>
-            <span>Review requirements</span>
+            <span>Voir les exigences</span>
           </button>
         </div>
       </div>
 
       <div class="hero-spotlight-card">
-        <span class="card-kicker">Verification overview</span>
-        <h2>Your profile is progressing toward premium trust validation.</h2>
+        <span class="card-kicker">Statut de vérification</span>
+        <h2>Votre profil progresse vers une validation de confiance premium.</h2>
 
         <div class="spotlight-score">
-          <strong>82%</strong>
-          <span>KYC completion</span>
+          <strong>{{ kycStatusLabel }}</strong>
+          <span>Statut KYC actuel</span>
         </div>
 
         <div class="spotlight-meta">
           <div class="spotlight-chip">
-            <span class="spotlight-chip__dot"></span>
-            Trust profile strengthening
+            <span
+              class="spotlight-chip__dot"
+              [style.background]="kycStatus === 'APPROVED' ? '#22c55e'
+                               : kycStatus === 'IN_REVIEW' ? '#f59e0b' : '#94a3b8'">
+            </span>
+            Trust Level {{ trustLevel }}/5
           </div>
-          <p>Complete KYC to unlock stronger credibility and premium access signals.</p>
+          <p>Complétez le KYC pour débloquer des signaux de crédibilité premium.</p>
         </div>
       </div>
     </div>
@@ -60,17 +67,297 @@
 
   <section class="kyc-layout">
     <div class="kyc-main">
+
+      <div class="panel-card" *ngIf="kycStatus === 'PENDING' || kycStatus === 'REJECTED'">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Dossier KYC</span>
+            <h2>Soumettre votre vérification d'identité</h2>
+          </div>
+        </div>
+
+        <div *ngIf="!showSubmitForm" class="empty-submit">
+          <i class="fas fa-id-card empty-submit__icon"></i>
+          <p>Votre KYC est en attente. Uploadez vos documents pour démarrer la vérification.</p>
+          <button type="button" class="hero-btn hero-btn--primary" (click)="toggleSubmitForm()">
+            <i class="fas fa-upload"></i>
+            <span>Démarrer la soumission</span>
+          </button>
+        </div>
+
+        <div *ngIf="showSubmitForm" class="kyc-submit-form">
+
+          <div class="two-factor-alert two-factor-alert--error" *ngIf="error">{{ error }}</div>
+          <div class="two-factor-alert two-factor-alert--success" *ngIf="successMessage">{{ successMessage }}</div>
+
+          <div class="upload-grid">
+
+            <div class="field">
+              <span class="field-label">
+                Document CIN
+                <em class="required">*</em>
+              </span>
+
+              <div class="file-upload-zone" [class.file-upload-zone--filled]="cinDocumentPath">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf"
+                  (change)="onCinDocumentSelected($event)"
+                  id="cinInput"
+                  hidden />
+
+                <label for="cinInput" class="file-upload-inner">
+                  <ng-container *ngIf="!cinDocumentPath">
+                    <i class="fas fa-id-card upload-icon upload-icon--orange"></i>
+                    <p>Cliquez pour uploader votre CIN</p>
+                    <small>JPG, PNG ou PDF • Max 10MB</small>
+                  </ng-container>
+
+                  <ng-container *ngIf="cinDocumentPath">
+                    <img
+                      *ngIf="cinDocumentPreview"
+                      [src]="cinDocumentPreview"
+                      class="file-preview-img"
+                      alt="CIN" />
+
+                    <span class="file-preview-name">
+                      <i class="fas fa-check-circle" style="color:#22c55e"></i>
+                      {{ cinDocumentPath }}
+                    </span>
+
+                    <button
+                      type="button"
+                      class="hero-btn hero-btn--ghost"
+                      (click)="removeCinDocument(); $event.preventDefault()">
+                      Retirer
+                    </button>
+                  </ng-container>
+                </label>
+              </div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">
+                Selfie — Liveness Detection
+                <em class="required">*</em>
+              </span>
+
+              <div class="file-upload-zone" [class.file-upload-zone--filled]="selfiePath">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  capture="user"
+                  (change)="onSelfieSelected($event)"
+                  id="selfieInput"
+                  hidden />
+
+                <label for="selfieInput" class="file-upload-inner">
+                  <ng-container *ngIf="!selfiePath">
+                    <i class="fas fa-camera upload-icon upload-icon--blue"></i>
+                    <p>Cliquez pour prendre ou uploader votre selfie</p>
+                    <small>JPG, PNG ou WEBP • Visage bien visible • Max 5MB</small>
+                  </ng-container>
+
+                  <ng-container *ngIf="selfiePath">
+                    <img
+                      *ngIf="selfiePreview"
+                      [src]="selfiePreview"
+                      class="file-preview-img"
+                      alt="Selfie" />
+
+                    <span class="file-preview-name">
+                      <i class="fas fa-check-circle" style="color:#22c55e"></i>
+                      {{ selfiePath }}
+                    </span>
+
+                    <button
+                      type="button"
+                      class="hero-btn hero-btn--ghost"
+                      (click)="removeSelfie(); $event.preventDefault()">
+                      Retirer
+                    </button>
+                  </ng-container>
+                </label>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="field">
+            <span class="field-label">
+              Diplôme / Preuve professionnelle
+              <em class="optional">(optionnel)</em>
+            </span>
+
+            <div
+              class="file-upload-zone file-upload-zone--optional"
+              [class.file-upload-zone--filled]="diplomaDocumentPath">
+
+              <input
+                type="file"
+                accept="image/jpeg,image/png,application/pdf"
+                (change)="onDiplomaSelected($event)"
+                id="diplomaInput"
+                hidden />
+
+              <label for="diplomaInput" class="file-upload-inner file-upload-inner--small">
+                <ng-container *ngIf="!diplomaDocumentPath">
+                  <i class="fas fa-file-arrow-up upload-icon upload-icon--green"></i>
+                  <p>Cliquez pour uploader votre diplôme</p>
+                  <small>JPG, PNG ou PDF • Max 10MB</small>
+                </ng-container>
+
+                <ng-container *ngIf="diplomaDocumentPath">
+                  <img
+                    *ngIf="diplomaDocumentPreview"
+                    [src]="diplomaDocumentPreview"
+                    class="file-preview-img"
+                    alt="Diplôme" />
+
+                  <span class="file-preview-name">
+                    <i class="fas fa-check-circle" style="color:#22c55e"></i>
+                    {{ diplomaDocumentPath }}
+                  </span>
+
+                  <button
+                    type="button"
+                    class="hero-btn hero-btn--ghost"
+                    (click)="removeDiploma(); $event.preventDefault()">
+                    Retirer
+                  </button>
+                </ng-container>
+              </label>
+            </div>
+          </div>
+
+          <div class="submit-actions">
+            <button
+              type="button"
+              class="hero-btn hero-btn--primary"
+              (click)="submitKyc()"
+              [disabled]="submitting || !cinDocumentFile || !selfieFile">
+              <i class="fas fa-paper-plane"></i>
+              <span *ngIf="!submitting">Soumettre le dossier</span>
+              <span *ngIf="submitting">Envoi en cours...</span>
+            </button>
+
+            <button
+              type="button"
+              class="hero-btn hero-btn--ghost"
+              (click)="toggleSubmitForm()">
+              Annuler
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="panel-card" *ngIf="kycStatus === 'IN_REVIEW'">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Dossier en cours</span>
+            <h2>Votre KYC est en cours de traitement</h2>
+          </div>
+        </div>
+
+        <div class="status-message">
+          <i class="fas fa-hourglass-half status-message__icon status-message__icon--warning"></i>
+          <p>Notre équipe examine votre dossier. Vous serez notifié dès que la décision sera prise.</p>
+        </div>
+      </div>
+
+      <div class="panel-card" *ngIf="kycStatus === 'APPROVED'">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Vérification complète</span>
+            <h2>Identité validée avec succès</h2>
+          </div>
+
+          <button type="button" class="hero-btn hero-btn--ghost" (click)="toggleSubmitForm()">
+            <i class="fas fa-file-circle-plus"></i>
+            <span>{{ showSubmitForm ? 'Annuler' : 'Ajouter un diplôme' }}</span>
+          </button>
+        </div>
+
+        <div class="status-message">
+          <i class="fas fa-circle-check status-message__icon status-message__icon--success"></i>
+          <p>Votre KYC est approuvé. Votre Trust Level a été mis à jour automatiquement.</p>
+        </div>
+
+        <div *ngIf="showSubmitForm" class="kyc-submit-form">
+          <div class="field">
+            <span class="field-label">
+              Diplôme / Preuve professionnelle
+              <em class="optional">(optionnel)</em>
+            </span>
+
+            <div
+              class="file-upload-zone file-upload-zone--optional"
+              [class.file-upload-zone--filled]="diplomaDocumentPath">
+
+              <input
+                type="file"
+                accept="image/jpeg,image/png,application/pdf"
+                (change)="onDiplomaSelected($event)"
+                id="approvedDiplomaInput"
+                hidden />
+
+              <label for="approvedDiplomaInput" class="file-upload-inner file-upload-inner--small">
+                <ng-container *ngIf="!diplomaDocumentPath">
+                  <i class="fas fa-file-arrow-up upload-icon upload-icon--green"></i>
+                  <p>Cliquez pour uploader votre diplôme</p>
+                  <small>JPG, PNG ou PDF • Max 10MB</small>
+                </ng-container>
+
+                <ng-container *ngIf="diplomaDocumentPath">
+                  <img
+                    *ngIf="diplomaDocumentPreview"
+                    [src]="diplomaDocumentPreview"
+                    class="file-preview-img"
+                    alt="Diplôme" />
+
+                  <span class="file-preview-name">
+                    <i class="fas fa-check-circle" style="color:#22c55e"></i>
+                    {{ diplomaDocumentPath }}
+                  </span>
+
+                  <button
+                    type="button"
+                    class="hero-btn hero-btn--ghost"
+                    (click)="removeDiploma(); $event.preventDefault()">
+                    Retirer
+                  </button>
+                </ng-container>
+              </label>
+            </div>
+          </div>
+
+          <div class="submit-actions">
+            <button
+  type="button"
+  class="hero-btn hero-btn--primary"
+  (click)="submitDiplomaOnly()"
+  [disabled]="submitting || !diplomaFile">
+  <i class="fas fa-paper-plane"></i>
+  <span *ngIf="!submitting">Envoyer le diplôme</span>
+  <span *ngIf="submitting">Envoi en cours...</span>
+</button>
+
+            <button
+              type="button"
+              class="hero-btn hero-btn--ghost"
+              (click)="toggleSubmitForm()">
+              Annuler
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div class="panel-card">
         <div class="panel-head">
           <div>
-            <span class="card-kicker">Verification flow</span>
-            <h2>KYC progress</h2>
-          </div>
-
-          <div class="panel-head__filters">
-            <span class="filter-chip active">Current</span>
-            <span class="filter-chip">Documents</span>
-            <span class="filter-chip">Compliance</span>
+            <span class="card-kicker">Progression</span>
+            <h2>Étapes de vérification</h2>
           </div>
         </div>
 
@@ -81,18 +368,14 @@
                 <div class="timeline-icon">
                   <i class="fas fa-shield-check"></i>
                 </div>
-
                 <div>
                   <div class="timeline-title-row">
                     <h3>{{ step.title }}</h3>
-                    <span [ngClass]="getStatusClass(step.status)">
-                      {{ step.status }}
-                    </span>
+                    <span [ngClass]="getStatusClass(step.status)">{{ step.status }}</span>
                   </div>
                   <p>{{ step.description }}</p>
                 </div>
               </div>
-
               <strong class="timeline-score">{{ step.progress }}%</strong>
             </div>
 
@@ -108,32 +391,20 @@
       <div class="panel-card">
         <div class="panel-head">
           <div>
-            <span class="card-kicker">Required files</span>
-            <h2>Documents center</h2>
+            <span class="card-kicker">Fichiers requis</span>
+            <h2>Centre de documents</h2>
           </div>
         </div>
 
         <div class="documents-grid">
           <article class="document-card" *ngFor="let doc of documents">
             <div class="document-card__top">
-              <div class="document-icon">
-                <i class="fas fa-file-lines"></i>
-              </div>
-
-              <span [ngClass]="getStatusClass(doc.status)">
-                {{ doc.status }}
-              </span>
+              <div class="document-icon"><i class="fas fa-file-lines"></i></div>
+              <span [ngClass]="getStatusClass(doc.status)">{{ doc.status }}</span>
             </div>
-
             <h3>{{ doc.title }}</h3>
             <p>{{ doc.description }}</p>
-
             <div class="document-hint">{{ doc.fileHint }}</div>
-
-            <button type="button" class="document-btn">
-              <i class="fas fa-arrow-up-from-bracket"></i>
-              <span>Manage file</span>
-            </button>
           </article>
         </div>
       </div>
@@ -141,17 +412,18 @@
       <div class="panel-card">
         <div class="panel-head">
           <div>
-            <span class="card-kicker">Compliance review</span>
-            <h2>Readiness checklist</h2>
+            <span class="card-kicker">Conformité</span>
+            <h2>Checklist de préparation</h2>
           </div>
         </div>
 
         <div class="checklist">
           <article class="check-item" *ngFor="let item of complianceChecklist">
             <div class="check-icon" [class.check-icon--active]="item.checked">
-              <i class="fas" [class.fa-check]="item.checked" [class.fa-clock]="!item.checked"></i>
+              <i class="fas"
+                 [class.fa-check]="item.checked"
+                 [class.fa-clock]="!item.checked"></i>
             </div>
-
             <div class="check-content">
               <strong>{{ item.label }}</strong>
               <p>{{ item.description }}</p>
@@ -159,6 +431,31 @@
           </article>
         </div>
       </div>
+
+      <div class="panel-card" *ngIf="kycHistory.length > 0">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Historique</span>
+            <h2>Demandes KYC précédentes</h2>
+          </div>
+        </div>
+
+        <div class="timeline-list">
+          <article class="timeline-card" *ngFor="let req of kycHistory">
+            <div class="timeline-card__top">
+              <div>
+                <h3>Demande #{{ req.id || req.kycRequestId }}</h3>
+                <p>
+                  Liveness score : <strong>{{ req.livenessScore }}</strong> |
+                  Passé : <strong>{{ req.livenessPassed ? 'Oui' : 'Non' }}</strong>
+                </p>
+              </div>
+              <span [ngClass]="getStatusClass(req.status)">{{ req.status }}</span>
+            </div>
+          </article>
+        </div>
+      </div>
+
     </div>
 
     <aside class="kyc-side">
@@ -166,20 +463,22 @@
         <div class="panel-head">
           <div>
             <span class="card-kicker">Trust passport</span>
-            <h2>Premium impact</h2>
+            <h2>Impact premium</h2>
           </div>
         </div>
 
         <div class="detail-score-card">
           <div>
-            <span>Eligibility score</span>
-            <strong>High</strong>
+            <span>Trust Level</span>
+            <strong>{{ trustLevel }}/5</strong>
           </div>
-          <div class="detail-score-card__pill">Escrow-ready soon</div>
+          <div class="detail-score-card__pill">
+            {{ kycStatus === 'APPROVED' ? 'Escrow éligible' : 'En attente' }}
+          </div>
         </div>
 
         <div class="big-progress">
-          <div class="big-progress__fill" style="width: 82%;"></div>
+          <div class="big-progress__fill" [style.width.%]="trustLevel * 20"></div>
         </div>
 
         <div class="benefits-list">
@@ -193,39 +492,33 @@
       <div class="panel-card panel-card--dark">
         <div class="panel-head panel-head--dark">
           <div>
-            <span class="card-kicker card-kicker--dark">Review note</span>
-            <h2>Why KYC matters</h2>
+            <span class="card-kicker card-kicker--dark">Pourquoi KYC ?</span>
+            <h2>L'importance de la vérification</h2>
           </div>
         </div>
 
         <div class="insight-list">
           <article class="insight-item">
-            <div class="insight-item__icon">
-              <i class="fas fa-user-shield"></i>
-            </div>
+            <div class="insight-item__icon"><i class="fas fa-user-shield"></i></div>
             <div>
-              <strong>Client confidence</strong>
-              <p>Verified freelancers appear more credible and professional from first contact.</p>
+              <strong>Confiance client</strong>
+              <p>Les freelancers vérifiés inspirent plus de crédibilité dès le premier contact.</p>
             </div>
           </article>
 
           <article class="insight-item">
-            <div class="insight-item__icon">
-              <i class="fas fa-lock"></i>
-            </div>
+            <div class="insight-item__icon"><i class="fas fa-lock"></i></div>
             <div>
-              <strong>Secure transactions</strong>
-              <p>KYC helps reinforce safer payments, escrow logic and account legitimacy.</p>
+              <strong>Transactions sécurisées</strong>
+              <p>Le KYC renforce la sécurité des paiements escrow et la légitimité du compte.</p>
             </div>
           </article>
 
           <article class="insight-item">
-            <div class="insight-item__icon">
-              <i class="fas fa-ranking-star"></i>
-            </div>
+            <div class="insight-item__icon"><i class="fas fa-ranking-star"></i></div>
             <div>
-              <strong>Premium visibility</strong>
-              <p>Higher trust levels strengthen profile exposure for serious business opportunities.</p>
+              <strong>Visibilité premium</strong>
+              <p>Un niveau de confiance élevé booste l'exposition du profil aux missions sérieuses.</p>
             </div>
           </article>
         </div>

@@ -11,6 +11,7 @@ import { SectionHeaderComponent } from './components/section-header/section-head
 import { EmptyStateComponent } from './components/empty-state/empty-state.component';
 import { NotificationBellComponent } from './components/notification-bell/notification-bell.component';
 import { LoadingSpinnerComponent } from './components/loading-spinner/loading-spinner.component';
+import { StatusCountPipe } from './pipes/status-count.pipe';
 
 @NgModule({
   declarations: [
@@ -21,7 +22,8 @@ import { LoadingSpinnerComponent } from './components/loading-spinner/loading-sp
     SectionHeaderComponent,
     EmptyStateComponent,
     NotificationBellComponent,
-    LoadingSpinnerComponent
+    LoadingSpinnerComponent,
+    StatusCountPipe
   ],
   imports: [
     CommonModule,
@@ -36,7 +38,10 @@ import { LoadingSpinnerComponent } from './components/loading-spinner/loading-sp
     SectionHeaderComponent,
     EmptyStateComponent,
     NotificationBellComponent,
-    LoadingSpinnerComponent
+    LoadingSpinnerComponent,
+    FormsModule,
+    RouterModule,
+    StatusCountPipe
   ]
 })
 export class SharedModule {}

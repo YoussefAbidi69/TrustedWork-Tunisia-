@@ -14,9 +14,13 @@ import tn.esprit.mscontractservicee.feign.fallback.UserServiceFallback;
 )
 public interface UserServiceClient {
 
-    // ms-user-service switched to public identifier CIN: GET /users/{cin}
+    // Older ms-user versions exposed GET /users/{cin}. Newer versions may not.
     @GetMapping("/users/{cin}")
     UserDTO getUserByCin(@PathVariable("cin") Long cin);
+
+    // Newer ms-user versions expose KYC status by CIN (returns UserDTO) and can be used as a lookup by CIN.
+    @GetMapping("/kyc/status/{cin}")
+    UserDTO getUserByCinFromKycStatus(@PathVariable("cin") Long cin);
 
     @GetMapping("/users/me")
     UserDTO getCurrentUser();

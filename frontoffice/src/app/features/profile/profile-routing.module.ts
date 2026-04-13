@@ -9,48 +9,24 @@ import { KycComponent } from './kyc/kyc.component';
 import { TrustPassportComponent } from './trust-passport/trust-passport.component';
 
 const routes: Routes = [
-  {
-    path: '',
-    redirectTo: 'profile-overview',
-    pathMatch: 'full'
-  },
+  // Redirection par défaut vers overview
+  { path: '',               redirectTo: 'overview', pathMatch: 'full' },
 
-  {
-    path: 'profile-overview',
-    component: ProfileOverviewComponent
-  },
-  {
-    path: 'certifications',
-    component: CertificationsComponent
-  },
-  {
-    path: 'skills',
-    component: SkillsComponent
-  },
-  {
-    path: 'settings',
-    component: SettingsComponent
-  },
-  {
-    path: 'kyc',
-    component: KycComponent
-  },
-  {
-    path: 'trust-passport',
-    component: TrustPassportComponent
-  },
+  // ← FIX : path 'overview' au lieu de 'profile-overview'
+  // La sidebar pointe vers /app/profile/overview
+  { path: 'overview',       component: ProfileOverviewComponent },
+  { path: 'certifications', component: CertificationsComponent },
+  { path: 'skills',         component: SkillsComponent },
+  { path: 'settings',       component: SettingsComponent },
+  { path: 'kyc',            component: KycComponent },
+  { path: 'trust-passport', component: TrustPassportComponent },
 
-  // 🔥 IMPORTANT: fallback pour éviter écran blanc
-  {
-    path: '**',
-    redirectTo: 'profile-overview'
-  }
+  // Fallback
+  { path: '**',             redirectTo: 'overview' }
 ];
 
 @NgModule({
-  imports: [
-    RouterModule.forChild(routes)
-  ],
+  imports: [RouterModule.forChild(routes)],
   exports: [RouterModule]
 })
 export class ProfileRoutingModule {}

@@ -12,6 +12,13 @@ export interface ConnectedUserResponse {
   role?: string;
   cin?: string | number;
   twoFactorEnabled?: boolean;
+  headline?: string;
+  location?: string;
+  bio?: string;
+  phone?: string;
+  kycStatus?: string;
+  trustLevel?: number;
+  photo?: string;
 }
 
 export interface DashboardUser {

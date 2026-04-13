@@ -18,6 +18,12 @@ public class UserServiceFallback implements UserServiceClient {
     }
 
     @Override
+    public UserDTO getUserByCinFromKycStatus(Long cin) {
+        log.error("Fallback: Unable to get user (via kyc/status) with cin: {}", cin);
+        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "User service unavailable");
+    }
+
+    @Override
     public UserDTO getCurrentUser() {
         log.error("Fallback: Unable to get current user");
         throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "User service unavailable");

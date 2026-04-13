@@ -216,3 +216,35 @@ input::placeholder {
     flex-direction: column;
   }
 }
+/* ─── Google OAuth — ajouts ──────────────────────────────────────────────── */
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 16px;
+  color: #9aa5b4;
+  font-size: 0.82rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(27, 31, 42, 0.1);
+}
+
+.google-signin-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.google-signin-wrapper > div {
+  width: 100% !important;
+}
+
+.google-signin-wrapper iframe {
+  width: 100% !important;
+}

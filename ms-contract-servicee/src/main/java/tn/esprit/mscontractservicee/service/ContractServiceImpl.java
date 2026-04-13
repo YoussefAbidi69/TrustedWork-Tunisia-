@@ -260,15 +260,57 @@ public class ContractServiceImpl implements IContractService {
 
     private UserDTO fetchUserByCin(Long cin) {
         try {
+            // Prefer the direct user lookup when available.
             return userServiceClient.getUserByCin(cin);
         } catch (FeignException e) {
-            if (e.status() == 404) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with cin: " + cin, e);
+            log.warn("User lookup failed (primary) cin={}, status={}, method={}, url={}, msg={}, body={}",
+                    cin,
+                    e.status(),
+                    (e.request() != null ? e.request().httpMethod() : null),
+                    (e.request() != null ? e.request().url() : null),
+                    e.getMessage(),
+                    safeFeignBody(e));
+            // Newer ms-user versions do not expose GET /users/{cin}. Fallback to /kyc/status/{cin}.
+            // Note: when ms-user has PUT /users/{cin} but no GET /users/{cin}, calling GET can return 405.
+            // Some versions can also return 5xx for /users/{cin} due to internal errors; try the KYC endpoint anyway.
+            if (e.status() == 404 || e.status() == 405 || e.status() >= 500) {
+                try {
+                    return userServiceClient.getUserByCinFromKycStatus(cin);
+                } catch (FeignException e2) {
+                    log.warn("User lookup failed (fallback kyc/status) cin={}, status={}, method={}, url={}, msg={}, body={}",
+                            cin,
+                            e2.status(),
+                            (e2.request() != null ? e2.request().httpMethod() : null),
+                            (e2.request() != null ? e2.request().url() : null),
+                            e2.getMessage(),
+                            safeFeignBody(e2));
+                    if (e2.status() == 404) {
+                        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with cin: " + cin, e2);
+                    }
+                    if (e2.status() == 401 || e2.status() == 403) {
+                        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token", e2);
+                    }
+                    throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "User service error", e2);
+                }
             }
             if (e.status() == 401 || e.status() == 403) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token", e);
             }
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "User service error", e);
+        }
+    }
+
+    private static String safeFeignBody(FeignException e) {
+        try {
+            String body = e.contentUTF8();
+            if (body == null) return null;
+            // Avoid logging huge payloads.
+            if (body.length() > 2000) {
+                return body.substring(0, 2000) + "...(truncated)";
+            }
+            return body;
+        } catch (Exception ignored) {
+            return null;
         }
     }
 }

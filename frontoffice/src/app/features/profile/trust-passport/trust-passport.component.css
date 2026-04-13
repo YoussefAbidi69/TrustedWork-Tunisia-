@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
-  color: #ecf3ff;
+  color: #10203a;
 }
 
 /* Shared */
@@ -290,6 +290,7 @@
 
 .panel-card {
   padding: 26px;
+  color: #10203a;
 }
 
 .panel-card--detail {
@@ -310,7 +311,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  margin-bottom: 22px;
+  margin-bottom: 20px;
 }
 
 .panel-head h2 {
@@ -569,4 +570,239 @@
 
 .advantage-item i {
   color: #f4b184;
+}
+
+/* Upload zones */
+.upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .upload-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field-label {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  color: #10203a;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.required {
+  color: #ef4444;
+  font-style: normal;
+  margin-left: 4px;
+}
+
+.optional {
+  color: #6d7a8d;
+  font-size: 12px;
+  margin-left: 6px;
+  font-style: normal;
+}
+
+.file-upload-zone {
+  display: block;
+  width: 100%;
+  border-radius: 18px;
+  border: 2px dashed rgba(15, 27, 45, 0.18);
+  background: rgba(15, 27, 45, 0.03);
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.file-upload-zone:hover {
+  border-color: #c85c3b;
+  background: rgba(200, 92, 59, 0.05);
+  box-shadow: 0 10px 24px rgba(200, 92, 59, 0.08);
+}
+
+.file-upload-zone--filled {
+  border-color: #22c55e;
+  border-style: solid;
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.file-upload-zone--optional {
+  border-color: rgba(15, 27, 45, 0.12);
+}
+
+.file-upload-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  min-height: 150px;
+  color: #10203a;
+}
+
+.file-upload-inner--small {
+  min-height: 110px;
+  padding: 20px;
+}
+
+.file-upload-inner p {
+  margin: 0;
+  color: #10203a;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.file-upload-inner small {
+  color: #6d7a8d;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.upload-icon {
+  font-size: 32px;
+  margin-bottom: 4px;
+}
+
+.upload-icon--orange { color: #c85c3b; }
+.upload-icon--blue   { color: #2563eb; }
+.upload-icon--green  { color: #16a34a; }
+
+.file-preview-img {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 2px solid rgba(34, 197, 94, 0.3);
+  background: #ffffff;
+}
+
+.file-preview-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #10203a;
+  font-size: 13px;
+  font-weight: 700;
+  word-break: break-word;
+  text-align: center;
+}
+
+.submit-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.status-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px;
+  text-align: center;
+  color: #10203a;
+}
+
+.status-message p {
+  margin: 0;
+  color: #4a5568;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.status-message__icon {
+  font-size: 40px;
+}
+
+.status-message__icon--success { color: #22c55e; }
+.status-message__icon--warning { color: #f59e0b; }
+
+.empty-submit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px;
+  text-align: center;
+}
+
+.empty-submit__icon {
+  font-size: 48px;
+  color: #c85c3b;
+  opacity: 0.7;
+}
+
+.empty-submit p {
+  margin: 0;
+  color: #4a5568;
+  font-size: 15px;
+  max-width: 400px;
+  line-height: 1.7;
+}
+
+.two-factor-alert {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.two-factor-alert--success {
+  color: #166534;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.18);
+}
+
+.two-factor-alert--error {
+  color: #991b1b;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.18);
+}
+
+@media (max-width: 1100px) {
+  .passport-hero__content,
+  .passport-layout,
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-card--detail {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .passport-hero,
+  .panel-card,
+  .stat-card {
+    padding: 20px;
+    border-radius: 22px;
+  }
+
+  .passport-hero__copy h1 {
+    font-size: 32px;
+  }
+
+  .pillars-grid {
+    grid-template-columns: 1fr;
+  }
 }
