@@ -283,6 +283,7 @@ input, select, textarea { font-family: inherit; }
 .avatar-warning { background: var(--warning-soft); color: var(--warning); }
 .avatar-danger  { background: var(--danger-soft);  color: var(--danger); }
 .avatar-info    { background: var(--info-soft);     color: var(--info); }
+.avatar-gold    { background: rgba(234, 179, 8, 0.12); color: #EAB308; }
 
 /* ── DIVIDER ── */
 .divider { height: 1px; background: var(--border); margin: 20px 0; }
@@ -356,3 +357,75 @@ input, select, textarea { font-family: inherit; }
 .pulse-dot.green  { background: var(--success); box-shadow: 0 0 6px var(--success); }
 .pulse-dot.orange { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
 .pulse-dot.red    { background: var(--danger);  box-shadow: 0 0 6px var(--danger); }
+
+/* ══════════════════════════════════════════════════════
+   OVERVIEW ADDITIONS — only what the overview needs
+   ══════════════════════════════════════════════════════ */
+
+:root {
+  --gold: #EAB308;
+  --gold-soft: rgba(234, 179, 8, 0.12);
+  --shadow-glow: 0 0 30px rgba(99,102,241,0.12);
+}
+
+@keyframes fadeSlideUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 0; transform: scale(0.8); }
+  50% { opacity: 0.6; transform: scale(1.4); }
+}
+
+@keyframes floatBlob1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(5vw, 8vh) scale(1.1); }
+  66% { transform: translate(-3vw, -4vh) scale(0.95); }
+}
+
+@keyframes floatBlob2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-6vw, -5vh) scale(1.08); }
+}
+
+@keyframes toastIn  { to { opacity: 1; transform: translateX(0); } }
+@keyframes toastOut { to { opacity: 0; transform: translateX(40px); } }
+
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  opacity: 0;
+  transform: translateX(40px);
+  animation: toastIn 0.4s ease forwards;
+  pointer-events: auto;
+}
+
+.toast.out { animation: toastOut 0.3s ease forwards; }
+.toast i { color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
