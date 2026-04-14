@@ -1,0 +1,74 @@
+<div class="admin-reports">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fas fa-chart-bar text-accent"></i> Rapports & Export</h1>
+      <p class="page-subtitle">Rapports de progression auto-générés et exports PDF / CSV</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" (click)="goBack()"><i class="fas fa-arrow-left"></i> Retour</button>
+      <button class="btn btn-ghost btn-sm" (click)="loadAll()"><i class="fas fa-rotate-right"></i> Refresh</button>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading"><i class="fas fa-spinner fa-spin"></i><p>Chargement des rapports...</p></div>
+
+  <div class="reports-grid" *ngIf="!loading">
+    <div class="card report-card" *ngFor="let item of reports">
+      <!-- Header -->
+      <div class="card-header">
+        <div>
+          <div class="card-title">{{ item.project.title }}</div>
+          <div class="card-subtitle">Projet #{{ item.project.id }} · {{ item.project.budget | number:'1.0-0' }} DT</div>
+        </div>
+        <span class="badge" [ngClass]="statusBadge(item.project.status)">{{ statusLabel(item.project.status) }}</span>
+      </div>
+
+      <!-- Stats mini -->
+      <div class="report-stats" *ngIf="item.report">
+        <div class="rstat">
+          <span class="rstat-value">{{ item.report.completedTasks }}/{{ item.report.totalTasks }}</span>
+          <span class="rstat-label">Tâches</span>
+        </div>
+        <div class="rstat">
+          <span class="rstat-value">{{ item.report.completionRate }}%</span>
+          <span class="rstat-label">Complétion</span>
+        </div>
+        <div class="rstat">
+          <span class="rstat-value">{{ item.report.openDeliverables }}</span>
+          <span class="rstat-label">En attente</span>
+        </div>
+        <div class="rstat">
+          <span class="rstat-value">{{ item.report.activeRisks }}</span>
+          <span class="rstat-label">Risques</span>
+        </div>
+      </div>
+
+      <!-- Résumé IA -->
+      <div class="report-summary" *ngIf="item.report?.summary">
+        <p>{{ item.report!.summary }}</p>
+      </div>
+
+      <div class="no-report" *ngIf="!item.report">
+        <i class="fas fa-file-circle-xmark"></i>
+        <span>Aucun rapport disponible</span>
+      </div>
+
+      <!-- Actions Export -->
+      <div class="report-actions">
+        <button class="btn btn-ghost btn-sm" (click)="exportPdf(item.project.id, item.project.title)">
+          <i class="fas fa-file-pdf text-danger"></i> Export PDF
+        </button>
+        <button class="btn btn-ghost btn-sm" (click)="exportCsv(item.project.id, item.project.title)">
+          <i class="fas fa-file-csv text-success"></i> Export CSV
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && reports.length === 0">
+    <i class="fas fa-chart-bar"></i>
+    <p>Aucun projet — aucun rapport à afficher</p>
+  </div>
+
+</div>

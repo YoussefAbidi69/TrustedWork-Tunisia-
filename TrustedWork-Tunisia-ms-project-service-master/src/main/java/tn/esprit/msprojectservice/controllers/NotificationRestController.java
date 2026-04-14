@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.msprojectservice.dto.NotificationDTO;
 import tn.esprit.msprojectservice.services.INotificationService;
-
+import tn.esprit.msprojectservice.scheduler.DeliveryRiskScheduler;
 import java.util.List;
 
 @RestController
@@ -17,6 +17,9 @@ public class NotificationRestController {
 
     @Autowired
     private INotificationService notificationService;
+
+    @Autowired
+    private DeliveryRiskScheduler deliveryRiskScheduler;
 
     @GetMapping("/user/{userId}")
     @Operation(summary = "Toutes les notifications", description = "Récupérer toutes les notifications d'un utilisateur")
@@ -51,5 +54,14 @@ public class NotificationRestController {
     public ResponseEntity<Void> markAllAsRead(@PathVariable Long userId) {
         notificationService.markAllAsRead(userId);
         return ResponseEntity.noContent().build();
+    }
+
+
+
+    @PostMapping("/test/{projectId}")
+    @Operation(summary = "Déclencher les notifications manuellement (test)")
+    public ResponseEntity<String> testNotifications(@PathVariable Long projectId) {
+        deliveryRiskScheduler.sendDailyNotifications();
+        return ResponseEntity.ok("Notifications déclenchées pour le projet " + projectId);
     }
 }

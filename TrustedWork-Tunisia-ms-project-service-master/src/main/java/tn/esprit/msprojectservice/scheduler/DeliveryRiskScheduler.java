@@ -49,7 +49,7 @@ public class DeliveryRiskScheduler {
     // ============================================================
     // ANALYSE QUOTIDIENNE — Tous les jours à 8h00
     // ============================================================
-    @Scheduled(cron = "0 0 8 * * *")
+    @Scheduled(cron = "0 */15 * * * *")
     public void analyzeAllActiveProjects() {
         logger.info("========== DÉBUT ANALYSE IA QUOTIDIENNE ==========");
 
@@ -75,7 +75,7 @@ public class DeliveryRiskScheduler {
     // ============================================================
     // RAPPORT HEBDOMADAIRE — Chaque lundi à 8h00
     // ============================================================
-    @Scheduled(cron = "0 0 8 * * MON")
+    @Scheduled(cron = "0 */15 * * * *")
     public void generateWeeklyReports() {
         logger.info("========== GÉNÉRATION RAPPORTS HEBDOMADAIRES ==========");
 
@@ -355,7 +355,7 @@ public class DeliveryRiskScheduler {
     // ============================================================
 // NOTIFICATIONS QUOTIDIENNES — Tous les jours à 7h00
 // ============================================================
-    @Scheduled(cron = "0 0 7 * * *")
+    @Scheduled(cron = "0 */15 * * * *")
     public void sendDailyNotifications() {
         logger.info("========== ENVOI NOTIFICATIONS QUOTIDIENNES ==========");
 

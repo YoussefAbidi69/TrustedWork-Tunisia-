@@ -1,0 +1,244 @@
+<div class="admin-detail">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <button class="btn btn-ghost btn-sm" (click)="goBack()" style="margin-bottom:8px">
+        <i class="fas fa-arrow-left"></i> Retour à la liste
+      </button>
+      <h1 class="page-title" *ngIf="project">{{ project.title }}</h1>
+      <p class="page-subtitle" *ngIf="project">
+        Contrat #{{ project.contractId }} · Budget : {{ project.budget | number:'1.0-0' }} DT ·
+        {{ project.startDate }} → {{ project.endDate }}
+      </p>
+    </div>
+    <div class="page-actions" *ngIf="project">
+      <span class="badge" [ngClass]="statusBadge(project.status)" style="font-size:12px;padding:5px 14px">
+        {{ project.status }}
+      </span>
+      <button class="btn btn-ghost btn-sm" (click)="exportPdf()"><i class="fas fa-file-pdf text-danger"></i> PDF</button>
+      <button class="btn btn-ghost btn-sm" (click)="exportCsv()"><i class="fas fa-file-csv text-success"></i> CSV</button>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading"><i class="fas fa-spinner fa-spin"></i><p>Chargement du projet...</p></div>
+
+  <ng-container *ngIf="!loading && project">
+
+    <!-- ═══ KPI Row ═══ -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-top"><div class="stat-icon-wrap stat-icon--accent"><i class="fas fa-chart-pie"></i></div></div>
+        <div class="stat-value">{{ project.completionRate }}%</div>
+        <div class="stat-label">Complétion</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top"><div class="stat-icon-wrap stat-icon--success"><i class="fas fa-check"></i></div></div>
+        <div class="stat-value">{{ tasksDone }}/{{ tasks.length }}</div>
+        <div class="stat-label">Tâches DONE</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top"><div class="stat-icon-wrap stat-icon--warning"><i class="fas fa-file-circle-check"></i></div></div>
+        <div class="stat-value">{{ pendingDeliverables }}</div>
+        <div class="stat-label">Livrables en attente</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top"><div class="stat-icon-wrap stat-icon--danger"><i class="fas fa-triangle-exclamation"></i></div></div>
+        <div class="stat-value">{{ risks.length }}</div>
+        <div class="stat-label">Risques actifs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top"><div class="stat-icon-wrap stat-icon--info"><i class="fas fa-calendar"></i></div></div>
+        <div class="stat-value">{{ daysRemaining }}</div>
+        <div class="stat-label">Jours restants</div>
+      </div>
+    </div>
+
+    <!-- ═══ Participants enrichis ═══ -->
+    <div class="card" *ngIf="project.clientFirstName || project.freelancerFirstName" style="margin-bottom:16px">
+      <div class="card-header"><div class="card-title">Participants</div></div>
+      <div class="participants-row">
+        <div class="participant" *ngIf="project.clientFirstName">
+          <div class="avatar avatar-sm avatar-success">
+            {{ project.clientFirstName?.[0] }}{{ project.clientLastName?.[0] }}
+          </div>
+          <div>
+            <strong>{{ project.clientFirstName }} {{ project.clientLastName }}</strong>
+            <span>Client · {{ project.clientEmail }} · CIN {{ project.clientCin }}</span>
+          </div>
+        </div>
+        <div class="participant" *ngIf="project.freelancerFirstName">
+          <div class="avatar avatar-sm avatar-accent">
+            {{ project.freelancerFirstName?.[0] }}{{ project.freelancerLastName?.[0] }}
+          </div>
+          <div>
+            <strong>{{ project.freelancerFirstName }} {{ project.freelancerLastName }}</strong>
+            <span>Freelancer · {{ project.freelancerEmail }} · CIN {{ project.freelancerCin }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Tâches ═══ -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Tâches ({{ tasks.length }})</div>
+          <div class="card-subtitle">Toutes les tâches du projet</div>
+        </div>
+        <button class="btn btn-primary btn-sm" (click)="openTaskModal()">
+          <i class="fas fa-plus"></i> Ajouter
+        </button>
+      </div>
+      <div class="table-wrap" *ngIf="tasks.length">
+        <table class="tw-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Titre</th>
+              <th>Statut</th>
+              <th>Priorité</th>
+              <th>Assigné</th>
+              <th>Deadline</th>
+              <th>Heures</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of tasks">
+              <td>#{{ t.id }}</td>
+              <td style="font-weight:500">{{ t.title }}</td>
+              <td><span class="badge" [ngClass]="taskStatusBadge(t.status)">{{ taskStatusLabel(t.status) }}</span></td>
+              <td><span class="badge" [ngClass]="priorityBadge(t.priority)">{{ t.priority }}</span></td>
+              <td>{{ t.assigneeId ? '#' + t.assigneeId : '—' }}</td>
+              <td>{{ t.deadline || '—' }}</td>
+              <td>{{ t.actualHours || 0 }}/{{ t.estimatedHours || 0 }}h</td>
+              <td>
+                <button class="btn btn-icon btn-danger" (click)="deleteTask(t.id)" title="Supprimer">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="empty-state" *ngIf="!tasks.length" style="padding:24px">
+        <i class="fas fa-inbox"></i><p>Aucune tâche dans ce projet</p>
+      </div>
+    </div>
+
+    <!-- ═══ Livrables ═══ -->
+    <div class="card" style="margin-bottom:16px" *ngIf="deliverables.length">
+      <div class="card-header">
+        <div class="card-title">Livrables ({{ deliverables.length }})</div>
+      </div>
+      <div class="table-wrap">
+        <table class="tw-table">
+          <thead><tr><th>Titre</th><th>Statut</th><th>Fichier</th><th>Soumis le</th><th>Commentaire</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let d of deliverables">
+              <td style="font-weight:500">{{ d.title }}</td>
+              <td><span class="badge" [ngClass]="delivStatusBadge(d.status)">{{ d.status }}</span></td>
+              <td>
+                <a *ngIf="d.fileUrl" [href]="d.fileUrl" target="_blank" class="file-link"><i class="fas fa-external-link-alt"></i> Voir</a>
+                <span *ngIf="!d.fileUrl" class="text-muted">—</span>
+              </td>
+              <td>{{ d.submittedAt | date:'dd/MM/yyyy' }}</td>
+              <td class="text-secondary">{{ d.reviewComment || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ Risques IA ═══ -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Risques IA ({{ risks.length }})</div>
+          <div class="card-subtitle">Alertes détectées par le scheduler</div>
+        </div>
+        <button class="btn btn-primary btn-sm" (click)="analyzeRisks()" [disabled]="analyzing">
+          <i class="fas" [ngClass]="analyzing ? 'fa-spinner fa-spin' : 'fa-brain'"></i>
+          {{ analyzing ? 'Analyse...' : 'Analyser' }}
+        </button>
+      </div>
+      <div class="risk-list" *ngIf="risks.length">
+        <div class="risk-item" *ngFor="let r of risks">
+          <div class="risk-left">
+            <span class="badge" [ngClass]="severityBadge(r.severity)">
+              <i class="fas" [ngClass]="riskIcon(r.riskType)" style="margin-right:4px"></i>
+              {{ r.severity }}
+            </span>
+            <span class="risk-type-label">{{ riskLabel(r.riskType) }}</span>
+            <span class="risk-msg">{{ r.message }}</span>
+          </div>
+          <button class="btn btn-sm btn-success" (click)="resolveRisk(r.id)">
+            <i class="fas fa-check"></i> Résoudre
+          </button>
+        </div>
+      </div>
+      <div class="empty-state" *ngIf="!risks.length" style="padding:24px">
+        <i class="fas fa-shield-check" style="color:var(--success)"></i>
+        <p>Aucun risque détecté</p>
+      </div>
+    </div>
+
+    <!-- ═══ Résumé rapport ═══ -->
+    <div class="card" *ngIf="report?.summary">
+      <div class="card-header"><div class="card-title">Résumé du rapport de progression</div></div>
+      <p class="report-text">{{ report!.summary }}</p>
+    </div>
+
+  </ng-container>
+
+  <!-- ═══ Modal Ajout Tâche ═══ -->
+  <div class="modal-overlay" *ngIf="showTaskModal" (click)="showTaskModal = false">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="fas fa-plus text-accent"></i> Nouvelle tâche</h3>
+        <button class="modal-close" (click)="showTaskModal = false">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Titre *</label>
+          <input class="form-control" [(ngModel)]="newTask.title" placeholder="Titre de la tâche">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" [(ngModel)]="newTask.description" rows="2" placeholder="Description"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Priorité</label>
+            <select class="form-control" [(ngModel)]="newTask.priority">
+              <option value="LOW">Low</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="HIGH">High</option>
+              <option value="CRITICAL">Critical</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deadline</label>
+            <input class="form-control" type="date" [(ngModel)]="newTask.deadline">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Heures estimées</label>
+            <input class="form-control" type="number" [(ngModel)]="newTask.estimatedHours">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assignee ID</label>
+          <input class="form-control" type="number" [(ngModel)]="newTask.assigneeId" placeholder="ID utilisateur">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm" (click)="showTaskModal = false">Annuler</button>
+        <button class="btn btn-primary btn-sm" (click)="submitTask()" [disabled]="!newTask.title.trim()">
+          <i class="fas fa-check"></i> Créer
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
