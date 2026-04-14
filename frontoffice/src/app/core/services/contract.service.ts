@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { Contract } from '../models/contract.model';
 
@@ -23,6 +24,15 @@ export class ContractService {
 
   getById(id: number): Observable<Contract> {
     return this.api.get<Contract>(`${this.endpoint}/${id}`);
+  }
+
+  getByReference(reference: string): Observable<Contract | undefined> {
+    return this.getMyContracts().pipe(
+      map(res => {
+        const contracts = Array.isArray(res) ? res : (res.content || []);
+        return contracts.find((c: any) => c.reference === reference);
+      })
+    );
   }
 
   create(contract: Contract): Observable<Contract> {

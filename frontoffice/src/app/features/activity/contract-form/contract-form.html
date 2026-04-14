@@ -20,7 +20,7 @@
         {{ error }}
       </div>
 
-      <form *ngIf="!loading" (ngSubmit)="onSubmit()" class="modern-form">
+      <form *ngIf="!loading" #contractForm="ngForm" (ngSubmit)="contractForm.valid && onSubmit()" class="modern-form">
         <div class="form-sections">
           
           <!-- Section 1: Informations Générales -->
@@ -29,18 +29,34 @@
             <div class="row-grid">
               <div class="input-field">
                 <label>Titre du Projet *</label>
-                <input type="text" placeholder="Ex: Développement Mobile Flutter" [(ngModel)]="contract.projectTitle" name="projectTitle" required>
+                <input type="text" placeholder="Ex: Développement Mobile Flutter" [(ngModel)]="contract.projectTitle" name="projectTitle" #projectTitle="ngModel" required minlength="4">
+                <div *ngIf="projectTitle.invalid && (projectTitle.dirty || projectTitle.touched)" class="error-msg">
+                  <span *ngIf="projectTitle.errors?.['required']">Le titre du projet est obligatoire.</span>
+                  <span *ngIf="projectTitle.errors?.['minlength']">Le titre doit contenir au moins 4 caractères.</span>
+                </div>
               </div>
               <div class="input-field">
                 <label>Montant Total (DT) *</label>
                 <div class="input-with-icon">
-                  <input type="number" placeholder="0.00" [(ngModel)]="contract.montantTotal" name="montantTotal" required>
+                  <input type="number" placeholder="0.00" [(ngModel)]="contract.montantTotal" name="montantTotal" #montantTotal="ngModel" required min="1">
                   <span class="icon">DT</span>
+                </div>
+                <div *ngIf="montantTotal.invalid && (montantTotal.dirty || montantTotal.touched)" class="error-msg">
+                  <span *ngIf="montantTotal.errors?.['required']">Le montant est obligatoire.</span>
+                  <span *ngIf="montantTotal.errors?.['min']">Le montant doit être supérieur à 0.</span>
                 </div>
               </div>
               <div class="input-field">
                 <label>CIN du Freelancer associé *</label>
-                <input type="text" placeholder="Entrez le CIN" [(ngModel)]="contract.freelancerCin" name="freelancerCin" required>
+                <input type="text" placeholder="Entrez le CIN" [(ngModel)]="contract.freelancerCin" name="freelancerCin" #freelancerCin="ngModel" required pattern="[0-9]{8,12}" (blur)="onFreelancerCinChange()">
+                <div *ngIf="checkingFreelancer" class="small text-info mt-1"><i class="fa fa-spinner fa-spin"></i> Vérification...</div>
+                <div *ngIf="freelancerCin.invalid && (freelancerCin.dirty || freelancerCin.touched)" class="error-msg">
+                  <span *ngIf="freelancerCin.errors?.['required']">Le CIN du freelancer est obligatoire.</span>
+                  <span *ngIf="freelancerCin.errors?.['pattern']">Le CIN doit contenir entre 8 et 12 chiffres.</span>
+                </div>
+                <div *ngIf="!freelancerExists && !checkingFreelancer" class="error-msg">
+                  <span>Ce freelancer n'existe pas dans notre base.</span>
+                </div>
               </div>
               <div class="input-field">
                 <label>Taux de Commission (%)</label>
@@ -55,19 +71,32 @@
             <div class="row-grid">
               <div class="input-field">
                 <label>Date de Début *</label>
-                <input type="date" [(ngModel)]="contract.dateDebut" name="dateDebut" required>
+                <input type="date" [(ngModel)]="contract.dateDebut" name="dateDebut" #dateDebut="ngModel" required [min]="minDateToday">
+                <div *ngIf="dateDebut.invalid && (dateDebut.dirty || dateDebut.touched)" class="error-msg">
+                  <span *ngIf="dateDebut.errors?.['required']">La date de début est obligatoire.</span>
+                  <span *ngIf="dateDebut.errors?.['min']">La date ne peut pas être dans le passé.</span>
+                </div>
               </div>
               <div class="input-field">
                 <label>Date de Fin prévue *</label>
-                <input type="date" [(ngModel)]="contract.dateFin" name="dateFin" required>
+                <input type="date" [(ngModel)]="contract.dateFin" name="dateFin" #dateFin="ngModel" required>
+                <div *ngIf="dateFin.invalid && (dateFin.dirty || dateFin.touched)" class="error-msg">
+                  <span *ngIf="dateFin.errors?.['required']">La date de fin est obligatoire.</span>
+                </div>
               </div>
               <div class="input-field">
                 <label>SLA Freelancer (heures de réponse)</label>
-                <input type="number" placeholder="24" [(ngModel)]="contract.slaFreelancerHeures" name="slaFreelancerHeures">
+                <input type="number" placeholder="24" [(ngModel)]="contract.slaFreelancerHeures" name="slaFreelancerHeures" #slaFree="ngModel" min="12">
+                <div *ngIf="slaFree.invalid && (slaFree.dirty || slaFree.touched)" class="error-msg">
+                  <span *ngIf="slaFree.errors?.['min']">Minimum 12 heures.</span>
+                </div>
               </div>
               <div class="input-field">
                 <label>SLA Client (jours de validation)</label>
-                <input type="number" placeholder="3" [(ngModel)]="contract.slaClientJours" name="slaClientJours">
+                <input type="number" placeholder="3" [(ngModel)]="contract.slaClientJours" name="slaClientJours" #slaCli="ngModel" min="1">
+                <div *ngIf="slaCli.invalid && (slaCli.dirty || slaCli.touched)" class="error-msg">
+                  <span *ngIf="slaCli.errors?.['min']">Minimum 1 jour.</span>
+                </div>
               </div>
             </div>
           </div>
@@ -77,7 +106,10 @@
             <h3 class="section-title">Détails de la mission</h3>
             <div class="input-field full-width">
               <label>Description du contrat</label>
-              <textarea rows="4" placeholder="Décrivez les objectifs et livrables attendus..." [(ngModel)]="contract.description" name="description"></textarea>
+              <textarea rows="4" placeholder="Décrivez les objectifs et livrables attendus..." [(ngModel)]="contract.description" name="description" #desc="ngModel" minlength="8"></textarea>
+              <div *ngIf="desc.invalid && (desc.dirty || desc.touched)" class="error-msg">
+                <span *ngIf="desc.errors?.['minlength']">La description doit contenir au moins 8 caractères.</span>
+              </div>
             </div>
           </div>
 
@@ -87,7 +119,7 @@
           <button type="button" class="btn btn-secondary-outline" routerLink="/app/activity/contracts">
             Annuler
           </button>
-          <button type="submit" class="btn btn-primary-elevated">
+          <button type="submit" class="btn btn-primary-elevated" [disabled]="contractForm.invalid || !freelancerExists || checkingFreelancer">
             {{ isEditMode ? 'Mettre à jour le contrat' : 'Créer et Envoyer' }}
           </button>
         </div>

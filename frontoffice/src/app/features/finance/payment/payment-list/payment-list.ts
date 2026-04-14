@@ -36,6 +36,8 @@ export class PaymentListComponent implements OnInit {
     this.contractService.getAll(0, 100).subscribe({
       next: (response: any) => {
         const raw = response.content || response;
+        const validStatuses = ['DRAFT', 'PENDING_PAYMENT', 'ACTIVE', 'COMPLETED'];
+        
         this.contracts = (raw || []).map((c: any) => ({
           ...c,
           montantTotal: Number(c?.montantTotal ?? 0),

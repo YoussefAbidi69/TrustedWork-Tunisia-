@@ -20,17 +20,17 @@
   <div class="form-card shadow-sm">
     <form [formGroup]="form" (ngSubmit)="submit()">
 
-      <!-- Contract ID -->
+      <!-- Contract Reference -->
       <div class="form-section mb-4">
         <label class="form-label-premium">
-          <i class="bi bi-file-earmark-text me-2"></i> ID du Contrat
+          <i class="bi bi-file-earmark-text me-2"></i> Référence du Contrat
         </label>
-        <input type="number"
-               formControlName="contractId"
+        <input type="text"
+               formControlName="contractReference"
                class="form-input-premium"
-               placeholder="Ex: 8"
-               (change)="onContractIdChange()"
-               [readonly]="!!contractId">
+               placeholder="Ex: CTR-2024-001"
+               (change)="onContractReferenceChange()"
+               [readonly]="isContractLocked">
       </div>
 
       <!-- Contract-Level Toggle -->

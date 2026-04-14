@@ -322,3 +322,15 @@
   font-weight: 800;
   color: var(--color-midnight);
 }
+.status-paid { background: #d1fae5; color: #065f46; }
+.status-processing { background: #fef3c7; color: #92400e; }
+.status-cancelled { background: #fee2e2; color: #991b1b; }
+.status-scheduled { background: #e0f2fe; color: #075985; }
+.clickable-row { cursor: pointer; transition: background-color 0.2s ease; }
+.clickable-row:hover { background-color: #f8fafc !important; }
+.timeline-container { padding-left: 1.5rem; border-left: 2px solid #f1f5f9; position: relative; }
+.timeline-container .position-absolute { z-index: 1; box-shadow: 0 0 0 4px #fff; background-color: var(--terracotta) !important; }
+
+.btn-print-receipt { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; border: none; padding: 10px 24px; border-radius: 99px; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(30, 41, 59, 0.2); }
+.btn-print-receipt:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(30, 41, 59, 0.3); background: linear-gradient(135deg, #334155 0%, #475569 100%); color: white; }
+.btn-print-receipt i { font-size: 1.1rem; }

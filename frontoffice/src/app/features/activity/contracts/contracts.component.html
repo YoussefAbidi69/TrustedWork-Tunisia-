@@ -29,9 +29,16 @@
         {{ error }}
       </div>
 
+      <div *ngIf="!loading && !error && contracts.length > 0" class="search-container mb-4">
+        <div class="search-wrapper">
+          <i class="bi bi-search"></i>
+          <input type="text" [(ngModel)]="searchTerm" placeholder="Rechercher un projet par titre..." class="search-input">
+        </div>
+      </div>
+
       <div *ngIf="!loading && !error" class="contracts-list">
         
-        <div *ngFor="let contract of contracts" class="contract-card" [class.expanded]="expandedContracts[contract.id!]">
+        <div *ngFor="let contract of filteredContracts" class="contract-card" [class.expanded]="expandedContracts[contract.id!]">
           <div class="contract-card__header" (click)="toggleMilestones(contract.id!)">
             <div class="header-info">
               <span class="contract-ref">{{ contract.reference }}</span>
@@ -87,6 +94,12 @@
               Aucun jalon défini pour ce contrat.
             </div>
           </div>
+        </div>
+
+        <div *ngIf="contracts.length > 0 && filteredContracts.length === 0" class="text-center py-5 bg-white rounded-4 shadow-sm border border-light">
+          <i class="bi bi-search text-muted fs-1 mb-3 d-block"></i>
+          <h3 class="h5">Aucun projet trouvé</h3>
+          <p class="text-muted">Aucun contrat ne correspond à votre recherche "{{ searchTerm }}".</p>
         </div>
 
         <div *ngIf="contracts.length === 0" class="text-center py-5 bg-white rounded-4 shadow-sm">

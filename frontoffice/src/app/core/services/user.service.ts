@@ -115,4 +115,8 @@ export class UserService {
   completeGoogleProfile(payload: any): Observable<any> {
     return this.api.post('/auth/complete-google-profile', payload, undefined, this.api.getAuthUrl());
   }
+
+  getUserByCin(cin: string | number): Observable<any> {
+    return this.api.get(`/kyc/status/${cin}`, undefined, this.api.getAuthUrl());
+  }
 }

@@ -124,7 +124,7 @@
              <span class="text-muted">{{ selectedPayment.description }}</span>
           </div>
           <div class="d-flex gap-2">
-             <button class="btn btn-outline-primary btn-sm rounded-pill"><i class="bi bi-printer me-1"></i> Imprimer le reçu</button>
+             <button class="btn-print-receipt" (click)="printReceipt()"><i class="bi bi-printer"></i> Imprimer le reçu</button>
           </div>
        </div>
        <div class="col-md-6 ps-md-4">

@@ -29,6 +29,7 @@ export class MilestoneFormComponent implements OnInit {
   totalContractAmount = 0;
   remainingContractAmount = 0;
   otherMilestonesTotal = 0;
+  minDateToday = new Date().toISOString().split('T')[0];
 
   constructor(
     private milestoneService: MilestoneService,

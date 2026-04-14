@@ -119,9 +119,9 @@ export class PaymentsHistoryComponent implements OnInit {
                 description: 'La transaction a été reçue par le réseau.'
               },
               {
-                title: tx.status === 'PROCESSED' ? 'Confirmé' : 'En attente',
+                title: tx.status === 'PROCESSED' || tx.status === 'SUCCESS' ? 'Confirmé' : 'En attente',
                 date: new Date(tx.createdAt).toLocaleString(),
-                description: tx.status === 'PROCESSED' ? 'Fonds mis à disposition avec succès.' : 'Traitement côté serveur.'
+                description: tx.status === 'PROCESSED' || tx.status === 'SUCCESS' ? 'Fonds mis à disposition avec succès.' : 'Traitement côté serveur.'
               }
             ]
           };
@@ -141,6 +141,37 @@ export class PaymentsHistoryComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  printReceipt(): void {
+    if (!this.selectedPayment) return;
+    
+    // Simple print implementation
+    const printContent = `
+      ============================================
+      REÇU DE PAIEMENT - TRUSTEDWORK
+      ============================================
+      Référence: ${this.selectedPayment.id}
+      Date: ${this.selectedPayment.paidAt}
+      Client: ${this.selectedPayment.client}
+      Montant: ${this.selectedPayment.amount}
+      Description: ${this.selectedPayment.description}
+      Statut: ${this.selectedPayment.status}
+      ============================================
+      Merci d'utiliser TrustedWork.
+    `;
+    
+    const printWindow = window.open('', '_blank', 'height=600,width=800');
+    if (printWindow) {
+      printWindow.document.write('<html><head><title>Reçu ' + this.selectedPayment.id + '</title>');
+      printWindow.document.write('<style>body{font-family:monospace;padding:40px;white-space:pre;}</style>');
+      printWindow.document.write('</head><body>');
+      printWindow.document.write(printContent);
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    }
   }
 
   mapStatus(apiStatus: string): PaymentHistoryStatus {

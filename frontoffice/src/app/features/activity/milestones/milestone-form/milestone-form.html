@@ -27,7 +27,7 @@
           <i class="bi bi-exclamation-circle-fill me-2"></i> {{ error }}
         </div>
 
-        <form *ngIf="!loading" (ngSubmit)="onSubmit()" class="premium-form-card shadow-xl">
+        <form *ngIf="!loading" #mForm="ngForm" (ngSubmit)="mForm.valid && milestone.montant <= remainingContractAmount && onSubmit()" class="premium-form-card shadow-xl">
           <input type="hidden" [(ngModel)]="milestone.contractId" name="contractId">
 
           <!-- SECTION: Info Base -->
@@ -51,9 +51,15 @@
                       [(ngModel)]="milestone.titre"
                       name="titre"
                       placeholder="Ex: Maquettes UI complètes"
+                      #mTitle="ngModel"
                       required
+                      minlength="3"
                       [disabled]="(!isClient && !isAdmin) || (isEditMode && milestone.status !== 'PENDING')"
                     >
+                  </div>
+                  <div *ngIf="mTitle.invalid && (mTitle.dirty || mTitle.touched)" class="error-msg">
+                    <span *ngIf="mTitle.errors?.['required']">Titre obligatoire.</span>
+                    <span *ngIf="mTitle.errors?.['minlength']">Minimum 3 caractères.</span>
                   </div>
                 </div>
               </div>
@@ -68,9 +74,18 @@
                       [(ngModel)]="milestone.montant"
                       name="montant"
                       placeholder="0.00"
+                      #mMontant="ngModel"
                       required
+                      min="1"
                       [disabled]="(!isClient && !isAdmin) || (isEditMode && milestone.status !== 'PENDING')"
                     >
+                  </div>
+                  <div *ngIf="mMontant.invalid && (mMontant.dirty || mMontant.touched)" class="error-msg">
+                    <span *ngIf="mMontant.errors?.['required']">Montant obligatoire.</span>
+                    <span *ngIf="mMontant.errors?.['min']">Le montant doit être supérieur à 0.</span>
+                  </div>
+                  <div *ngIf="milestone.montant > remainingContractAmount" class="error-msg">
+                    <span>Dépasse le budget restant ({{ remainingContractAmount }} DT).</span>
                   </div>
                   <div class="budget-indicator mt-2" *ngIf="totalContractAmount > 0">
                     <i class="bi bi-wallet2 me-1"></i>
@@ -107,9 +122,15 @@
                       type="date"
                       [(ngModel)]="milestone.deadline"
                       name="deadline"
+                      #mDeadline="ngModel"
                       required
+                      [min]="minDateToday"
                       [disabled]="(!isClient && !isAdmin) || ['IN_PROGRESS', 'SUBMITTED', 'APPROVED'].includes(milestone.status)"
                     >
+                  </div>
+                  <div *ngIf="mDeadline.invalid && (mDeadline.dirty || mDeadline.touched)" class="error-msg">
+                    <span *ngIf="mDeadline.errors?.['required']">Date limite obligatoire.</span>
+                    <span *ngIf="mDeadline.errors?.['min']">La date ne peut pas être passée.</span>
                   </div>
                 </div>
               </div>
@@ -123,9 +144,16 @@
                       [(ngModel)]="milestone.description"
                       name="description"
                       rows="4"
+                      #mDesc="ngModel"
+                      required
+                      minlength="5"
                       placeholder="Décrivez précisément ce qui sera livré lors de ce jalon..."
                       [disabled]="(!isClient && !isAdmin) || (isEditMode && milestone.status !== 'PENDING')"
                     ></textarea>
+                  </div>
+                  <div *ngIf="mDesc.invalid && (mDesc.dirty || mDesc.touched)" class="error-msg">
+                    <span *ngIf="mDesc.errors?.['required']">Description obligatoire.</span>
+                    <span *ngIf="mDesc.errors?.['minlength']">Minimum 5 caractères.</span>
                   </div>
                 </div>
               </div>
@@ -169,7 +197,7 @@
             <button type="button" class="btn btn-ghost" routerLink="/app/activity/contracts">
               <i class="bi bi-x-lg me-2"></i> Annuler
             </button>
-            <button type="submit" class="btn btn-submit">
+            <button type="submit" class="btn btn-submit" [disabled]="mForm.invalid || milestone.montant > remainingContractAmount">
               <i class="bi bi-check2-circle me-2"></i>
               {{ isEditMode ? 'Mettre à jour le jalon' : 'Créer le jalon' }}
             </button>

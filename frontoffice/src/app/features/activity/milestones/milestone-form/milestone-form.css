@@ -141,6 +141,21 @@
 .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 20px 45px rgba(200, 92, 59, 0.35); background: #b65839; }
 .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+.error-msg {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 6px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+input.ng-invalid.ng-touched, 
+textarea.ng-invalid.ng-touched {
+  border-color: #ef4444 !important;
+}
+
 @media (max-width: 768px) {
   .form-section { padding: 24px 20px; }
   .form-divider { margin: 0 20px; }

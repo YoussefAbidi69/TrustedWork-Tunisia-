@@ -18,6 +18,17 @@ export class ContractsComponent implements OnInit {
   expandedContracts: { [contractId: number]: boolean } = {};
   loading = false;
   error = '';
+  searchTerm: string = '';
+
+  get filteredContracts(): Contract[] {
+    if (!this.searchTerm.trim()) {
+      return this.contracts;
+    }
+    const term = this.searchTerm.toLowerCase();
+    return this.contracts.filter(c => 
+      c.projectTitle?.toLowerCase().includes(term)
+    );
+  }
 
   // Submission Modal State
   showSubmitModal = false;

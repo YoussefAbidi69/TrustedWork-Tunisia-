@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DisputeService } from '../../../../core/services/dispute.service';
 import { MilestoneService } from '../../../../core/services/milestone.service';
+import { ContractService } from '../../../../core/services/contract.service';
 import { Milestone } from '../../../../core/models/milestone.model';
 
 @Component({
@@ -18,16 +19,18 @@ export class DisputeCreateComponent implements OnInit {
   loadingMilestones = false;
   error = '';
   useContractLevel = false;
+  isContractLocked = false;
 
   constructor(
     private fb: FormBuilder,
     private disputeService: DisputeService,
     private milestoneService: MilestoneService,
+    private contractService: ContractService,
     private route: ActivatedRoute,
     private router: Router
   ) {
     this.form = this.fb.group({
-      contractId: [null, Validators.required],
+      contractReference: ['', Validators.required],
       milestoneId: [null],
       motif: ['', [Validators.required, Validators.minLength(10)]],
       preuvesPlaignant: ['']
@@ -38,17 +41,38 @@ export class DisputeCreateComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       if (params['contractId']) {
         this.contractId = +params['contractId'];
-        this.form.patchValue({ contractId: this.contractId });
-        this.loadMilestones(this.contractId);
+        this.isContractLocked = true;
+        this.contractService.getById(this.contractId).subscribe({
+          next: (c) => {
+            this.form.patchValue({ contractReference: c.reference });
+            this.loadMilestones(this.contractId!);
+          }
+        });
       }
     });
   }
 
-  onContractIdChange(): void {
-    const contractId = this.form.get('contractId')?.value;
-    if (contractId) {
-      this.contractId = +contractId;
-      this.loadMilestones(this.contractId);
+  onContractReferenceChange(): void {
+    const ref = this.form.get('contractReference')?.value;
+    if (ref) {
+      this.contractService.getByReference(ref).subscribe({
+        next: (contract) => {
+          if (contract) {
+            this.contractId = contract.id!;
+            this.loadMilestones(this.contractId);
+            this.error = '';
+          } else {
+            this.contractId = null;
+            this.milestones = [];
+            this.error = 'Contrat introuvable avec cette référence.';
+          }
+        },
+        error: () => {
+          this.contractId = null;
+          this.milestones = [];
+          this.error = 'Erreur lors de la recherche du contrat.';
+        }
+      });
     }
   }
 
@@ -81,8 +105,10 @@ export class DisputeCreateComponent implements OnInit {
 
     const payload = {
       ...this.form.value,
+      contractId: this.contractId,
       milestoneId: this.useContractLevel ? null : (this.form.value.milestoneId || null)
     };
+    delete (payload as any).contractReference;
 
     this.disputeService.create(payload).subscribe({
       next: (dispute) => {

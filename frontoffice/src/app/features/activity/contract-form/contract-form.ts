@@ -6,6 +6,7 @@ import { ContractService } from '../../../core/services/contract.service';
 import { Contract } from '../../../core/models/contract.model';
 import { ContractStatus } from '../../../core/models/enums/contract-status.enum';
 import { AuthService } from '../../../core/services/auth.service';
+import { UserService } from '../../../core/services/user.service';
 
 @Component({
   selector: 'app-contract-form',
@@ -34,9 +35,13 @@ export class ContractFormComponent implements OnInit {
   isEditMode = false;
   loading = false;
   error = '';
+  minDateToday = new Date().toISOString().split('T')[0];
+  freelancerExists = true;
+  checkingFreelancer = false;
 
   constructor(
     private contractService: ContractService,
+    private userService: UserService,
     private router: Router,
     private route: ActivatedRoute,
     private authService: AuthService
@@ -68,7 +73,38 @@ export class ContractFormComponent implements OnInit {
     });
   }
 
+  onFreelancerCinChange(): void {
+    const cin = this.contract.freelancerCin;
+    if (cin && cin.length >= 8) {
+      this.checkingFreelancer = true;
+      this.userService.getUserByCin(cin).subscribe({
+        next: (user) => {
+          this.freelancerExists = true;
+          this.checkingFreelancer = false;
+        },
+        error: (err) => {
+          console.warn('Vérification freelancer échouée:', err.status, err);
+          // On ne bloque que si on est SUR que l'utilisateur n'existe pas (404)
+          // Si 403 ou autre, on laisse passer au cas où c'est un problème de droits
+          if (err.status === 404 || err.status === 400) {
+            this.freelancerExists = false;
+          } else {
+            this.freelancerExists = true; 
+          }
+          this.checkingFreelancer = false;
+        }
+      });
+    } else {
+      this.freelancerExists = true;
+    }
+  }
+
   onSubmit(): void {
+    if (!this.freelancerExists) {
+      this.error = "Impossible de créer le contrat : le freelancer avec ce CIN n'a pas été trouvé ou n'est pas actif.";
+      window.scrollTo(0, 0);
+      return;
+    }
     this.loading = true;
     
     const payload = { ...this.contract } as any;
@@ -86,7 +122,7 @@ export class ContractFormComponent implements OnInit {
           this.router.navigate(['/app/activity/contracts', this.contract.id]);
         },
         error: (err) => {
-          this.error = 'Erreur lors de la modification';
+          this.error = err.error?.message || err.error || 'Erreur lors de la modification';
           this.loading = false;
           console.error(err);
         }
@@ -97,7 +133,8 @@ export class ContractFormComponent implements OnInit {
           this.router.navigate(['/app/activity/contracts', contract.id]);
         },
         error: (err) => {
-          this.error = 'Erreur lors de la création';
+          // On affiche le message spécifique renvoyé par le backend si disponible
+          this.error = err.error?.message || err.error || 'Erreur lors de la création';
           this.loading = false;
           console.error(err);
         }
