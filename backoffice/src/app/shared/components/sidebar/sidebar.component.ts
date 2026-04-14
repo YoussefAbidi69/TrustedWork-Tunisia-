@@ -59,6 +59,11 @@ export class SidebarComponent implements OnInit {
       route: '/admin/freelancers'
     },
     {
+      label: 'Reviews',
+      icon: 'fa-star',
+      route: '/admin/freelancers/reviews'
+    },
+    {
       label: 'Profile Reports',
       icon: 'fa-flag',
       route: '/admin/freelancers/reports',
@@ -69,17 +74,25 @@ export class SidebarComponent implements OnInit {
       label: 'Platform Stats',
       icon: 'fa-chart-pie',
       route: '/admin/freelancers/stats'
+    },
+    {
+      label: 'Trending',
+      icon:  'fa-fire',
+      route: '/admin/freelancers/trending',
+      badge: '🔥',
+      badgeType: 'accent'
+    },
+    {
+      sectionLabel: 'Système',
+      label: 'Schedulers',
+      icon: 'fa-clock-rotate-left',
+      route: '/admin/schedulers'
     }
   ];
 
   comingSoonItems: NavItem[] = [
     {
       sectionLabel: 'Reputation Engine',
-      label: 'Reviews',
-      icon: 'fa-star',
-      comingSoon: true
-    },
-    {
       label: 'Trust Scores',
       icon: 'fa-shield-halved',
       comingSoon: true
@@ -199,6 +212,12 @@ export class SidebarComponent implements OnInit {
 
       case '/admin/freelancers/stats':
         return currentUrl === '/admin/freelancers/stats';
+        
+        case '/admin/freelancers/reviews':
+        return currentUrl === '/admin/freelancers/reviews';
+
+      case '/admin/schedulers':
+        return currentUrl === '/admin/schedulers';
 
       default:
         return currentUrl === route;
