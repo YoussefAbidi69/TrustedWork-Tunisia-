@@ -397,4 +397,14 @@ export class ContractSignComponent implements OnInit, OnDestroy {
       });
     }
   }
+
+  closeWindow(): void {
+    // Tente de fermer la fenêtre
+    window.close();
+    
+    // Si la fenêtre ne se ferme pas (sécurité navigateur), on redirige vers l'accueil
+    setTimeout(() => {
+      this.router.navigate(['/']);
+    }, 500);
+  }
 }

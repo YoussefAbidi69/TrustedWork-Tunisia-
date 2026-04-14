@@ -94,13 +94,10 @@
     <!-- Right: Status and Info Panel -->
     <div class="signature-panel shadow-sm">
 
-      <!-- Navigation Control (Top for better UX) -->
-      <div class="mb-4 d-flex justify-content-between align-items-center">
-        <a [routerLink]="['/app/activity/contracts', contractId]" class="btn-ghost-cancel py-2 px-3">
-          <i class="bi bi-arrow-left me-2"></i> Retour aux Détails du Contrat
-        </a>
+      <!-- View Label (formerly with Back button) -->
+      <div class="mb-4 text-end">
         <span class="badge rounded-pill bg-light text-midnight px-3 py-2 border shadow-sm">
-          Vue Signature
+          Vue Signature Électronique
         </span>
       </div>
 
@@ -165,13 +162,22 @@
       </div>
 
       <!-- 3. Success and Download -->
-      <div class="success-card animate-slide-up" *ngIf="signed || (isPublicMode && bothSigned) || (!isPublicMode && bothSigned)">
-        <i class="bi bi-patch-check-fill success-icon"></i>
-        <h3>Document Scellé</h3>
-        <p>Le contrat a été officiellement signé par les deux parties.</p>
-        <button class="btn-download-signed w-100" (click)="downloadSignedPdf()">
-          <i class="bi bi-cloud-arrow-down-fill me-2"></i> Télécharger le Contrat (PDF)
-        </button>
+      <div class="success-card animate-slide-up" *ngIf="signed || bothSigned">
+        <i class="bi bi-patch-check-fill success-icon" [class.partial]="!bothSigned"></i>
+        <h3 *ngIf="bothSigned">Document Scellé</h3>
+        <h3 *ngIf="!bothSigned">Signature Enregistrée</h3>
+        
+        <p *ngIf="bothSigned">Le contrat a été officiellement signé par les deux parties.</p>
+        <p *ngIf="!bothSigned">Votre signature a été apposée avec succès. Le contrat sera finalisé dès que l'autre partie aura signé.</p>
+        <div class="d-flex flex-column gap-2">
+          <button class="btn-download-signed w-100" (click)="downloadSignedPdf()">
+            <i class="bi bi-cloud-arrow-down-fill me-2"></i> Télécharger le Contrat (PDF)
+          </button>
+          
+          <button class="btn-close-session w-100" (click)="closeWindow()">
+            <i class="bi bi-x-circle-fill me-2"></i> Fermer cette page
+          </button>
+        </div>
       </div>
 
       <!-- 4. Signature controls (Visible only in Public Mode) -->
@@ -226,12 +232,7 @@
         </button>
       </div>
 
-      <!-- 5. Navigation Control -->
-      <div class="mt-auto pt-4 shadow-top">
-        <a [routerLink]="['/app/activity/contracts', contractId]" class="btn-back w-100">
-          <i class="bi bi-arrow-left me-2"></i> Retour aux Détails du Contrat
-        </a>
-      </div>
+
 
     </div>
   </div>

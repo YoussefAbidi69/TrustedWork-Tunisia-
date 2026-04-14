@@ -25,6 +25,7 @@ public class PaymentServiceImpl implements IPaymentService {
     private final MilestoneRepository milestoneRepository;
     private final EscrowAccountRepository escrowAccountRepository;
     private final TransactionRepository transactionRepository;
+    private final WalletRepository walletRepository;
     private final IWalletService walletService;
     private final IStripeService stripeService;
 
@@ -33,6 +34,10 @@ public class PaymentServiceImpl implements IPaymentService {
 
     @Value("${app.signature.required:false}")
     private boolean signatureRequired;
+
+    // Wallet de la plateforme (commission). Par défaut: wallet.id=1
+    @Value("${platform.wallet.id:1}")
+    private Long platformWalletId;
 
     @Override
     public PaymentIntentResponse createPaymentIntent(Long contractId, String email) throws Exception {
@@ -315,6 +320,34 @@ public class PaymentServiceImpl implements IPaymentService {
         walletService.credit(contract.getFreelancerCin(), netAmount,
                 (simulationEnabled ? "SIMULATION: " : "") + "Paiement contrat #" + contract.getId() + " - Jalon: " + milestone.getTitre());
 
+        // Créditer la plateforme (commission) - wallet configurable, par défaut id=1
+        if (commission.compareTo(BigDecimal.ZERO) > 0) {
+            Wallet platformWallet = walletRepository.findById(platformWalletId)
+                    .orElseThrow(() -> new RuntimeException("Platform wallet not found. walletId=" + platformWalletId));
+
+            walletService.credit(platformWallet.getUserCin(), commission,
+                    (simulationEnabled ? "SIMULATION: " : "") + "Commission contrat #" + contract.getId() + " - Jalon: " + milestone.getTitre());
+
+            Transaction commissionTx = Transaction.builder()
+                    .reference((simulationEnabled ? "TRX-SIM-COM-" : "TRX-COM-") + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                    .contractId(contract.getId())
+                    .milestoneId(milestone.getId())
+                    .escrowId(escrow.getId())
+                    .walletId(platformWallet.getId())
+                    .type(TransactionType.COMMISSION)
+                    .montant(commission)
+                    .commissionDynamique(commissionRate)
+                    .montantCommission(commission)
+                    .montantNet(commission)
+                    .methodePaiement(simulationEnabled ? PaymentMethod.WALLET : PaymentMethod.STRIPE)
+                    .description("Commission plateforme")
+                    .status(TransactionStatus.PROCESSED)
+                    .createdAt(LocalDateTime.now())
+                    .processedAt(LocalDateTime.now())
+                    .build();
+            transactionRepository.save(commissionTx);
+        }
+
         // Créer la transaction de libération (gross + commission + net)
         Wallet freelancerWallet = walletService.getOrCreateWallet(contract.getFreelancerCin());
 
@@ -330,6 +363,7 @@ public class PaymentServiceImpl implements IPaymentService {
                 .montantCommission(commission)
                 .montantNet(netAmount)
                 .methodePaiement(simulationEnabled ? PaymentMethod.WALLET : PaymentMethod.STRIPE)
+                .description("Release to freelancer (net)")
                 .status(TransactionStatus.PROCESSED)
                 .createdAt(LocalDateTime.now())
                 .processedAt(LocalDateTime.now())

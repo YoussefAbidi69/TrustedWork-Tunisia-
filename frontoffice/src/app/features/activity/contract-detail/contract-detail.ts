@@ -168,7 +168,6 @@ export class ContractDetailComponent implements OnInit {
       next: () => {
         this.signatureService.sendSignatureRequests(this.contract!.id!).subscribe({
           next: () => {
-            alert('Contrat finalisé et demandes de signature envoyées par email !');
             this.loadContract(this.contract!.id!);
           },
           error: (err) => {

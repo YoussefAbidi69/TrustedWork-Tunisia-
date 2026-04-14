@@ -16,13 +16,13 @@
               <h1 class="h3 fw-bold mb-2">{{ contract?.projectTitle || 'Paiement de projet' }}</h1>
               <p class="summary-subtitle mb-4">Sécurisez votre collaboration. Les fonds restent bloqués jusqu'à la validation du jalon.</p>
 
-              <div class="total-badge p-4 rounded-4 mb-4">
-                 <span class="small-label d-block mb-2">Montant à déposer en séquestre</span>
-                 <div class="total-amount d-flex align-items-baseline gap-2">
-                   <span class="number text-white fw-900">{{ amount | number:'1.2-2' }}</span>
-                   <span class="currency text-white-50 fw-bold">DT</span>
-                 </div>
-              </div>
+               <div class="total-badge p-4 rounded-4 mb-3">
+                  <span class="small-label d-block mb-2">Montant total en séquestre</span>
+                  <div class="total-amount d-flex align-items-baseline gap-2">
+                    <span class="number text-white fw-900">{{ amount | number:'1.2-2' }}</span>
+                    <span class="currency text-white-50 fw-bold">DT</span>
+                  </div>
+               </div>
 
               <div class="security-list mt-4">
                  <h6 class="text-white-50 text-uppercase fw-bold mb-4 ls-1 fs-7">Vos garanties TrustedWork</h6>

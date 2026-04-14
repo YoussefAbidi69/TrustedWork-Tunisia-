@@ -301,3 +301,62 @@
 .bg-light-soft {
   background: #f8fafc;
 }
+
+/* Success Card Actions */
+.btn-download-signed {
+  padding: 16px; border-radius: 12px; border: none;
+  background: var(--olive); color: white;
+  font-weight: 700; cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-download-signed:hover {
+  background: #6a845f;
+  transform: translateY(-2px);
+}
+
+.btn-close-session {
+  padding: 16px; border-radius: 12px;
+  background: #f1f5f9; color: var(--midnight);
+  border: 2px solid #e2e8f0;
+  font-weight: 700; cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-close-session:hover {
+  background: var(--midnight);
+  color: white;
+  border-color: var(--midnight);
+  transform: translateY(-2px);
+}
+
+.success-icon {
+  font-size: 3.5rem;
+  color: var(--olive);
+  display: block;
+  margin-bottom: 20px;
+}
+
+.success-icon.partial {
+  color: var(--stone);
+}
+
+.success-card {
+  text-align: center;
+  border: 2px solid var(--olive);
+  background: #f0fdf4;
+}
+
+.success-card:has(.partial) {
+  border-color: var(--stone);
+  background: #f8fafc;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}

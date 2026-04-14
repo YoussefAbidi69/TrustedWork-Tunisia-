@@ -2,6 +2,7 @@ package tn.esprit.mscontractservicee.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ import tn.esprit.mscontractservicee.repository.DisputeRepository;
 import tn.esprit.mscontractservicee.repository.EscrowAccountRepository;
 import tn.esprit.mscontractservicee.repository.MilestoneRepository;
 import tn.esprit.mscontractservicee.repository.TransactionRepository;
+import tn.esprit.mscontractservicee.repository.WalletRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -59,7 +61,12 @@ public class DisputeServiceImpl implements IDisputeService {
     private final MilestoneRepository milestoneRepository;
     private final EscrowAccountRepository escrowAccountRepository;
     private final TransactionRepository transactionRepository;
+    private final WalletRepository walletRepository;
     private final IWalletService walletService;
+
+    // Wallet de la plateforme (commission). Par défaut: wallet.id=1
+    @Value("${platform.wallet.id:1}")
+    private Long platformWalletId;
 
     @Override
     public Dispute openDispute(Long authenticatedCin, DisputeCreateRequest request) {
@@ -412,6 +419,35 @@ public class DisputeServiceImpl implements IDisputeService {
         String scope = milestoneId != null ? (" milestone #" + milestoneId) : "";
         walletService.credit(contract.getFreelancerCin(), netAmount,
                 "Dispute release for contract #" + contract.getId() + scope);
+
+        // Créditer la plateforme (commission) - wallet configurable, par défaut id=1
+        if (commission.compareTo(BigDecimal.ZERO) > 0) {
+            Wallet platformWallet = walletRepository.findById(platformWalletId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                            "Platform wallet not found. walletId=" + platformWalletId));
+
+            walletService.credit(platformWallet.getUserCin(), commission,
+                    "Commission (dispute release) for contract #" + contract.getId() + scope);
+
+            Transaction commissionTx = Transaction.builder()
+                    .reference("TRX-COM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                    .contractId(contract.getId())
+                    .milestoneId(milestoneId)
+                    .escrowId(escrow.getId())
+                    .walletId(platformWallet.getId())
+                    .type(TransactionType.COMMISSION)
+                    .montant(commission)
+                    .commissionDynamique(commissionRate)
+                    .montantCommission(commission)
+                    .montantNet(commission)
+                    .methodePaiement(PaymentMethod.WALLET)
+                    .description("Commission plateforme (dispute)")
+                    .status(TransactionStatus.PROCESSED)
+                    .createdAt(LocalDateTime.now())
+                    .processedAt(LocalDateTime.now())
+                    .build();
+            transactionRepository.save(commissionTx);
+        }
 
         Wallet freelancerWallet = walletService.getOrCreateWallet(contract.getFreelancerCin());
         Transaction tx = Transaction.builder()
