@@ -1,0 +1,42 @@
+@import '../community-layout-system.css';
+
+:host {
+  display: block;
+}
+
+.cm-comment-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cm-comment-card {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(27, 31, 42, 0.08);
+  background: var(--cream);
+}
+
+.cm-comment-card__head {
+  margin-bottom: 8px;
+}
+
+.cm-comment-card__author {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cm-comment-card__body {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--charcoal);
+  line-height: 1.5;
+}
+
+.cm-comment-list__state {
+  padding: 24px;
+}

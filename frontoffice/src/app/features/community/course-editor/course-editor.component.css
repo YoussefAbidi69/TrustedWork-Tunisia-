@@ -1,0 +1,28 @@
+.cm-editor-block {
+  border: 1px solid var(--cm-border, #e5e7eb);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+  background: var(--cm-surface-2, #f9fafb);
+}
+
+.cm-editor-block__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.cm-editor-lesson {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+@media (max-width: 720px) {
+  .cm-editor-lesson {
+    grid-template-columns: 1fr;
+  }
+}

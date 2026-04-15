@@ -1,0 +1,43 @@
+@import '../community-layout-system.css';
+
+:host {
+  display: block;
+}
+
+.cm-filter__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cm-filter__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(27, 31, 42, 0.1);
+  background: var(--white);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--slate);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color var(--transition), background var(--transition), color var(--transition);
+}
+
+.cm-filter__btn:hover {
+  border-color: rgba(200, 92, 59, 0.3);
+  color: var(--midnight);
+}
+
+.cm-filter__btn--active {
+  border-color: rgba(200, 92, 59, 0.45);
+  background: var(--terracotta-light);
+  color: var(--terracotta-dark);
+}
+
+.cm-filter__btn i {
+  font-size: 10px;
+  opacity: 0.85;
+}

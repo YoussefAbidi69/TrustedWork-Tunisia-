@@ -1,0 +1,109 @@
+@import '../community-layout-system.css';
+
+:host {
+  display: block;
+}
+
+.cm-feed-page {
+  max-width: 1440px;
+}
+
+.cm-feed-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .cm-feed-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cm-feed-sidebar {
+  top: 92px;
+}
+
+.cm-feed-main__heading {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--midnight);
+  letter-spacing: -0.02em;
+}
+
+.cm-feed-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cm-feed-nav__btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(27, 31, 42, 0.08);
+  background: var(--white);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--charcoal);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.cm-feed-nav__btn:hover {
+  border-color: rgba(200, 92, 59, 0.25);
+  background: var(--cream);
+}
+
+.cm-feed-nav__btn--active {
+  border-color: rgba(200, 92, 59, 0.45);
+  background: var(--terracotta-light);
+  color: var(--terracotta-dark);
+}
+
+.cm-feed-nav__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(27, 31, 42, 0.08);
+  background: var(--white);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--charcoal);
+  text-decoration: none;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.cm-feed-nav__link:hover {
+  border-color: rgba(200, 92, 59, 0.25);
+  background: var(--cream);
+  color: var(--terracotta-dark);
+}
+
+.cm-feed-nav__link-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.cm-feed-filter {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.cm-feed-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}

@@ -1,0 +1,35 @@
+<header class="topbar">
+  <div class="topbar-left">
+    <button class="topbar-menu-btn" (click)="onToggle()">
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="topbar-search">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="Search users, reviews, contracts...">
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <div class="topbar-date">
+      <i class="fas fa-calendar"></i>
+      <span>{{ currentDate | date:'MMM d, yyyy' }}</span>
+    </div>
+
+    <button class="topbar-icon-btn">
+      <i class="fas fa-bell"></i>
+      <span class="notif-dot"></span>
+    </button>
+
+    <div class="topbar-admin">
+      <div class="avatar avatar-sm avatar-accent">AD</div>
+      <div class="admin-info">
+        <strong>Admin</strong>
+        <span>Super Admin</span>
+      </div>
+    </div>
+
+    <button class="topbar-icon-btn logout-btn" (click)="onLogout()" title="Logout">
+      <i class="fas fa-right-from-bracket"></i>
+    </button>
+  </div>
+</header>

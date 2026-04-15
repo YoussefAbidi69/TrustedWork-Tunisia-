@@ -1,0 +1,170 @@
+<div class="cm-page" *ngIf="!loading && community as c">
+  <app-community-page-header
+    [eyebrow]="'Community · ID ' + c.id"
+    [title]="c.name"
+    [subtitle]="c.description">
+    <ng-container cmActions>
+      <a class="cm-btn cm-btn--ghost" routerLink="../browse">All communities</a>
+      <a
+        *ngIf="authService.isLoggedIn()"
+        class="cm-btn cm-btn--primary"
+        [routerLink]="createPostLink()"
+        [queryParams]="createPostQueryParams()">
+        <i class="fas fa-pen" aria-hidden="true"></i>
+        New post
+      </a>
+    </ng-container>
+  </app-community-page-header>
+
+  <div *ngIf="courseDownloadError" class="cm-page" style="padding: 0 24px 12px">
+    <div class="cm-banner cm-banner--warn">{{ courseDownloadError }}</div>
+  </div>
+
+  <div class="cm-split cm-split--wide-aside">
+    <div class="cm-page-body">
+      <section class="cm-panel">
+        <div class="cm-panel__head">
+          <h2 class="cm-panel__title">Posts in this space</h2>
+          <span class="cm-muted">{{ posts.length }} total</span>
+        </div>
+        <div class="cm-panel__body" style="padding-top: 8px">
+          <div *ngIf="posts.length === 0" class="cm-state">No posts yet. Be the first to share something.</div>
+
+          <div class="cm-post-row" *ngFor="let post of posts">
+            <div class="cm-vote-stack" aria-label="Vote">
+              <button
+                type="button"
+                class="cm-vote-stack__btn"
+                [class.cm-vote-stack__btn--active]="post.myVote === VoteType.UP"
+                (click)="vote(post.id, VoteType.UP)"
+                title="Upvote"
+                aria-label="Upvote"
+                [attr.aria-pressed]="post.myVote === VoteType.UP">
+                <i class="fas fa-arrow-up" aria-hidden="true"></i>
+              </button>
+              <button
+                type="button"
+                class="cm-vote-stack__btn"
+                [class.cm-vote-stack__btn--active]="post.myVote === VoteType.DOWN"
+                (click)="vote(post.id, VoteType.DOWN)"
+                title="Downvote"
+                aria-label="Downvote"
+                [attr.aria-pressed]="post.myVote === VoteType.DOWN">
+                <i class="fas fa-arrow-down" aria-hidden="true"></i>
+              </button>
+            </div>
+            <div style="min-width: 0">
+              <div class="cm-feed-card__meta">
+                <span class="cm-badge cm-badge--slate">{{ post.type }}</span>
+                <span
+                  class="cm-badge"
+                  [ngClass]="{
+                    'cm-badge--published': post.status === PostStatus.PUBLISHED,
+                    'cm-badge--draft': post.status === PostStatus.DRAFT,
+                    'cm-badge--hidden': post.status === PostStatus.HIDDEN,
+                    'cm-badge--rejected': post.status === PostStatus.REJECTED
+                  }">
+                  {{ post.status }}
+                </span>
+                <span>Author #{{ post.createdBy }}</span>
+              </div>
+              <h3 class="cm-feed-card__title">
+                <a [routerLink]="['../posts', post.id]">{{ post.title }}</a>
+              </h3>
+              <p class="cm-feed-card__preview">{{ truncate(post.content, 200) }}</p>
+              <div class="cm-btn-group" style="margin-top: 8px">
+                <a class="cm-btn cm-btn--secondary cm-btn--sm" [routerLink]="['../posts', post.id]">Open</a>
+                <button type="button" class="cm-btn cm-btn--ghost cm-btn--sm" (click)="toggleReport(post.id)">Report</button>
+                <button
+                  *ngIf="canDownload(post)"
+                  type="button"
+                  class="cm-btn cm-btn--primary cm-btn--sm"
+                  (click)="downloadCoursePost(post)">
+                  Download
+                </button>
+              </div>
+
+              <div *ngIf="reportOpen[post.id]" class="cm-report-box">
+                <div class="cm-field">
+                  <label class="cm-label" [for]="'reason-' + post.id">Reason</label>
+                  <input class="cm-input" [id]="'reason-' + post.id" type="text" [(ngModel)]="reportReason[post.id]" [name]="'reason' + post.id" required />
+                </div>
+                <div class="cm-field">
+                  <label class="cm-label" [for]="'description-' + post.id">Description</label>
+                  <textarea
+                    class="cm-textarea"
+                    [id]="'description-' + post.id"
+                    [(ngModel)]="reportDescription[post.id]"
+                    [name]="'desc' + post.id"
+                    required></textarea>
+                </div>
+                <div class="cm-btn-group">
+                  <button type="button" class="cm-btn cm-btn--primary cm-btn--sm" (click)="submitReport(post.id)">Submit</button>
+                  <button type="button" class="cm-btn cm-btn--ghost cm-btn--sm" (click)="cancelReport(post.id)">Cancel</button>
+                </div>
+              </div>
+              <div *ngIf="reportSubmitted[post.id]" class="cm-banner cm-banner--success" style="margin-top: 10px">Report submitted.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="cm-aside-stack">
+      <section class="cm-aside-card">
+        <h3 class="cm-aside-card__title">Learning courses</h3>
+        <div class="cm-aside-card__body">
+          <div *ngIf="courses.length === 0" class="cm-muted">No published courses yet.</div>
+          <a
+            *ngFor="let course of courses"
+            class="cm-lesson-link"
+            style="display: block; margin-bottom: 8px"
+            [routerLink]="['courses', course.id]"
+            [relativeTo]="route.parent">
+            {{ course.title }}
+          </a>
+          <a
+            *ngIf="authService.isLoggedIn()"
+            class="cm-btn cm-btn--secondary"
+            style="width: 100%; margin-top: 10px"
+            [routerLink]="['courses', 'new']"
+            [relativeTo]="route.parent"
+            [queryParams]="{ communityId: c.id }">
+            Create learning course
+          </a>
+        </div>
+      </section>
+      <section class="cm-aside-card">
+        <h3 class="cm-aside-card__title">About</h3>
+        <div class="cm-aside-card__body">
+          <p>{{ c.description }}</p>
+          <hr class="cm-divider" />
+          <p class="cm-muted">Created by user #{{ c.createdBy }}</p>
+          <a
+            *ngIf="authService.isLoggedIn()"
+            class="cm-btn cm-btn--primary"
+            style="width: 100%; margin-top: 8px"
+            [routerLink]="createPostLink()"
+            [queryParams]="createPostQueryParams()">
+            Create post
+          </a>
+        </div>
+      </section>
+      <section class="cm-aside-card">
+        <h3 class="cm-aside-card__title">Guidelines</h3>
+        <div class="cm-aside-card__body">
+          <p class="cm-tip">Keep feedback constructive.</p>
+          <p class="cm-tip">Course posts should include working file URLs.</p>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<div *ngIf="loading" class="cm-page">
+  <div class="cm-state">Loading community…</div>
+</div>
+
+<div *ngIf="!loading && !community && error" class="cm-page">
+  <div class="cm-state cm-state--error">{{ error }}</div>
+</div>

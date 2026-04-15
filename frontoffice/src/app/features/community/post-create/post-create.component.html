@@ -1,0 +1,168 @@
+<div class="cm-page">
+  <app-community-page-header
+    eyebrow="Posts"
+    title="Create a post"
+    subtitle="Discussion posts are for conversation. Course posts need a PDF (upload) before you can publish; AI-generated courses will be added later.">
+  </app-community-page-header>
+
+  <div class="cm-split cm-split--wide-aside">
+    <section class="cm-panel">
+      <div class="cm-panel__head">
+        <h2 class="cm-panel__title">Composer</h2>
+      </div>
+      <div class="cm-panel__body">
+        <div *ngIf="publishError" class="cm-banner cm-banner--warn">{{ publishError }}</div>
+        <div *ngIf="saveError" class="cm-banner cm-banner--warn">{{ saveError }}</div>
+        <div *ngIf="aiCoursePlaceholderNotice" class="cm-banner cm-banner--warn">
+          {{ aiCoursePlaceholderNotice }}
+          <button type="button" class="cm-btn cm-btn--ghost cm-btn--sm" style="margin-left: 8px" (click)="dismissAiNotice()">
+            Dismiss
+          </button>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+          <div class="cm-field" *ngIf="showCommunityPicker">
+            <label class="cm-label" for="pcomm">Community</label>
+            <div *ngIf="communitiesLoading" class="cm-muted">Loading communities…</div>
+            <div *ngIf="!communitiesLoading && communitiesError" class="cm-banner cm-banner--warn">
+              {{ communitiesError }}
+              <button type="button" class="cm-btn cm-btn--secondary cm-btn--sm" style="margin-top: 8px" (click)="retryLoadCommunities()">
+                Retry
+              </button>
+            </div>
+            <select
+              *ngIf="!communitiesLoading && !communitiesError"
+              id="pcomm"
+              class="cm-select"
+              [formControl]="communitySelect">
+              <option [ngValue]="null">Select a community…</option>
+              <option *ngFor="let c of communities" [ngValue]="c.id">{{ c.name }}</option>
+            </select>
+            <p *ngIf="!communitiesLoading && !communitiesError && communities.length === 0" class="cm-banner cm-banner--warn">
+              No communities exist yet.
+              <a class="cm-link" routerLink="../create">Create one</a>
+              or
+              <a class="cm-link" routerLink="../browse">browse</a>.
+            </p>
+            <span class="cm-error" *ngIf="(submitted || communitySelect.touched) && communitySelect.invalid">Choose a community.</span>
+          </div>
+
+          <div class="cm-field" *ngIf="!showCommunityPicker && effectiveCommunityId != null">
+            <span class="cm-label">Community</span>
+            <p class="cm-muted">
+              Posting to
+              <strong *ngIf="resolvedCommunityName">{{ resolvedCommunityName }}</strong>
+              <ng-container *ngIf="!resolvedCommunityName">community #{{ effectiveCommunityId }}</ng-container>
+            </p>
+          </div>
+
+          <div class="cm-field">
+            <span class="cm-label">Post type</span>
+            <div class="cm-seg" role="group" aria-label="Post type">
+              <button
+                type="button"
+                class="cm-seg__btn"
+                [class.cm-seg__btn--active]="form.get('type')?.value === PostType.INFO"
+                (click)="form.patchValue({ type: PostType.INFO })">
+                Discussion
+              </button>
+              <button
+                type="button"
+                class="cm-seg__btn"
+                [class.cm-seg__btn--active]="form.get('type')?.value === PostType.COURSE"
+                (click)="form.patchValue({ type: PostType.COURSE })">
+                Course
+              </button>
+            </div>
+          </div>
+
+          <div class="cm-field">
+            <label class="cm-label" for="ptitle">Title</label>
+            <input id="ptitle" type="text" class="cm-input" formControlName="title" placeholder="Clear, specific title" />
+            <span class="cm-error" *ngIf="submitted && f['title'].errors?.['required']">Title is required.</span>
+            <span class="cm-error" *ngIf="submitted && f['title'].errors?.['minlength']">At least 3 characters.</span>
+          </div>
+
+          <div class="cm-field">
+            <label class="cm-label" for="pcontent">Content</label>
+            <textarea id="pcontent" class="cm-textarea" rows="8" formControlName="content" placeholder="Main body of the post"></textarea>
+            <span class="cm-hint">Minimum 50 characters.</span>
+            <span class="cm-error" *ngIf="submitted && f['content'].errors?.['required']">Content is required.</span>
+            <span class="cm-error" *ngIf="submitted && f['content'].errors?.['minlength']">At least 50 characters.</span>
+          </div>
+
+          <div class="cm-field">
+            <label class="cm-label" for="pmedia">Media URL (optional)</label>
+            <input id="pmedia" type="text" class="cm-input" formControlName="mediaUrl" placeholder="https://…" />
+          </div>
+
+          <div class="cm-field" *ngIf="isCourse">
+            <span class="cm-label">Course file (PDF)</span>
+            <p class="cm-hint">Upload a PDF to attach to this course. Publishing requires a file unless you save as draft first.</p>
+            <div class="cm-btn-group" style="flex-wrap: wrap; align-items: center">
+              <input
+                #coursePdfInput
+                type="file"
+                accept=".pdf,application/pdf"
+                style="display: none"
+                [disabled]="coursePdfUploading"
+                (change)="onCoursePdfSelected($event)" />
+              <button
+                type="button"
+                class="cm-btn cm-btn--secondary"
+                [disabled]="coursePdfUploading"
+                (click)="coursePdfInput.click()">
+                {{ coursePdfUploading ? 'Uploading…' : 'Upload PDF' }}
+              </button>
+              <button type="button" class="cm-btn cm-btn--ghost" (click)="onGenerateCourseWithAi()">
+                Generate course with AI <span class="cm-muted" style="font-weight: normal">(coming soon)</span>
+              </button>
+            </div>
+            <p *ngIf="coursePdfError" class="cm-error">{{ coursePdfError }}</p>
+            <p *ngIf="form.get('fileUrl')?.value" class="cm-muted" style="margin-top: 8px">
+              Attached:
+              <strong>{{ coursePdfDisplayName || 'PDF' }}</strong>
+              <span class="cm-hint" style="display: block; margin-top: 4px; word-break: break-all">
+                {{ form.get('fileUrl')?.value }}
+              </span>
+              <button type="button" class="cm-btn cm-btn--ghost cm-btn--sm" style="margin-left: 8px" (click)="clearCoursePdf(coursePdfInput)">
+                Remove
+              </button>
+            </p>
+            <details class="cm-hint" style="margin-top: 12px">
+              <summary style="cursor: pointer">Or paste a direct file URL</summary>
+              <label class="cm-label" for="pfile" style="margin-top: 8px">File URL</label>
+              <input id="pfile" type="text" class="cm-input" formControlName="fileUrl" placeholder="https://… (must be reachable when learners download)" />
+            </details>
+          </div>
+
+          <label class="cm-checkbox">
+            <input type="checkbox" formControlName="publishNow" />
+            <span>Publish immediately after saving (subject to validation rules)</span>
+          </label>
+
+          <div class="cm-form-actions">
+            <button type="submit" class="cm-btn cm-btn--primary">Save post</button>
+            <a
+              class="cm-btn cm-btn--ghost"
+              [routerLink]="effectiveCommunityId != null ? ['communities', effectiveCommunityId] : ['']"
+              [relativeTo]="route.parent">
+              Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <aside class="cm-aside-stack">
+      <section class="cm-aside-card">
+        <h3 class="cm-aside-card__title">Publishing</h3>
+        <div class="cm-aside-card__body">
+          <p class="cm-tip">Drafts stay private until you publish.</p>
+          <p class="cm-tip">Course posts: upload a PDF or paste an https link. “Publish immediately” is blocked until a file is set.</p>
+          <p class="cm-tip">AI course generation will plug into the same flow later.</p>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>

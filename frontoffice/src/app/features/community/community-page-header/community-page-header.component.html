@@ -1,0 +1,10 @@
+<header class="cm-page-header">
+  <div class="cm-page-header__text">
+    <p class="cm-page-header__eyebrow" *ngIf="eyebrow">{{ eyebrow }}</p>
+    <h1 class="cm-page-header__title" *ngIf="title">{{ title }}</h1>
+    <p class="cm-page-header__sub" *ngIf="subtitle">{{ subtitle }}</p>
+  </div>
+  <div class="cm-page-header__actions">
+    <ng-content select="[cmActions]"></ng-content>
+  </div>
+</header>

@@ -1,0 +1,55 @@
+<article class="cm-feed-card">
+  <div class="cm-feed-card__meta">
+    <span class="cm-badge cm-badge--slate">{{ communityName }}</span>
+    <span class="cm-muted">Author #{{ post.createdBy }}</span>
+  </div>
+
+  <h3 class="cm-feed-card__title">
+    <a [routerLink]="['posts', post.id]" [relativeTo]="shell">{{ post.title }}</a>
+  </h3>
+
+  <p class="cm-feed-card__preview">{{ preview }}</p>
+
+  <div class="cm-feed-card__footer">
+    <div class="cm-feed-card__stats">
+      <span><i class="fas fa-comment" aria-hidden="true"></i> {{ commentCount }}</span>
+      <span><i class="fas fa-arrow-trend-up" aria-hidden="true"></i> {{ voteDifference }}</span>
+    </div>
+    <div class="cm-btn-group">
+      <button
+        type="button"
+        class="cm-btn cm-btn--sm"
+        [class.cm-btn--primary]="post.myVote === VoteType.UP"
+        [class.cm-btn--secondary]="post.myVote !== VoteType.UP"
+        (click)="onVote(VoteType.UP)"
+        title="Upvote"
+        [attr.aria-pressed]="post.myVote === VoteType.UP">
+        <i class="fas fa-arrow-up" aria-hidden="true"></i>
+      </button>
+      <button
+        type="button"
+        class="cm-btn cm-btn--sm"
+        [class.cm-btn--primary]="post.myVote === VoteType.DOWN"
+        [class.cm-btn--ghost]="post.myVote !== VoteType.DOWN"
+        (click)="onVote(VoteType.DOWN)"
+        title="Downvote"
+        [attr.aria-pressed]="post.myVote === VoteType.DOWN">
+        <i class="fas fa-arrow-down" aria-hidden="true"></i>
+      </button>
+      <button
+        *ngIf="showCourseDownload"
+        type="button"
+        class="cm-btn cm-btn--secondary cm-btn--sm"
+        [disabled]="downloadBusy"
+        (click)="onDownloadCourse($event)"
+        title="Download course file">
+        <i class="fas fa-download" aria-hidden="true"></i>
+        {{ downloadBusy ? '…' : 'Download' }}
+      </button>
+      <a class="cm-btn cm-btn--primary cm-btn--sm" [routerLink]="['posts', post.id]" [relativeTo]="shell">
+        Open
+        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+</article>

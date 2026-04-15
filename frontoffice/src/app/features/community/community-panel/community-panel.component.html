@@ -1,0 +1,9 @@
+<section class="cm-panel">
+  <div class="cm-panel__head" *ngIf="title">
+    <h2 class="cm-panel__title">{{ title }}</h2>
+    <ng-content select="[cmPanelHeadExtra]"></ng-content>
+  </div>
+  <div class="cm-panel__body">
+    <ng-content></ng-content>
+  </div>
+</section>

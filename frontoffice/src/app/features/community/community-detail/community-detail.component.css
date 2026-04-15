@@ -1,0 +1,5 @@
+@import '../community-layout-system.css';
+
+:host {
+  display: block;
+}

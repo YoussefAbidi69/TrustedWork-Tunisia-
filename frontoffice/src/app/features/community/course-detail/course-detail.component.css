@@ -1,0 +1,42 @@
+@import '../community-layout-system.css';
+
+:host {
+  display: block;
+}
+
+.cm-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(27, 31, 42, 0.08);
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.cm-progress__bar {
+  height: 100%;
+  background: var(--terracotta);
+  border-radius: 999px;
+  transition: width var(--transition);
+}
+
+.cm-lesson-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-top: 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(27, 31, 42, 0.08);
+  background: var(--white);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--charcoal);
+  text-decoration: none;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.cm-lesson-link:hover {
+  border-color: rgba(200, 92, 59, 0.3);
+  background: var(--cream);
+}

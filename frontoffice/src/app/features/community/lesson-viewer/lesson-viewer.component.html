@@ -1,0 +1,84 @@
+<div class="cm-page">
+  <div *ngIf="loading" class="cm-state">Loading lesson…</div>
+  <div *ngIf="!loading && error" class="cm-state cm-state--error">{{ error }}</div>
+
+  <ng-container *ngIf="!loading && lesson as l">
+    <app-community-page-header eyebrow="Lesson" [title]="l.title" subtitle="Work through the content and mark complete to track progress.">
+      <a cmActions class="cm-btn cm-btn--ghost" *ngIf="courseId != null" [routerLink]="['courses', courseId]" [relativeTo]="route.parent">
+        Course overview
+      </a>
+    </app-community-page-header>
+
+    <div class="cm-split cm-split--wide-aside">
+      <main class="cm-page-body">
+        <section class="cm-panel">
+          <div class="cm-panel__head">
+            <span class="cm-badge cm-badge--info">{{ l.type }}</span>
+          </div>
+          <div class="cm-panel__body">
+            <ng-container [ngSwitch]="l.type">
+              <div *ngSwitchCase="LessonType.TEXT" class="cm-lesson-text" [innerHTML]="l.content"></div>
+
+              <div *ngSwitchCase="LessonType.VIDEO" class="cm-video">
+                <video *ngIf="safeVideoUrl" controls [src]="safeVideoUrl"></video>
+              </div>
+
+              <div *ngSwitchCase="LessonType.PDF" class="cm-pdf">
+                <iframe *ngIf="safePdfUrl" [src]="safePdfUrl" title="PDF lesson"></iframe>
+              </div>
+
+              <div *ngSwitchCase="LessonType.QUIZ" class="cm-quiz">
+                <div class="cm-quiz__q" *ngFor="let q of quizQuestions; let qi = index">
+                  <p class="cm-quiz__qt"><strong>{{ q.question || q.text || q.label }}</strong></p>
+                  <div class="cm-quiz__opts">
+                    <label
+                      class="cm-quiz__opt"
+                      *ngFor="let opt of q.options || []; let oi = index"
+                      [class.cm-quiz__opt--correct]="quizSubmitted && isOptionCorrect(q, opt)"
+                      [class.cm-quiz__opt--wrong]="quizSubmitted && selectedAnswers[qi] === opt && !isOptionCorrect(q, opt)">
+                      <input
+                        type="radio"
+                        [name]="'quiz-' + qi"
+                        [value]="opt"
+                        [checked]="selectedAnswers[qi] === opt"
+                        (change)="selectOption(qi, opt)"
+                        [disabled]="quizSubmitted" />
+                      <span>{{ opt }}</span>
+                    </label>
+                  </div>
+                </div>
+                <button type="button" class="cm-btn cm-btn--primary" (click)="submitQuiz()" *ngIf="!quizSubmitted">Submit quiz</button>
+              </div>
+            </ng-container>
+
+            <div class="cm-form-actions">
+              <button type="button" class="cm-btn cm-btn--primary" (click)="markComplete()" [disabled]="isCompleted || markBusy">
+                <span *ngIf="isCompleted">Completed</span>
+                <span *ngIf="!isCompleted">Mark complete</span>
+              </button>
+              <button type="button" class="cm-btn cm-btn--secondary" (click)="goNext()" [disabled]="isLastLesson">Next lesson</button>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="cm-aside-stack">
+        <section class="cm-aside-card">
+          <h3 class="cm-aside-card__title">Lessons</h3>
+          <div class="cm-aside-card__body">
+            <a
+              *ngFor="let item of lessons"
+              class="cm-lesson-link"
+              [class.cm-lesson-link--active]="l.id === item.id"
+              [routerLink]="courseId != null ? ['courses', courseId, 'learn'] : ['']"
+              [relativeTo]="route.parent"
+              [queryParams]="{ lessonId: item.id }">
+              <span>{{ item.title }}</span>
+              <span class="cm-badge cm-badge--slate">{{ item.type }}</span>
+            </a>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </ng-container>
+</div>

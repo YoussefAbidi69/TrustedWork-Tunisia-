@@ -1,0 +1,52 @@
+<div class="cm-page">
+  <app-community-page-header
+    eyebrow="Community"
+    title="Create a community"
+    subtitle="Name your space and describe how members should use it. You will appear as the creator in the directory.">
+  </app-community-page-header>
+
+  <div class="cm-split cm-split--wide-aside">
+    <section class="cm-panel">
+      <div class="cm-panel__head">
+        <h2 class="cm-panel__title">Community details</h2>
+      </div>
+      <div class="cm-panel__body">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+          <div class="cm-field">
+            <label class="cm-label" for="cname">Name</label>
+            <input id="cname" type="text" class="cm-input" formControlName="name" placeholder="e.g. Advanced algorithms study group" />
+            <span class="cm-error" *ngIf="submitted && f['name'].errors?.['required']">Required.</span>
+            <span class="cm-error" *ngIf="submitted && f['name'].errors?.['minlength']">At least 3 characters.</span>
+          </div>
+
+          <div class="cm-field">
+            <label class="cm-label" for="cdesc">Description</label>
+            <textarea
+              id="cdesc"
+              class="cm-textarea"
+              formControlName="description"
+              placeholder="Who is this for? What can people post?"></textarea>
+            <span class="cm-hint">Minimum 10 characters.</span>
+            <span class="cm-error" *ngIf="submitted && f['description'].errors?.['required']">Required.</span>
+            <span class="cm-error" *ngIf="submitted && f['description'].errors?.['minlength']">At least 10 characters.</span>
+          </div>
+
+          <div class="cm-form-actions">
+            <button type="submit" class="cm-btn cm-btn--primary">Create community</button>
+            <button type="button" class="cm-btn cm-btn--ghost" (click)="cancel()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <aside class="cm-aside-stack">
+      <section class="cm-aside-card">
+        <h3 class="cm-aside-card__title">Checklist</h3>
+        <div class="cm-aside-card__body">
+          <p class="cm-tip">Pick a specific name so members recognize the topic instantly.</p>
+          <p class="cm-tip">The description sets expectations for tone and content.</p>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>

@@ -1,0 +1,48 @@
+<div class="cm-page">
+  <div *ngIf="loading" class="cm-state">Loading course…</div>
+  <div *ngIf="!loading && error" class="cm-state cm-state--error">{{ error }}</div>
+
+  <ng-container *ngIf="!loading && course as c">
+    <app-community-page-header eyebrow="Course" [title]="c.title" [subtitle]="c.description">
+      <a cmActions class="cm-btn cm-btn--ghost" [routerLink]="['']" [relativeTo]="route.parent">Back to feed</a>
+    </app-community-page-header>
+
+    <div class="cm-split cm-split--wide-aside">
+      <main class="cm-page-body">
+        <section class="cm-panel" *ngIf="canCertificate">
+          <div class="cm-panel__body">
+            <p class="cm-muted">All lessons marked complete. Issue your certificate below.</p>
+            <button type="button" class="cm-btn cm-btn--primary" (click)="issueCertificate()">Issue certificate</button>
+          </div>
+        </section>
+      </main>
+
+      <aside class="cm-aside-stack">
+        <section class="cm-aside-card">
+          <h3 class="cm-aside-card__title">Lessons</h3>
+          <div class="cm-aside-card__body">
+            <p class="cm-muted">{{ completedCount }} / {{ totalLessons }} completed</p>
+            <div class="cm-progress">
+              <div
+                class="cm-progress__bar"
+                [style.width.%]="totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0"></div>
+            </div>
+            <div *ngIf="totalLessons === 0" class="cm-banner cm-banner--warn">No lessons in this course.</div>
+            <ng-container *ngFor="let section of sections">
+              <p class="cm-label" style="margin-top: 14px">{{ section.title }}</p>
+              <a
+                *ngFor="let row of lessonsForSection(section)"
+                class="cm-lesson-link"
+                [routerLink]="['courses', courseId, 'learn']"
+                [relativeTo]="route.parent"
+                [queryParams]="{ lessonId: row.lesson.id }">
+                <span>{{ row.lesson.title }}</span>
+                <span class="cm-badge cm-badge--slate">{{ row.lesson.type }}</span>
+              </a>
+            </ng-container>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </ng-container>
+</div>
