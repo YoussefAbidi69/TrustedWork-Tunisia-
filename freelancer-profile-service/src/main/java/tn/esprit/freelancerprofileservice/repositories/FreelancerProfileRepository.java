@@ -28,5 +28,22 @@ public interface FreelancerProfileRepository extends JpaRepository<FreelancerPro
     @Query("SELECT f FROM FreelancerProfile f WHERE f.completenessScore < :threshold")
     List<FreelancerProfile> findProfilesBelowScore(@Param("threshold") Integer threshold);
 
+    // Recherche multicritères
+    @Query("""
+        SELECT p FROM FreelancerProfile p
+        WHERE p.visibility = 'PUBLIC'
+          AND (:region IS NULL OR p.region = :region)
+          AND (:availability IS NULL OR p.availabilityStatus = :availability)
+          AND (:minRate IS NULL OR p.hourlyRate >= :minRate)
+          AND (:maxRate IS NULL OR p.hourlyRate <= :maxRate)
+        ORDER BY p.completenessScore DESC
+    """)
+    List<FreelancerProfile> searchProfiles(
+            @Param("region") String region,
+            @Param("availability") AvailabilityStatus availability,
+            @Param("minRate") Double minRate,
+            @Param("maxRate") Double maxRate
+    );
+
     boolean existsByUserId(Long userId);
 }

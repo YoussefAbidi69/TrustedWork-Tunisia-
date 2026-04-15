@@ -7,5 +7,10 @@ import java.util.List;
 
 public interface EducationRepository extends JpaRepository<Education, Long> {
 
-    List<Education> findByProfileId(Long profileId);
+    // Récupérer les formations d'un profil, triées par année décroissante
+    List<Education> findByProfileIdOrderByGraduationYearDesc(Long profileId);
+
+    // Vérifier si un doublon existe (même diplôme + même institution pour le même profil)
+    boolean existsByDegreeIgnoreCaseAndInstitutionIgnoreCaseAndProfileId(
+            String degree, String institution, Long profileId);
 }
