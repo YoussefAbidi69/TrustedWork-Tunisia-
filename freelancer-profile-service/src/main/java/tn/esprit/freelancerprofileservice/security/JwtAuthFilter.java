@@ -5,6 +5,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,13 +19,39 @@ import java.util.List;
 /**
  * Filtre JWT — intercepte chaque requête et valide le token
  * émis par le user-service (Module 01)
- * Même pattern que dans user-service pour cohérence inter-services
  */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
+
     private final JwtUtil jwtUtil;
+
+    // URLs qui ne nécessitent pas de JWT
+    private static final List<String> PUBLIC_PATHS = List.of(
+            "/api/ml/",
+            "/api/reviews/profiles/",
+            "/api/views/profiles/",
+            "/swagger-ui",
+            "/api-docs",
+            "/v3/api-docs",
+            "/ws/"
+    );
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        String method = request.getMethod();
+
+        // Laisser passer OPTIONS (preflight CORS)
+        if ("OPTIONS".equalsIgnoreCase(method)) {
+            return true;
+        }
+
+        // Laisser passer tous les endpoints publics
+        return PUBLIC_PATHS.stream().anyMatch(path::contains);
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -33,7 +61,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        // Vérifier la présence et le format du header Authorization
+        // Pas de token — on continue sans authentification
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -44,24 +72,24 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             if (jwtUtil.isTokenValid(token)) {
                 String username = jwtUtil.extractUsername(token);
-                String role     = jwtUtil.extractRole(token);
+                String role = jwtUtil.extractRole(token);
 
-                // ← ajoute cette ligne
-                System.out.println(">>> JWT OK — user: " + username + " role: " + role);
+                log.debug(">>> JWT OK — user: {} role: {}", username, role);
 
                 List<SimpleGrantedAuthority> authorities = List.of(
                         new SimpleGrantedAuthority("ROLE_" + role)
                 );
+
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(username, null, authorities);
+
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } else {
-                // ← et celle-ci
-                System.out.println(">>> JWT INVALID — token rejected");
+                log.warn(">>> JWT INVALID — token rejected");
+                SecurityContextHolder.clearContext();
             }
         } catch (Exception e) {
-            // ← et celle-ci
-            System.out.println(">>> JWT EXCEPTION — " + e.getMessage());
+            log.error(">>> JWT EXCEPTION — {}", e.getMessage(), e);
             SecurityContextHolder.clearContext();
         }
 

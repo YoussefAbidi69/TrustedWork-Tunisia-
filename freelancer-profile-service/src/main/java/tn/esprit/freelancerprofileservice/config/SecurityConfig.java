@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -17,15 +18,13 @@ import tn.esprit.freelancerprofileservice.security.JwtAuthFilter;
 
 import java.util.List;
 
-/**
- * Configuration Spring Security — stateless JWT
- * Endpoints publics : swagger, profils publics, reviews, rankings
- * Endpoints protégés : création/modification profil, skills, portfolio, etc.
- */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private static final String REVIEWS_API = "/api/reviews/**";
 
     private final JwtAuthFilter jwtAuthFilter;
 
@@ -37,22 +36,39 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Preflight CORS — toujours autoriser
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // Swagger — accès libre
+
+                        // Swagger
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/api-docs/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        // Profils publics — accès libre
+
+                        // WebSocket
+                        .requestMatchers("/ws/**").permitAll()
+
+                        // ML Service — accès public
+                        .requestMatchers("/api/ml/**").permitAll()
+
+                        // Profils — lecture publique
                         .requestMatchers(HttpMethod.GET, "/api/profiles").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/profiles/{profileId}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/profiles/ranking/**").permitAll()
-                        // Reviews publiques — accès libre
-                        .requestMatchers(HttpMethod.GET, "/api/reviews/profile/**").permitAll()
-                        // Tout le reste — authentification requise
+
+                        // Reviews — lecture et écriture publiques
+                        .requestMatchers(HttpMethod.GET, REVIEWS_API).permitAll()
+                        .requestMatchers(HttpMethod.POST, REVIEWS_API).permitAll()
+                        .requestMatchers(HttpMethod.PUT, REVIEWS_API).permitAll()
+
+                        // Vues profil
+                        .requestMatchers(HttpMethod.POST, "/api/views/profiles/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/views/profiles/**").permitAll()
+
+                        // Notifications — authentifié
+                        .requestMatchers("/api/notifications/**").authenticated()
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -69,6 +85,7 @@ public class SecurityConfig {
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("Content-Disposition", "Content-Type"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
