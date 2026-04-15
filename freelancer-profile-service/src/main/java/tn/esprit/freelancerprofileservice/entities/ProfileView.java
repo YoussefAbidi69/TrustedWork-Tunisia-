@@ -11,19 +11,33 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "profile_views")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ProfileView {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ID du visiteur (null si visiteur anonyme)
+    /**
+     * ID du visiteur
+     * null si visiteur anonyme
+     */
     private Long viewerId;
 
-    private LocalDateTime viewedAt = LocalDateTime.now();
+    private LocalDateTime viewedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_id", nullable = false)
     private FreelancerProfile profile;
+
+    @PrePersist
+    protected void onCreate() {
+        if (viewedAt == null) {
+            viewedAt = LocalDateTime.now();
+        }
+    }
 }

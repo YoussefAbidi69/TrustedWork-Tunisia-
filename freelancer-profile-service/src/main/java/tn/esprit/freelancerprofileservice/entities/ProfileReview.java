@@ -7,40 +7,100 @@ import tn.esprit.freelancerprofileservice.enums.ReviewStatus;
 import java.time.LocalDateTime;
 
 /**
- * Avis d'un client sur le travail d'un freelancer
- * Anti-spam : 1 review max par client par freelancer (contrainte DB)
+ * Avis laissé sur un profil freelancer.
+ *
+ * Règles métier principales :
+ * - Un même client ne peut laisser qu'un seul avis par profil
+ * - Le freelancer peut répondre à l'avis
+ * - Un avis peut être flaggé comme suspect par un algorithme métier
  */
 @Entity
 @Table(
         name = "profile_reviews",
-        uniqueConstraints = @UniqueConstraint(
-                columnNames = {"client_id", "profile_id"},
-                name = "uk_client_profile_review"
-        )
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        columnNames = {"client_id", "profile_id"},
+                        name = "uk_client_profile_review"
+                )
+        }
 )
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ProfileReview {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ID du client qui laisse l'avis (référence Module 01)
+
     @Column(name = "client_id", nullable = false)
     private Long clientId;
 
-    @Column(nullable = false)
-    private Integer rating; // Note de 1 à 5
 
-    @Column(columnDefinition = "TEXT")
+    @Column(nullable = false)
+    private Integer rating;
+
+
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String comment;
 
+
+    @Column(name = "freelancer_reply", columnDefinition = "TEXT")
+    private String freelancerReply;
+
+    /**
+     * Indique si l'avis a été flaggé comme suspect
+     * (ex: incohérence note/commentaire).
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean flagged = false;
+
+
+    @Column(name = "flag_reason", length = 255)
+    private String flagReason;
+
+
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    @Builder.Default
     private ReviewStatus status = ReviewStatus.VISIBLE;
 
-    private LocalDateTime reviewedAt = LocalDateTime.now();
+
+    @Column(name = "reviewed_at", nullable = false, updatable = false)
+    private LocalDateTime reviewedAt;
+
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_id", nullable = false)
     private FreelancerProfile profile;
+
+    @PrePersist
+    public void prePersist() {
+        LocalDateTime now = LocalDateTime.now();
+        if (reviewedAt == null) {
+            reviewedAt = now;
+        }
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
+        if (status == null) {
+            status = ReviewStatus.VISIBLE;
+        }
+        if (flagged == null) {
+            flagged = false;
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
