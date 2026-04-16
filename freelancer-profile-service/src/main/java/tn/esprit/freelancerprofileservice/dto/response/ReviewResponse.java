@@ -14,9 +14,26 @@ import java.time.LocalDateTime;
 public class ReviewResponse {
 
     private Long id;
+
     private Long clientId;
+
     private Integer rating;
+
     private String comment;
+
+
+    private String freelancerReply;
+
+
+    private Boolean flagged;
+
+
+    private String flagReason;
+
     private ReviewStatus status;
+
     private LocalDateTime reviewedAt;
+
+
+    private LocalDateTime updatedAt;
 }

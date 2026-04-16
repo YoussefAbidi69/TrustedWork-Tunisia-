@@ -6,7 +6,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * DTO de réponse — endorsement d'un skill
+ * DTO de réponse d'un endorsement.
  */
 @Data
 @Builder

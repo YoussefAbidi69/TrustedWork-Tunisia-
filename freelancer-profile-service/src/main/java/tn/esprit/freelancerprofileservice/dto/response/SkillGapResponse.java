@@ -17,3 +17,4 @@ public class SkillGapResponse {
     private List<String> gapSkills;      // Skills manquants à acquérir
     private int gapCount;                // Nombre de gaps détectés
 }
+
