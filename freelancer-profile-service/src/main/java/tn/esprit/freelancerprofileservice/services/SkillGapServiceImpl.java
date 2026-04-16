@@ -2,22 +2,22 @@ package tn.esprit.freelancerprofileservice.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.freelancerprofileservice.dto.response.SkillGapResponse;
+import tn.esprit.freelancerprofileservice.entities.FreelancerProfile;
 import tn.esprit.freelancerprofileservice.entities.Skill;
+import tn.esprit.freelancerprofileservice.exceptions.ResourceNotFoundException;
 import tn.esprit.freelancerprofileservice.repositories.FreelancerProfileRepository;
 import tn.esprit.freelancerprofileservice.repositories.SkillRepository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
- * Algorithme de détection des gaps de compétences
- *
- * Compare les skills du freelancer avec les Top 10 skills
- * les plus présents sur la plateforme TrustedWork Tunisia
+ * Détection des gaps de compétences.
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class SkillGapServiceImpl implements ISkillGapService {
 
     private final SkillRepository skillRepository;
@@ -25,28 +25,26 @@ public class SkillGapServiceImpl implements ISkillGapService {
 
     @Override
     public SkillGapResponse detectSkillGaps(Long userId) {
-        Long profileId = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Profil introuvable"))
-                .getId();
+        FreelancerProfile profile = profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("FreelancerProfile", userId));
 
-        // Skills actuels du freelancer
-        List<String> mySkills = skillRepository.findByProfileId(profileId)
+        List<String> mySkills = skillRepository.findByProfileIdOrderByAuthenticityScoreDesc(profile.getId())
                 .stream()
                 .map(Skill::getName)
-                .map(String::toLowerCase)
-                .collect(Collectors.toList());
+                .map(name -> name.toLowerCase().trim())
+                .distinct()
+                .toList();
 
-        // Top 10 skills les plus présents sur la plateforme
         List<String> topSkills = skillRepository.findTopSkillsRaw()
                 .stream()
                 .limit(10)
-                .map(row -> ((String) row[0]).toLowerCase())
-                .collect(Collectors.toList());
+                .map(row -> ((String) row[0]).toLowerCase().trim())
+                .distinct()
+                .toList();
 
-        // Gaps = top skills que le freelancer n'a pas
         List<String> gapSkills = topSkills.stream()
-                .filter(s -> !mySkills.contains(s))
-                .collect(Collectors.toList());
+                .filter(skill -> !mySkills.contains(skill))
+                .toList();
 
         return SkillGapResponse.builder()
                 .mySkills(mySkills)

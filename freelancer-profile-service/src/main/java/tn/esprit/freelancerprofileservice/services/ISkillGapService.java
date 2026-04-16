@@ -7,3 +7,4 @@ public interface ISkillGapService {
     // Détecter les skills manquants par rapport aux top freelancers
     SkillGapResponse detectSkillGaps(Long userId);
 }
+

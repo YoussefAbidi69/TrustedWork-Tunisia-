@@ -8,3 +8,4 @@ public interface ISkillAuthenticityService {
     // Recalculer tous les scores d'un profil (appelé par le scheduler)
     void recalculateAllScores(Long profileId);
 }
+

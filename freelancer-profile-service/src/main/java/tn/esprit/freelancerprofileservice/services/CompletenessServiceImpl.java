@@ -59,7 +59,7 @@ public class CompletenessServiceImpl implements ICompletenessService {
         total += avatarScore;
 
         // 3. Skills (5 pts par skill, max 25 pts)
-        long skillCount = skillRepository.findByProfileId(profileId).size();
+        long skillCount = skillRepository.findByProfileIdOrderByAuthenticityScoreDesc(profileId).size();
         int skillsScore = (int) Math.min(skillCount * 5, 25);
         if (skillCount < 5) {
             suggestions.add("Ajoutez " + (5 - skillCount) + " skill(s) pour atteindre le maximum (+25 pts)");

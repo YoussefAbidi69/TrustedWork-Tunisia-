@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import tn.esprit.freelancerprofileservice.entities.FreelancerProfile;
 import tn.esprit.freelancerprofileservice.enums.AvailabilityStatus;
 import tn.esprit.freelancerprofileservice.repositories.FreelancerProfileRepository;
-
 import tn.esprit.freelancerprofileservice.exceptions.DuplicateResourceException;
 import tn.esprit.freelancerprofileservice.exceptions.ResourceNotFoundException;
 
@@ -41,11 +40,13 @@ public class FreelancerProfileServiceImpl implements IFreelancerProfileService {
         return profileRepository.findById(profileId)
                 .orElseThrow(() -> new ResourceNotFoundException("Profil", profileId));
     }
+
     @Override
     public FreelancerProfile updateProfile(Long userId, FreelancerProfile updates) {
         FreelancerProfile existing = getByUserId(userId);
         existing.setHeadline(updates.getHeadline());
         existing.setBio(updates.getBio());
+        existing.setAvatarUrl(updates.getAvatarUrl());
         existing.setHourlyRate(updates.getHourlyRate());
         existing.setAvailabilityStatus(updates.getAvailabilityStatus());
         existing.setVisibility(updates.getVisibility());
@@ -62,6 +63,11 @@ public class FreelancerProfileServiceImpl implements IFreelancerProfileService {
     @Override
     public List<FreelancerProfile> getRankingByRegion(String region) {
         return profileRepository.findByRegionOrderByCompletenessScoreDesc(region);
+    }
+
+    @Override
+    public List<FreelancerProfile> searchProfiles(String region, AvailabilityStatus availability, Double minRate, Double maxRate) {
+        return profileRepository.searchProfiles(region, availability, minRate, maxRate);
     }
 
     @Override

@@ -2,48 +2,49 @@ package tn.esprit.freelancerprofileservice.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.freelancerprofileservice.dto.response.CareerPathResponse;
+import tn.esprit.freelancerprofileservice.entities.FreelancerProfile;
 import tn.esprit.freelancerprofileservice.entities.Skill;
+import tn.esprit.freelancerprofileservice.exceptions.ResourceNotFoundException;
 import tn.esprit.freelancerprofileservice.repositories.FreelancerProfileRepository;
 import tn.esprit.freelancerprofileservice.repositories.SkillRepository;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
- * Algorithme de recommandation de parcours de carrière (Rule-based AI)
- *
- * Parcours prédéfinis adaptés au marché tunisien :
- * - Backend Java  : Spring Boot → Docker → Kubernetes → Microservices
- * - Frontend      : Angular → React → TypeScript → UI/UX
- * - Data          : Python → SQL → Machine Learning → Pandas
- * - DevOps        : Linux → Docker → Kubernetes → CI/CD
- * - Mobile        : Flutter → React Native → Android → iOS
+ * Recommandation simple de parcours de carrière.
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CareerPathServiceImpl implements ICareerPathService {
 
     private final FreelancerProfileRepository profileRepository;
     private final SkillRepository skillRepository;
 
-    // Définition des parcours de carrière adaptés au marché tunisien
+    private static final String BACKEND_JAVA = "Backend Java";
+
     private static final Map<String, List<String>> CAREER_PATHS = new LinkedHashMap<>();
     private static final Map<String, String> CAREER_DESCRIPTIONS = new HashMap<>();
 
     static {
-        CAREER_PATHS.put("Backend Java",
+        CAREER_PATHS.put(BACKEND_JAVA,
                 Arrays.asList("Java", "Spring Boot", "Spring Security", "JPA", "MySQL", "Docker", "Kubernetes", "Microservices"));
+
         CAREER_PATHS.put("Frontend",
                 Arrays.asList("HTML", "CSS", "JavaScript", "TypeScript", "Angular", "React", "UI/UX"));
+
         CAREER_PATHS.put("Data",
                 Arrays.asList("Python", "SQL", "Pandas", "NumPy", "Machine Learning", "Scikit-learn", "TensorFlow"));
+
         CAREER_PATHS.put("DevOps",
                 Arrays.asList("Linux", "Bash", "Docker", "Kubernetes", "Jenkins", "Ansible", "CI/CD", "Terraform"));
+
         CAREER_PATHS.put("Mobile",
                 Arrays.asList("Flutter", "Dart", "React Native", "Android", "iOS", "Firebase"));
 
-        CAREER_DESCRIPTIONS.put("Backend Java", "Développeur backend Java spécialisé en microservices et cloud");
+        CAREER_DESCRIPTIONS.put(BACKEND_JAVA, "Développeur backend Java spécialisé en microservices et cloud");
         CAREER_DESCRIPTIONS.put("Frontend", "Développeur frontend moderne avec frameworks JavaScript");
         CAREER_DESCRIPTIONS.put("Data", "Ingénieur data et Machine Learning");
         CAREER_DESCRIPTIONS.put("DevOps", "Ingénieur DevOps et infrastructure cloud");
@@ -52,47 +53,45 @@ public class CareerPathServiceImpl implements ICareerPathService {
 
     @Override
     public CareerPathResponse recommendCareerPath(Long userId) {
-        profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Profil introuvable"));
+        FreelancerProfile profile = profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("FreelancerProfile", userId));
 
-        // Récupérer les skills de l'utilisateur en minuscules pour comparaison
-        List<Skill> skills = skillRepository.findByProfileId(
-                profileRepository.findByUserId(userId).get().getId()
-        );
+        List<Skill> skills = skillRepository.findByProfileIdOrderByAuthenticityScoreDesc(profile.getId());
+
         List<String> userSkills = skills.stream()
-                .map(s -> s.getName().toLowerCase())
-                .collect(Collectors.toList());
+                .map(Skill::getName)
+                .map(name -> name.toLowerCase().trim())
+                .distinct()
+                .toList();
 
-        // Trouver le parcours avec le plus de correspondances
-        String bestPath = "Backend Java";
-        int bestScore = 0;
+        String bestPath = BACKEND_JAVA;
+        int bestScore = -1;
 
         for (Map.Entry<String, List<String>> entry : CAREER_PATHS.entrySet()) {
-            long matchCount = entry.getValue().stream()
-                    .filter(s -> userSkills.contains(s.toLowerCase()))
+            int matchCount = (int) entry.getValue().stream()
+                    .map(s -> s.toLowerCase().trim())
+                    .filter(userSkills::contains)
                     .count();
+
             if (matchCount > bestScore) {
-                bestScore = (int) matchCount;
+                bestScore = matchCount;
                 bestPath = entry.getKey();
             }
         }
 
         List<String> pathSkills = CAREER_PATHS.get(bestPath);
 
-        // Skills déjà acquis sur ce parcours
         List<String> currentSkills = pathSkills.stream()
-                .filter(s -> userSkills.contains(s.toLowerCase()))
-                .collect(Collectors.toList());
+                .filter(skill -> userSkills.contains(skill.toLowerCase().trim()))
+                .toList();
 
-        // Skills manquants sur ce parcours
         List<String> missingSkills = pathSkills.stream()
-                .filter(s -> !userSkills.contains(s.toLowerCase()))
-                .collect(Collectors.toList());
+                .filter(skill -> !userSkills.contains(skill.toLowerCase().trim()))
+                .toList();
 
-        // Prochaines étapes = les 3 premiers skills manquants
         List<String> nextSteps = missingSkills.stream()
                 .limit(3)
-                .collect(Collectors.toList());
+                .toList();
 
         return CareerPathResponse.builder()
                 .detectedPath(bestPath)
