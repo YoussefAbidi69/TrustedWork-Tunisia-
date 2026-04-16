@@ -11,10 +11,9 @@ import tn.esprit.freelancerprofileservice.entities.Endorsement;
 import tn.esprit.freelancerprofileservice.services.IEndorsementService;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
- * Controller REST — gestion des endorsements
+ * Controller REST de gestion des endorsements.
  */
 @RestController
 @RequestMapping("/api/endorsements")
@@ -23,33 +22,41 @@ public class EndorsementController {
 
     private final IEndorsementService endorsementService;
 
-    // POST /api/endorsements/skill/{skillId}
     @PostMapping("/skill/{skillId}")
     public ResponseEntity<EndorsementResponse> addEndorsement(
             @PathVariable Long skillId,
-            @Valid @RequestBody AddEndorsementRequest request) {
+            @Valid @RequestBody AddEndorsementRequest request
+    ) {
+        Endorsement savedEndorsement = endorsementService.addEndorsement(
+                skillId,
+                request.getEndorserId(),
+                request.getComment()
+        );
 
-        Endorsement saved = endorsementService.addEndorsement(
-                skillId, request.getEndorserId(), request.getComment());
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(savedEndorsement));
     }
 
-    // GET /api/endorsements/skill/{skillId}
     @GetMapping("/skill/{skillId}")
     public ResponseEntity<List<EndorsementResponse>> getBySkill(@PathVariable Long skillId) {
-        List<EndorsementResponse> endorsements = endorsementService
-                .getEndorsementsBySkill(skillId)
-                .stream().map(this::toResponse).collect(Collectors.toList());
-        return ResponseEntity.ok(endorsements);
+        List<EndorsementResponse> responses = endorsementService.getEndorsementsBySkill(skillId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+
+        return ResponseEntity.ok(responses);
     }
 
-    private EndorsementResponse toResponse(Endorsement e) {
+    @GetMapping("/skill/{skillId}/count")
+    public ResponseEntity<Long> countBySkill(@PathVariable Long skillId) {
+        return ResponseEntity.ok(endorsementService.countEndorsements(skillId));
+    }
+
+    private EndorsementResponse toResponse(Endorsement endorsement) {
         return EndorsementResponse.builder()
-                .id(e.getId())
-                .endorserId(e.getEndorserId())
-                .comment(e.getComment())
-                .endorsedAt(e.getEndorsedAt())
+                .id(endorsement.getId())
+                .endorserId(endorsement.getEndorserId())
+                .comment(endorsement.getComment())
+                .endorsedAt(endorsement.getEndorsedAt())
                 .build();
     }
 }

@@ -15,7 +15,6 @@ import tn.esprit.freelancerprofileservice.services.ICompletenessService;
 import tn.esprit.freelancerprofileservice.services.IFreelancerProfileService;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Controller REST — gestion des profils freelancer
@@ -55,6 +54,24 @@ public class FreelancerProfileController {
         return ResponseEntity.ok(toResponse(profileService.getByUserId(userId)));
     }
 
+    // GET /api/profiles/search — recherche multicritères
+    // ⚠️ doit être déclaré avant @GetMapping("/{profileId}")
+    @GetMapping("/search")
+    public ResponseEntity<List<ProfileResponse>> searchProfiles(
+            @RequestParam(required = false) String region,
+            @RequestParam(required = false) AvailabilityStatus availability,
+            @RequestParam(required = false) Double minRate,
+            @RequestParam(required = false) Double maxRate) {
+
+        List<ProfileResponse> profiles = profileService
+                .searchProfiles(region, availability, minRate, maxRate)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+
+        return ResponseEntity.ok(profiles);
+    }
+
     // GET /api/profiles/{profileId} — profil par profileId
     @GetMapping("/{profileId}")
     public ResponseEntity<ProfileResponse> getById(@PathVariable Long profileId) {
@@ -85,7 +102,9 @@ public class FreelancerProfileController {
     @GetMapping
     public ResponseEntity<List<ProfileResponse>> getAllPublic() {
         List<ProfileResponse> profiles = profileService.getAllPublicProfiles()
-                .stream().map(this::toResponse).collect(Collectors.toList());
+                .stream()
+                .map(this::toResponse)
+                .toList();
         return ResponseEntity.ok(profiles);
     }
 
@@ -93,7 +112,9 @@ public class FreelancerProfileController {
     @GetMapping("/ranking/{region}")
     public ResponseEntity<List<ProfileResponse>> getRanking(@PathVariable String region) {
         List<ProfileResponse> profiles = profileService.getRankingByRegion(region)
-                .stream().map(this::toResponse).collect(Collectors.toList());
+                .stream()
+                .map(this::toResponse)
+                .toList();
         return ResponseEntity.ok(profiles);
     }
 
