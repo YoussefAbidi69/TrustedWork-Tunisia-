@@ -1,7 +1,6 @@
 package tn.esprit.freelancerprofileservice.dto.request;
 
 import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.hibernate.validator.constraints.URL;
@@ -10,16 +9,15 @@ import tn.esprit.freelancerprofileservice.enums.CertificationType;
 import java.time.LocalDate;
 
 /**
- * DTO d'ajout d'une certification
+ * DTO de mise à jour d'une certification
+ * Tous les champs sont optionnels pour permettre une mise à jour flexible.
  */
 @Data
-public class AddCertificationRequest {
+public class UpdateCertificationRequest {
 
-    @NotBlank(message = "Le titre est obligatoire")
     @Size(min = 2, max = 120, message = "Le titre doit contenir entre 2 et 120 caractères")
     private String title;
 
-    @NotBlank(message = "L'émetteur est obligatoire")
     @Size(min = 2, max = 120, message = "L'émetteur doit contenir entre 2 et 120 caractères")
     private String issuer;
 
