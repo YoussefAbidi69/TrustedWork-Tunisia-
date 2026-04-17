@@ -2,7 +2,7 @@ package tn.esprit.msprojectservice.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,11 +11,11 @@ import tn.esprit.msprojectservice.services.IExportService;
 
 @RestController
 @RequestMapping("/api/projects/{projectId}/export")
+@RequiredArgsConstructor  // ✅ remplace @Autowired
 @Tag(name = "Export Rapports", description = "Export des rapports en PDF et CSV")
 public class ExportRestController {
 
-    @Autowired
-    private IExportService exportService;
+    private final IExportService exportService;  // ✅ final, pas @Autowired
 
     @GetMapping("/pdf")
     @Operation(summary = "Export PDF", description = "Télécharger le rapport complet du projet en PDF")

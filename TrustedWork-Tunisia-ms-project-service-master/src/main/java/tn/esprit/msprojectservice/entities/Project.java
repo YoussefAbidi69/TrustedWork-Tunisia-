@@ -2,7 +2,6 @@ package tn.esprit.msprojectservice.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
-import tn.esprit.msprojectservice.entities.ProjectStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

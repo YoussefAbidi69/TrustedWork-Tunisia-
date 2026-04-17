@@ -1,12 +1,10 @@
 package tn.esprit.msprojectservice.services;
 
 import jakarta.annotation.PostConstruct;
-import org.dmg.pmml.PMML;
+import lombok.RequiredArgsConstructor;
 import org.jpmml.evaluator.*;
-import org.jpmml.model.PMMLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tn.esprit.msprojectservice.dto.MLPredictionDTO;
 import tn.esprit.msprojectservice.entities.*;
@@ -28,6 +26,8 @@ import org.jpmml.evaluator.LoadingModelEvaluatorBuilder;
  *   3. Le modèle retourne P(retard) entre 0.0 et 1.0
  *   4. La sévérité est déduite automatiquement depuis la probabilité
  */
+@SuppressWarnings("java:S1192,java:S107,java:S6201")
+@RequiredArgsConstructor
 @Service
 public class MLPredictionServiceImpl implements IMLPredictionService {
 
@@ -42,17 +42,10 @@ public class MLPredictionServiceImpl implements IMLPredictionService {
     private static final double THRESHOLD_MEDIUM   = 0.50;
     private static final double THRESHOLD_LOW      = 0.35;
 
-    @Autowired
-    private IProjectRepository projectRepository;
-
-    @Autowired
-    private ITaskRepository taskRepository;
-
-    @Autowired
-    private IRiskSignalRepository riskSignalRepository;
-
-    @Autowired
-    private IDeliverableRepository deliverableRepository;
+    private final IProjectRepository     projectRepository;
+    private final ITaskRepository        taskRepository;
+    private final IRiskSignalRepository  riskSignalRepository;
+    private final IDeliverableRepository deliverableRepository;
 
     // Évaluateur JPMML — chargé une seule fois au démarrage
     private Evaluator evaluator;

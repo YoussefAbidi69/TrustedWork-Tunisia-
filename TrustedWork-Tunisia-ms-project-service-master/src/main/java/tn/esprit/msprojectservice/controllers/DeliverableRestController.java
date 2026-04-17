@@ -2,7 +2,7 @@ package tn.esprit.msprojectservice.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,11 +14,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@RequiredArgsConstructor
 @Tag(name = "Livrables", description = "Gestion des livrables et workflow d'approbation client")
 public class DeliverableRestController {
 
-    @Autowired
-    private IDeliverableService deliverableService;
+    private final IDeliverableService deliverableService;
 
     @PostMapping("/projects/{projectId}/deliverables")
     @Operation(summary = "Soumettre un livrable", description = "Le freelancer soumet un livrable pour validation client")
