@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.msprojectservice.dto.DeliveryRiskSignalDTO;
+import tn.esprit.msprojectservice.dto.MLPredictionDTO;
+import tn.esprit.msprojectservice.services.IMLPredictionService;
 import tn.esprit.msprojectservice.services.IRiskSignalService;
 import tn.esprit.msprojectservice.scheduler.DeliveryRiskScheduler;
 import java.util.List;
@@ -20,6 +22,9 @@ public class RiskSignalRestController {
 
     @Autowired
     private DeliveryRiskScheduler deliveryRiskScheduler;
+
+    @Autowired
+    private IMLPredictionService mlPredictionService;
 
     @GetMapping("/projects/{projectId}/risks")
     @Operation(summary = "Risques actifs", description = "Récupérer tous les signaux de risque actifs d'un projet")
@@ -48,5 +53,20 @@ public class RiskSignalRestController {
         deliveryRiskScheduler.analyzeProjectById(projectId);
         List<DeliveryRiskSignalDTO> risks = riskSignalService.getActiveRisksByProjectId(projectId);
         return ResponseEntity.ok(risks);
+    }
+
+
+
+
+
+    // Nouvel endpoint ML
+    @GetMapping("/projects/{projectId}/risks/ml-predict")
+    @Operation(
+            summary = "Prédiction ML Random Forest",
+            description = "Appelle le modèle Random Forest pour prédire le risque de retard du projet"
+    )
+    public ResponseEntity<MLPredictionDTO> predictWithML(@PathVariable Long projectId) {
+        MLPredictionDTO prediction = mlPredictionService.predictDeliveryRisk(projectId);
+        return ResponseEntity.ok(prediction);
     }
 }

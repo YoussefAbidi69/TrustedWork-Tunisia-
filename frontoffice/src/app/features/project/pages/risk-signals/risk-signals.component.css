@@ -118,3 +118,56 @@
 
 @media (max-width: 900px) { .risks-top-grid { grid-template-columns: 1fr; } .severity-cards { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 600px) { .risks-page { padding: 16px; } .type-filters { gap: 6px; } .type-tab { padding: 7px 12px; font-size: 12px; } }
+
+
+/* ── ML FEATURES — indicateurs lisibles ── */
+/* ── ML PREDICTION CARD ── */
+.ml-card { background: #fff; border-radius: 20px; border: 1.5px solid rgba(124,58,237,.15); padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 20px rgba(124,58,237,.07); }
+.ml-card--loading { align-items: center; justify-content: center; min-height: 80px; color: #7c3aed; font-size: 14px; font-weight: 600; gap: 10px; flex-direction: row; }
+
+.ml-card__header { display: flex; justify-content: space-between; align-items: center; }
+.ml-card__title { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 800; color: #0f1b2d; }
+.ml-card__title i { color: #7c3aed; font-size: 16px; }
+.ml-badge { padding: 3px 9px; border-radius: 8px; background: linear-gradient(135deg,#7c3aed,#a855f7); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .06em; }
+.btn-refresh-ml { width: 32px; height: 32px; border-radius: 10px; border: 1px solid rgba(124,58,237,.2); background: rgba(124,58,237,.05); color: #7c3aed; cursor: pointer; display: grid; place-items: center; transition: all .2s; }
+.btn-refresh-ml:hover { background: rgba(124,58,237,.12); }
+
+.ml-prob-row { display: flex; align-items: center; gap: 20px; }
+.ml-prob-bar-wrap { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.ml-prob-label { display: flex; justify-content: space-between; font-size: 13px; color: #6d7a8d; font-weight: 600; }
+.ml-prob-label strong { font-size: 16px; font-weight: 900; }
+.ml-prob-track { height: 10px; border-radius: 999px; background: rgba(15,27,45,.07); overflow: hidden; }
+.ml-prob-fill { height: 100%; border-radius: 999px; transition: width .8s ease, background .4s; }
+
+.ml-verdict { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 12px; font-size: 13px; font-weight: 800; flex-shrink: 0; }
+.ml-verdict--late { background: rgba(239,68,68,.08); color: #dc2626; border: 1px solid rgba(239,68,68,.2); }
+.ml-verdict--ok { background: rgba(34,197,94,.08); color: #16a34a; border: 1px solid rgba(34,197,94,.2); }
+
+.ml-message { padding: 12px 16px; border-radius: 12px; background: rgba(124,58,237,.04); border-left: 3px solid #7c3aed; }
+.ml-message p { margin: 0; font-size: 13px; color: #3d4f63; line-height: 1.7; }
+
+/* ── ML FEATURES — indicateurs lisibles ── */
+.ml-features { display: flex; flex-direction: column; gap: 8px; }
+
+.ml-feat-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px; border: 1px solid transparent; transition: background .2s; }
+.ml-feat-item--ok   { background: rgba(34,197,94,.04);  border-color: rgba(34,197,94,.12); }
+.ml-feat-item--warn { background: rgba(239,68,68,.04);  border-color: rgba(239,68,68,.12); }
+
+.ml-feat-icon { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 15px; flex-shrink: 0; }
+.ml-feat-item--ok   .ml-feat-icon { background: rgba(34,197,94,.1);  color: #16a34a; }
+.ml-feat-item--warn .ml-feat-icon { background: rgba(239,68,68,.1);  color: #dc2626; }
+
+.ml-feat-content { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.ml-feat-name    { font-size: 12px; font-weight: 700; color: #6d7a8d; }
+.ml-feat-verdict { font-size: 13px; font-weight: 600; color: #0f1b2d; line-height: 1.4; }
+
+.ml-feat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.dot--ok       { background: #22c55e; }
+.dot--warn     { background: #f59e0b; }
+.dot--bad      { background: #f97316; }
+.dot--critical { background: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.2); }
+.ml-feat-label { font-size: 12px; color: #6d7a8d; font-weight: 600; min-width: 160px; }
+.ml-feat-critical { color: #7c3aed; font-weight: 800; }
+.ml-feat-bar-wrap { flex: 1; height: 6px; border-radius: 999px; background: rgba(15,27,45,.07); overflow: hidden; }
+.ml-feat-bar { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#7c3aed,#a855f7); transition: width .6s ease; }
+.ml-feat-val { font-size: 12px; font-weight: 800; color: #3d4f63; min-width: 36px; text-align: right; }

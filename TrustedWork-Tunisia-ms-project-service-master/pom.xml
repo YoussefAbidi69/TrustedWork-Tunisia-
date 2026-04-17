@@ -115,6 +115,26 @@
             <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
+
+
+
+
+
+
+
+
+        <!-- ============================================ -->
+        <!-- JPMML — Moteur d'inférence Random Forest     -->
+        <!-- Permet d'appeler le modèle .pmml dans Java   -->
+        <!-- ============================================ -->
+        <!-- ✅ JPMML 1.7.7 — artifact correct -->
+        <!-- pmml-evaluator-metro inclut pmml-evaluator + le runtime JAXB -->
+        <!-- Une seule dépendance suffit -->
+        <dependency>
+            <groupId>org.jpmml</groupId>
+            <artifactId>pmml-evaluator-metro</artifactId>
+            <version>1.7.7</version>
+        </dependency>
     </dependencies>
 
 

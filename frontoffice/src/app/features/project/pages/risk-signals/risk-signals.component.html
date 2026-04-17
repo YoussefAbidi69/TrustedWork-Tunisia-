@@ -65,6 +65,105 @@
     </div>
   </div>
 
+
+  <!-- ══ ML PREDICTION CARD ══ -->
+<div class="ml-card" *ngIf="mlPrediction">
+
+  <div class="ml-card__header">
+    <div class="ml-card__title">
+      <i class="fas fa-brain"></i>
+      <span>Prédiction </span>
+      <span class="ml-badge">ML</span>
+    </div>
+    <button class="btn-refresh-ml" (click)="loadMLPrediction()" [disabled]="loadingML">
+      <i class="fas" [ngClass]="loadingML ? 'fa-spinner fa-spin' : 'fa-rotate-right'"></i>
+    </button>
+  </div>
+
+  <!-- Probabilité -->
+  <div class="ml-prob-row">
+    <div class="ml-prob-bar-wrap">
+      <div class="ml-prob-label">
+        <span>Probabilité de retard</span>
+        <strong [style.color]="getProbabilityColor()">{{ getProbabilityPercent() }}%</strong>
+      </div>
+      <div class="ml-prob-track">
+        <div class="ml-prob-fill"
+             [style.width]="getProbabilityPercent() + '%'"
+             [style.background]="getProbabilityColor()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Badge verdict -->
+    <div class="ml-verdict" [ngClass]="mlPrediction.willBeLate ? 'ml-verdict--late' : 'ml-verdict--ok'">
+      <i class="fas" [ngClass]="mlPrediction.willBeLate ? 'fa-triangle-exclamation' : 'fa-circle-check'"></i>
+      <span>{{ mlPrediction.willBeLate ? 'Retard probable' : 'Dans les délais' }}</span>
+    </div>
+  </div>
+
+  <!-- Message IA -->
+  <div class="ml-message">
+    <p>{{ mlPrediction.message }}</p>
+  </div>
+
+  <!-- Features radar -->
+<!-- Features radar -->
+<div class="ml-features">
+
+  <div class="ml-feat-item" [ngClass]="getFeatStatus(mlPrediction.daysElapsedRatio, mlPrediction.tasksDoneRatio, 'time')">
+    <div class="ml-feat-icon">
+      <i class="fas fa-calendar-clock"></i>
+    </div>
+    <div class="ml-feat-content">
+      <span class="ml-feat-name">Avancement dans le temps</span>
+      <span class="ml-feat-verdict">{{ getTimeVerdict(mlPrediction.daysElapsedRatio, mlPrediction.tasksDoneRatio) }}</span>
+    </div>
+    <div class="ml-feat-dot" [ngClass]="getDotClass(mlPrediction.daysElapsedRatio, mlPrediction.tasksDoneRatio, 'time')"></div>
+  </div>
+
+  <div class="ml-feat-item" [ngClass]="getFeatStatus(mlPrediction.assigneePerfScore, null, 'perf')">
+    <div class="ml-feat-icon">
+      <i class="fas fa-user-check"></i>
+    </div>
+    <div class="ml-feat-content">
+      <span class="ml-feat-name">Fiabilité du freelancer</span>
+      <span class="ml-feat-verdict">{{ getPerfVerdict(mlPrediction.assigneePerfScore) }}</span>
+    </div>
+    <div class="ml-feat-dot" [ngClass]="getDotClass(mlPrediction.assigneePerfScore, null, 'perf')"></div>
+  </div>
+
+  <div class="ml-feat-item" [ngClass]="getFeatStatus(mlPrediction.scopeCreepRatio, null, 'scope')">
+    <div class="ml-feat-icon">
+      <i class="fas fa-expand"></i>
+    </div>
+    <div class="ml-feat-content">
+      <span class="ml-feat-name">Stabilité du périmètre</span>
+      <span class="ml-feat-verdict">{{ getScopeVerdict(mlPrediction.scopeCreepRatio) }}</span>
+    </div>
+    <div class="ml-feat-dot" [ngClass]="getDotClass(mlPrediction.scopeCreepRatio, null, 'scope')"></div>
+  </div>
+
+  <div class="ml-feat-item" [ngClass]="getFeatStatus(mlPrediction.bottleneckDaysAvg, null, 'bottleneck')">
+    <div class="ml-feat-icon">
+      <i class="fas fa-traffic-light"></i>
+    </div>
+    <div class="ml-feat-content">
+      <span class="ml-feat-name">Tâches bloquées</span>
+      <span class="ml-feat-verdict">{{ getBottleneckVerdict(mlPrediction.bottleneckDaysAvg) }}</span>
+    </div>
+    <div class="ml-feat-dot" [ngClass]="getDotClass(mlPrediction.bottleneckDaysAvg, null, 'bottleneck')"></div>
+  </div>
+
+</div>
+
+</div>
+
+<!-- Skeleton ML loading -->
+<div class="ml-card ml-card--loading" *ngIf="!mlPrediction && loadingML">
+  <i class="fas fa-spinner fa-spin"></i> Analyse ML en cours...
+</div>
+
   <!-- ══ TYPE FILTER TABS ══ -->
   <div class="type-filters">
     <button class="type-tab" [class.type-tab--active]="activeTypeFilter === 'ALL'" (click)="setTypeFilter('ALL')">

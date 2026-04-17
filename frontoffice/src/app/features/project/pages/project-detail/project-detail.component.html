@@ -188,48 +188,76 @@
     <div class="detail-col-r">
 
       <!-- Risques IA -->
-      <section class="dcard dcard--risks">
-        <div class="dcard-head">
-          <div>
-            <h2><i class="fas fa-brain"></i> Risques IA</h2>
-            <p>{{ risks.length }} signal(aux) actif(s)</p>
-          </div>
-          <!-- ✅ Freelancer + Admin seulement -->
-          <button class="btn-sm btn-sm--ai" (click)="triggerAiAnalysis()"
-                  [disabled]="analyzingRisks"
-                  *ngIf="canAnalyzeRisks">
-            <i class="fas" [ngClass]="analyzingRisks ? 'fa-spinner fa-spin' : 'fa-wand-magic-sparkles'"></i>
-            {{ analyzingRisks ? 'Analyse...' : 'Analyser' }}
-          </button>
-        </div>
+<!-- ── Risques IA + ML Score ── -->
+<section class="dcard dcard--risks">
+  <div class="dcard-head">
+    <div>
+      <h2><i class="fas fa-brain"></i> Risques IA</h2>
+      <p>{{ risks.length }} signal(aux) actif(s)</p>
+    </div>
+    <button class="btn-sm btn-sm--ai" (click)="triggerAiAnalysis()"
+            [disabled]="analyzingRisks" *ngIf="canAnalyzeRisks">
+      <i class="fas" [ngClass]="analyzingRisks ? 'fa-spinner fa-spin' : 'fa-wand-magic-sparkles'"></i>
+      {{ analyzingRisks ? 'Analyse...' : 'Analyser' }}
+    </button>
+  </div>
 
-        <div *ngIf="risks.length === 0" class="empty-mini empty-mini--success">
-          <i class="fas fa-shield-check"></i>
-          <span>Aucun risque détecté. Tout va bien !</span>
-        </div>
+  <!-- ══ BLOC ML — probabilité de retard ══ -->
+  <div class="ml-inline-card" *ngIf="mlPrediction">
+    <div class="ml-inline-top">
+      <span class="ml-inline-label">
+        <i class="fas fa-robot"></i> Prédiction ML
+      </span>
+      <span class="ml-inline-verdict"
+            [class.verdict--ok]="!mlPrediction.willBeLate"
+            [class.verdict--late]="mlPrediction.willBeLate">
+        {{ mlPrediction.willBeLate ? 'Retard probable' : 'Dans les délais' }}
+      </span>
+    </div>
+    <div class="ml-inline-bar-wrap">
+      <div class="ml-inline-bar"
+           [style.width]="getProbabilityPercent() + '%'"
+           [style.background]="getProbabilityColor()">
+      </div>
+    </div>
+    <div class="ml-inline-footer">
+      <span>{{ mlPrediction.message }}</span>
+    </div>
+    <a class="ml-inline-details" [routerLink]="['/app/projects', projectId, 'risks']">
+      Voir l'analyse complète <i class="fas fa-arrow-right"></i>
+    </a>
+  </div>
 
-        <div class="risk-list" *ngIf="risks.length > 0">
-          <div class="risk-item" *ngFor="let risk of risks" [ngClass]="getSeverityClass(risk.severity)">
-            <div class="risk-item__icon">
-              <i class="fas" [ngClass]="getRiskIcon(risk.riskType)"></i>
-            </div>
-            <div class="risk-item__body">
-              <div class="risk-item__top">
-                <strong>{{ getRiskLabel(risk.riskType) }}</strong>
-                <span class="severity-badge" [ngClass]="getSeverityClass(risk.severity)">{{ risk.severity }}</span>
-              </div>
-              <p>{{ risk.message }}</p>
-              <span class="risk-date"><i class="fas fa-clock"></i> {{ risk.detectedAt | slice:0:10 }}</span>
-            </div>
-            <!-- ✅ Freelancer + Admin seulement -->
-            <button class="risk-resolve-btn" (click)="resolveRisk(risk.id)"
-                    title="Marquer comme résolu"
-                    *ngIf="isFreelancer || isAdmin">
-              <i class="fas fa-check"></i>
-            </button>
-          </div>
+  <!-- Liste risques existante -->
+  <div *ngIf="risks.length === 0" class="empty-mini empty-mini--success">
+    <i class="fas fa-shield-check"></i>
+    <span>Aucun risque détecté. Tout va bien !</span>
+  </div>
+
+  <div class="risk-list" *ngIf="risks.length > 0">
+    <div class="risk-item" *ngFor="let risk of risks" [ngClass]="getSeverityClass(risk.severity)">
+      <div class="risk-item__icon">
+        <i class="fas" [ngClass]="getRiskIcon(risk.riskType)"></i>
+      </div>
+      <div class="risk-item__body">
+        <div class="risk-item__top">
+          <strong>{{ getRiskLabel(risk.riskType) }}</strong>
+          <span class="severity-badge" [ngClass]="getSeverityClass(risk.severity)">
+            {{ risk.severity }}
+          </span>
         </div>
-      </section>
+        <p>{{ risk.message }}</p>
+        <span class="risk-date">
+          <i class="fas fa-clock"></i> {{ risk.detectedAt | slice:0:10 }}
+        </span>
+      </div>
+      <button class="risk-resolve-btn" (click)="resolveRisk(risk.id)"
+              title="Marquer comme résolu" *ngIf="isFreelancer || isAdmin">
+        <i class="fas fa-check"></i>
+      </button>
+    </div>
+  </div>
+</section>
 
       <!-- Livrables récents -->
       <section class="dcard">
@@ -324,9 +352,10 @@
     </div>
   </div>
 </div>
-<!-- 🔍 DEBUG — supprimer après vérification -->
+<!-- 🔍 DEBUG — supprimer après vérification 
 <div style="background: #1a1a2e; color: #fff; padding: 8px 16px; border-radius: 8px; margin-bottom: 12px; font-family: monospace; font-size: 13px;">
   userId={{ currentUserId }} | role="{{ currentRole }}" |
   isClient={{ isClient }} | isFreelancer={{ isFreelancer }} | isAdmin={{ isAdmin }} |
   canCreateTask={{ canCreateTask }}
 </div>
+-->

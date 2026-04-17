@@ -160,3 +160,23 @@ export interface CreateDeliverableDTO {
   fileUrl: string;
   taskId?: number;
 }
+
+// ── MLPredictionDTO — Résultat du modèle Random Forest ──────────
+
+export interface MLPrediction {
+  probabilityLate: number;       // 0.0 à 1.0
+  willBeLate: boolean;           // true = retard prédit
+  severity: RiskSeverity | null; // null = projet sain
+  message: string;               // message généré automatiquement
+  criticalFeature: string;       // feature la plus risquée
+
+  // Features envoyées au modèle (traçabilité)
+  daysElapsedRatio: number;
+  tasksDoneRatio: number;
+  activeRisksCount: number;
+  bottleneckDaysAvg: number;
+  openDeliverablesCount: number;
+  assigneePerfScore: number;
+  scopeCreepRatio: number;
+  budgetConsumptionRatio: number;
+}

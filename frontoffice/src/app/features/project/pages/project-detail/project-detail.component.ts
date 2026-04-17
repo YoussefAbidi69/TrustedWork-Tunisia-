@@ -5,9 +5,8 @@ import { ProjectApiService } from '../../services/project-api.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import {
   Project, Task, Deliverable, DeliveryRiskSignal, ProgressReport,
-  TaskStatus, TaskPriority, RiskSeverity
+  TaskStatus, TaskPriority, RiskSeverity, MLPrediction  // ← MLPrediction
 } from '../../models/project.models';
-
 @Component({
   selector: 'app-project-detail',
   templateUrl: './project-detail.component.html',
@@ -21,6 +20,10 @@ export class ProjectDetailComponent implements OnInit {
   deliverables: Deliverable[] = [];
   risks: DeliveryRiskSignal[] = [];
   report: ProgressReport | null = null;
+
+
+  mlPrediction: MLPrediction | null = null;
+
 
   loading = true;
   error = '';
@@ -78,6 +81,7 @@ export class ProjectDetailComponent implements OnInit {
       // isAdmin est déjà set dans ngOnInit
 
       this.loading = false;
+      this.loadMLPrediction();
     },
     error: (err) => {
       this.error = 'Impossible de charger le projet.';
@@ -295,4 +299,26 @@ export class ProjectDetailComponent implements OnInit {
   goToRisks() {
     this.router.navigate(['/app/projects', this.projectId, 'risks']);
   }
+
+
+  loadMLPrediction(): void {
+  this.projectApi.predictDeliveryRisk(this.projectId).subscribe({
+    next: (pred) => this.mlPrediction = pred,
+    error: () => {}
+  });
+}
+
+getProbabilityPercent(): number {
+  return this.mlPrediction
+    ? Math.round(this.mlPrediction.probabilityLate * 100)
+    : 0;
+}
+
+getProbabilityColor(): string {
+  const p = this.getProbabilityPercent();
+  if (p >= 85) return '#ef4444';
+  if (p >= 70) return '#f97316';
+  if (p >= 50) return '#f59e0b';
+  return '#22c55e';
+}
 }

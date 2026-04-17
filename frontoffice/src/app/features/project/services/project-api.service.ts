@@ -8,9 +8,12 @@ import {
   Deliverable, CreateDeliverableDTO, DeliverableStatus,
   ProgressReport,
   DeliveryRiskSignal,
+  MLPrediction,           // ← AJOUTER
   ProjectNotification,
   ProjectStatus
 } from '../models/project.models';
+
+
 
 const GATEWAY_URL = 'http://localhost:8089/project';
 
@@ -230,4 +233,11 @@ export class ProjectApiService {
       responseType: 'blob'
     });
   }
+
+  // Prédiction ML Random Forest
+predictDeliveryRisk(projectId: number): Observable<MLPrediction> {
+  return this.http.get<MLPrediction>(
+    `${GATEWAY_URL}/api/projects/${projectId}/risks/ml-predict`
+  );
+}
 }

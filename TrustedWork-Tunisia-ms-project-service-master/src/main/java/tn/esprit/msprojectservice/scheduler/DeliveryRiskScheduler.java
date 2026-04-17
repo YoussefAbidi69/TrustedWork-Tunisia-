@@ -5,9 +5,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import tn.esprit.msprojectservice.dto.MLPredictionDTO;
 import tn.esprit.msprojectservice.dto.ProgressReportDTO;
 import tn.esprit.msprojectservice.entities.*;
 import tn.esprit.msprojectservice.repositories.*;
+import tn.esprit.msprojectservice.services.IMLPredictionService;
 import tn.esprit.msprojectservice.services.IProgressReportService;
 
 import java.time.LocalDate;
@@ -45,6 +47,10 @@ public class DeliveryRiskScheduler {
 
     @Autowired
     private IDeliverableRepository deliverableRepository;
+
+
+    @Autowired
+    private IMLPredictionService mlPredictionService;
 
     // ============================================================
     // ANALYSE QUOTIDIENNE — Tous les jours à 8h00
@@ -98,36 +104,34 @@ public class DeliveryRiskScheduler {
     // 1. DELAY_RISK — Détection de retard par tâche
     // ============================================================
     private void detectDelayRisk(Project project) {
-        List<Task> tasks = taskRepository.findByProjectId(project.getId());
+        // ✅ REMPLACÉ : score pondéré manuel → modèle Random Forest ML
+        MLPredictionDTO prediction = mlPredictionService.predictDeliveryRisk(project.getId());
 
-        for (Task task : tasks) {
-            // Ignorer les tâches terminées ou sans deadline
-            if (task.getStatus() == TaskStatus.DONE || task.getDeadline() == null) {
-                continue;
-            }
-
-            // Calcul du score de risque de retard
-            double riskScore = calculateDelayRiskScore(task, project);
-
-            if (riskScore >= DELAY_RISK_THRESHOLD) {
-                // Vérifier qu'un signal n'existe pas déjà pour cette tâche
-                if (!riskSignalRepository.existsActiveSignal(project.getId(), RiskType.DELAY_RISK, task.getId())) {
-
-                    RiskSeverity severity = determineSeverity(riskScore);
-
-                    long daysRemaining = ChronoUnit.DAYS.between(LocalDate.now(), task.getDeadline());
-
-                    String message = String.format(
-                            "⚠ Risque de retard détecté sur la tâche \"%s\". Score de risque : %.0f%%. " +
-                                    "Jours restants : %d. Priorité : %s.",
-                            task.getTitle(), riskScore * 100, daysRemaining, task.getPriority()
-                    );
-
-                    createSignal(project, RiskType.DELAY_RISK, severity, message, task.getId());
-                    logger.warn("DELAY_RISK détecté — Tâche: {} — Score: {}", task.getTitle(), riskScore);
-                }
-            }
+        // Aucun risque détecté par le modèle
+        if (prediction.getSeverity() == null) {
+            logger.info("✅ Aucun DELAY_RISK — Projet: {} | P(retard): {}",
+                    project.getTitle(), prediction.getProbabilityLate());
+            return;
         }
+
+        // Anti-doublon : ne pas recréer un signal si un DELAY_RISK actif existe déjà
+        if (riskSignalRepository.existsActiveProjectSignal(project.getId(), RiskType.DELAY_RISK)) {
+            return;
+        }
+
+        createSignal(
+                project,
+                RiskType.DELAY_RISK,
+                prediction.getSeverity(),
+                prediction.getMessage(),
+                null
+        );
+
+        logger.warn("🤖 DELAY_RISK ML — Projet: {} | P(retard): {}% | Sévérité: {}",
+                project.getTitle(),
+                Math.round(prediction.getProbabilityLate() * 100),
+                prediction.getSeverity()
+        );
     }
 
     // ============================================================
@@ -244,41 +248,7 @@ public class DeliveryRiskScheduler {
     // UTILITAIRES
     // ============================================================
 
-    /**
-     * Calcul du score de risque de retard
-     * DeliveryRisk = (daysRemaining / estimatedDuration × 0.35)
-     *              + (taskCompletionRate × 0.35)
-     *              + (assigneeHistoryScore × 0.30)
-     */
-    private double calculateDelayRiskScore(Task task, Project project) {
-        // --- Facteur 1 : Ratio temps restant ---
-        long totalDuration;
-        if (task.getEstimatedHours() != null && task.getEstimatedHours() > 0) {
-            totalDuration = task.getEstimatedHours() / 8; // Convertir heures en jours
-            if (totalDuration == 0) totalDuration = 1;
-        } else if (project.getStartDate() != null && task.getDeadline() != null) {
-            totalDuration = ChronoUnit.DAYS.between(project.getStartDate(), task.getDeadline());
-            if (totalDuration == 0) totalDuration = 1;
-        } else {
-            totalDuration = 30; // Valeur par défaut
-        }
 
-        long daysRemaining = ChronoUnit.DAYS.between(LocalDate.now(), task.getDeadline());
-        // Si deadline dépassée, le ratio est maximal (risque = 1.0)
-        double timeRatio = (daysRemaining <= 0) ? 1.0 : 1.0 - ((double) daysRemaining / totalDuration);
-        timeRatio = Math.max(0, Math.min(1, timeRatio)); // Borner entre 0 et 1
-
-        // --- Facteur 2 : Taux de complétion des tâches du projet ---
-        int totalTasks = taskRepository.countTotalTasksByProjectId(project.getId());
-        int completedTasks = taskRepository.countCompletedTasksByProjectId(project.getId());
-        double taskCompletionRate = (totalTasks > 0) ? 1.0 - ((double) completedTasks / totalTasks) : 0.5;
-
-        // --- Facteur 3 : Score historique de l'assignee (simplifié en Phase 1) ---
-        double assigneeHistoryScore = calculateAssigneeScore(task);
-
-        // --- Score final ---
-        return (timeRatio * 0.35) + (taskCompletionRate * 0.35) + (assigneeHistoryScore * 0.30);
-    }
 
     /**
      * Score de fiabilité de l'assignee basé sur son historique
