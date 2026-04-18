@@ -2,10 +2,12 @@ package tn.esprit.freelancerprofileservice.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 /**
  * Gestionnaire global des exceptions — intercepte toutes les erreurs
@@ -13,6 +15,22 @@ import java.time.LocalDateTime;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * 400 — Erreurs de validation @Valid (@NotNull, @Size, @Min, @Max, etc.)
+     * Sans ce handler, Spring retourne un 500 générique au lieu d'un 400 lisible
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+        // Concatène tous les messages de champs invalides en une seule string
+        String message = ex.getBindingResult().getFieldErrors()
+                .stream()
+                .map(err -> err.getField() + " : " + err.getDefaultMessage())
+                .collect(Collectors.joining(" | "));
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(400, message, LocalDateTime.now()));
+    }
 
     /**
      * 404 — Ressource introuvable
