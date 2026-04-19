@@ -1,0 +1,86 @@
+<div class="invitations-container">
+  <div class="freelancers-list-section">
+    <h3>Freelancers Disponibles</h3>
+    
+    <div *ngIf="loadingFreelancers" class="loading-state">
+      <app-loading-spinner></app-loading-spinner>
+    </div>
+
+    <div *ngIf="!loadingFreelancers && availableFreelancers.length === 0" class="empty-state">
+      <p>Aucun freelancer disponible.</p>
+    </div>
+
+    <div *ngIf="!loadingFreelancers && availableFreelancers.length > 0" class="freelancers-grid">
+      <div *ngFor="let f of availableFreelancers" class="freelancer-card">
+        <div class="f-profile">
+          <div class="f-avatar" [style.background-image]="f.photo ? 'url(' + f.photo + ')' : ''">
+            <i *ngIf="!f.photo" class="fas fa-user"></i>
+          </div>
+          <div class="f-details">
+            <h4 class="f-name">{{ f.firstName }} {{ f.lastName }}</h4>
+            <p class="f-headline">{{ f.headline || 'Freelancer' }}</p>
+            <p class="f-location" *ngIf="f.location"><i class="fas fa-location-dot"></i> {{ f.location }}</p>
+          </div>
+        </div>
+        <button 
+          class="btn btn--primary btn--sm" 
+          [disabled]="invitingId === f.id || isAlreadyInvited(f.id)"
+          (click)="sendInvitationByUserId(f.id)">
+          <i class="fas" [ngClass]="isAlreadyInvited(f.id) ? 'fa-check' : (invitingId === f.id ? 'fa-spinner fa-spin' : 'fa-plus')"></i>
+          {{ isAlreadyInvited(f.id) ? 'Déjà invité' : (invitingId === f.id ? 'Invitation...' : 'Inviter') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="invitations-list">
+    <div class="list-header">
+      <h3>Invitations envoyées</h3>
+      <span class="count">{{ invitations.length }} au total</span>
+    </div>
+
+    <div *ngIf="loading" class="loading-state">
+      <app-loading-spinner></app-loading-spinner>
+    </div>
+
+    <div *ngIf="!loading && invitations.length === 0" class="empty-state">
+      <i class="fas fa-paper-plane"></i>
+      <p>Aucune invitation envoyée pour le moment.</p>
+    </div>
+
+    <table *ngIf="!loading && invitations.length > 0" class="tw-table">
+      <thead>
+        <tr>
+          <th>Destinataire (ID)</th>
+          <th>Statut</th>
+          <th>Date d'envoi</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let invite of invitations">
+          <td>
+            <div class="user-info">
+              <span class="user-id">#{{ invite.receiverId }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="status-badge" [ngClass]="getStatusClass(invite.status)">
+              {{ invite.status }}
+            </span>
+          </td>
+          <td>{{ invite.sentAt | date:'short' }}</td>
+          <td>
+            <button 
+              *ngIf="invite.status === 'PENDING'"
+              class="btn-icon text-danger" 
+              (click)="cancelInvitation(invite.id)"
+              title="Annuler l'invitation">
+              <i class="fas fa-times"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

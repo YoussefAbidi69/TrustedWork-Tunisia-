@@ -1,0 +1,70 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-titles">
+      <span class="chip">Invitations</span>
+      <h1>Mes Invitations d'Agences</h1>
+      <p>Retrouvez ici les demandes de collaboration reçues par des leads d'agences.</p>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    <i class="fas fa-circle-check"></i> {{ successMessage }}
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    <i class="fas fa-triangle-exclamation"></i> {{ errorMessage }}
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading" class="empty-state">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Chargement de vos invitations...</p>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading && invitations.length === 0" class="empty-state">
+    <div class="empty-icon">
+      <i class="fas fa-envelope-open"></i>
+    </div>
+    <h3>Aucune invitation en attente</h3>
+    <p>Vous n'avez actuellement aucune invitation PENDING à rejoindre une agence.</p>
+  </div>
+
+  <!-- List -->
+  <div class="invitations-list" *ngIf="!loading && invitations.length > 0">
+    <div *ngFor="let inv of invitations" class="invitation-card">
+      <div class="invitation-main">
+        <div class="invitation-avatar">
+          <i class="fas fa-building"></i>
+        </div>
+        <div class="invitation-info">
+          <h3>{{ inv.agencyName || 'Agence Inconnue' }}</h3>
+          <p>
+            Status: <strong>{{ inv.proposedRole || 'MEMBER' }}</strong> • 
+            Reçu le: {{ inv.sentAt | date:'mediumDate' }}
+          </p>
+          <p class="invited-by">
+            <i class="fas fa-user-tie"></i> Invité par <strong>{{ inv.senderName || 'Un Lead' }}</strong>
+          </p>
+        </div>
+      </div>
+      
+      <div class="invitation-actions">
+        <button 
+          class="btn-primary" 
+          (click)="accept(inv.id)"
+          [disabled]="actionLoadingId !== null">
+          <span *ngIf="actionLoadingId !== inv.id"><i class="fas fa-check"></i> Accepter</span>
+          <span *ngIf="actionLoadingId === inv.id"><i class="fas fa-spinner fa-spin"></i> Traitement...</span>
+        </button>
+        <button 
+          class="btn-danger ghost" 
+          (click)="decline(inv.id)"
+          [disabled]="actionLoadingId !== null">
+          <i class="fas fa-xmark"></i> Refuser
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

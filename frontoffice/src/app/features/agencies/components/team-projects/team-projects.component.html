@@ -1,0 +1,60 @@
+<div class="projects-section">
+  <div class="section-top">
+    <h3>Projets de l'équipe</h3>
+    <div class="top-actions">
+      <button class="btn btn--primary btn--sm">
+        <i class="fas fa-folder-plus"></i> Nouveau Projet
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-box">
+    <app-loading-spinner></app-loading-spinner>
+  </div>
+
+  <div *ngIf="!loading && projects.length === 0" class="empty-box">
+    <app-empty-state 
+      title="Aucun projet" 
+      description="Créez votre premier projet d'équipe pour commencer à collaborer et suivre vos objectifs."
+      icon="fa-diagram-project">
+    </app-empty-state>
+  </div>
+
+  <div class="projects-grid" *ngIf="!loading && projects.length > 0">
+    <div *ngFor="let project of projects" class="project-card">
+      <div class="project-card__header">
+        <span class="status-indicator" [ngClass]="getStatusClass(project.status)">
+          {{ project.status }}
+        </span>
+        <button class="btn-icon-dots"><i class="fas fa-ellipsis-v"></i></button>
+      </div>
+
+      <div class="project-card__body">
+        <h4>{{ project.title }}</h4>
+        <p class="description text-truncate-2">{{ project.description || 'Acune description fournie pour ce projet.' }}</p>
+
+        <div class="progress-dashboard">
+          <div class="progress-header">
+            <span class="label">Progression globale</span>
+            <span class="percentage">{{ project.progress }}%</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" [style.width.%]="project.progress"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="project-card__footer">
+        <div class="footer-meta">
+          <div class="meta-item">
+            <i class="fas fa-calendar-alt"></i>
+            <span>{{ project.startDate | date:'MMM yyyy' }}</span>
+          </div>
+        </div>
+        <button class="btn btn--outline btn--sm">
+          Gérer <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

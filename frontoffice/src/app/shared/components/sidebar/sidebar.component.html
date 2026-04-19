@@ -1,0 +1,101 @@
+<aside class="dashboard-sidebar" [class.collapsed]="collapsed">
+
+  <a routerLink="/app/dashboard" class="sb-brand">
+    <div class="sb-logo">TW</div>
+    <div class="sb-brand-text" *ngIf="!collapsed">
+      <strong>TrustedWork</strong>
+      <small>Tunisia</small>
+    </div>
+  </a>
+
+  <div class="sb-profile">
+    <div class="profile-avatar">
+      {{ authService.getUserInitials() }}
+    </div>
+    <div class="profile-meta" *ngIf="!collapsed">
+      <strong>{{ currentUser?.email }}</strong>
+      <span>Session active</span>
+    </div>
+  </div>
+
+  <!-- Trust Level — valeur réelle chargée depuis le backend -->
+  <div class="sidebar-trust">
+    <div class="sidebar-trust__head">
+      <span *ngIf="!collapsed">Trust Level</span>
+      <strong>{{ trustLevel }}/5</strong>
+    </div>
+  </div>
+
+  <button type="button" class="sb-collapse-btn" (click)="onToggleCollapse()">
+    <i class="fas" [ngClass]="collapsed ? 'fa-angles-right' : 'fa-angles-left'"></i>
+  </button>
+
+  <nav class="sidebar-nav">
+
+    <div class="sidebar-section-label" *ngIf="!collapsed">Mon espace</div>
+
+    <ng-container *ngFor="let item of activeItems">
+      <!-- Item without children -->
+      <a
+        *ngIf="!item.children"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        class="sidebar-link">
+        <div class="sidebar-link__icon"><i class="fas" [ngClass]="item.icon"></i></div>
+        <span class="sidebar-link__label" *ngIf="!collapsed">{{ item.label }}</span>
+      </a>
+
+      <!-- Item with children -->
+      <div *ngIf="item.children" class="sidebar-item-group">
+        <button
+          type="button"
+          class="sidebar-link"
+          (click)="toggleItem(item)">
+          <div class="sidebar-link__icon"><i class="fas" [ngClass]="item.icon"></i></div>
+          <span class="sidebar-link__label" *ngIf="!collapsed">{{ item.label }}</span>
+          <div class="sidebar-link__caret" *ngIf="!collapsed">
+            <i class="fas" [ngClass]="item.expanded ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+          </div>
+        </button>
+
+        <div class="sidebar-submenu" *ngIf="item.expanded && !collapsed">
+          <a
+            *ngFor="let child of item.children"
+            [routerLink]="child.route"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{exact: true}"
+            class="sidebar-sublink"
+            [ngClass]="{ 'highlight-primary': (!hasAgencies && child.label.includes('Créer')) || (hasAgencies && child.label.includes('Accéder')) }">
+            <div class="sidebar-sublink__icon"><i class="fas" [ngClass]="child.icon"></i></div>
+            <span class="sidebar-sublink__label">{{ child.label }}</span>
+            <div class="sidebar-sublink__badge" *ngIf="child.badge">{{ child.badge }}</div>
+          </a>
+        </div>
+      </div>
+    </ng-container>
+
+    <hr />
+
+    <div class="sidebar-section-label" *ngIf="!collapsed">Autres modules</div>
+
+    <div
+      *ngFor="let item of comingSoonItems"
+      class="sidebar-link sidebar-link--disabled">
+      <i class="fas" [ngClass]="item.icon"></i>
+      <span *ngIf="!collapsed">{{ item.label }}</span>
+      <small *ngIf="!collapsed">Bientôt</small>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-footer">
+    <button
+      type="button"
+      class="sidebar-link sidebar-link--logout"
+      (click)="onLogout()">
+      <i class="fas fa-right-from-bracket"></i>
+      <span *ngIf="!collapsed">Déconnexion</span>
+    </button>
+  </div>
+
+</aside>

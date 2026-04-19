@@ -1,0 +1,76 @@
+<div class="agencies-container">
+  <app-section-header
+    title="Gestion des Agences"
+    subtitle="Gérez vos collaborations, membres et projets au sein de vos agences.">
+    <div class="header-actions">
+      <a routerLink="new" class="btn btn--primary">
+        <i class="fas fa-plus"></i> Créer une Agence
+      </a>
+    </div>
+  </app-section-header>
+
+  <!-- Stats Quick View -->
+  <div class="stats-grid" *ngIf="context && context.hasMemberships">
+    <app-stat-card
+      title="Total Agences"
+      [value]="context.memberships.length.toString()"
+      icon="fa-building"
+      color="azure">
+    </app-stat-card>
+    <app-stat-card
+      title="Agences Actives"
+      [value]="getActiveCount().toString()"
+      icon="fa-check-circle"
+      color="olive">
+    </app-stat-card>
+  </div>
+
+  <div class="content-section">
+    <div *ngIf="loading" class="loading-container">
+      <app-loading-spinner></app-loading-spinner>
+    </div>
+
+    <div *ngIf="!loading && (!context || !context.hasMemberships)" class="empty-container">
+      <app-empty-state
+        title="Aucune agence trouvée"
+        description="Vous ne faites partie d'aucune agence pour le moment. Vous pouvez créer votre propre agence."
+        icon="fa-building-circle-exclamation">
+        <a routerLink="new" class="btn btn--primary btn--sm">Commencer maintenant</a>
+      </app-empty-state>
+    </div>
+
+    <div *ngIf="!loading && context && context.hasMemberships" class="agencies-grid">
+      <div *ngFor="let membership of context.memberships" class="agency-card">
+        <div class="agency-card__header">
+          <div class="agency-logo" [style.background-image]="membership.logoUrl ? 'url(' + membership.logoUrl + ')' : ''">
+            <i *ngIf="!membership.logoUrl" class="fas fa-building"></i>
+          </div>
+          <div class="agency-badge" [class]="'badge--' + membership.role.toLowerCase()">
+            {{ membership.role }}
+          </div>
+        </div>
+        
+        <div class="agency-card__body">
+          <h3 class="agency-name">{{ membership.agencyName }}</h3>
+          
+          <div class="agency-meta">
+            <div class="meta-item">
+              <i class="fas fa-calendar"></i>
+              <span>Membre depuis {{ membership.joinedAt | date:'MMM yyyy' }}</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-user-check"></i>
+              <span>Status: {{ membership.status }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="agency-card__footer">
+          <a [routerLink]="[membership.agencyId]" class="btn btn--outline btn--sm btn--block">
+            Accéder à l'espace
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

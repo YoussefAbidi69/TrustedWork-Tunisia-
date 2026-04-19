@@ -1,0 +1,72 @@
+<div class="members-section">
+  <div class="section-top">
+    <h3>Membres de l'équipe</h3>
+    <div class="top-actions">
+      <button class="btn btn--outline btn--sm">
+        <i class="fas fa-user-plus"></i> Inviter un collaborateur
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-box">
+    <app-loading-spinner></app-loading-spinner>
+  </div>
+
+  <div *ngIf="!loading && members.length === 0" class="empty-box">
+    <app-empty-state 
+      title="Aucun membre" 
+      description="Invitez des freelances pour commencer à collaborer sur vos projets."
+      icon="fa-users-slash">
+    </app-empty-state>
+  </div>
+
+  <div class="table-container" *ngIf="!loading && members.length > 0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Membre</th>
+          <th>Rôle</th>
+          <th>Statut</th>
+          <th>Workload</th>
+          <th>Date d'arrivée</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let member of members">
+          <td>
+            <div class="member-link">
+              <div class="mini-avatar">{{ member.userId }}</div>
+              <div class="member-text">
+                <strong>Utilisateur #{{ member.userId }}</strong>
+                <small>{{ member.skills || 'Aucune compétence' }}</small>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getRoleBadgeClass(member.role)">{{ member.role }}</span>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getStatusBadgeClass(member.status)">{{ member.status }}</span>
+          </td>
+          <td>
+            <div class="workload-info">
+              <div class="workload-track">
+                <div class="workload-fill" [style.width.%]="member.workloadScore"></div>
+              </div>
+              <span class="workload-val">{{ member.workloadScore }}%</span>
+            </div>
+          </td>
+          <td>
+            <span class="date-text">{{ member.joinedAt | date:'mediumDate' }}</span>
+          </td>
+          <td class="td-actions">
+            <button class="btn-icon" (click)="removeMember(member.id)" title="Retirer de l'agence">
+              <i class="fas fa-trash-can"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

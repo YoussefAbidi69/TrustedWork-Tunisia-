@@ -1,0 +1,120 @@
+.invitations-section {
+  padding: 1rem 0;
+}
+
+.invite-panel {
+  background: var(--white);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.invite-panel h3 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--midnight);
+}
+
+.invite-panel p {
+  font-size: 0.9rem;
+  color: var(--stone);
+  margin-bottom: 1.5rem;
+}
+
+.invite-form {
+  display: flex;
+  gap: 1rem;
+}
+
+.invite-form .form-control {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--cloud);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  transition: var(--transition);
+}
+
+.invite-form .form-control:focus {
+  outline: none;
+  border-color: var(--terracotta);
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+}
+
+.invitations-list h4 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: var(--charcoal);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.table th {
+  text-align: left;
+  padding: 1rem;
+  background: var(--midnight);
+  color: var(--white);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--cloud);
+  font-size: 0.9rem;
+  color: var(--midnight);
+}
+
+.email-cell {
+  font-weight: 500;
+  color: var(--terracotta);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status--pending { background: var(--azure-light); color: var(--azure); }
+.status--accepted { background: var(--olive-light); color: var(--olive); }
+.status--rejected { background: var(--terracotta-light); color: var(--terracotta); }
+.status--expired { background: var(--slate-light); color: var(--slate); }
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: var(--transition);
+}
+
+.btn-icon:hover {
+  transform: scale(1.1);
+}
+
+.text-danger {
+  color: #e74c3c;
+}
+
+.loading-box, .empty-box {
+  padding: 3rem;
+  text-align: center;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  color: var(--stone);
+}

@@ -1,0 +1,142 @@
+.projects-section {
+  padding: 1rem 0;
+}
+
+.section-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.section-top h3 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  margin: 0;
+  color: var(--charcoal);
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.project-card {
+  background: var(--white);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  transition: var(--transition);
+}
+
+.project-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--terracotta-light);
+}
+
+.project-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.status-indicator {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status--active { background: var(--azure-light); color: var(--azure); }
+.status--completed { background: var(--olive-light); color: var(--olive); }
+.status--hold { background: var(--gold-light); color: var(--gold); }
+.status--planning { background: var(--slate-light); color: var(--slate); }
+
+.btn-icon-dots {
+  background: transparent;
+  border: none;
+  color: var(--stone);
+  cursor: pointer;
+}
+
+.project-card__body h4 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--midnight);
+}
+
+.description {
+  font-size: 0.9rem;
+  color: var(--slate);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.progress-dashboard {
+  margin-bottom: 1rem;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+}
+
+.label { color: var(--stone); }
+.percentage { color: var(--midnight); font-weight: 700; }
+
+.progress-bar-container {
+  height: 8px;
+  background: #EDF2F7;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--terracotta-light), var(--terracotta));
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.project-card__footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0,0,0,0.03);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-meta {
+  display: flex;
+  gap: 1rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--stone);
+}
+
+.loading-box, .empty-box {
+  padding: 4rem;
+  text-align: center;
+}
