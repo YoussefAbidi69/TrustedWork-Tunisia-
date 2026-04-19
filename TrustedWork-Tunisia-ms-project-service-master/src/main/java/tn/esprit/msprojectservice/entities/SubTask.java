@@ -20,6 +20,8 @@ public class SubTask {
 
     private boolean done;
 
+    // @ToString.Exclude — évite la boucle : SubTask → Task → subTasks → SubTask → ...
+    @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "task_id")
     private Task task;

@@ -1,6 +1,8 @@
 package tn.esprit.msprojectservice.services;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import tn.esprit.msprojectservice.dto.DeliverableDTO;
 import tn.esprit.msprojectservice.entities.Deliverable;
@@ -11,6 +13,7 @@ import tn.esprit.msprojectservice.repositories.IDeliverableRepository;
 import tn.esprit.msprojectservice.repositories.IProjectRepository;
 import tn.esprit.msprojectservice.repositories.ITaskRepository;
 import tn.esprit.msprojectservice.exceptions.EntityNotFoundException;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,18 +21,21 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DeliverableServiceImpl implements IDeliverableService {
 
-    // ✅ Constantes pour éviter la duplication des strings (Fix strings dupliquées)
-    private static final String LIVRABLE_NOT_FOUND = "Livrable non trouvé avec l'id : ";
-    private static final String PROJET_NOT_FOUND   = "Projet non trouvé avec l'id : ";
-    private static final String TACHE_NOT_FOUND    = "Tâche non trouvée avec l'id : ";
+    private static final Logger logger = LoggerFactory.getLogger(DeliverableServiceImpl.class);
+
+    private static final String LIVRABLE_NOT_FOUND = "Livrable non trouve avec l'id : ";
+    private static final String PROJET_NOT_FOUND   = "Projet non trouve avec l'id : ";
+    private static final String TACHE_NOT_FOUND    = "Tache non trouvee avec l'id : ";
 
     private final IDeliverableRepository deliverableRepository;
-    private final IProjectRepository projectRepository;
-    private final ITaskRepository taskRepository;
+    private final IProjectRepository     projectRepository;
+    private final ITaskRepository        taskRepository;
+
+    // Injection du service mail -- Phase 2
+    private final IMailService mailService;
 
     @Override
     public DeliverableDTO submitDeliverable(Long projectId, DeliverableDTO deliverableDTO) {
-        // ✅ Fix 4 — EntityNotFoundException au lieu de RuntimeException
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException(PROJET_NOT_FOUND + projectId));
 
@@ -37,7 +43,6 @@ public class DeliverableServiceImpl implements IDeliverableService {
         deliverable.setProject(project);
 
         if (deliverableDTO.getTaskId() != null) {
-            // ✅ Fix 5 — EntityNotFoundException au lieu de RuntimeException
             Task task = taskRepository.findById(deliverableDTO.getTaskId())
                     .orElseThrow(() -> new EntityNotFoundException(TACHE_NOT_FOUND + deliverableDTO.getTaskId()));
             deliverable.setTask(task);
@@ -68,11 +73,12 @@ public class DeliverableServiceImpl implements IDeliverableService {
                 .orElseThrow(() -> new EntityNotFoundException(LIVRABLE_NOT_FOUND + id));
 
         if (deliverable.getStatus() != DeliverableStatus.SUBMITTED) {
-            throw new IllegalStateException("Ce livrable a déjà été reviewé. Statut actuel : " + deliverable.getStatus());
+            throw new IllegalStateException(
+                    "Ce livrable a deja ete reviewe. Statut actuel : " + deliverable.getStatus());
         }
 
         if (status != DeliverableStatus.APPROVED && status != DeliverableStatus.REJECTED) {
-            throw new IllegalArgumentException("Le statut de review doit être APPROVED ou REJECTED");
+            throw new IllegalArgumentException("Le statut de review doit etre APPROVED ou REJECTED");
         }
 
         deliverable.setStatus(status);
@@ -80,6 +86,17 @@ public class DeliverableServiceImpl implements IDeliverableService {
         deliverable.setReviewedAt(LocalDateTime.now());
 
         Deliverable updated = deliverableRepository.save(deliverable);
+
+        // MAILING -- Notifier le freelancer apres la decision du client
+        // MailServiceImpl recupere lui-meme l'email via UserServiceClient
+        try {
+            mailService.envoyerNotificationReviewLivrable(updated);
+            logger.info("Email review livrable declenche -- ID: {} | Statut: {}", updated.getId(), status);
+        } catch (Exception e) {
+            // Le mail ne bloque jamais la sauvegarde en base
+            logger.error("Echec envoi email review livrable {} : {}", updated.getId(), e.getMessage());
+        }
+
         return DeliverableDTO.fromEntity(updated);
     }
 

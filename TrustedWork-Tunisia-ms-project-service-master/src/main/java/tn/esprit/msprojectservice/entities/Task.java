@@ -29,6 +29,9 @@ public class Task {
     @Enumerated(EnumType.STRING)
     private TaskPriority priority;
 
+    // @ToString.Exclude — évite la boucle :
+    // Task.toString() → project → Project.toString() → tasks → Task.toString() → ...
+    @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;
@@ -45,11 +48,11 @@ public class Task {
 
     private LocalDateTime updatedAt;
 
-
+    @ToString.Exclude
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<SubTask> subTasks;
 
-
+    @ToString.Exclude
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Deliverable> deliverables;
 

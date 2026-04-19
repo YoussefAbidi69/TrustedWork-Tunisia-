@@ -44,15 +44,21 @@ public class Project {
 
     private LocalDateTime updatedAt;
 
+    // @ToString.Exclude — évite la boucle infinie :
+    // Project.toString() → tasks → Task.toString() → project → Project.toString() → ...
+    @ToString.Exclude
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Task> tasks;
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Deliverable> deliverables;
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ProgressReport> progressReports;
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<DeliveryRiskSignal> riskSignals;
 

@@ -26,10 +26,13 @@ public class Deliverable {
     @Enumerated(EnumType.STRING)
     private DeliverableStatus status;
 
+    // @ToString.Exclude — évite les boucles via Task et Project
+    @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "task_id")
     private Task task;
 
+    @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;
