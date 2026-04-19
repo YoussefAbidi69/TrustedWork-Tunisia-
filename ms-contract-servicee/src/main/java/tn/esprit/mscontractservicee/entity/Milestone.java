@@ -28,7 +28,11 @@ public class Milestone implements Serializable {
     Long contractId;
     Integer ordre;
     String titre;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     String description;
+
     BigDecimal montant;
     LocalDate deadline;
     LocalDateTime startedAt;

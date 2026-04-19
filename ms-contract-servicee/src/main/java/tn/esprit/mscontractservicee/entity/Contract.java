@@ -38,7 +38,11 @@ public class Contract implements Serializable {
     Long freelancerWalletCin;
     Long projectId;
     String projectTitle;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     String description;
+
     BigDecimal montantTotal;
     Integer slaFreelancerHeures;
     Integer slaClientJours;

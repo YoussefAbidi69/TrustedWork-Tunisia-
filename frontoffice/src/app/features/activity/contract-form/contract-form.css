@@ -222,3 +222,115 @@ input.ng-invalid.ng-touched {
   box-shadow: none;
   transform: none;
 }
+
+/* ─── Assistant IA ───────────────────────────────── */
+.ai-assistant-card {
+  background: linear-gradient(135deg, rgba(82, 113, 255, 0.05), rgba(0, 0, 0, 0.02));
+  border: 1px solid rgba(82, 113, 255, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ai-icon {
+  font-size: 1.8rem;
+  background: linear-gradient(135deg, var(--terracotta), var(--midnight));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.ai-title h3 {
+  margin: 0 0 0.2rem 0;
+  font-size: 1.1rem;
+  color: var(--midnight);
+}
+
+.ai-title p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.ai-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ai-input {
+  width: 100%;
+  resize: vertical;
+  background: white;
+  border: 1px solid #e2e8f0;
+}
+
+.ai-input:focus {
+  border-color: var(--terracotta);
+  box-shadow: 0 0 0 3px rgba(232, 92, 63, 0.1);
+}
+
+.btn-ai {
+  align-self: flex-end;
+  background: var(--midnight);
+  color: white;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+}
+
+.btn-ai:hover:not(:disabled) {
+  background: var(--terracotta);
+  transform: translateY(-2px);
+}
+
+.btn-ai:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.divider-text {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 2rem 0;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.divider-text::before,
+.divider-text::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.divider-text::before { margin-right: 1rem; }
+.divider-text::after { margin-left: 1rem; }

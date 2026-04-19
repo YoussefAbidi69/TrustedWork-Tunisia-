@@ -59,6 +59,7 @@ public class ContractController {
     private final ContractDocumentService contractDocumentService;
     private final SignatureRequestRepository signatureRequestRepository;
     private final SignatureSignerRepository signatureSignerRepository;
+    private final tn.esprit.mscontractservicee.service.IContractAiGenerationService contractAiService;
 
     private static boolean hasRole(Authentication authentication, SimpleGrantedAuthority role) {
         return authentication != null
@@ -99,6 +100,14 @@ public class ContractController {
         response.put("message", "ms-contract-service is running!");
         response.put("status", "OK");
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/ai/generate")
+    @Operation(summary = "Générer un brouillon de contrat via IA")
+    @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
+    public ResponseEntity<tn.esprit.mscontractservicee.dto.ai.ContractAiResponse> generateContractDraft(
+            @RequestBody tn.esprit.mscontractservicee.dto.ai.ContractAiPromptRequest request) {
+        return ResponseEntity.ok(contractAiService.generateContractDraft(request));
     }
 
     @PostMapping

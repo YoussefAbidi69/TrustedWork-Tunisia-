@@ -6,6 +6,8 @@ import { MilestoneService } from '../../../../core/services/milestone.service';
 import { Milestone } from '../../../../core/models/milestone.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ContractService } from '../../../../core/services/contract.service';
+import { Contract } from '../../../../core/models/contract.model';
+import { AIService } from '../../../../core/services/ai.service';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -31,12 +33,19 @@ export class MilestoneFormComponent implements OnInit {
   otherMilestonesTotal = 0;
   minDateToday = new Date().toISOString().split('T')[0];
 
+  // ─── IA ──────────────────────────────────────────────
+  aiPrompt = '';
+  generating = false;
+  parentContract: Contract | null = null;
+  existingMilestoneTitles: string[] = [];
+
   constructor(
     private milestoneService: MilestoneService,
     private contractService: ContractService,
     private router: Router,
     private route: ActivatedRoute,
-    public authService: AuthService
+    public authService: AuthService,
+    private aiService: AIService
   ) {}
 
   get isFreelancer(): boolean {
@@ -74,10 +83,16 @@ export class MilestoneFormComponent implements OnInit {
       milestones: this.milestoneService.getByContractId(contractId)
     }).subscribe({
       next: (data) => {
+        this.parentContract = data.contract;
         this.totalContractAmount = data.contract.montantTotal;
         this.otherMilestonesTotal = data.milestones
           .filter(m => m.id !== currentMilestoneId)
           .reduce((sum, m) => sum + (m.montant || 0), 0);
+        
+        this.existingMilestoneTitles = data.milestones
+          .filter(m => m.id !== currentMilestoneId)
+          .map(m => m.titre);
+
         this.calculateRemainder();
         this.loading = false;
       },
@@ -91,6 +106,41 @@ export class MilestoneFormComponent implements OnInit {
 
   calculateRemainder(): void {
     this.remainingContractAmount = this.totalContractAmount - this.otherMilestonesTotal;
+  }
+
+  generateMilestoneWithAI(): void {
+    if (!this.aiPrompt || this.aiPrompt.trim().length < 5 || !this.parentContract) return;
+    this.generating = true;
+    this.error = '';
+
+    const context = {
+      prompt: this.aiPrompt,
+      contractTitle: this.parentContract.projectTitle || '',
+      contractDescription: this.parentContract.description || '',
+      remainingBudget: this.remainingContractAmount,
+      contractDeadline: (this.parentContract.dateFin || '').toString(),
+      existingMilestones: this.existingMilestoneTitles
+    };
+
+    this.aiService.generateMilestoneDraft(context).subscribe({
+      next: (draft: any) => {
+        this.milestone = { ...this.milestone, ...draft };
+        
+        // Sécurité: vérifier que le nouveau montant ne dépasse pas le reste à allouer
+        if (this.milestone.montant > this.remainingContractAmount) {
+             this.milestone.montant = this.remainingContractAmount;
+             this.error = "L'IA a proposé un montant supérieur au budget restant. Il a été ajusté automatiquement au maximum possible.";
+        }
+
+        this.generating = false;
+        this.aiPrompt = '';
+      },
+      error: (err: any) => {
+        console.error('AI Generation error:', err);
+        this.error = "Erreur de l'IA: " + (err.error?.message || "Impossible de générer le jalon.");
+        this.generating = false;
+      }
+    });
   }
 
   loadMilestone(id: number): void {

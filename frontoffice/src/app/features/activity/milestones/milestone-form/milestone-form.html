@@ -27,6 +27,40 @@
           <i class="bi bi-exclamation-circle-fill me-2"></i> {{ error }}
         </div>
 
+        <!-- 🧠 Assistant IA (Non visible en mode édition) -->
+        <div class="ai-assistant-card" *ngIf="!isEditMode && !loading">
+          <div class="ai-header">
+            <span class="ai-icon">✨</span>
+            <div class="ai-title">
+              <h3>Assistant IA</h3>
+              <p>Décrivez la tâche et l'IA générera le jalon en fonction du reste de votre budget.</p>
+            </div>
+          </div>
+          <div class="ai-body">
+            <div class="ai-context" *ngIf="parentContract">
+              💡 <strong>Contrat :</strong> {{ parentContract.projectTitle }} 
+              <span class="ai-budget ms-2">&bull; Budget restant : <span class="text-terracotta fw-bold">{{ remainingContractAmount }} DT</span></span>
+            </div>
+            <textarea
+              class="form-control-premium ai-input"
+              rows="2"
+              [(ngModel)]="aiPrompt"
+              placeholder="Ex: La partie paiement en ligne avec Stripe..."
+              [disabled]="generating"
+            ></textarea>
+            <button 
+              type="button" 
+              class="btn-premium-ai" 
+              (click)="generateMilestoneWithAI()"
+              [disabled]="generating || !aiPrompt"
+            >
+              <span *ngIf="generating" class="spinner-border spinner-border-sm me-2"></span>
+              {{ generating ? 'Génération...' : 'Générer avec l\'IA' }}
+            </button>
+          </div>
+        </div>
+        <div class="divider-text" *ngIf="!isEditMode && !loading"><span>OU REMPLIR MANUELLEMENT</span></div>
+
         <form *ngIf="!loading" #mForm="ngForm" (ngSubmit)="mForm.valid && milestone.montant <= remainingContractAmount && onSubmit()" class="premium-form-card shadow-xl">
           <input type="hidden" [(ngModel)]="milestone.contractId" name="contractId">
 

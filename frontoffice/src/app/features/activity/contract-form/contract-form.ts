@@ -7,6 +7,7 @@ import { Contract } from '../../../core/models/contract.model';
 import { ContractStatus } from '../../../core/models/enums/contract-status.enum';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
+import { AIService } from '../../../core/services/ai.service';
 
 @Component({
   selector: 'app-contract-form',
@@ -31,7 +32,7 @@ export class ContractFormComponent implements OnInit {
     commissionRate: 10,
     status: ContractStatus.DRAFT
   };
-  
+
   isEditMode = false;
   loading = false;
   error = '';
@@ -39,13 +40,37 @@ export class ContractFormComponent implements OnInit {
   freelancerExists = true;
   checkingFreelancer = false;
 
+  // ─── IA ──────────────────────────────────────────────
+  aiPrompt = '';
+  generating = false;
+
   constructor(
     private contractService: ContractService,
     private userService: UserService,
     private router: Router,
     private route: ActivatedRoute,
-    private authService: AuthService
-  ) {}
+    private authService: AuthService,
+    private aiService: AIService
+  ) { }
+
+  generateWithAI(): void {
+    if (!this.aiPrompt || this.aiPrompt.trim().length < 5) return;
+    this.generating = true;
+    this.error = '';
+
+    this.aiService.generateContractDraft(this.aiPrompt).subscribe({
+      next: (draft: any) => {
+        this.contract = { ...this.contract, ...draft };
+        this.generating = false;
+        this.aiPrompt = ''; // Clear prompt on success
+      },
+      error: (err: any) => {
+        console.error('AI Generation error:', err);
+        this.error = "Erreur de l'IA: " + (err.error?.message || "Le service est indisponible.");
+        this.generating = false;
+      }
+    });
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.params['id'];
@@ -89,7 +114,7 @@ export class ContractFormComponent implements OnInit {
           if (err.status === 404 || err.status === 400) {
             this.freelancerExists = false;
           } else {
-            this.freelancerExists = true; 
+            this.freelancerExists = true;
           }
           this.checkingFreelancer = false;
         }
@@ -106,16 +131,16 @@ export class ContractFormComponent implements OnInit {
       return;
     }
     this.loading = true;
-    
+
     const payload = { ...this.contract } as any;
     if (payload.dateDebut === '') payload.dateDebut = null;
     if (payload.dateFin === '') payload.dateFin = null;
     if (payload.projectId === 0 || payload.projectId === '') payload.projectId = null;
-    
+
     // We don't send wallet CINs to creation as they may be inferred or handled by back
     delete payload.clientWalletCin;
     delete payload.freelancerWalletCin;
-    
+
     if (this.isEditMode) {
       this.contractService.update(this.contract.id!, payload).subscribe({
         next: () => {

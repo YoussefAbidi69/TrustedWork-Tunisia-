@@ -44,6 +44,9 @@ public class Transaction {
     PaymentMethod methodePaiement;
 
     String facturePdfUrl;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     String description;
 
     // Stripe fields

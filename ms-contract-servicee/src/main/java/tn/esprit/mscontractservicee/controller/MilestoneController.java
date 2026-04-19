@@ -39,6 +39,7 @@ public class MilestoneController {
     private final IMilestoneService milestoneService;
     private final IContractService contractService;
     private final IDeliveryProofService deliveryProofService;
+    private final tn.esprit.mscontractservicee.service.IContractAiGenerationService contractAiService;
 
     @Value("${milestone.submission.requireDeliveryProof:false}")
     private boolean requireDeliveryProofOnSubmit;
@@ -104,6 +105,14 @@ public class MilestoneController {
         response.put("message", "Milestone service is running!");
         response.put("status", "OK");
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/ai/generate")
+    @Operation(summary = "Générer un brouillon de jalon via IA")
+    @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
+    public ResponseEntity<tn.esprit.mscontractservicee.dto.ai.MilestoneAiResponse> generateMilestoneDraft(
+            @RequestBody tn.esprit.mscontractservicee.dto.ai.MilestoneAiPromptRequest request) {
+        return ResponseEntity.ok(contractAiService.generateMilestoneDraft(request));
     }
 
     @PostMapping
