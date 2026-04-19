@@ -18,8 +18,8 @@ export class TwoFactorComponent implements OnInit {
   remainingMinutes = 10;
 
   constructor(
-    private authService: AuthService,
-    private router: Router
+    private readonly authService: AuthService,
+    private readonly router: Router
   ) {}
 
   ngOnInit(): void {
@@ -27,7 +27,7 @@ export class TwoFactorComponent implements OnInit {
 
     if (!pending || !this.authService.isPendingTwoFactorValid(10)) {
       this.authService.clearPendingTwoFactorState();
-      this.router.navigate(['/login']);
+this.router.navigate(['/auth/login']);
       return;
     }
 
@@ -80,7 +80,7 @@ export class TwoFactorComponent implements OnInit {
 
   backToLogin(): void {
     this.authService.clearPendingTwoFactorState();
-    this.router.navigate(['/login']);
+this.router.navigate(['/auth/login']);
   }
 
   private resolveOtpError(error: HttpErrorResponse): string {

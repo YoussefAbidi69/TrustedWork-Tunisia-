@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -11,36 +11,46 @@ import { AuthResponse } from '../../../core/models/auth.model';
   templateUrl: './complete-profile.component.html',
   styleUrls: ['./complete-profile.component.css']
 })
-export class CompleteProfileComponent {
-
+export class CompleteProfileComponent implements OnInit {
   form: FormGroup;
   submitted = false;
   loading = false;
   errorMessage = '';
+  googleUser: any;
 
-  // Informations du compte Google (affichées en lecture seule)
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly userService: UserService,
+    public readonly authService: AuthService,
+    private readonly router: Router
+  ) {
+    this.form = this.fb.group({
+      cin: ['', [Validators.required, Validators.pattern(/^\d{8}$/)]],
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{8,15}$/)]],
+      role: ['FREELANCER', Validators.required]
+    });
+  }
 
-googleUser: any;
-
-constructor(
-  private fb: FormBuilder,
-  private userService: UserService,
-  public authService: AuthService,
-  private router: Router
-) {
-  this.form = this.fb.group({
-    cin: ['', [Validators.required, Validators.pattern(/^\d{8}$/)]],
-    phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{8,15}$/)]],
-    role: ['FREELANCER', Validators.required]
-  });
-}
-
-ngOnInit(): void {
-  this.googleUser = this.authService.getCurrentAuthUser();
-}
+  ngOnInit(): void {
+    this.googleUser = this.authService.getCurrentAuthUser();
+  }
 
   get f() {
     return this.form.controls;
+  }
+
+  get selectedRole(): string {
+    return this.form.get('role')?.value;
+  }
+
+  get displayName(): string {
+    if (!this.googleUser) return 'Utilisateur';
+    return (
+      this.googleUser.fullName ||
+      this.googleUser.name ||
+      this.googleUser.email?.split('@')[0] ||
+      'Utilisateur'
+    );
   }
 
   onSubmit(): void {
@@ -48,6 +58,7 @@ ngOnInit(): void {
     this.errorMessage = '';
 
     if (this.form.invalid) {
+      this.form.markAllAsTouched();
       return;
     }
 
@@ -63,7 +74,6 @@ ngOnInit(): void {
       next: (res: AuthResponse) => {
         this.loading = false;
 
-        // Mettre à jour la session avec les nouveaux tokens (rôle mis à jour)
         (this.authService as any)['saveSession'](res, true);
 
         this.router.navigate(['/app/dashboard']);
@@ -89,6 +99,16 @@ ngOnInit(): void {
 
   getInitials(): string {
     if (!this.googleUser) return '?';
+
+    const fullName = this.googleUser.fullName || this.googleUser.name;
+    if (fullName) {
+      const parts = fullName.trim().split(' ').filter((p: string) => !!p);
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+      }
+      return parts[0][0].toUpperCase();
+    }
+
     const firstName = this.googleUser.email?.split('@')[0] ?? '?';
     return firstName.charAt(0).toUpperCase();
   }

@@ -32,10 +32,10 @@ export class RegisterComponent implements AfterViewInit {
   captchaError = false;
 
   constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router,
-    private ngZone: NgZone
+    private readonly fb: FormBuilder,
+    private readonly authService: AuthService,
+    private readonly router: Router,
+    private readonly ngZone: NgZone
   ) {
     this.registerForm = this.fb.group(
       {
@@ -52,14 +52,14 @@ export class RegisterComponent implements AfterViewInit {
       { validators: passwordMatchValidator }
     );
 
-    (window as any)['onCaptchaSuccess'] = (token: string) => {
+    (globalThis as any)['onCaptchaSuccess'] = (token: string) => {
       this.ngZone.run(() => {
         this.captchaToken = token;
         this.captchaError = false;
       });
     };
 
-    (window as any)['onCaptchaExpired'] = () => {
+    (globalThis as any)['onCaptchaExpired'] = () => {
       this.ngZone.run(() => {
         this.captchaToken = null;
       });
@@ -72,9 +72,9 @@ export class RegisterComponent implements AfterViewInit {
 
   private renderCaptcha(): void {
     // Si grecaptcha est déjà prêt, on rend directement
-    if (typeof grecaptcha !== 'undefined' && grecaptcha.render) {
+    if (grecaptcha !== undefined && grecaptcha.render) {
       const container = document.getElementById('recaptcha-container');
-      if (container && container.childElementCount === 0) {
+      if (container?.childElementCount === 0) {
         grecaptcha.render(container, {
           sitekey: '6LfHVqgsAAAAAIOKWTA9QvyQEMX0YMbvb7paevfW',
           callback: (token: string) => {
@@ -169,13 +169,13 @@ export class RegisterComponent implements AfterViewInit {
           phoneNumber: '', role: 'FREELANCER',
           password: '', confirmPassword: '', agreeTerms: false
         });
-        if (typeof grecaptcha !== 'undefined') grecaptcha.reset();
+        if (grecaptcha !== undefined) grecaptcha.reset();
         this.captchaToken = null;
         setTimeout(() => { this.router.navigate(['/auth/login']); }, 1200);
       },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
-        if (typeof grecaptcha !== 'undefined') grecaptcha.reset();
+        if (grecaptcha !== undefined) grecaptcha.reset();
         this.captchaToken = null;
         if (err.status === 400) {
           this.errorMessage = 'Données invalides ou utilisateur déjà existant.';

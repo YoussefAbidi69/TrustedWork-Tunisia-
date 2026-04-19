@@ -19,7 +19,7 @@
   padding: 8px 14px;
   border-radius: 999px;
   background: #f5e0d8;
-  color: #c85c3b;
+  color: #8a3520; /* WCAG AA 6.4:1 */
   font-size: 0.8rem;
   font-weight: 700;
   margin-bottom: 16px;
@@ -190,7 +190,7 @@ input::placeholder {
   min-height: 56px;
   border: none;
   border-radius: 16px;
-  background: linear-gradient(135deg, #c85c3b, #a84830);
+  background: linear-gradient(135deg, #a84830, #7a2e14); /* WCAG AA blanc 5.9:1 */
   color: #ffffff;
   font-size: 0.96rem;
   font-weight: 700;

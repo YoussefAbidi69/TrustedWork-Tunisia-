@@ -31,9 +31,9 @@ export class ResetPasswordComponent {
   token = '';
 
   constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private authService: AuthService
+    private readonly fb: FormBuilder,
+    private readonly route: ActivatedRoute,
+    private readonly authService: AuthService
   ) {
     this.resetPasswordForm = this.fb.group(
       {

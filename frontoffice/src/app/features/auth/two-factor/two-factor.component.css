@@ -36,7 +36,7 @@
   place-items: center;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(135deg, #6c63ff, #4f46e5);
+  background: linear-gradient(135deg, #4f46e5, #3730a3); /* WCAG AA blanc 6.25:1 */
   box-shadow: 0 12px 30px rgba(79, 70, 229, 0.28);
 }
 
@@ -47,7 +47,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #6c63ff;
+  color: #4338ca; /* WCAG AA 8:1 sur blanc */
 }
 
 .two-factor-card h1 {
@@ -88,13 +88,13 @@
 .alert.info {
   background: rgba(59, 130, 246, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.15);
-  color: #1d4ed8;
+  color: #1e3a8a; /* WCAG AA renforce */
 }
 
 .alert.error {
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.15);
-  color: #991b1b;
+  color: #7f1d1d; /* WCAG AA renforce */
 }
 
 .form-group {
@@ -150,7 +150,7 @@
 
 .btn-primary {
   color: #fff;
-  background: linear-gradient(135deg, #6c63ff, #4f46e5);
+  background: linear-gradient(135deg, #4f46e5, #3730a3); /* WCAG AA blanc 6.25:1 */
   box-shadow: 0 12px 24px rgba(79, 70, 229, 0.2);
 }
 

@@ -1,142 +1,321 @@
-<div class="auth-card">
-
-  <!-- En-tête -->
-  <div class="auth-card__header">
-    <span class="auth-chip">Dernière étape</span>
-    <h2>Complétez votre profil</h2>
-    <p>
-      Vous vous êtes connecté avec Google. Veuillez renseigner quelques
-      informations supplémentaires pour activer votre compte TrustedWork.
-    </p>
-  </div>
-
-  <!-- Compte Google détecté (lecture seule) -->
-  <div class="google-account-badge" *ngIf="googleUser">
-    <div class="google-avatar">{{ getInitials() }}</div>
-    <div class="google-account-info">
-      <span class="google-account-label">Compte Google</span>
-      <span class="google-account-email">{{ googleUser.email }}</span>
-    </div>
-    <div class="google-verified-icon">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <circle cx="10" cy="10" r="10" fill="#34a853"/>
-        <path d="M5.5 10.5l3 3 6-6" stroke="white" stroke-width="1.8"
-              stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
-  </div>
-
-  <!-- Formulaire -->
-  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="auth-form">
-
-    <!-- CIN -->
-    <div class="form-group">
-      <label for="cin">
-        Numéro CIN
-        <span class="field-hint">8 chiffres — carte d'identité nationale</span>
-      </label>
-      <div class="input-shell" [class.input-shell--error]="submitted && f['cin'].invalid">
-        <span class="input-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="5" width="20" height="14" rx="2"/>
-            <line x1="2" y1="10" x2="22" y2="10"/>
-          </svg>
-        </span>
-        <input
-          id="cin"
-          type="text"
-          formControlName="cin"
-          placeholder="12345678"
-          maxlength="8"
-          inputmode="numeric"
-        />
+<div class="complete-profile-page">
+  <div class="complete-profile-shell">
+    <!-- Panel gauche -->
+    <aside class="onboarding-aside">
+      <div class="brand-block">
+        <div class="brand-mark">TW</div>
+        <div class="brand-copy">
+          <span class="brand-eyebrow">Trusted onboarding</span>
+          <h1>Finalisez votre espace professionnel</h1>
+          <p>
+            Encore une dernière étape pour activer votre compte et accéder à
+            votre tableau de bord TrustedWork.
+          </p>
+        </div>
       </div>
-      <small class="field-error" *ngIf="submitted && f['cin'].errors?.['required']">
-        Le CIN est obligatoire.
-      </small>
-      <small class="field-error" *ngIf="submitted && f['cin'].errors?.['pattern']">
-        Le CIN doit contenir exactement 8 chiffres.
-      </small>
-    </div>
 
-    <!-- Téléphone -->
-    <div class="form-group">
-      <label for="phoneNumber">
-        Numéro de téléphone
-        <span class="field-hint">Format tunisien : 8 chiffres</span>
-      </label>
-      <div class="input-shell" [class.input-shell--error]="submitted && f['phoneNumber'].invalid">
-        <span class="input-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07
-                     A19.5 19.5 0 013.52 13a19.79 19.79 0 01-3.07-8.67
-                     A2 2 0 012.44 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81
-                     a2 2 0 01-.45 2.11L6.91 9.91a16 16 0 006.29 6.29l.79-.79
-                     a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
-          </svg>
-        </span>
-        <input
-          id="phoneNumber"
-          type="tel"
-          formControlName="phoneNumber"
-          placeholder="55123456"
-          maxlength="15"
-          inputmode="numeric"
-        />
-      </div>
-      <small class="field-error" *ngIf="submitted && f['phoneNumber'].errors?.['required']">
-        Le numéro de téléphone est obligatoire.
-      </small>
-      <small class="field-error" *ngIf="submitted && f['phoneNumber'].errors?.['pattern']">
-        Format invalide (8 à 15 chiffres).
-      </small>
-    </div>
+      <div class="progress-card">
+        <div class="progress-card__top">
+          <span class="progress-label">Progression</span>
+          <span class="progress-value">Étape 3/3</span>
+        </div>
 
-    <!-- Rôle -->
-    <div class="form-group">
-      <label for="role">Je m'inscris en tant que</label>
-      <div class="role-selector">
+        <div class="progress-bar">
+          <span class="progress-bar__fill"></span>
+        </div>
 
-        <label class="role-option" [class.role-option--active]="form.value.role === 'FREELANCER'">
-          <input type="radio" formControlName="role" value="FREELANCER" />
-          <div class="role-option__content">
-            <span class="role-icon">💼</span>
-            <span class="role-label">Freelancer</span>
-            <span class="role-desc">Je propose mes services</span>
+        <div class="progress-steps">
+          <div class="progress-step progress-step--done">
+            <span class="step-dot"></span>
+            <div>
+              <strong>Connexion sociale</strong>
+              <small>Compte Google vérifié</small>
+            </div>
           </div>
-        </label>
 
-        <label class="role-option" [class.role-option--active]="form.value.role === 'CLIENT'">
-          <input type="radio" formControlName="role" value="CLIENT" />
-          <div class="role-option__content">
-            <span class="role-icon">🏢</span>
-            <span class="role-label">Client</span>
-            <span class="role-desc">Je recrute des talents</span>
+          <div class="progress-step progress-step--done">
+            <span class="step-dot"></span>
+            <div>
+              <strong>Session sécurisée</strong>
+              <small>Authentification activée</small>
+            </div>
           </div>
-        </label>
 
+          <div class="progress-step progress-step--active">
+            <span class="step-dot"></span>
+            <div>
+              <strong>Profil métier</strong>
+              <small>Complétez vos informations</small>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- Erreur globale -->
-    <div class="form-feedback form-feedback--error" *ngIf="errorMessage">
-      {{ errorMessage }}
-    </div>
+      <div class="trust-card">
+        <div class="trust-card__header">
+          <span class="mini-chip">Pourquoi ces informations ?</span>
+          <h3>Construire une plateforme fiable</h3>
+        </div>
 
-    <!-- Submit -->
-    <button type="submit" class="submit-btn" [disabled]="loading">
-      <span *ngIf="!loading">Activer mon compte</span>
-      <span *ngIf="loading">Enregistrement en cours...</span>
-    </button>
+        <div class="trust-list">
+          <div class="trust-item">
+            <div class="trust-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"
+                      stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div>
+              <strong>Vérification d’identité</strong>
+              <p>Le CIN permet de renforcer la confiance entre clients et freelancers.</p>
+            </div>
+          </div>
 
-  </form>
+          <div class="trust-item">
+            <div class="trust-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.52 13a19.79 19.79 0 01-3.07-8.67A2 2 0 012.44 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L6.91 9.91a16 16 0 006.29 6.29l.79-.79a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z"
+                      stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div>
+              <strong>Contact professionnel</strong>
+              <p>Votre numéro sera utilisé pour sécuriser vos échanges et votre compte.</p>
+            </div>
+          </div>
 
-  <!-- Pied de page -->
-  <div class="auth-card__footer">
-    <span>Vous souhaitez utiliser un autre compte ?</span>
-    <a routerLink="/auth/login" (click)="authService.logout()">Se déconnecter</a>
+          <div class="trust-item">
+            <div class="trust-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M8 6h11M8 12h11M8 18h11M3 6h.01M3 12h.01M3 18h.01"
+                      stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div>
+              <strong>Expérience personnalisée</strong>
+              <p>Le choix du rôle adapte votre dashboard, vos actions et votre parcours.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Panel droit -->
+    <section class="form-panel">
+      <div class="form-card">
+        <div class="form-card__header">
+          <div>
+            <span class="auth-chip">Activation du compte</span>
+            <h2>Complétez votre profil</h2>
+            <p>
+              Votre compte Google est reconnu. Ajoutez vos informations
+              complémentaires pour activer votre espace TrustedWork.
+            </p>
+          </div>
+
+          <div class="security-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"
+                    stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Connexion sécurisée</span>
+          </div>
+        </div>
+
+        <!-- Compte Google -->
+        <div class="google-account-badge" *ngIf="googleUser">
+          <div class="google-avatar">{{ getInitials() }}</div>
+
+          <div class="google-account-info">
+            <span class="google-account-label">Compte Google connecté</span>
+            <strong class="google-account-name">{{ displayName }}</strong>
+            <span class="google-account-email">{{ googleUser.email }}</span>
+          </div>
+
+          <div class="google-verified-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="10" fill="#22c55e"/>
+              <path d="M5.5 10.5l3 3 6-6"
+                    stroke="white"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="auth-form">
+          <div class="form-section">
+            <div class="section-heading">
+              <h3>Informations de vérification</h3>
+              <p>Ces données renforcent la fiabilité de votre compte.</p>
+            </div>
+
+            <div class="form-grid">
+              <!-- CIN -->
+              <div class="form-group">
+                <label for="cin">
+                  Numéro CIN
+                  <span class="field-hint">8 chiffres</span>
+                </label>
+
+                <div class="input-shell" [class.input-shell--error]="submitted && f['cin'].invalid">
+                  <span class="input-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <rect x="2" y="5" width="20" height="14" rx="2"
+                            stroke="currentColor" stroke-width="1.8"/>
+                      <line x1="2" y1="10" x2="22" y2="10"
+                            stroke="currentColor" stroke-width="1.8"/>
+                    </svg>
+                  </span>
+
+                  <input
+                    id="cin"
+                    type="text"
+                    formControlName="cin"
+                    placeholder="12345678"
+                    maxlength="8"
+                    inputmode="numeric"
+                  />
+                </div>
+
+                <small class="field-error" *ngIf="submitted && f['cin'].errors?.['required']">
+                  Le CIN est obligatoire.
+                </small>
+                <small class="field-error" *ngIf="submitted && f['cin'].errors?.['pattern']">
+                  Le CIN doit contenir exactement 8 chiffres.
+                </small>
+              </div>
+
+              <!-- Téléphone -->
+              <div class="form-group">
+                <label for="phoneNumber">
+                  Numéro de téléphone
+                  <span class="field-hint">8 à 15 chiffres</span>
+                </label>
+
+                <div class="input-shell" [class.input-shell--error]="submitted && f['phoneNumber'].invalid">
+                  <span class="input-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.52 13a19.79 19.79 0 01-3.07-8.67A2 2 0 012.44 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L6.91 9.91a16 16 0 006.29 6.29l.79-.79a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z"
+                            stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+
+                  <input
+                    id="phoneNumber"
+                    type="tel"
+                    formControlName="phoneNumber"
+                    placeholder="55123456"
+                    maxlength="15"
+                    inputmode="numeric"
+                  />
+                </div>
+
+                <small class="field-error" *ngIf="submitted && f['phoneNumber'].errors?.['required']">
+                  Le numéro de téléphone est obligatoire.
+                </small>
+                <small class="field-error" *ngIf="submitted && f['phoneNumber'].errors?.['pattern']">
+                  Format invalide. Saisissez entre 8 et 15 chiffres.
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-heading">
+              <h3>Choisissez votre rôle</h3>
+              <p>Votre interface sera personnalisée selon votre usage principal.</p>
+            </div>
+
+            <div class="role-selector">
+              <label class="role-option" [class.role-option--active]="selectedRole === 'FREELANCER'">
+                <input type="radio" formControlName="role" value="FREELANCER" />
+                <div class="role-option__content">
+                  <div class="role-top">
+                    <span class="role-icon">💼</span>
+                    <span class="role-badge">Indépendant</span>
+                  </div>
+
+                  <div class="role-main">
+                    <span class="role-label">Freelancer</span>
+                    <span class="role-desc">
+                      Créez votre profil, proposez vos services et développez votre réputation.
+                    </span>
+                  </div>
+
+                  <ul class="role-features">
+                    <li>Portfolio & compétences</li>
+                    <li>Opportunités & missions</li>
+                    <li>Score de confiance</li>
+                  </ul>
+                </div>
+              </label>
+
+              <label class="role-option" [class.role-option--active]="selectedRole === 'CLIENT'">
+                <input type="radio" formControlName="role" value="CLIENT" />
+                <div class="role-option__content">
+                  <div class="role-top">
+                    <span class="role-icon">🏢</span>
+                    <span class="role-badge">Recruteur</span>
+                  </div>
+
+                  <div class="role-main">
+                    <span class="role-label">Client</span>
+                    <span class="role-desc">
+                      Publiez vos besoins, trouvez des talents et gérez vos collaborations.
+                    </span>
+                  </div>
+
+                  <ul class="role-features">
+                    <li>Recherche de profils</li>
+                    <li>Gestion des besoins</li>
+                    <li>Suivi des échanges</li>
+                  </ul>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="info-note">
+            <div class="info-note__icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M12 8h.01M11 11h1v5h1"
+                      stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <p>
+              Vos informations sont utilisées pour sécuriser votre compte et améliorer
+              la fiabilité de la plateforme.
+            </p>
+          </div>
+
+          <div class="form-feedback form-feedback--error" *ngIf="errorMessage">
+            {{ errorMessage }}
+          </div>
+
+          <button type="submit" class="submit-btn" [disabled]="loading">
+            <span class="submit-btn__inner" *ngIf="!loading">
+              <span>Activer mon compte</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12h14M13 5l7 7-7 7"
+                      stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+
+            <span class="submit-btn__inner" *ngIf="loading">
+              <span class="btn-spinner"></span>
+              <span>Enregistrement en cours...</span>
+            </span>
+          </button>
+        </form>
+
+        <div class="auth-card__footer">
+          <span>Vous souhaitez utiliser un autre compte ?</span>
+          <a routerLink="/auth/login" (click)="authService.logout()">Se déconnecter</a>
+        </div>
+      </div>
+    </section>
   </div>
-
 </div>

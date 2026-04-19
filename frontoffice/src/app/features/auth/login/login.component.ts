@@ -6,7 +6,6 @@ import { AuthService } from '../../../core/services/auth.service';
 import { GoogleOAuthService } from '../../../core/services/google-oauth.service';
 import { FreelancerProfileService } from '../../../core/services/freelancer-profile.service';
 import { AuthResponse } from '../../../core/models/auth.model';
-import { FreelancerProfile } from '../../../core/models/freelancer.model';
 
 @Component({
   selector: 'app-login',
@@ -24,11 +23,11 @@ export class LoginComponent implements OnInit {
   private readonly ADMIN_BACKOFFICE_URL = 'http://localhost:4201';
 
   constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private googleOAuthService: GoogleOAuthService,
-    private freelancerService: FreelancerProfileService,
-    private router: Router
+    private readonly fb: FormBuilder,
+    private readonly authService: AuthService,
+    private readonly googleOAuthService: GoogleOAuthService,
+    private readonly freelancerService: FreelancerProfileService,
+    private readonly router: Router
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -72,8 +71,7 @@ export class LoginComponent implements OnInit {
 
         if (res.twoFactorRequired) {
           this.successMessage = 'Code de vérification requis.';
-          sessionStorage.setItem('2fa_email', payload.email);
-          sessionStorage.setItem('remember_me', String(rememberMe));
+          
           this.router.navigate(['/auth/2fa']);
           return;
         }
@@ -105,7 +103,7 @@ export class LoginComponent implements OnInit {
     if (role === 'ADMIN') {
       const token = res.accessToken;
       const redirectUrl = `${this.ADMIN_BACKOFFICE_URL}/auth/auto-login?token=${encodeURIComponent(token)}&userId=${res.userId}&email=${encodeURIComponent(res.email)}&role=${role}`;
-      window.location.href = redirectUrl;
+      globalThis.location.href = redirectUrl;
       return;
     }
 
@@ -113,7 +111,7 @@ export class LoginComponent implements OnInit {
       // Attendre que le token soit bien sauvegardé en storage
       // avant d'appeler le freelancer-service
       setTimeout(() => {
-        this.ensureFreelancerProfile(res.userId!);
+        this.ensureFreelancerProfile(res.userId);
       }, 300);
     } else {
       this.successMessage = 'Connexion réussie.';
@@ -125,27 +123,24 @@ export class LoginComponent implements OnInit {
    * Vérifie si le profil freelancer existe dans Module 02.
    * Pattern lazy creation : créé automatiquement au premier login.
    */
-   private ensureFreelancerProfile(userId: number): void {
+  private ensureFreelancerProfile(userId: number): void {
     this.freelancerService.getProfileByUserId(userId).subscribe({
       next: () => {
         // Profil existe → dashboard directement
         this.successMessage = 'Connexion réussie.';
-        window.location.href = '/app/dashboard';
+        globalThis.location.href = '/app/dashboard';
       },
       error: (err: HttpErrorResponse) => {
         if (err.status === 404) {
           // Premier login → rediriger vers création de profil
-          window.location.href = '/app/profile/create';
+          globalThis.location.href = '/app/profile/create';
         } else {
           // Module 02 down → fail open
-          window.location.href = '/app/dashboard';
+          globalThis.location.href = '/app/dashboard';
         }
       }
     });
   }
-
-  
- 
 
   private onGoogleSuccess(response: AuthResponse): void {
     this.successMessage = 'Connexion Google réussie.';
