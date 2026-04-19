@@ -8,7 +8,7 @@ const API_URL = 'http://localhost:8081/api';
   providedIn: 'root'
 })
 export class ApiService {
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   get<T>(url: string): Observable<T> {
     return this.http.get<T>(`${API_URL}${url}`);

@@ -1,5 +1,4 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Observable, from } from 'rxjs';
 import { ApiService } from './api.service';
 import { AuthResponse } from '../models/auth.model';
 import { AuthService } from './auth.service';
@@ -18,9 +17,9 @@ export class GoogleOAuthService {
 
 private readonly GOOGLE_CLIENT_ID = '770752272656-tqn8j0hotptmdn54pmltnd10e1sak057.apps.googleusercontent.com';
   constructor(
-    private api: ApiService,
-    private authService: AuthService,
-    private ngZone: NgZone
+    private readonly api: ApiService,
+    private readonly authService: AuthService,
+    private readonly ngZone: NgZone
   ) {}
 
   /**
@@ -34,7 +33,7 @@ private readonly GOOGLE_CLIENT_ID = '770752272656-tqn8j0hotptmdn54pmltnd10e1sak0
     onSuccess: (response: AuthResponse) => void,
     onError: (error: any) => void
   ): void {
-    if (typeof google === 'undefined') {
+    if (google === undefined) {
       console.error('Google Identity Services script not loaded');
       return;
     }
@@ -88,7 +87,7 @@ private readonly GOOGLE_CLIENT_ID = '770752272656-tqn8j0hotptmdn54pmltnd10e1sak0
    * Révoque la session Google côté client (utile au logout).
    */
   revokeGoogleSession(email: string): void {
-    if (typeof google !== 'undefined') {
+    if (google !== undefined) {
       google.accounts.id.revoke(email, () => {
         console.log('Google session revoked');
       });

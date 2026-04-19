@@ -14,7 +14,7 @@ export interface ConnectedUserResponse {
   phone?: string;
   photo?: string;
 
-  // ✅ nouveaux champs profil
+  //  nouveaux champs profil
   headline?: string;
   location?: string;
   bio?: string;

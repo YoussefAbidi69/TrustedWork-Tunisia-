@@ -1,4 +1,3 @@
-
 export interface FreelancerProfile {
   id: number;
   userId: number;
@@ -17,10 +16,30 @@ export interface FreelancerProfile {
   updatedAt: string;
 }
 
+export type SkillCategory =
+  | 'FRONTEND'
+  | 'BACKEND'
+  | 'FULLSTACK'
+  | 'MOBILE'
+  | 'DEVOPS'
+  | 'CLOUD'
+  | 'DATA'
+  | 'AI'
+  | 'DESIGN'
+  | 'SECURITY'
+  | 'OTHER';
+
+export type SkillLevel =
+  | 'JUNIOR'
+  | 'INTERMEDIATE'
+  | 'CONFIRMED'
+  | 'EXPERT';
+
 export interface Skill {
   id: number;
   name: string;
-  level: 'JUNIOR' | 'CONFIRMED' | 'EXPERT';
+  category: SkillCategory;
+  level: SkillLevel;
   authenticityScore: number;
   examScore: number;
   endorsementCount: number;
@@ -34,6 +53,8 @@ export interface PortfolioItem {
   imageUrl: string;
   technologies: string;
   completionDate: string;
+  pinned: boolean;
+  projectScore: number;
 }
 
 export interface Certification {
@@ -50,27 +71,62 @@ export interface Certification {
 export interface Endorsement {
   id: number;
   endorserId: number;
-  comment: string;
+  comment: string | null;
   endorsedAt: string;
 }
+
+export type ReviewStatus = 'VISIBLE' | 'HIDDEN' | 'FLAGGED';
 
 export interface ProfileReview {
   id: number;
   clientId: number;
   rating: number;
   comment: string;
-  status: 'VISIBLE' | 'HIDDEN' | 'FLAGGED';
+  freelancerReply?: string | null;
+  flagged: boolean;
+  flagReason?: string | null;
+  status: ReviewStatus;
   reviewedAt: string;
+  updatedAt?: string | null;
+}
+
+export interface AddProfileReviewRequest {
+  clientId: number;
+  rating: number;
+  comment: string;
+}
+
+export interface ReplyToReviewRequest {
+  reply: string;
+}
+
+export interface ProfileReviewSummary {
+  profileId: number;
+  averageRating: number;
+  totalReviews: number;
+  fiveStarCount: number;
+  fourStarCount: number;
+  threeStarCount: number;
+  twoStarCount: number;
+  oneStarCount: number;
 }
 
 export interface WorkExperience {
   id: number;
   jobTitle: string;
   company: string;
-  description: string;
+  location?: string;
+  description?: string;
   startDate: string;
-  endDate: string;
+  endDate?: string | null;
   isCurrent: boolean;
+
+  periodLabel?: string;
+  durationLabel?: string;
+  durationInMonths?: number;
+
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Education {

@@ -35,7 +35,7 @@ export class AuthService {
   private readonly TWO_FACTOR_REMEMBER_ME_KEY = 'remember_me';
   private readonly TWO_FACTOR_CREATED_AT_KEY = '2fa_created_at';
 
-  constructor(private api: ApiService) {}
+  constructor(private readonly api: ApiService) {}
 
   login(payload: LoginPayload, rememberMe: boolean = true): Observable<AuthResponse> {
     return this.api.post<AuthResponse>('/auth/login', payload).pipe(
@@ -117,7 +117,7 @@ export class AuthService {
   getUserInitials(): string {
     const user = this.getCurrentAuthUser();
 
-    if (!user || !user.email) {
+    if (!user?.email) {
       return '?';
     }
 

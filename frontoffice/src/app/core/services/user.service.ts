@@ -35,7 +35,7 @@ export interface CompleteProfilePayload {
   providedIn: 'root'
 })
 export class UserService {
-  constructor(private api: ApiService) {}
+  constructor(private readonly api: ApiService) {}
 
   getCurrentUser(): Observable<ConnectedUserResponse> {
     return this.api.get<ConnectedUserResponse>('/users/me');
