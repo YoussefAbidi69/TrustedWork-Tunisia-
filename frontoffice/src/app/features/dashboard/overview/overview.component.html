@@ -1,35 +1,51 @@
 <div class="dash-home">
 
-  <!-- HERO -->
+  <!-- ═══════════════════════════════════════════════
+       HERO SECTION — Identité + Trust Score
+       ═══════════════════════════════════════════════ -->
   <section class="dash-hero">
-    <div class="dash-hero__bg"></div>
+    <div class="dash-hero__orbs">
+      <div class="orb orb--1"></div>
+      <div class="orb orb--2"></div>
+      <div class="orb orb--3"></div>
+    </div>
 
     <div class="dash-hero__left">
       <span class="dash-tag">
-        <i class="fas fa-circle-dot" style="color:#22c55e"></i>
-        TrustedWork Tunisia
+        <span class="live-dot"></span>
+        TrustedWork Tunisia — Tableau de bord
       </span>
 
-{{ getGreeting() }}, <span class="name-hl">{{ displayName }}</span> <span class="wave">👋</span>
+      <h1>
+        {{ getGreeting() }},
+        <span class="name-hl">{{ displayName }}</span>
+        <span class="wave">👋</span>
+      </h1>
       <p>Gérez votre identité digitale, explorez les meilleures missions et construisez votre réputation.</p>
 
-      <div class="dash-stats-row">
-        <div class="hstat">
+      <!-- Stats inline -->
+      <div class="hero-stats">
+        <div class="hs-item">
           <strong [style.color]="trustLevel >= 4 ? '#22c55e' : '#f97316'">{{ trustLevel }}/5</strong>
           <span>Trust Level</span>
         </div>
-        <div class="hstat-div"></div>
-        <div class="hstat">
-          <strong>{{ kycStatusLabel }}</strong>
+        <div class="hs-sep"></div>
+        <div class="hs-item">
+          <strong [class.hs-pending]="kycStatus === 'PENDING'"
+                  [class.hs-ok]="kycStatus === 'APPROVED'"
+                  [class.hs-warn]="kycStatus === 'IN_REVIEW'"
+                  [class.hs-err]="kycStatus === 'REJECTED'">
+            {{ kycStatusLabel }}
+          </strong>
           <span>KYC</span>
         </div>
-        <div class="hstat-div"></div>
-        <div class="hstat">
+        <div class="hs-sep"></div>
+        <div class="hs-item">
           <strong>{{ profileCompletionScore }}%</strong>
           <span>Profil</span>
         </div>
-        <div class="hstat-div"></div>
-        <div class="hstat">
+        <div class="hs-sep"></div>
+        <div class="hs-item">
           <strong [style.color]="twoFactorEnabled ? '#22c55e' : '#ef4444'">
             {{ twoFactorEnabled ? 'Actif' : 'Inactif' }}
           </strong>
@@ -37,157 +53,286 @@
         </div>
       </div>
 
-      <div class="dash-actions">
-        <a [routerLink]="nextAction.route" class="btn-primary">
+      <!-- CTA buttons -->
+      <div class="hero-actions">
+        <a [routerLink]="nextAction.route" class="btn-cta btn-cta--primary">
           <i class="fas" [ngClass]="nextAction.icon"></i>
           {{ nextAction.label }}
         </a>
-        <a routerLink="/app/profile/overview" class="btn-ghost">
+        <a routerLink="/app/profile/overview" class="btn-cta btn-cta--ghost">
           <i class="fas fa-user-pen"></i>
           Mon profil
         </a>
       </div>
     </div>
 
+    <!-- Trust Score Ring -->
     <div class="dash-hero__right">
-      <div class="trust-card">
-        <div class="tc-head">
+      <div class="trust-passport">
+        <div class="tp-header">
           <i class="fas fa-shield-halved"></i>
           <span>Identity Trust Score</span>
         </div>
-        <div class="tc-ring-wrap">
-          <div class="tc-ring">
-            <svg viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="42" class="ring-bg"/>
-              <circle cx="50" cy="50" r="42" class="ring-fill"
-                [style.stroke-dasharray]="(profileCompletionScore * 2.64) + ' 264'"/>
-            </svg>
-            <div class="tc-label">
-              <strong>{{ profileCompletionScore }}%</strong>
-              <small>Score</small>
-            </div>
+
+        <div class="tp-ring-wrap">
+          <svg viewBox="0 0 120 120" class="tp-ring-svg">
+            <circle cx="60" cy="60" r="50" class="ring-track"/>
+            <circle cx="60" cy="60" r="50" class="ring-progress"
+              [style.stroke-dasharray]="(profileCompletionScore * 3.14) + ' 314'"/>
+          </svg>
+          <div class="tp-ring-center">
+            <strong>{{ profileCompletionScore }}%</strong>
+            <small>Score</small>
           </div>
         </div>
-        <div class="tc-items">
-          <div class="tc-item" [class.tc-item--on]="kycStatus === 'APPROVED'">
+
+        <div class="tp-checks">
+          <div class="tp-check" [class.tp-check--on]="kycStatus === 'APPROVED'">
             <i class="fas" [ngClass]="kycStatus === 'APPROVED' ? 'fa-circle-check' : 'fa-circle'"></i>
-            KYC Validé
+            <span>KYC Validé</span>
           </div>
-          <div class="tc-item" [class.tc-item--on]="twoFactorEnabled">
+          <div class="tp-check" [class.tp-check--on]="twoFactorEnabled">
             <i class="fas" [ngClass]="twoFactorEnabled ? 'fa-circle-check' : 'fa-circle'"></i>
-            2FA Actif
+            <span>2FA Actif</span>
           </div>
-          <div class="tc-item" [class.tc-item--on]="livenessPassed">
+          <div class="tp-check" [class.tp-check--on]="livenessPassed">
             <i class="fas" [ngClass]="livenessPassed ? 'fa-circle-check' : 'fa-circle'"></i>
-            Liveness OK
+            <span>Liveness OK</span>
           </div>
-          <div class="tc-item" [class.tc-item--on]="trustLevel >= 3">
+          <div class="tp-check" [class.tp-check--on]="trustLevel >= 3">
             <i class="fas" [ngClass]="trustLevel >= 3 ? 'fa-circle-check' : 'fa-circle'"></i>
-            Trust Level ≥ 3
+            <span>Trust Level ≥ 3</span>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- PLATFORM STATS -->
-  <section class="pstats-row">
-    <div class="pstat" *ngFor="let s of platformStats">
-      <div class="pstat-icon"><i class="fas" [ngClass]="s.icon"></i></div>
-      <div>
+  <!-- ═══════════════════════════════════════════════
+       STATS PLATEFORME
+       ═══════════════════════════════════════════════ -->
+  <section class="platform-stats">
+    <div class="ps-card" *ngFor="let s of platformStats">
+      <div class="ps-icon" [style.background]="s.color + '22'" [style.color]="s.color">
+        <i class="fas" [ngClass]="s.icon"></i>
+      </div>
+      <div class="ps-content">
         <strong>{{ s.value }}</strong>
         <span>{{ s.label }}</span>
       </div>
+      <div class="ps-accent" [style.background]="s.color"></div>
     </div>
   </section>
 
-  <!-- MAIN GRID -->
-  <div class="dash-grid">
+  <!-- ═══════════════════════════════════════════════
+       GRILLE PRINCIPALE
+       ═══════════════════════════════════════════════ -->
+  <div class="main-grid">
 
-    <!-- OFFRES -->
-    <section class="dcard">
-      <div class="dcard-head">
-        <div>
-          <h2><i class="fas fa-fire"></i> Offres recommandées</h2>
-          <p>Missions adaptées à votre Trust Level ({{ trustLevel }}/5)</p>
-        </div>
-        <span class="badge-live">● Live</span>
-      </div>
+    <!-- COLONNE GAUCHE ─── Offres + Top Freelancers -->
+    <div class="col-left">
 
-      <div class="jobs-list">
-        <article class="job" *ngFor="let job of featuredJobs" [class.job--locked]="!canApply(job.trustRequired)">
-          <div class="job-top">
+      <!-- OFFRES RECOMMANDÉES -->
+      <section class="glass-card">
+        <div class="gc-header">
+          <div class="gc-title">
+            <i class="fas fa-fire"></i>
             <div>
-              <div class="job-title-row">
-                <h3>{{ job.title }}</h3>
-                <span *ngIf="job.urgency" class="jbadge"
-                  [class.jbadge--urgent]="job.urgency==='Urgent'"
-                  [class.jbadge--premium]="job.urgency==='Premium'">
-                  {{ job.urgency }}
-                </span>
+              <h2>Offres recommandées</h2>
+              <p>Missions adaptées à votre Trust Level ({{ trustLevel }}/5)</p>
+            </div>
+          </div>
+          <span class="badge-live"><span class="live-dot"></span> Live</span>
+        </div>
+
+        <div class="jobs-list">
+          <article class="job-card" *ngFor="let job of featuredJobs"
+            [class.job-card--locked]="!canApply(job.trustRequired)">
+            <div class="job-card__top">
+              <div class="job-card__info">
+                <div class="job-card__title-row">
+                  <h3>{{ job.title }}</h3>
+                  <span *ngIf="job.urgency" class="job-badge"
+                    [class.job-badge--urgent]="job.urgency === 'Urgent'"
+                    [class.job-badge--premium]="job.urgency === 'Premium'">
+                    {{ job.urgency }}
+                  </span>
+                </div>
+                <span class="job-company"><i class="fas fa-building"></i> {{ job.company }}</span>
               </div>
-              <span class="job-co"><i class="fas fa-building"></i> {{ job.company }}</span>
+              <strong class="job-budget">{{ job.budget }}</strong>
             </div>
-            <strong class="job-budget">{{ job.budget }}</strong>
-          </div>
-          <div class="job-tags">
-            <span *ngFor="let tag of job.tags" class="jtag">{{ tag }}</span>
-          </div>
-          <div class="job-foot">
-            <span class="job-time"><i class="fas fa-clock"></i> {{ job.posted }}</span>
-            <div class="job-actions">
-              <span *ngIf="!canApply(job.trustRequired)" class="job-lock">
-                <i class="fas fa-lock"></i> Trust ≥ {{ job.trustRequired }}
-              </span>
-              <button class="job-btn" [class.job-btn--off]="!canApply(job.trustRequired)" [disabled]="!canApply(job.trustRequired)">
-                <i class="fas" [ngClass]="canApply(job.trustRequired) ? 'fa-paper-plane' : 'fa-lock'"></i>
-                {{ canApply(job.trustRequired) ? 'Postuler' : 'Verrouillé' }}
-              </button>
+
+            <div class="job-tags">
+              <span *ngFor="let tag of job.tags" class="job-tag">{{ tag }}</span>
             </div>
-          </div>
-        </article>
-      </div>
 
-      <a routerLink="/app/dashboard" class="dcard-more">
-        Voir toutes les offres <i class="fas fa-arrow-right"></i>
-      </a>
-    </section>
+            <div class="job-footer">
+              <span class="job-time"><i class="fas fa-clock"></i> {{ job.posted }}</span>
+              <div class="job-actions">
+                <span *ngIf="!canApply(job.trustRequired)" class="job-lock-label">
+                  <i class="fas fa-lock"></i> Trust ≥ {{ job.trustRequired }}
+                </span>
+                <button class="job-apply-btn"
+                  [class.job-apply-btn--disabled]="!canApply(job.trustRequired)"
+                  [disabled]="!canApply(job.trustRequired)">
+                  <i class="fas" [ngClass]="canApply(job.trustRequired) ? 'fa-paper-plane' : 'fa-lock'"></i>
+                  {{ canApply(job.trustRequired) ? 'Postuler' : 'Verrouillé' }}
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
 
-    <!-- COLONNE DROITE -->
-    <div class="dash-col-r">
+        <a routerLink="/app/dashboard" class="gc-more">
+          Voir toutes les offres <i class="fas fa-arrow-right"></i>
+        </a>
+      </section>
 
-      <!-- TENDANCES -->
-      <section class="dcard">
-        <div class="dcard-head">
-          <div>
-            <h2><i class="fas fa-chart-line"></i> Tendances marché</h2>
-            <p>Compétences demandées en Tunisie</p>
+      <!-- TOP FREELANCERS (données réelles via API) -->
+      <section class="glass-card">
+        <div class="gc-header">
+          <div class="gc-title">
+            <i class="fas fa-trophy"></i>
+            <div>
+              <h2>Top Freelancers</h2>
+              <p>Profils les plus complets de la plateforme</p>
+            </div>
           </div>
         </div>
-        <div class="trends">
-          <div class="trend" *ngFor="let t of trends">
-            <div class="trend-ico"><i class="fas" [ngClass]="t.icon"></i></div>
-            <div class="trend-info">
-              <strong>{{ t.label }}</strong>
-              <span *ngIf="t.hot" class="trend-hot">🔥 Tendance</span>
-              <span *ngIf="!t.hot" class="trend-up">↗ En hausse</span>
+
+        <!-- Skeleton loading -->
+        <div class="freelancers-grid" *ngIf="loadingFreelancers">
+          <div class="fl-skeleton" *ngFor="let i of [1,2,3,4]">
+            <div class="sk-avatar"></div>
+            <div class="sk-lines">
+              <div class="sk-line sk-line--lg"></div>
+              <div class="sk-line sk-line--sm"></div>
+              <div class="sk-line sk-line--md"></div>
             </div>
-            <span class="trend-pct">{{ t.growth }}</span>
+          </div>
+        </div>
+
+        <!-- Données réelles -->
+        <div class="freelancers-grid" *ngIf="!loadingFreelancers && topFreelancers.length > 0">
+          <div class="fl-card" *ngFor="let fl of topFreelancers; let i = index">
+
+            <!-- Badge classement -->
+            <div class="fl-rank" [class.fl-rank--gold]="i===0" [class.fl-rank--silver]="i===1" [class.fl-rank--bronze]="i===2">
+              <span *ngIf="i === 0">🥇</span>
+              <span *ngIf="i === 1">🥈</span>
+              <span *ngIf="i === 2">🥉</span>
+              <span *ngIf="i >= 3">#{{ i + 1 }}</span>
+            </div>
+
+            <!-- Avatar (image ou initiales) -->
+            <div class="fl-avatar">
+              <img *ngIf="fl.avatarUrl" [src]="fl.avatarUrl" [alt]="fl.headline" (error)="$any($event.target).style.display='none'"/>
+              <div *ngIf="!fl.avatarUrl" class="fl-avatar__initials">
+                {{ getInitials(fl.headline || '') }}
+              </div>
+              <span class="fl-status-dot"
+                [style.background]="getAvailabilityColor(fl.availabilityStatus)">
+              </span>
+            </div>
+
+            <!-- Infos -->
+            <div class="fl-info">
+              <h4 class="fl-headline">{{ fl.headline || 'Freelancer' }}</h4>
+              <span class="fl-region" *ngIf="fl.region">
+                <i class="fas fa-location-dot"></i> {{ fl.region }}
+              </span>
+              <span class="fl-avail" [style.color]="getAvailabilityColor(fl.availabilityStatus)">
+                {{ getAvailabilityLabel(fl.availabilityStatus) }}
+              </span>
+            </div>
+
+            <!-- Score + tarif -->
+            <div class="fl-meta">
+              <div class="fl-score">
+                <div class="fl-score-bar">
+                  <div class="fl-score-fill" [style.width.%]="fl.completenessScore"></div>
+                </div>
+                <span>{{ fl.completenessScore }}%</span>
+              </div>
+              <strong class="fl-rate" *ngIf="fl.hourlyRate">
+                {{ fl.hourlyRate }} DT/h
+              </strong>
+            </div>
+
+            <!-- CTA -->
+            <a [routerLink]="['/app/profile/public', fl.userId]" class="fl-view-btn">
+              Voir le profil <i class="fas fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- État vide -->
+        <div class="empty-state" *ngIf="!loadingFreelancers && topFreelancers.length === 0">
+          <i class="fas fa-users-slash"></i>
+          <p>Aucun freelancer disponible pour le moment.</p>
+        </div>
+
+        <a routerLink="/app/freelancers" class="gc-more" *ngIf="!loadingFreelancers && topFreelancers.length > 0">
+          Explorer tous les freelancers <i class="fas fa-arrow-right"></i>
+        </a>
+      </section>
+    </div>
+
+    <!-- COLONNE DROITE ─── Tendances + Activité + Actions -->
+    <div class="col-right">
+
+      <!-- TENDANCES MARCHÉ avec barres animées -->
+      <section class="glass-card">
+        <div class="gc-header">
+          <div class="gc-title">
+            <i class="fas fa-chart-line"></i>
+            <div>
+              <h2>Tendances marché</h2>
+              <p>Compétences les plus demandées en Tunisie</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="trends-list">
+          <div class="trend-item" *ngFor="let t of trends">
+            <div class="trend-icon">
+              <i class="fas" [ngClass]="t.icon"></i>
+            </div>
+            <div class="trend-body">
+              <div class="trend-top-row">
+                <span class="trend-label">{{ t.label }}</span>
+                <span class="trend-growth" [class.trend-growth--hot]="t.hot">+{{ t.growth }}%</span>
+              </div>
+              <div class="trend-bar-track">
+                <div class="trend-bar-fill"
+                  [class.trend-bar-fill--hot]="t.hot"
+                  [style.width]="getTrendBarWidth(t.growth)">
+                </div>
+              </div>
+              <span class="trend-badge" [class.trend-badge--hot]="t.hot">
+                <i class="fas" [ngClass]="t.hot ? 'fa-fire' : 'fa-arrow-trend-up'"></i>
+                {{ t.hot ? 'Tendance' : 'En hausse' }}
+              </span>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- ACTIVITÉ -->
-      <section class="dcard">
-        <div class="dcard-head">
-          <div><h2><i class="fas fa-bolt"></i> Activité récente</h2></div>
+      <!-- ACTIVITÉ RÉCENTE -->
+      <section class="glass-card">
+        <div class="gc-header">
+          <div class="gc-title">
+            <i class="fas fa-bolt"></i>
+            <div><h2>Activité récente</h2></div>
+          </div>
         </div>
-        <div class="activity">
+        <div class="activity-list">
           <div class="act-item" *ngFor="let a of recentActivity">
-            <div class="act-ico" [style.background]="a.color + '22'">
-              <i class="fas" [ngClass]="a.icon" [style.color]="a.color"></i>
+            <div class="act-icon" [style.background]="a.color + '22'" [style.color]="a.color">
+              <i class="fas" [ngClass]="a.icon"></i>
             </div>
-            <div>
+            <div class="act-body">
               <span>{{ a.text }}</span>
               <small>{{ a.time }}</small>
             </div>
@@ -196,15 +341,26 @@
       </section>
 
       <!-- ACTIONS RAPIDES -->
-      <section class="dcard">
-        <div class="dcard-head">
-          <div><h2><i class="fas fa-rocket"></i> Actions rapides</h2></div>
+      <section class="glass-card">
+        <div class="gc-header">
+          <div class="gc-title">
+            <i class="fas fa-rocket"></i>
+            <div><h2>Actions rapides</h2></div>
+          </div>
         </div>
-        <div class="qactions">
-          <a routerLink="/app/profile/kyc"           class="qa"><i class="fas fa-id-card"></i><span>KYC</span></a>
-          <a routerLink="/app/profile/trust-passport" class="qa"><i class="fas fa-passport"></i><span>Trust</span></a>
-          <a routerLink="/app/profile/settings"       class="qa"><i class="fas fa-lock"></i><span>Sécurité</span></a>
-          <a routerLink="/app/profile/overview"       class="qa"><i class="fas fa-user-pen"></i><span>Profil</span></a>
+        <div class="quick-grid">
+          <a routerLink="/app/profile/kyc"           class="quick-btn">
+            <i class="fas fa-id-card"></i><span>KYC</span>
+          </a>
+          <a routerLink="/app/profile/trust-passport" class="quick-btn">
+            <i class="fas fa-passport"></i><span>Trust</span>
+          </a>
+          <a routerLink="/app/profile/settings"       class="quick-btn">
+            <i class="fas fa-lock"></i><span>Sécurité</span>
+          </a>
+          <a routerLink="/app/profile/overview"       class="quick-btn">
+            <i class="fas fa-user-pen"></i><span>Profil</span>
+          </a>
         </div>
       </section>
 

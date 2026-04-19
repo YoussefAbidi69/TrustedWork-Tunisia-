@@ -1,45 +1,260 @@
-<div class="freelancers-container">
-
-  <div class="section-header">
-    <h2>Freelancers</h2>
-    <p class="subtitle">Découvrez les profils de la communauté TrustedWork Tunisia</p>
+<div class="talent-marketplace">
+  <div class="marketplace-bg">
+    <div class="bg-glow bg-glow--one"></div>
+    <div class="bg-glow bg-glow--two"></div>
+    <div class="bg-grid"></div>
   </div>
 
-  <div class="loading" *ngIf="isLoading">Chargement...</div>
-  <div class="error-banner" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="marketplace-shell">
 
-  <div class="empty-state" *ngIf="!isLoading && freelancers.length === 0">
-    <p>Aucun autre freelancer disponible pour le moment.</p>
-  </div>
-
-  <div class="freelancers-grid" *ngIf="!isLoading && freelancers.length > 0">
-    <div class="freelancer-card" *ngFor="let f of freelancers"
-         (click)="viewProfile(f.userId)">
-
-      <div class="card-avatar">
-        {{ f.headline.charAt(0) || 'F' }}
-      </div>
-
-      <div class="card-info">
-        <h3>{{ f.headline || 'Freelancer' }}</h3>
-        <p class="card-bio">{{ f.bio | slice:0:80 }}{{ (f.bio.length || 0) > 80 ? '...' : '' }}</p>
-        <div class="card-meta">
-          <span *ngIf="f.region">📍 {{ f.region }}</span>
-          <span *ngIf="f.hourlyRate">💰 {{ f.hourlyRate }} TND/h</span>
-          <span class="score">🏆 {{ f.completenessScore }}% complet</span>
+    <section class="marketplace-hero">
+      <div class="marketplace-hero__content">
+        <div class="hero-copy">
+          <span class="hero-chip">TrustedWork Marketplace</span>
+          <h1>Trouvez le bon freelancer, plus vite.</h1>
+          <p>
+            Explorez les talents par région, disponibilité et budget dans une
+            interface plus premium, plus claire et plus SaaS.
+          </p>
         </div>
-        <span class="availability-badge"
-              [class.available]="f.availabilityStatus === 'AVAILABLE'">
-          {{ f.availabilityStatus === 'AVAILABLE' ? 'Disponible' :
-             f.availabilityStatus === 'BUSY' ? 'Occupé' : 'En vacances' }}
-        </span>
+
+        <div class="hero-stat-card">
+          <span class="hero-stat-card__label">Freelancers trouvés</span>
+          <strong class="hero-stat-card__value">{{ freelancers.length }}</strong>
+          <span class="hero-stat-card__sub">Base active TrustedWork</span>
+        </div>
       </div>
 
-      <div class="card-action">
-        <span class="view-btn">Voir le profil →</span>
-      </div>
+      <div class="filter-panel">
+        <div class="filter-panel__header">
+          <div>
+            <span class="section-chip">Filtres intelligents</span>
+            <h2>Affinez votre recherche</h2>
+          </div>
+        </div>
 
+        <div class="filter-grid">
+          <div class="filter-box">
+            <label for="filter-region">Région</label>
+            <div class="input-shell">
+              <select
+                id="filter-region"
+                [(ngModel)]="selectedRegion"
+                (change)="applyFilters()">
+                <option value="">Toutes les régions</option>
+                <option *ngFor="let region of availableRegions" [value]="region">
+                  {{ region }}
+                </option>
+              </select>
+              <span class="input-icon">⌄</span>
+            </div>
+          </div>
+
+          <div class="filter-box">
+            <label for="filter-status">Statut</label>
+            <div class="input-shell">
+              <select
+                id="filter-status"
+                [(ngModel)]="selectedStatus"
+                (change)="applyFilters()">
+                <option value="">Tous les statuts</option>
+                <option value="AVAILABLE">Disponible</option>
+                <option value="BUSY">Occupé</option>
+                <option value="ON_VACATION">En congé</option>
+              </select>
+              <span class="input-icon">⌄</span>
+            </div>
+          </div>
+
+          <div class="filter-box">
+            <label for="filter-rate-min">Budget minimum</label>
+            <div class="input-shell">
+              <input
+                id="filter-rate-min"
+                type="number"
+                [(ngModel)]="minRate"
+                placeholder="0" />
+              <span class="input-suffix">TND</span>
+            </div>
+          </div>
+
+          <div class="filter-box">
+            <label for="filter-rate-max">Budget maximum</label>
+            <div class="input-shell">
+              <input
+                id="filter-rate-max"
+                type="number"
+                [(ngModel)]="maxRate"
+                placeholder="∞" />
+              <span class="input-suffix">TND</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <button type="button" class="btn-primary-action" (click)="applyFilters()">
+            <span>Exécuter</span>
+          </button>
+          <button type="button" class="btn-secondary-action" (click)="resetFilters()">
+            <span>Reset</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="loading-spinner"></div>
+      <h3>Chargement des freelancers...</h3>
+      <p>Nous synchronisons la base TrustedWork.</p>
     </div>
-  </div>
 
+    <div class="error-state" *ngIf="errorMessage">
+      <div class="error-state__icon">!</div>
+      <div class="error-state__content">
+        <strong>Impossible de charger les profils</strong>
+        <span>{{ errorMessage }}</span>
+      </div>
+      <button class="btn-reload" type="button" (click)="loadFreelancers()">
+        Réessayer
+      </button>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && freelancers.length === 0">
+      <div class="empty-state__icon">◌</div>
+      <h3>Aucun freelancer trouvé</h3>
+      <p>Aucun profil ne correspond à votre configuration actuelle.</p>
+      <button class="btn-primary-action" type="button" (click)="resetFilters()">
+        Réinitialiser les filtres
+      </button>
+    </div>
+
+    <section class="results-toolbar" *ngIf="!isLoading && freelancers.length > 0">
+      <div class="results-toolbar__left">
+        <h2>Résultats</h2>
+        <span>{{ freelancers.length }} profil(s) disponibles</span>
+      </div>
+
+      <div class="results-toolbar__right">
+        <div class="toolbar-badge">
+          <span>Dernière sync</span>
+          <strong>{{ currentTime }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="freelancers-grid" *ngIf="!isLoading && freelancers.length > 0">
+      <article
+        class="freelancer-card"
+        *ngFor="let f of freelancers; let i = index"
+        role="button"
+        tabindex="0"
+        (click)="viewProfile(f.userId)"
+        (keyup.enter)="viewProfile(f.userId)"
+        [style.animation-delay]="(i * 0.06) + 's'">
+
+        <div class="freelancer-card__top">
+          <div class="freelancer-identity">
+            <!-- Real photo if available, otherwise show initials -->
+            <img
+              *ngIf="f.photo"
+              [src]="f.photo"
+              [alt]="f.fullName"
+              class="avatar-badge avatar-badge--photo"
+              [class.avatar-badge--elite]="f.completenessScore >= 80"
+              [class.avatar-badge--pro]="f.completenessScore >= 50 && f.completenessScore < 80"
+              [class.avatar-badge--starter]="f.completenessScore < 50" />
+
+            <div
+              *ngIf="!f.photo"
+              class="avatar-badge"
+              [class.avatar-badge--elite]="f.completenessScore >= 80"
+              [class.avatar-badge--pro]="f.completenessScore >= 50 && f.completenessScore < 80"
+              [class.avatar-badge--starter]="f.completenessScore < 50">
+              {{ f.initials }}
+            </div>
+
+            <div class="identity-copy">
+              <div class="identity-header">
+                <h3>{{ f.fullName }}</h3>
+
+                <span
+                  class="availability-pill"
+                  [class.availability-pill--available]="f.availabilityStatus === 'AVAILABLE'"
+                  [class.availability-pill--busy]="f.availabilityStatus === 'BUSY'"
+                  [class.availability-pill--vacation]="f.availabilityStatus === 'ON_VACATION'">
+                  {{
+                    f.availabilityStatus === 'AVAILABLE'
+                      ? 'Disponible'
+                      : f.availabilityStatus === 'BUSY'
+                        ? 'Occupé'
+                        : 'En congé'
+                  }}
+                </span>
+              </div>
+
+              <p class="headline">
+                {{ f.headline || 'Freelancer specialist' }}
+              </p>
+            </div>
+          </div>
+
+          <div class="score-panel">
+            <strong>{{ f.completenessScore }}</strong>
+            <span>OVR</span>
+          </div>
+        </div>
+
+        <p class="bio">
+          {{ f.bio | slice:0:120 }}{{ (f.bio.length || 0) > 120 ? '...' : '' }}
+        </p>
+
+        <div class="meta-row">
+          <span class="meta-pill" *ngIf="f.region">📍 {{ f.region }}</span>
+          <span class="meta-pill" *ngIf="f.hourlyRate">💰 {{ f.hourlyRate }} TND/h</span>
+          <span class="meta-pill meta-pill--accent">{{ f.completenessScore }}% complétude</span>
+        </div>
+
+        <div
+          class="deployment-status"
+          [class.deployment-status--available]="f.availabilityStatus === 'AVAILABLE'"
+          [class.deployment-status--busy]="f.availabilityStatus === 'BUSY'"
+          [class.deployment-status--vacation]="f.availabilityStatus === 'ON_VACATION'">
+          <span class="status-dot"></span>
+          <span>
+            {{
+              f.availabilityStatus === 'AVAILABLE'
+                ? 'Ready for deployment'
+                : f.availabilityStatus === 'BUSY'
+                  ? 'Currently engaged'
+                  : 'On leave'
+            }}
+          </span>
+        </div>
+
+        <div class="card-footer">
+          <button type="button" class="btn-card-action">
+            Voir le profil
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <footer class="marketplace-footer" *ngIf="!isLoading && freelancers.length > 0">
+      <div class="footer-stat">
+        <span class="footer-stat__label">Profils chargés</span>
+        <strong>{{ freelancers.length }}</strong>
+      </div>
+
+      <div class="footer-stat">
+        <span class="footer-stat__label">Filtres actifs</span>
+        <strong>{{ (selectedRegion ? 1 : 0) + (selectedStatus ? 1 : 0) + (minRate ? 1 : 0) + (maxRate ? 1 : 0) }}</strong>
+      </div>
+
+      <div class="footer-stat">
+        <span class="footer-stat__label">Statut</span>
+        <strong>Synchronisé</strong>
+      </div>
+    </footer>
+
+  </div>
 </div>
