@@ -98,6 +98,12 @@
             <version>24.0.0</version>
         </dependency>
 
+        <!-- Jackson Java 8 Time support (LocalDateTime, LocalDate, etc.) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
         <!-- JWT (validate tokens issued by ms-user-service) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

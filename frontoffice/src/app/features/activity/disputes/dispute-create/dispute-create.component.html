@@ -81,12 +81,44 @@
       <!-- Commentaire / Preuves -->
       <div class="form-section mb-4">
         <label class="form-label-premium">
-          <i class="bi bi-paperclip me-2"></i> Commentaire / Preuves (optionnel)
+          <i class="bi bi-paperclip me-2"></i> Commentaire
         </label>
         <textarea formControlName="preuvesPlaignant"
                   class="form-input-premium textarea"
                   rows="3"
-                  placeholder="Liens, descriptions de preuves, captures..."></textarea>
+                  placeholder="Liens et détails supplémentaires..."></textarea>
+      </div>
+
+      <!-- Pièces Jointes (2) -->
+      <div class="form-section mb-4">
+        <label class="form-label-premium">
+          <i class="bi bi-file-earmark-arrow-up me-2"></i> Pièces Jointes (Maximum 2 fichiers, 5Mo max)
+        </label>
+        
+        <div *ngIf="fileError" class="text-danger small mb-2 d-flex align-items-center">
+            <i class="bi bi-exclamation-circle me-1"></i> {{ fileError }}
+        </div>
+
+        <div class="file-upload-box p-3 border rounded dashed-border" (click)="fileInput.click()" style="cursor: pointer; border-style: dashed !important; border-color: #6366f1;">
+          <div class="text-center text-stone">
+            <i class="bi bi-cloud-arrow-up fs-3 text-primary mb-2 d-block"></i>
+            <span>Cliquez ici pour sélectionner des fichiers</span>
+          </div>
+          <input type="file" #fileInput (change)="onFilesSelected($event)" multiple hidden>
+        </div>
+
+        <!-- Selected files list -->
+        <ul class="list-group mt-3" *ngIf="selectedFiles.length > 0">
+          <li *ngFor="let file of selectedFiles; let i = index" class="list-group-item d-flex justify-content-between align-items-center bg-light border-0 rounded mb-2">
+            <div class="d-flex align-items-center text-truncate pe-3">
+              <i class="bi bi-file-earmark-text text-primary me-2"></i>
+              <span class="text-truncate" style="max-width: 250px;">{{ file.name }}</span>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger shadow-sm py-1 px-2" (click)="removeFile(i); $event.stopPropagation()">
+              <i class="bi bi-trash"></i>
+            </button>
+          </li>
+        </ul>
       </div>
 
       <!-- Actions -->

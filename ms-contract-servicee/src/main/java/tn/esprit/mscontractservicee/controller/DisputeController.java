@@ -24,7 +24,9 @@ import tn.esprit.mscontractservicee.dto.dispute.DisputeCreateRequest;
 import tn.esprit.mscontractservicee.dto.dispute.DisputeEvidenceResponse;
 import tn.esprit.mscontractservicee.dto.dispute.DisputeResolveRequest;
 import tn.esprit.mscontractservicee.dto.dispute.DisputeRespondRequest;
+import tn.esprit.mscontractservicee.dto.dispute.DisputeAiRecommendation;
 import tn.esprit.mscontractservicee.entity.Dispute;
+import tn.esprit.mscontractservicee.service.IDisputeAiService;
 import tn.esprit.mscontractservicee.service.IDisputeEvidenceService;
 import tn.esprit.mscontractservicee.service.IDisputeService;
 
@@ -41,6 +43,7 @@ public class DisputeController {
 
     private final IDisputeService disputeService;
     private final IDisputeEvidenceService disputeEvidenceService;
+    private final IDisputeAiService disputeAiService;
 
     private static Long currentCin(Authentication authentication) {
         if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
@@ -66,6 +69,15 @@ public class DisputeController {
                                         @RequestBody DisputeCreateRequest request) {
         Dispute saved = disputeService.openDispute(currentCin(authentication), request);
         return new ResponseEntity<>(saved, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/{id}/ai-analysis")
+    @Operation(summary = "Analyse AI du litige — recommandation Gemini à la volée (ADMIN)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<DisputeAiRecommendation> aiAnalysis(Authentication authentication,
+                                                              @PathVariable Long id) {
+        DisputeAiRecommendation recommendation = disputeAiService.analyze(id, currentCin(authentication));
+        return ResponseEntity.ok(recommendation);
     }
 
     @PostMapping("/{id}/respond")

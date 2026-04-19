@@ -1,0 +1,55 @@
+<aside class="sidebar" [class.collapsed]="collapsed">
+
+  <div class="sidebar-brand">
+    <div class="brand-logo">
+      <i class="fas fa-shield-halved"></i>
+    </div>
+    <div class="brand-info" *ngIf="!collapsed">
+      <strong>TrustedWork</strong>
+      <small>Admin Console</small>
+    </div>
+  </div>
+
+  <div class="sidebar-profile" *ngIf="!collapsed">
+    <div class="avatar avatar-md avatar-accent">AD</div>
+    <div class="profile-info">
+      <strong>Administrator</strong>
+      <span class="online-status">
+        <span class="dot-green"></span>
+        Online
+      </span>
+    </div>
+  </div>
+
+  <div class="sidebar-profile-mini" *ngIf="collapsed">
+    <div class="avatar avatar-sm avatar-accent">AD</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <ng-container *ngFor="let item of navItems">
+
+      <div class="nav-section-label" *ngIf="item.sectionLabel && !collapsed">
+        {{ item.sectionLabel }}
+      </div>
+
+      <div class="nav-section-divider" *ngIf="item.sectionLabel && collapsed"></div>
+
+      <a [routerLink]="item.route" routerLinkActive="active" class="nav-link" [title]="collapsed ? item.label : ''">
+        <span class="nav-icon">
+          <i class="fas" [ngClass]="item.icon"></i>
+        </span>
+        <span class="nav-label" *ngIf="!collapsed">{{ item.label }}</span>
+        <span *ngIf="!collapsed && item.badge" class="nav-badge badge" [ngClass]="'badge-' + (item.badgeType || 'accent')">{{ item.badge }}</span>
+      </a>
+
+    </ng-container>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="collapse-btn" (click)="onToggle()">
+      <i class="fas" [ngClass]="collapsed ? 'fa-angles-right' : 'fa-angles-left'"></i>
+      <span *ngIf="!collapsed">Collapse</span>
+    </button>
+  </div>
+
+</aside>

@@ -5,6 +5,8 @@ import { DisputeService } from '../../../../core/services/dispute.service';
 import { MilestoneService } from '../../../../core/services/milestone.service';
 import { ContractService } from '../../../../core/services/contract.service';
 import { Milestone } from '../../../../core/models/milestone.model';
+import { forkJoin, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-dispute-create',
@@ -20,6 +22,8 @@ export class DisputeCreateComponent implements OnInit {
   error = '';
   useContractLevel = false;
   isContractLocked = false;
+  selectedFiles: File[] = [];
+  fileError = '';
 
   constructor(
     private fb: FormBuilder,
@@ -97,6 +101,29 @@ export class DisputeCreateComponent implements OnInit {
     }
   }
 
+  onFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.fileError = '';
+    if (input.files) {
+      const filesArr = Array.from(input.files);
+      if (this.selectedFiles.length + filesArr.length > 2) {
+        this.fileError = 'Vous ne pouvez uploader que 2 fichiers maximum.';
+        return;
+      }
+      for (const file of filesArr) {
+        if (file.size > 5 * 1024 * 1024) { // Limit 5MB
+          this.fileError = `Le fichier ${file.name} dépasse 5 Mo.`;
+          return;
+        }
+      }
+      this.selectedFiles = [...this.selectedFiles, ...filesArr].slice(0, 2);
+    }
+  }
+
+  removeFile(index: number): void {
+    this.selectedFiles.splice(index, 1);
+  }
+
   submit(): void {
     if (this.form.invalid) return;
 
@@ -110,10 +137,21 @@ export class DisputeCreateComponent implements OnInit {
     };
     delete (payload as any).contractReference;
 
-    this.disputeService.create(payload).subscribe({
-      next: (dispute) => {
+    this.disputeService.create(payload).pipe(
+      switchMap(dispute => {
+        if (this.selectedFiles.length === 0) {
+          return of({ dispute, uploads: [] });
+        }
+        // Upload all selected files concurrently
+        const uploadObs = this.selectedFiles.map(file => this.disputeService.uploadEvidence(dispute.id!, file));
+        return forkJoin(uploadObs).pipe(
+          switchMap(uploads => of({ dispute, uploads }))
+        );
+      })
+    ).subscribe({
+      next: (result) => {
         this.loading = false;
-        this.router.navigate(['/app/activity/disputes', dispute.id]);
+        this.router.navigate(['/app/activity/disputes', result.dispute.id]);
       },
       error: (err) => {
         this.loading = false;
@@ -124,7 +162,7 @@ export class DisputeCreateComponent implements OnInit {
         } else if (err.status === 403) {
           this.error = 'Vous n\'êtes pas autorisé à créer un litige sur ce contrat.';
         } else {
-          this.error = err.error?.message || 'Erreur lors de la création du litige.';
+          this.error = err.error?.message || 'Erreur lors de la création du litige ou upload des fichiers.';
         }
         console.error(err);
       }

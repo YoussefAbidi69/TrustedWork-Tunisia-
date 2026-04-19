@@ -1,0 +1,111 @@
+<div class="container mt-4 animate-fade-in">
+
+  <!-- Page Header -->
+  <div class="page-header shadow-lg mb-4">
+    <span class="badge-kicker">
+      <i class="bi bi-shield-plus me-1"></i> Nouveau Litige
+    </span>
+    <h2 class="display-6 text-white mb-0">Ouvrir un Litige</h2>
+    <p class="text-white opacity-75 mt-1 mb-0">
+      Décrivez le problème rencontré et fournissez les preuves nécessaires.
+    </p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="alert alert-danger rounded-4 border-0 mb-4">
+    <i class="bi bi-exclamation-triangle me-2"></i> {{ error }}
+  </div>
+
+  <!-- Form Card -->
+  <div class="form-card shadow-sm">
+    <form [formGroup]="form" (ngSubmit)="submit()">
+
+      <!-- Contract ID -->
+      <div class="form-section mb-4">
+        <label class="form-label-premium">
+          <i class="bi bi-file-earmark-text me-2"></i> ID du Contrat
+        </label>
+        <input type="number"
+               formControlName="contractId"
+               class="form-input-premium"
+               placeholder="Ex: 8"
+               (change)="onContractIdChange()"
+               [readonly]="!!contractId">
+      </div>
+
+      <!-- Contract-Level Toggle -->
+      <div class="form-section mb-4">
+        <div class="toggle-container" (click)="toggleContractLevel()">
+          <div class="toggle-switch" [class.active]="useContractLevel">
+            <div class="toggle-knob"></div>
+          </div>
+          <span class="toggle-label">
+            Dispute au niveau du contrat entier
+            <small class="d-block text-stone">(aucun jalon spécifique ciblé)</small>
+          </span>
+        </div>
+      </div>
+
+      <!-- Milestone Select -->
+      <div class="form-section mb-4" *ngIf="!useContractLevel">
+        <label class="form-label-premium">
+          <i class="bi bi-flag me-2"></i> Jalon concerné (optionnel)
+        </label>
+        <div *ngIf="loadingMilestones" class="text-stone small">
+          <div class="spinner-border spinner-border-sm me-2"></div> Chargement des jalons...
+        </div>
+        <select *ngIf="!loadingMilestones"
+                formControlName="milestoneId"
+                class="form-input-premium">
+          <option [ngValue]="null">— Aucun jalon (niveau contrat) —</option>
+          <option *ngFor="let m of milestones" [ngValue]="m.id">
+            #{{ m.id }} — {{ m.titre }} ({{ m.montant }} DT)
+          </option>
+        </select>
+      </div>
+
+      <!-- Motif -->
+      <div class="form-section mb-4">
+        <label class="form-label-premium">
+          <i class="bi bi-chat-left-text me-2"></i> Motif du litige *
+        </label>
+        <textarea formControlName="motif"
+                  class="form-input-premium textarea"
+                  rows="5"
+                  placeholder="Décrivez en détail le problème rencontré..."></textarea>
+        <div class="form-hint" *ngIf="form.get('motif')?.touched && form.get('motif')?.invalid">
+          <i class="bi bi-info-circle me-1"></i> Le motif doit contenir au moins 10 caractères.
+        </div>
+      </div>
+
+      <!-- Commentaire / Preuves -->
+      <div class="form-section mb-4">
+        <label class="form-label-premium">
+          <i class="bi bi-paperclip me-2"></i> Commentaire / Preuves (optionnel)
+        </label>
+        <textarea formControlName="preuvesPlaignant"
+                  class="form-input-premium textarea"
+                  rows="3"
+                  placeholder="Liens, descriptions de preuves, captures..."></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions d-flex gap-3 justify-content-end">
+        <button type="button" class="btn-ghost" (click)="cancel()">
+          <i class="bi bi-x-lg me-2"></i> Annuler
+        </button>
+        <button type="submit"
+                class="btn-premium primary"
+                [disabled]="form.invalid || loading">
+          <span *ngIf="!loading">
+            <i class="bi bi-shield-exclamation me-2"></i> Soumettre le Litige
+          </span>
+          <span *ngIf="loading">
+            <div class="spinner-border spinner-border-sm me-2"></div> Envoi...
+          </span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

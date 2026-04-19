@@ -4,6 +4,8 @@ import { DisputeService } from '../../../../core/services/dispute.service';
 import { Dispute, DisputeEvidence, DisputeResolveRequest } from '../../../../core/models/dispute.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { environment } from '../../../../../environments/environment';
+import { forkJoin, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-dispute-detail',
@@ -24,7 +26,10 @@ export class DisputeDetailComponent implements OnInit {
   // Respond (defendeur)
   showRespondModal = false;
   responseText = '';
+  respondProof = '';
   responding = false;
+  respondFiles: File[] = [];
+  respondFileError = '';
 
   // Assign (admin)
   showAssignModal = false;
@@ -154,15 +159,67 @@ export class DisputeDetailComponent implements OnInit {
 
   // ─── RESPOND ─────────────────────────────────────────
 
-  openRespondModal(): void { this.showRespondModal = true; this.responseText = ''; }
+  openRespondModal(): void { 
+    this.showRespondModal = true; 
+    this.responseText = ''; 
+    this.respondProof = '';
+    this.respondFiles = [];
+    this.respondFileError = '';
+  }
   closeRespondModal(): void { this.showRespondModal = false; }
+
+  onRespondFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.respondFileError = '';
+    if (input.files) {
+      const filesArr = Array.from(input.files);
+      if (this.respondFiles.length + filesArr.length > 2) {
+        this.respondFileError = 'Vous ne pouvez uploader que 2 fichiers maximum.';
+        return;
+      }
+      for (const file of filesArr) {
+        if (file.size > 5 * 1024 * 1024) { // Limit 5MB
+          this.respondFileError = `Le fichier ${file.name} dépasse 5 Mo.`;
+          return;
+        }
+      }
+      this.respondFiles = [...this.respondFiles, ...filesArr].slice(0, 2);
+    }
+  }
+
+  removeRespondFile(index: number): void {
+    this.respondFiles.splice(index, 1);
+  }
 
   submitResponse(): void {
     if (!this.responseText.trim()) return;
     this.responding = true;
-    this.disputeService.respond(this.disputeId, this.responseText).subscribe({
-      next: () => { this.responding = false; this.closeRespondModal(); this.loadDispute(); },
-      error: (err) => { this.responding = false; alert('Erreur: ' + (err.error?.message || 'Serveur indisponible')); }
+    
+    // Combine réponse et preuves texte
+    let finalDefenseText = `Réponse : \n${this.responseText.trim()}`;
+    if (this.respondProof?.trim()) {
+      finalDefenseText += `\n\nPreuves : \n${this.respondProof.trim()}`;
+    }
+
+    this.disputeService.respond(this.disputeId, finalDefenseText).pipe(
+      switchMap(disputeResp => {
+        if (this.respondFiles.length === 0) {
+          return of([]);
+        }
+        const uploadObs = this.respondFiles.map(file => this.disputeService.uploadEvidence(this.disputeId, file));
+        return forkJoin(uploadObs);
+      })
+    ).subscribe({
+      next: () => { 
+        this.responding = false; 
+        this.closeRespondModal(); 
+        this.loadDispute(); 
+        this.loadEvidence();
+      },
+      error: (err) => { 
+        this.responding = false; 
+        alert('Erreur: ' + (err.error?.message || 'Serveur indisponible ou erreur d\'upload')); 
+      }
     });
   }
 
