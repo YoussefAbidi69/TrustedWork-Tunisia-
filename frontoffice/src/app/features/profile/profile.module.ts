@@ -18,6 +18,7 @@ import { CareerRecommendationsComponent } from './career-recommendations/career-
 import { EducationComponent } from './education/education.component';
 import { CreateProfileComponent } from './create-profile/create-profile.component';
 import { PublicProfileComponent } from './public-profile/public-profile.component';
+import { AnalyticsComponent } from './analytics/analytics.component';
 
 @NgModule({
   declarations: [
@@ -34,7 +35,8 @@ import { PublicProfileComponent } from './public-profile/public-profile.componen
     CareerRecommendationsComponent,
     EducationComponent,
     CreateProfileComponent,
-    PublicProfileComponent
+    PublicProfileComponent,
+    AnalyticsComponent
   ],
   imports: [
     CommonModule,

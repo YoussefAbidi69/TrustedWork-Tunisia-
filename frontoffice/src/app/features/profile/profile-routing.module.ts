@@ -13,6 +13,8 @@ import { ReviewsComponent } from './reviews/reviews.component';
 import { EducationComponent } from './education/education.component';
 import { CreateProfileComponent } from './create-profile/create-profile.component';
 import { PublicProfileComponent } from './public-profile/public-profile.component';
+import { AnalyticsComponent } from './analytics/analytics.component';
+
 import { CareerRecommendationsComponent } from './career-recommendations/career-recommendations.component';
 const routes: Routes = [
   { path: '', redirectTo: 'overview', pathMatch: 'full' },
@@ -29,6 +31,8 @@ const routes: Routes = [
   { path: 'career-path', component: CareerRecommendationsComponent },
   { path: 'education', component: EducationComponent },
   { path: 'create', component: CreateProfileComponent },
+  { path: 'analytics', component: AnalyticsComponent },
+
   { path: 'public/:userId', component: PublicProfileComponent },
   
   { path: '**', redirectTo: 'overview' }
