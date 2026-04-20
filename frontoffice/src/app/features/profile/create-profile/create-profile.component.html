@@ -1,99 +1,208 @@
-<div class="create-container">
+<div class="create-page">
+  <div class="create-shell">
 
-  <div class="create-card">
+    <!-- Colonne gauche -->
+    <aside class="create-aside">
+      <div class="aside-card aside-card--hero">
+        <span class="aside-chip">Onboarding Freelancer</span>
 
-    <div class="create-header">
-      <h1>Créez votre profil freelancer</h1>
-      <p>Ces informations seront visibles sur votre profil public TrustedWork.</p>
-    </div>
+        <h1>Créez un profil qui inspire confiance</h1>
 
-    <div class="error-banner" *ngIf="errorMessage">
-      {{ errorMessage }}
-    </div>
+        <p>
+          Présentez clairement votre expertise, votre disponibilité et votre positionnement
+          pour améliorer votre visibilité sur TrustedWork.
+        </p>
 
-    <div class="form-body">
+        <div class="progress-block">
+          <div class="progress-block__top">
+            <span>Complétion du profil</span>
+            <strong>{{ completionPercent }}%</strong>
+          </div>
 
-      <div class="form-group">
-        <label>Titre professionnel *</label>
-        <input
-          type="text"
-          [(ngModel)]="profile.headline"
-          placeholder="Ex: Développeur Spring Boot & Angular — Tunis"
-          class="form-control"
-        />
-        <small>Ce titre apparaît en premier sur votre profil public.</small>
-      </div>
+          <div class="progress-bar">
+            <span class="progress-bar__fill" [style.width.%]="completionPercent"></span>
+          </div>
 
-      <div class="form-group">
-        <label>Bio</label>
-        <textarea
-          [(ngModel)]="profile.bio"
-          placeholder="Décrivez votre expertise, vos spécialités et ce qui vous différencie..."
-          class="form-control"
-          rows="4"
-        ></textarea>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Taux horaire (TND)</label>
-          <input
-            type="number"
-            [(ngModel)]="profile.hourlyRate"
-            placeholder="Ex: 35"
-            min="1"
-            class="form-control"
-          />
-        </div>
-        <div class="form-group">
-          <label>Gouvernorat</label>
-          <select [(ngModel)]="profile.region" class="form-control">
-            <option value="">-- Sélectionner --</option>
-            <option *ngFor="let r of regions" [value]="r">{{ r }}</option>
-          </select>
+          <small>
+            Plus votre profil est complet, plus vous augmentez vos chances d’être remarqué.
+          </small>
         </div>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>Disponibilité</label>
-          <select [(ngModel)]="profile.availabilityStatus" class="form-control">
-            <option value="AVAILABLE">Disponible</option>
-            <option value="BUSY">Occupé</option>
-            <option value="ON_VACATION">En vacances</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Type de projets</label>
-          <select [(ngModel)]="profile.projectType" class="form-control">
-            <option value="BOTH">Court et long terme</option>
-            <option value="SHORT_TERM">Court terme</option>
-            <option value="LONG_TERM">Long terme</option>
-          </select>
+      <div class="aside-card">
+        <h3>Ce que les clients voient en premier</h3>
+
+        <div class="benefit-list">
+          <div class="benefit-item">
+            <div class="benefit-icon">01</div>
+            <div>
+              <strong>Titre professionnel</strong>
+              <p>Votre positionnement métier en une phrase claire et crédible.</p>
+            </div>
+          </div>
+
+          <div class="benefit-item">
+            <div class="benefit-icon">02</div>
+            <div>
+              <strong>Bio & expertise</strong>
+              <p>Ce qui vous différencie et les missions que vous savez réellement gérer.</p>
+            </div>
+          </div>
+
+          <div class="benefit-item">
+            <div class="benefit-icon">03</div>
+            <div>
+              <strong>Disponibilité & visibilité</strong>
+              <p>Des signaux simples qui rassurent les recruteurs et filtrent mieux les opportunités.</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="form-group">
-        <label>Visibilité du profil</label>
-        <select [(ngModel)]="profile.visibility" class="form-control">
-          <option value="PUBLIC">Public — visible par tous</option>
-          <option value="CONNECTIONS_ONLY">Connexions uniquement</option>
-          <option value="PRIVATE">Privé</option>
-        </select>
+      <div class="aside-card aside-card--tip">
+        <h3>Conseil pro</h3>
+        <p>
+          Évitez un titre trop générique. Préférez un intitulé précis comme
+          <strong>“Développeur Spring Boot & Angular | APIs, microservices, dashboard admin”</strong>.
+        </p>
       </div>
+    </aside>
 
-    </div>
+    <!-- Colonne droite -->
+    <section class="create-main">
+      <div class="create-card">
+        <div class="create-header">
+          <div class="create-header__content">
+            <span class="header-chip">Profil public</span>
+            <h2>Créez votre profil freelancer</h2>
+            <p>
+              Ces informations seront visibles sur votre profil public TrustedWork
+              et aideront les clients à mieux comprendre votre valeur.
+            </p>
+          </div>
+        </div>
 
-    <div class="create-footer">
-      <button
-        class="btn-primary"
-        (click)="onSubmit()"
-        [disabled]="isLoading"
-      >
-        {{ isLoading ? 'Création en cours...' : 'Créer mon profil' }}
-      </button>
-    </div>
+        <div class="error-banner" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+
+        <div class="form-body">
+          <div class="section-title">
+            <h3>Positionnement professionnel</h3>
+            <p>Définissez comment vous souhaitez apparaître sur la plateforme.</p>
+          </div>
+
+          <div class="form-group">
+            <label for="headline">Titre professionnel <span>*</span></label>
+            <input
+              id="headline"
+              type="text"
+              [(ngModel)]="profile.headline"
+              placeholder="Ex: Développeur Spring Boot & Angular — Tunis"
+              class="form-control"
+            />
+            <div class="field-meta">
+              <small>Ce titre apparaît en premier sur votre profil public.</small>
+              <small>{{ headlineLength }}/120</small>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="bio">Bio</label>
+            <textarea
+              id="bio"
+              [(ngModel)]="profile.bio"
+              placeholder="Décrivez votre expertise, vos spécialités, vos types de missions et ce qui vous différencie..."
+              class="form-control"
+              rows="5"
+            ></textarea>
+            <div class="field-meta">
+              <small>Présentez votre expertise de manière simple, concrète et crédible.</small>
+              <small>{{ bioLength }}/600</small>
+            </div>
+          </div>
+
+          <div class="section-title section-title--spaced">
+            <h3>Paramètres du profil</h3>
+            <p>Ajoutez les informations qui permettent aux clients de mieux vous qualifier.</p>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="hourlyRate">Taux horaire (TND)</label>
+              <input
+                id="hourlyRate"
+                type="number"
+                [(ngModel)]="profile.hourlyRate"
+                placeholder="Ex: 35"
+                min="1"
+                class="form-control"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="region">Gouvernorat</label>
+              <select id="region" [(ngModel)]="profile.region" class="form-control">
+                <option value="">-- Sélectionner --</option>
+                <option *ngFor="let r of regions" [value]="r">{{ r }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="availabilityStatus">Disponibilité</label>
+              <select id="availabilityStatus" [(ngModel)]="profile.availabilityStatus" class="form-control">
+                <option value="AVAILABLE">Disponible</option>
+                <option value="BUSY">Occupé</option>
+                <option value="ON_VACATION">En vacances</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="projectType">Type de projets</label>
+              <select id="projectType" [(ngModel)]="profile.projectType" class="form-control">
+                <option value="BOTH">Court et long terme</option>
+                <option value="SHORT_TERM">Court terme</option>
+                <option value="LONG_TERM">Long terme</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="visibility">Visibilité du profil</label>
+            <select id="visibility" [(ngModel)]="profile.visibility" class="form-control">
+              <option value="PUBLIC">Public — visible par tous</option>
+              <option value="CONNECTIONS_ONLY">Connexions uniquement</option>
+              <option value="PRIVATE">Privé</option>
+            </select>
+          </div>
+
+          <div class="profile-note">
+            <div class="profile-note__icon">i</div>
+            <p>
+              Un profil bien renseigné améliore la confiance, la clarté de votre positionnement
+              et la qualité des mises en relation sur la plateforme.
+            </p>
+          </div>
+        </div>
+
+        <div class="create-footer">
+          <div class="footer-summary">
+            <span>État du profil</span>
+            <strong>{{ completionPercent }}% complété</strong>
+          </div>
+
+          <button
+            class="btn-primary"
+            (click)="onSubmit()"
+            [disabled]="isLoading"
+          >
+            {{ isLoading ? 'Création en cours...' : 'Créer mon profil' }}
+          </button>
+        </div>
+      </div>
+    </section>
 
   </div>
-
 </div>

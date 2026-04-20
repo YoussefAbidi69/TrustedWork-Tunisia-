@@ -4,17 +4,12 @@ import { FreelancerProfileService } from '../../../core/services/freelancer-prof
 import { AuthService } from '../../../core/services/auth.service';
 import { FreelancerProfile } from '../../../core/models/freelancer.model';
 
-/**
- * Page de création du profil freelancer — premier login uniquement
- * Redirige vers dashboard après création réussie
- */
 @Component({
   selector: 'app-create-profile',
   templateUrl: './create-profile.component.html',
   styleUrls: ['./create-profile.component.css']
 })
 export class CreateProfileComponent {
-
   isLoading = false;
   errorMessage = '';
 
@@ -52,6 +47,28 @@ export class CreateProfileComponent {
 
   private get currentUserId(): number {
     return this.authService.getCurrentAuthUser()!.userId;
+  }
+
+  get headlineLength(): number {
+    return this.profile.headline.trim().length;
+  }
+
+  get bioLength(): number {
+    return this.profile.bio.trim().length;
+  }
+
+  get completionPercent(): number {
+    let score = 0;
+
+    if (this.profile.headline.trim()) score += 30;
+    if (this.profile.bio.trim()) score += 20;
+    if (this.profile.hourlyRate && this.profile.hourlyRate > 0) score += 15;
+    if (this.profile.region) score += 10;
+    if (this.profile.availabilityStatus) score += 10;
+    if (this.profile.projectType) score += 10;
+    if (this.profile.visibility) score += 5;
+
+    return score;
   }
 
   onSubmit(): void {
