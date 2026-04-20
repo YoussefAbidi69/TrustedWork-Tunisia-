@@ -131,6 +131,24 @@ export interface ProjectNotification {
   createdAt: string;
 }
 
+// ── MLPrediction ────────────────────────────────────────────
+
+export interface MLPrediction {
+  probabilityLate: number;
+  willBeLate: boolean;
+  severity: RiskSeverity | null;
+  message: string;
+  criticalFeature: string;
+  daysElapsedRatio: number;
+  tasksDoneRatio: number;
+  activeRisksCount: number;
+  bottleneckDaysAvg: number;
+  openDeliverablesCount: number;
+  assigneePerfScore: number;
+  scopeCreepRatio: number;
+  budgetConsumptionRatio: number;
+}
+
 // ── DTOs de création ────────────────────────────────────────
 
 export interface CreateProjectDTO {

@@ -110,6 +110,12 @@ export class SidebarComponent implements OnInit {
       icon: 'fa-chart-bar',
       route: '/admin/projects/admin/reports',
     },
+    {
+      label: 'ML Prediction',
+      icon: 'fa-robot',
+      route: '/admin/projects/admin/ml-prediction',
+      badgeType: 'info'
+    },
     // ═══ FIN MODULE 08 ═══
     {
       sectionLabel: 'Platform',

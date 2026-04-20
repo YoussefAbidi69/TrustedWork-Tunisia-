@@ -9,7 +9,8 @@ import {
   ProgressReport,
   DeliveryRiskSignal,
   ProjectNotification,
-  ProjectStatus
+  ProjectStatus,
+  MLPrediction
 } from '../models/project.models';
 
 @Injectable({ providedIn: 'root' })
@@ -238,6 +239,12 @@ export class ProjectApiService {
   resolveRisk(id: number): Observable<DeliveryRiskSignal> {
     return this.http.patch<DeliveryRiskSignal>(
       `${this.BASE}/api/risks/${id}/resolve`, null, { headers: this.getHeaders() }
+    );
+  }
+
+  predictDeliveryRisk(projectId: number): Observable<MLPrediction> {
+    return this.http.get<MLPrediction>(
+      `${this.BASE}/api/projects/${projectId}/risks/ml-predict`, { headers: this.getHeaders() }
     );
   }
 
