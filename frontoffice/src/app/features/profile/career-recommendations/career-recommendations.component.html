@@ -1,137 +1,211 @@
-<div class="career-container">
+<div class="career-page">
+  <div class="career-shell">
 
-  <!-- En-tête -->
-  <div class="career-header">
-    <h2>🚀 Recommandations de Carrière</h2>
-    <p class="subtitle">
-      Analyse intelligente basée sur vos compétences — marché tunisien
-    </p>
-  </div>
-
-  <!-- Erreur -->
-  <div class="alert-error" *ngIf="errorMessage">❌ {{ errorMessage }}</div>
-
-  <!-- SECTION 1 : Career Path -->
-  <div class="section-card">
-    <div class="section-header">
-      <h3>🎯 Votre Parcours Détecté</h3>
+    <!-- Error -->
+    <div class="toast-stack" *ngIf="errorMessage">
+      <div class="alert-banner alert-banner--error">
+        <span class="alert-icon">⚠️</span>
+        <span>{{ errorMessage }}</span>
+      </div>
     </div>
 
-    <!-- Loading -->
-    <div class="loading" *ngIf="isLoadingCareer">Analyse en cours...</div>
+    <!-- Hero -->
+    <section class="career-hero">
+      <div class="career-hero__glow career-hero__glow--one"></div>
+      <div class="career-hero__glow career-hero__glow--two"></div>
 
-    <!-- Career Path Result -->
-    <div class="career-path-result" *ngIf="!isLoadingCareer && careerPath">
+      <div class="career-header">
+        <div class="header-left">
+          <div class="section-icon">🚀</div>
 
-      <!-- Path principal -->
-      <div class="path-badge">
-        <span class="path-icon">{{ getPathIcon(careerPath.detectedPath) }}</span>
-        <div class="path-info">
-          <h4>{{ careerPath.detectedPath }}</h4>
-          <p>{{ careerPath.description }}</p>
+          <div class="header-copy">
+            <div class="header-topline">
+              <h2>Recommandations de Carrière</h2>
+              <span class="badge-count">AI Insights</span>
+            </div>
+            <p class="subtitle">
+              Analyse intelligente de votre profil, de vos compétences actuelles et des gaps à combler
+              pour progresser sur le marché tunisien.
+            </p>
+          </div>
         </div>
       </div>
 
-      <div class="path-details">
+      <div class="hero-stats" *ngIf="careerPath || skillGap">
+        <div class="stat-card">
+          <span class="stat-label">Compétences détectées</span>
+          <strong>{{ detectedSkillsCount }}</strong>
+        </div>
 
-        <!-- Skills acquis -->
-        <div class="skills-section">
-          <h5>✅ Compétences acquises ({{ careerPath.currentSkills.length }})</h5>
-          <div class="skills-tags">
-            <span class="tag tag-acquired"
-                  *ngFor="let skill of careerPath.currentSkills">
-              {{ skill }}
-            </span>
-            <span class="tag tag-empty"
-                  *ngIf="careerPath.currentSkills.length === 0">
-              Aucune compétence détectée sur ce parcours
-            </span>
+        <div class="stat-card">
+          <span class="stat-label">Prochaines étapes</span>
+          <strong>{{ nextStepsCount }}</strong>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-label">Compétences manquantes</span>
+          <strong>{{ skillGap?.gapCount ?? missingSkillsCount }}</strong>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-label">Parcours recommandé</span>
+          <strong>{{ careerPath?.detectedPath || '—' }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- Loading -->
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="loading-spinner"></div>
+      <p>Analyse intelligente en cours...</p>
+    </div>
+
+    <ng-container *ngIf="!isLoading">
+
+      <!-- SECTION 1 : Career Path -->
+      <section class="section-card" *ngIf="careerPath">
+        <div class="section-header">
+          <div>
+            <span class="section-chip">Parcours détecté</span>
+            <h3>Votre orientation professionnelle</h3>
           </div>
         </div>
 
-        <!-- Prochaines étapes -->
-        <div class="skills-section" *ngIf="careerPath.nextSteps.length > 0">
-          <h5>⏭️ Prochaines étapes recommandées</h5>
-          <div class="next-steps">
-            <div class="step-item"
-                 *ngFor="let step of careerPath.nextSteps; let i = index">
-              <div class="step-number">{{ i + 1 }}</div>
-              <div class="step-content">
-                <span class="step-name">{{ step }}</span>
-                <span class="step-label">À apprendre</span>
+        <div class="career-path-result">
+          <div class="path-badge">
+            <span class="path-icon">{{ getPathIcon(careerPath.detectedPath) }}</span>
+
+            <div class="path-info">
+              <h4>{{ careerPath.detectedPath }}</h4>
+              <p>{{ careerPath.description }}</p>
+            </div>
+          </div>
+
+          <div class="path-grid">
+            <!-- Skills acquis -->
+            <div class="insight-card">
+              <div class="insight-card__header">
+                <h5>✅ Compétences acquises</h5>
+                <span class="counter-pill">{{ careerPath.currentSkills.length }}</span>
+              </div>
+
+              <div class="skills-tags">
+                <span
+                  class="tag tag-acquired"
+                  *ngFor="let skill of careerPath.currentSkills; trackBy: trackByIndex">
+                  {{ skill }}
+                </span>
+
+                <span class="tag tag-empty" *ngIf="careerPath.currentSkills.length === 0">
+                  Aucune compétence détectée sur ce parcours
+                </span>
+              </div>
+            </div>
+
+            <!-- Skills manquants -->
+            <div class="insight-card" *ngIf="careerPath.missingSkills.length > 0">
+              <div class="insight-card__header">
+                <h5>❌ Compétences manquantes</h5>
+                <span class="counter-pill counter-pill--danger">{{ careerPath.missingSkills.length }}</span>
+              </div>
+
+              <div class="skills-tags">
+                <span
+                  class="tag tag-missing"
+                  *ngFor="let skill of careerPath.missingSkills; trackBy: trackByIndex">
+                  {{ skill }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Next Steps -->
+          <div class="steps-card" *ngIf="careerPath.nextSteps.length > 0">
+            <div class="steps-card__header">
+              <h5>⏭️ Prochaines étapes recommandées</h5>
+              <p>Voici les compétences les plus pertinentes à apprendre pour évoluer sur ce parcours.</p>
+            </div>
+
+            <div class="next-steps">
+              <div
+                class="step-item"
+                *ngFor="let step of careerPath.nextSteps; let i = index; trackBy: trackByIndex">
+                <div class="step-number">{{ i + 1 }}</div>
+
+                <div class="step-content">
+                  <span class="step-name">{{ step }}</span>
+                  <span class="step-label">Compétence à apprendre</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </section>
 
-        <!-- Skills manquants -->
-        <div class="skills-section" *ngIf="careerPath.missingSkills.length > 0">
-          <h5>❌ Compétences manquantes ({{ careerPath.missingSkills.length }})</h5>
-          <div class="skills-tags">
-            <span class="tag tag-missing"
-                  *ngFor="let skill of careerPath.missingSkills">
-              {{ skill }}
-            </span>
+      <!-- SECTION 2 : Skill Gap -->
+      <section class="section-card" *ngIf="skillGap">
+        <div class="section-header">
+          <div>
+            <span class="section-chip">Skill Gap Analysis</span>
+            <h3>Analyse des écarts de compétences</h3>
           </div>
-        </div>
 
-      </div>
-    </div>
-  </div>
-
-  <!-- SECTION 2 : Skill Gap Analysis -->
-  <div class="section-card" *ngIf="skillGap">
-    <div class="section-header">
-      <h3>📊 Analyse des Gaps de Compétences</h3>
-      <span class="gap-badge"
-            [class.badge-danger]="skillGap.gapCount > 5"
-            [class.badge-warning]="skillGap.gapCount <= 5 && skillGap.gapCount > 2"
-            [class.badge-success]="skillGap.gapCount <= 2">
-        {{ skillGap.gapCount }} gap(s) détecté(s)
-      </span>
-    </div>
-
-    <div class="loading" *ngIf="isLoadingGap">Analyse en cours...</div>
-
-    <div class="gap-analysis" *ngIf="!isLoadingGap">
-
-      <!-- Top skills plateforme -->
-      <div class="gap-section">
-        <h5>🏆 Top Skills sur TrustedWork Tunisia</h5>
-        <div class="skills-tags">
-          <span class="tag"
-                *ngFor="let skill of skillGap.topSkills; let i = index"
-                [class.tag-acquired]="!skillGap.gapSkills.includes(skill)"
-                [class.tag-missing]="skillGap.gapSkills.includes(skill)">
-            {{ skill }}
+          <span class="gap-badge" [ngClass]="getGapBadgeClass(skillGap.gapCount)">
+            {{ skillGap.gapCount }} gap(s) détecté(s)
           </span>
         </div>
-      </div>
 
-      <!-- Gaps à combler -->
-      <div class="gap-section" *ngIf="skillGap.gapSkills.length > 0">
-        <h5>🎯 Compétences à acquérir en priorité</h5>
-        <div class="gap-items">
-          <div class="gap-item"
-               *ngFor="let gap of skillGap.gapSkills; let i = index">
-            <div class="gap-priority"
-                 [style.background]="getGapColor(i)">
-              {{ i + 1 }}
+        <div class="gap-analysis">
+          <div class="gap-section">
+            <h5>🏆 Top Skills sur TrustedWork Tunisia</h5>
+            <div class="skills-tags">
+              <span
+                class="tag"
+                *ngFor="let skill of skillGap.topSkills; let i = index; trackBy: trackByIndex"
+                [class.tag-acquired]="!skillGap.gapSkills.includes(skill)"
+                [class.tag-missing]="skillGap.gapSkills.includes(skill)">
+                {{ skill }}
+              </span>
             </div>
-            <span class="gap-name">{{ gap }}</span>
-            <span class="gap-label">Non maîtrisé</span>
+          </div>
+
+          <div class="gap-section" *ngIf="skillGap.gapSkills.length > 0">
+            <h5>🎯 Compétences à acquérir en priorité</h5>
+
+            <div class="gap-items">
+              <div
+                class="gap-item"
+                *ngFor="let gap of skillGap.gapSkills; let i = index; trackBy: trackByIndex">
+                <div class="gap-priority" [style.background]="getGapColor(i)">
+                  {{ i + 1 }}
+                </div>
+
+                <span class="gap-name">{{ gap }}</span>
+                <span class="gap-label">Priorité d'apprentissage</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="no-gap" *ngIf="skillGap.gapSkills.length === 0">
+            <div class="no-gap-icon">🏆</div>
+            <h4>Excellent profil</h4>
+            <p>Vous maîtrisez déjà tous les top skills de la plateforme.</p>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Félicitations si aucun gap -->
-      <div class="no-gap" *ngIf="skillGap.gapSkills.length === 0">
-        <div class="no-gap-icon">🏆</div>
-        <h4>Excellent !</h4>
-        <p>Vous maîtrisez tous les top skills de la plateforme</p>
-      </div>
+      <!-- Empty global fallback -->
+      <section class="empty-state-card" *ngIf="!careerPath && !skillGap">
+        <div class="empty-state">
+          <div class="empty-icon">🧠</div>
+          <h3>Aucune recommandation disponible</h3>
+          <p>
+            Ajoutez davantage de compétences et d'expériences pour obtenir une analyse de carrière plus précise.
+          </p>
+        </div>
+      </section>
 
-    </div>
+    </ng-container>
+
   </div>
-
 </div>

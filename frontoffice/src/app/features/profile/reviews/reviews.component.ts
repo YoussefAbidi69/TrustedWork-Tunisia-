@@ -1,11 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { FreelancerProfileService } from '../../../core/services/freelancer-profile.service';
-import { AuthService } from '../../../core/services/auth.service';
-import { ProfileReview } from '../../../core/models/freelancer.model';
+import {
+  ProfileReview,
+  ProfileReviewSummary
+} from '../../../core/models/freelancer.model';
 
-/**
- * Composant Reviews — avis clients sur le profil freelancer
- */
 @Component({
   selector: 'app-reviews',
   templateUrl: './reviews.component.html',
@@ -14,115 +13,205 @@ import { ProfileReview } from '../../../core/models/freelancer.model';
 export class ReviewsComponent implements OnInit {
 
   reviews: ProfileReview[] = [];
+  reviewSummary: ProfileReviewSummary | null = null;
+
   averageRating = 0;
-  profileId: number | null = null;
+  latestRating: number | null = null;
+
   isLoading = false;
+  isReplying = false;
+
   errorMessage = '';
   successMessage = '';
-  showForm = false;
 
-  // Formulaire d'ajout d'avis
-  newReview = {
-    clientId: 0,
-    rating: 5,
-    comment: ''
-  };
+  activeReplyReviewId: number | null = null;
+  replyDraft = '';
 
-  // Pour l'affichage des étoiles
-  stars = [1, 2, 3, 4, 5];
+  canReply = true;
 
-  constructor(
-    private profileService: FreelancerProfileService,
-    private authService: AuthService
-  ) {}
+  profileId = 1;
+  freelancerUserId = 1;
+
+  clientNames: Record<number, string> = {};
+  clientInitialsMap: Record<number, string> = {};
+
+  constructor(private profileService: FreelancerProfileService) {}
 
   ngOnInit(): void {
-    this.loadProfile();
+    this.loadReviewsData();
   }
 
-  get currentUserId(): number {
-    return this.authService.getCurrentAuthUser()!.userId;
-  }
-
-  loadProfile(): void {
+  loadReviewsData(): void {
     this.isLoading = true;
-    this.profileService.getProfileByUserId(this.currentUserId).subscribe({
-      next: (profile) => {
-        this.profileId = profile.id;
-        this.loadReviews();
-        this.loadAverageRating();
-      },
-      error: () => {
-        this.errorMessage = 'Profil introuvable';
-        this.isLoading = false;
-      }
-    });
-  }
+    this.errorMessage = '';
+    this.successMessage = '';
 
-  loadReviews(): void {
-    if (!this.profileId) return;
     this.profileService.getReviews(this.profileId).subscribe({
       next: (reviews) => {
-        this.reviews = reviews;
-        this.isLoading = false;
+        this.reviews = reviews ?? [];
+        this.resolveClientNames();
+        this.latestRating = this.reviews.length > 0 ? this.reviews[0].rating : null;
+        this.loadAverageRating();
+        this.loadReviewSummary();
       },
       error: () => {
-        this.errorMessage = 'Erreur lors du chargement des avis';
+        this.errorMessage = 'Erreur lors du chargement des avis.';
         this.isLoading = false;
       }
     });
   }
 
   loadAverageRating(): void {
-    if (!this.profileId) return;
     this.profileService.getAverageRating(this.profileId).subscribe({
-      next: (avg) => { this.averageRating = avg || 0; }
-    });
-  }
-
-  submitReview(): void {
-    if (!this.profileId) return;
-
-    const payload = {
-      clientId: this.newReview.clientId || this.currentUserId,
-      rating: this.newReview.rating,
-      comment: this.newReview.comment
-    };
-
-    this.profileService.addReview(this.profileId, payload).subscribe({
-      next: (review) => {
-        this.reviews.unshift(review);
-        this.averageRating = this.calculateAverage();
-        this.resetForm();
-        this.showForm = false;
-        this.successMessage = 'Avis ajouté avec succès !';
-        setTimeout(() => this.successMessage = '', 3000);
+      next: (average) => {
+        this.averageRating = average ?? 0;
       },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'Erreur lors de l\'ajout de l\'avis';
-        setTimeout(() => this.errorMessage = '', 3000);
+      error: () => {
+        this.averageRating = 0;
       }
     });
   }
 
-  setRating(star: number): void {
-    this.newReview.rating = star;
+  loadReviewSummary(): void {
+    this.profileService.getReviewSummary(this.profileId).subscribe({
+      next: (summary) => {
+        this.reviewSummary = summary;
+        this.isLoading = false;
+      },
+      error: () => {
+        this.reviewSummary = null;
+        this.isLoading = false;
+      }
+    });
   }
 
-  calculateAverage(): number {
-    if (this.reviews.length === 0) return 0;
-    const sum = this.reviews.reduce((acc, r) => acc + r.rating, 0);
-    return Math.round((sum / this.reviews.length) * 10) / 10;
+  private resolveClientNames(): void {
+    const uniqueClientIds = [...new Set(this.reviews.map(review => review.clientId))];
+
+    uniqueClientIds.forEach(clientId => {
+      if (this.clientNames[clientId]) {
+        return;
+      }
+
+      this.profileService.getUserIdentity(clientId).subscribe({
+        next: (user: any) => {
+          const fullName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
+          const finalName = fullName || `Client #${clientId}`;
+
+          this.clientNames[clientId] = finalName;
+          this.clientInitialsMap[clientId] = this.buildInitials(finalName);
+        },
+        error: () => {
+          const fallbackName = `Client #${clientId}`;
+          this.clientNames[clientId] = fallbackName;
+          this.clientInitialsMap[clientId] = this.buildInitials(fallbackName);
+        }
+      });
+    });
   }
 
-  getStarArray(rating: number): string[] {
-    return Array.from({ length: 5 }, (_, i) =>
-      i < Math.floor(rating) ? 'full' :
-      i < rating ? 'half' : 'empty'
-    );
+  toggleReply(reviewId: number): void {
+    if (this.activeReplyReviewId === reviewId) {
+      this.activeReplyReviewId = null;
+      this.replyDraft = '';
+      return;
+    }
+
+    this.activeReplyReviewId = reviewId;
+    this.replyDraft = '';
   }
 
-  resetForm(): void {
-    this.newReview = { clientId: 0, rating: 5, comment: '' };
+  submitReply(review: ProfileReview): void {
+    const reply = this.replyDraft.trim();
+
+    if (!reply) {
+      return;
+    }
+
+    this.isReplying = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.profileService.replyToReview(
+      review.id,
+      this.freelancerUserId,
+      { reply }
+    ).subscribe({
+      next: (updatedReview) => {
+        const index = this.reviews.findIndex(r => r.id === review.id);
+
+        if (index !== -1) {
+          this.reviews[index] = {
+            ...this.reviews[index],
+            freelancerReply: updatedReview.freelancerReply,
+            updatedAt: updatedReview.updatedAt
+          };
+        }
+
+        this.successMessage = 'Réponse publiée avec succès.';
+        this.activeReplyReviewId = null;
+        this.replyDraft = '';
+        this.isReplying = false;
+      },
+      error: () => {
+        this.errorMessage = 'Erreur lors de la publication de la réponse.';
+        this.isReplying = false;
+      }
+    });
+  }
+
+  getStarArray(rating: number): ('full' | 'empty')[] {
+    const rounded = Math.round(rating);
+    const stars: ('full' | 'empty')[] = [];
+
+    for (let i = 1; i <= 5; i++) {
+      stars.push(i <= rounded ? 'full' : 'empty');
+    }
+
+    return stars;
+  }
+
+  getRatingLabel(rating: number): string {
+    if (rating >= 4.5) return 'Excellent';
+    if (rating >= 4) return 'Très bon';
+    if (rating >= 3) return 'Bon';
+    if (rating >= 2) return 'Moyen';
+    if (rating > 0) return 'Faible';
+    return 'Aucune note';
+  }
+
+  getDistributionPercentage(count: number): number {
+    const total = this.reviewSummary?.totalReviews ?? 0;
+
+    if (total <= 0) {
+      return 0;
+    }
+
+    return (count / total) * 100;
+  }
+
+  getTotalReviews(): number {
+    return this.reviewSummary?.totalReviews ?? this.reviews.length;
+  }
+
+  getClientDisplayName(review: ProfileReview): string {
+    return this.clientNames[review.clientId] || 'Client';
+  }
+
+  getClientInitials(review: ProfileReview): string {
+    return this.clientInitialsMap[review.clientId] || 'CL';
+  }
+
+  private buildInitials(fullName: string): string {
+    return fullName
+      .split(' ')
+      .filter(part => !!part.trim())
+      .slice(0, 2)
+      .map(part => part.charAt(0).toUpperCase())
+      .join('');
+  }
+
+  trackByReview(index: number, review: ProfileReview): number {
+    return review.id;
   }
 }

@@ -13,9 +13,9 @@ import { CareerPathResponse, SkillGapResponse } from '../../../core/models/freel
   styleUrls: ['./career-recommendations.component.css']
 })
 export class CareerRecommendationsComponent implements OnInit {
-
   careerPath: CareerPathResponse | null = null;
   skillGap: SkillGapResponse | null = null;
+
   isLoadingCareer = false;
   isLoadingGap = false;
   errorMessage = '';
@@ -34,6 +34,22 @@ export class CareerRecommendationsComponent implements OnInit {
     return this.authService.getCurrentAuthUser()!.userId;
   }
 
+  get isLoading(): boolean {
+    return this.isLoadingCareer || this.isLoadingGap;
+  }
+
+  get detectedSkillsCount(): number {
+    return this.careerPath?.currentSkills?.length || 0;
+  }
+
+  get missingSkillsCount(): number {
+    return this.careerPath?.missingSkills?.length || 0;
+  }
+
+  get nextStepsCount(): number {
+    return this.careerPath?.nextSteps?.length || 0;
+  }
+
   loadCareerPath(): void {
     this.isLoadingCareer = true;
     this.profileService.getCareerPath(this.currentUserId).subscribe({
@@ -42,7 +58,7 @@ export class CareerRecommendationsComponent implements OnInit {
         this.isLoadingCareer = false;
       },
       error: () => {
-        this.errorMessage = 'Erreur lors du chargement des recommandations';
+        this.errorMessage = 'Erreur lors du chargement des recommandations.';
         this.isLoadingCareer = false;
       }
     });
@@ -75,5 +91,15 @@ export class CareerRecommendationsComponent implements OnInit {
   getGapColor(index: number): string {
     const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6'];
     return colors[index % colors.length];
+  }
+
+  getGapBadgeClass(gapCount: number): string {
+    if (gapCount > 5) return 'badge-danger';
+    if (gapCount > 2) return 'badge-warning';
+    return 'badge-success';
+  }
+
+  trackByIndex(index: number): number {
+    return index;
   }
 }

@@ -1,112 +1,350 @@
-<div class="reviews-container">
+<div class="reviews-page">
+  <div class="reviews-shell">
 
-  <!-- En-tête avec note moyenne -->
-  <div class="reviews-header">
-    <div class="header-left">
-      <h2>⭐ Avis Clients</h2>
-      <p class="subtitle">{{ reviews.length }} avis au total</p>
-    </div>
-
-    <!-- Note moyenne -->
-    <div class="average-card" *ngIf="reviews.length > 0">
-      <span class="average-number">{{ averageRating }}</span>
-      <div class="average-stars">
-        <span *ngFor="let star of getStarArray(averageRating)"
-              class="star"
-              [class.full]="star === 'full'"
-              [class.empty]="star === 'empty'">
-          {{ star === 'full' ? '★' : '☆' }}
-        </span>
+    <!-- Toast Notifications -->
+    <div class="toast-stack" *ngIf="errorMessage || successMessage">
+      <div class="alert-banner alert-banner--error" *ngIf="errorMessage">
+        <span class="alert-icon">⚠️</span>
+        <span>{{ errorMessage }}</span>
+        <button type="button" class="alert-close" (click)="errorMessage = ''">✕</button>
       </div>
-      <span class="average-label">Note moyenne</span>
-    </div>
 
-    <button class="btn-add" (click)="showForm = !showForm">
-      {{ showForm ? '✕ Annuler' : '+ Laisser un avis' }}
-    </button>
-  </div>
-
-  <!-- Messages -->
-  <div class="alert-success" *ngIf="successMessage">✅ {{ successMessage }}</div>
-  <div class="alert-error" *ngIf="errorMessage">❌ {{ errorMessage }}</div>
-
-  <!-- Formulaire d'avis -->
-  <div class="form-card" *ngIf="showForm">
-    <h3>Nouvel avis</h3>
-
-    <!-- Sélection des étoiles -->
-    <div class="rating-selector">
-      <label>Note *</label>
-      <div class="stars-input">
-        <span *ngFor="let star of stars"
-              class="star-btn"
-              [class.active]="star <= newReview.rating"
-              (click)="setRating(star)">
-          ★
-        </span>
-        <span class="rating-text">{{ newReview.rating }}/5</span>
+      <div class="alert-banner alert-banner--success" *ngIf="successMessage">
+        <span class="alert-icon">✅</span>
+        <span>{{ successMessage }}</span>
+        <button type="button" class="alert-close" (click)="successMessage = ''">✕</button>
       </div>
     </div>
 
-    <div class="form-group">
-      <label>Commentaire</label>
-      <textarea [(ngModel)]="newReview.comment"
-                placeholder="Partagez votre expérience..."
-                rows="3"></textarea>
-    </div>
+    <!-- Hero Section -->
+    <section class="reviews-hero">
+      <div class="hero-glow hero-glow--one"></div>
+      <div class="hero-glow hero-glow--two"></div>
 
-    <div class="form-actions">
-      <button class="btn-save" (click)="submitReview()">
-        💾 Publier l'avis
-      </button>
-      <button class="btn-cancel" (click)="showForm = false; resetForm()">
-        Annuler
-      </button>
-    </div>
-  </div>
+      <div class="reviews-header">
+        <div class="header-left">
+          <div class="section-icon">⭐</div>
 
-  <!-- Loading -->
-  <div class="loading" *ngIf="isLoading">Chargement...</div>
+          <div class="header-copy">
+            <div class="header-topline">
+              <h2>Avis Clients</h2>
+              <span class="badge-count">{{ getTotalReviews() }} avis</span>
+            </div>
+            <p class="subtitle">
+              Consultez les retours laissés par vos clients, la moyenne globale
+              et la répartition détaillée des notes.
+            </p>
+          </div>
+        </div>
+      </div>
 
-  <!-- Etat vide -->
-  <div class="empty-state" *ngIf="!isLoading && reviews.length === 0">
-    <div class="empty-icon">⭐</div>
-    <h3>Aucun avis pour l'instant</h3>
-    <p>Les avis de vos clients apparaîtront ici</p>
-  </div>
-
-  <!-- Liste des avis -->
-  <div class="reviews-list" *ngIf="!isLoading && reviews.length > 0">
-    <div class="review-card" *ngFor="let review of reviews">
-
-      <div class="review-header">
-        <div class="reviewer-info">
-          <div class="reviewer-avatar">U{{ review.clientId }}</div>
-          <div>
-            <span class="reviewer-name">Client #{{ review.clientId }}</span>
-            <span class="review-date">
-              {{ review.reviewedAt | date:'dd MMM yyyy' }}
-            </span>
+      <!-- Statistics Dashboard -->
+      <div class="hero-stats" *ngIf="reviews.length > 0">
+        
+        <!-- Average Rating Card -->
+        <div class="average-card">
+          <div class="average-content">
+            <span class="average-number">{{ averageRating.toFixed(1) }}</span>
+            
+            <div class="average-stars">
+              <span
+                *ngFor="let star of getStarArray(averageRating)"
+                class="star"
+                [class.full]="star === 'full'">
+                {{ star === 'full' ? '&#9733;' : '&#9734;' }}
+              </span>
+            </div>
+            
+            <span class="average-label">Note moyenne</span>
+            <span class="average-sublabel">{{ getRatingLabel(averageRating) }}</span>
           </div>
         </div>
 
-        <!-- Etoiles -->
-        <div class="review-stars">
-          <span *ngFor="let star of getStarArray(review.rating)"
-                class="star"
-                [class.full]="star === 'full'"
-                [class.empty]="star === 'empty'">
-            {{ star === 'full' ? '★' : '☆' }}
-          </span>
-          <span class="rating-value">{{ review.rating }}/5</span>
+        <!-- Stat Cards -->
+        <div class="stat-card">
+          <span class="stat-label">Avis reçus</span>
+          <strong class="stat-value">{{ getTotalReviews() }}</strong>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-label">Dernière note</span>
+          <strong class="stat-value">{{ latestRating !== null ? latestRating + '/5' : '—' }}</strong>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-label">Perception</span>
+          <strong class="stat-value">{{ getRatingLabel(averageRating) }}</strong>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="loading-spinner"></div>
+      <p>Chargement des avis...</p>
+    </div>
+
+    <!-- Empty State -->
+    <section class="empty-state-card" *ngIf="!isLoading && reviews.length === 0">
+      <div class="empty-state">
+        <div class="empty-icon">⭐</div>
+        <h3>Aucun avis pour l'instant</h3>
+        <p>
+          Les avis publiés par vos clients apparaîtront ici automatiquement
+          depuis votre profil public.
+        </p>
+      </div>
+    </section>
+
+    <!-- Rating Breakdown Section -->
+    <section class="rating-section" *ngIf="!isLoading && reviews.length > 0 && reviewSummary as summary">
+      <div class="section-head">
+        <div>
+          <span class="section-chip">Analyse</span>
+          <h3>Répartition des notes</h3>
         </div>
       </div>
 
-      <p class="review-comment" *ngIf="review.comment">
-        "{{ review.comment }}"
-      </p>
+      <div class="rating-breakdown">
+        
+        <!-- 5 Stars -->
+        <div class="breakdown-row">
+          <div class="breakdown-label">
+            <span class="star-num">5</span>
+            <span class="mini-star">&#9733;</span>
+          </div>
+          <div class="breakdown-bar-wrapper">
+            <div class="breakdown-bar">
+              <div 
+                class="breakdown-fill breakdown-fill--excellent" 
+                [style.width.%]="getDistributionPercentage(summary.fiveStarCount)">
+              </div>
+            </div>
+          </div>
+          <div class="breakdown-value">
+            <span>{{ summary.fiveStarCount }}</span>
+            <span class="breakdown-percent">{{ getDistributionPercentage(summary.fiveStarCount).toFixed(0) }}%</span>
+          </div>
+        </div>
 
-    </div>
+        <!-- 4 Stars -->
+        <div class="breakdown-row">
+          <div class="breakdown-label">
+            <span class="star-num">4</span>
+            <span class="mini-star">&#9733;</span>
+          </div>
+          <div class="breakdown-bar-wrapper">
+            <div class="breakdown-bar">
+              <div 
+                class="breakdown-fill breakdown-fill--good" 
+                [style.width.%]="getDistributionPercentage(summary.fourStarCount)">
+              </div>
+            </div>
+          </div>
+          <div class="breakdown-value">
+            <span>{{ summary.fourStarCount }}</span>
+            <span class="breakdown-percent">{{ getDistributionPercentage(summary.fourStarCount).toFixed(0) }}%</span>
+          </div>
+        </div>
+
+        <!-- 3 Stars -->
+        <div class="breakdown-row">
+          <div class="breakdown-label">
+            <span class="star-num">3</span>
+            <span class="mini-star">&#9733;</span>
+          </div>
+          <div class="breakdown-bar-wrapper">
+            <div class="breakdown-bar">
+              <div 
+                class="breakdown-fill breakdown-fill--medium" 
+                [style.width.%]="getDistributionPercentage(summary.threeStarCount)">
+              </div>
+            </div>
+          </div>
+          <div class="breakdown-value">
+            <span>{{ summary.threeStarCount }}</span>
+            <span class="breakdown-percent">{{ getDistributionPercentage(summary.threeStarCount).toFixed(0) }}%</span>
+          </div>
+        </div>
+
+        <!-- 2 Stars -->
+        <div class="breakdown-row">
+          <div class="breakdown-label">
+            <span class="star-num">2</span>
+            <span class="mini-star">&#9733;</span>
+          </div>
+          <div class="breakdown-bar-wrapper">
+            <div class="breakdown-bar">
+              <div 
+                class="breakdown-fill breakdown-fill--poor" 
+                [style.width.%]="getDistributionPercentage(summary.twoStarCount)">
+              </div>
+            </div>
+          </div>
+          <div class="breakdown-value">
+            <span>{{ summary.twoStarCount }}</span>
+            <span class="breakdown-percent">{{ getDistributionPercentage(summary.twoStarCount).toFixed(0) }}%</span>
+          </div>
+        </div>
+
+        <!-- 1 Star -->
+        <div class="breakdown-row">
+          <div class="breakdown-label">
+            <span class="star-num">1</span>
+            <span class="mini-star">&#9733;</span>
+          </div>
+          <div class="breakdown-bar-wrapper">
+            <div class="breakdown-bar">
+              <div 
+                class="breakdown-fill breakdown-fill--bad" 
+                [style.width.%]="getDistributionPercentage(summary.oneStarCount)">
+              </div>
+            </div>
+          </div>
+          <div class="breakdown-value">
+            <span>{{ summary.oneStarCount }}</span>
+            <span class="breakdown-percent">{{ getDistributionPercentage(summary.oneStarCount).toFixed(0) }}%</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Reviews List Section -->
+    <section class="reviews-list-section" *ngIf="!isLoading && reviews.length > 0">
+      <div class="section-head">
+        <div>
+          <span class="section-chip">Historique</span>
+          <h3>Retours clients</h3>
+        </div>
+      </div>
+
+      <div class="reviews-list">
+        
+        <!-- Review Card - Dynamic with *ngFor -->
+        <article 
+          class="review-card" 
+          *ngFor="let review of reviews; trackBy: trackByReview">
+
+          <!-- Review Header -->
+          <div class="review-header">
+            <div class="reviewer-info">
+              <div class="reviewer-avatar">
+                {{ getClientInitials(review) }}
+              </div>
+
+              <div class="reviewer-meta">
+                <div class="reviewer-line">
+                  <span class="reviewer-name">{{ getClientDisplayName(review) }}</span>
+                  <span class="reviewer-badge badge-client">Client</span>
+                </div>
+                <span class="review-date">{{ review.reviewedAt | date:'dd MMM yyyy' }}</span>
+              </div>
+            </div>
+
+            <div class="review-rating-box">
+              <div class="review-stars">
+                <span
+                  *ngFor="let star of getStarArray(review.rating)"
+                  class="star"
+                  [class.full]="star === 'full'">
+                  {{ star === 'full' ? '&#9733;' : '&#9734;' }}
+                </span>
+              </div>
+              <span class="rating-number">{{ review.rating }}<span class="rating-max">/5</span></span>
+            </div>
+          </div>
+
+          <!-- Status Badges -->
+          <div class="review-status-row" *ngIf="review.flagged || review.status !== 'VISIBLE'">
+            
+            <span class="status-badge status-warning" *ngIf="review.flagged">
+              &#9888; Signal&#65039;
+            </span>
+
+            <span class="status-badge status-muted" *ngIf="review.status === 'HIDDEN'">
+              &#128065; Masqu&#65039;
+            </span>
+
+            <span class="status-badge status-danger" *ngIf="review.status === 'FLAGGED'">
+              &#9940; Suspect
+            </span>
+          </div>
+
+          <!-- Comment -->
+          <p class="review-comment" *ngIf="review.comment">
+            "{{ review.comment }}"
+          </p>
+
+          <!-- Flag Reason -->
+          <div class="flag-reason" *ngIf="review.flagged && review.flagReason">
+            <span class="flag-icon">&#9888;</span>
+            <div class="flag-content">
+              <strong>Motif du signalement :</strong> {{ review.flagReason }}
+            </div>
+          </div>
+
+          <!-- Freelancer Reply -->
+          <div class="freelancer-reply" *ngIf="review.freelancerReply">
+            <div class="reply-header">
+              <span class="reply-icon">&#8678;</span>
+              <span class="reply-title">Votre r&#233;ponse</span>
+              <span class="reply-date">{{ review.updatedAt | date:'dd MMM yyyy' }}</span>
+            </div>
+            <div class="reply-content">
+              {{ review.freelancerReply }}
+            </div>
+          </div>
+
+          <!-- Reply Box -->
+          <div class="reply-container" *ngIf="canReply && !review.freelancerReply">
+            <button
+              type="button"
+              class="reply-toggle-btn"
+              [class.active]="activeReplyReviewId === review.id"
+              (click)="toggleReply(review.id)">
+              {{ activeReplyReviewId === review.id ? '✕ Annuler' : 'R&#233;pondre &#224; cet avis' }}
+            </button>
+
+            <div class="reply-form" *ngIf="activeReplyReviewId === review.id">
+              <textarea
+                [(ngModel)]="replyDraft"
+                rows="4"
+                maxlength="1000"
+                placeholder="Ecrivez une r&#233;ponse professionnelle..."
+                class="reply-textarea"
+              ></textarea>
+
+              <div class="reply-footer">
+                <span class="char-count" [class.warning]="replyDraft.length > 900">
+                  {{ replyDraft.length }}/1000
+                </span>
+                
+                <div class="reply-actions">
+                  <button
+                    type="button"
+                    class="btn-cancel"
+                    (click)="toggleReply(review.id)">
+                    Annuler
+                  </button>
+                  
+                  <button
+                    type="button"
+                    class="btn-submit-reply"
+                    [disabled]="isReplying || !replyDraft.trim()"
+                    (click)="submitReply(review)">
+                    <span *ngIf="!isReplying">&#128190; Publier</span>
+                    <span *ngIf="isReplying">&#9203; Envoi en cours...</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </article>
+      </div>
+    </section>
+
   </div>
-
 </div>
