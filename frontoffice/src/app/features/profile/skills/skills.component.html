@@ -1,100 +1,468 @@
-<!-- Section Skills — connectée au freelancer-profile-service -->
-<div class="skills-container">
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Compétences | Ultra Premium Design</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
 
-  <!-- En-tête -->
-  <div class="section-header">
-    <div class="header-left">
-      <h2>Mes Compétences</h2>
-      <p class="subtitle">{{ skills.length }} compétence(s) déclarée(s)</p>
+<body>
+    <!-- Animated Background -->
+    <div class="animated-bg"></div>
+
+    <!-- Floating Particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Main Content -->
+    <div class="skills-page">
+        
+        <!-- Toast Notifications -->
+        <div class="toast-stack" id="toastStack"></div>
+
+        <!-- Hero Section -->
+        <section class="skills-hero">
+            <div class="hero-glow hero-glow--one"></div>
+            <div class="hero-glow hero-glow--two"></div>
+
+            <div class="section-header">
+                <div class="header-left">
+                    <div class="section-icon">&lt;/&gt;</div>
+                    <div class="header-copy">
+                        <div class="header-topline">
+                            <h2>Mes Compétences</h2>
+                            <span class="badge-count">12 compétences</span>
+                        </div>
+                        <p class="subtitle">
+                            Valorisez votre expertise avec des scores d'authenticité, 
+                            des endorsements et une présentation premium de votre stack technique.
+                        </p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-primary" onclick="toggleForm()">
+                        + Ajouter une compétence
+                    </button>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="hero-stats">
+                <div class="stat-card">
+                    <span class="stat-label">Compétences totales</span>
+                    <strong class="stat-value">12</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Authenticité moyenne</span>
+                    <strong class="stat-value">87%</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Endorsements</span>
+                    <strong class="stat-value">256</strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add Skill Form (Hidden by default) -->
+        <section class="form-card" id="formCard" style="display: none;">
+            <div class="form-card__header">
+                <span class="section-chip">Nouvelle compétence</span>
+                <h3>Ajouter un skill</h3>
+                <p>Ajoutez une compétence métier ou technique avec sa catégorie et son score d'évaluation initial.</p>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nom du skill *</label>
+                    <input type="text" class="form-control" placeholder="Ex: Spring Boot, Angular, Docker...">
+                </div>
+                <div class="form-group">
+                    <label>Catégorie *</label>
+                    <select class="form-control">
+                        <option value="">Sélectionner...</option>
+                        <option value="FRONTEND">Frontend</option>
+                        <option value="BACKEND">Backend</option>
+                        <option value="FULLSTACK">Fullstack</option>
+                        <option value="MOBILE">Mobile</option>
+                        <option value="DEVOPS">DevOps</option>
+                        <option value="CLOUD">Cloud</option>
+                        <option value="DATA">Data</option>
+                        <option value="AI">AI / Machine Learning</option>
+                        <option value="DESIGN">Design</option>
+                        <option value="SECURITY">Sécurité</option>
+                        <option value="OTHER">Autre</option>
+                    </select>
+                    <small>Permet de structurer votre stack et améliorer la lisibilité du profil.</small>
+                </div>
+                <div class="form-group">
+                    <label>Score d'examen (0–100)</label>
+                    <input type="number" class="form-control" placeholder="85" min="0" max="100">
+                    <small>Correspond à votre score obtenu sur le module d'évaluation.</small>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn-primary" onclick="addSkill()">
+                    Enregistrer la compétence
+                </button>
+                <button class="btn-ghost" onclick="toggleForm()">
+                    Annuler
+                </button>
+            </div>
+        </section>
+
+        <!-- Skills Grid -->
+        <section class="skills-grid-section">
+            <div class="section-head">
+                <span class="section-chip">Inventaire</span>
+                <h3>Compétences déclarées</h3>
+            </div>
+
+            <div class="skills-grid">
+                
+                <!-- Skill Card 1 - Top Skill -->
+                <article class="skill-card">
+                    <div class="skill-header">
+                        <div class="skill-header__main">
+                            <span class="skill-name">Angular</span>
+                            <span class="skill-category">Frontend</span>
+                            <span class="skill-level level-expert">Expert</span>
+                        </div>
+                        <span class="top-skill-badge">⭐ Top Skill</span>
+                    </div>
+
+                    <div class="skill-scores">
+                        <div class="score-row">
+                            <span class="score-label">Authenticité</span>
+                            <div class="score-bar-wrapper">
+                                <div class="score-bar auth-high" style="width: 95%;"></div>
+                            </div>
+                            <span class="score-value">95%</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">Score examen</span>
+                            <span class="score-pill">98%</span>
+                            <!-- ✨ BOUTON MODIFIER ULTRA PREMIUM -->
+                            <button class="btn-edit-glass" type="button" onclick="editScore(1)">
+                                <i class="fas fa-pen-to-square"></i>
+                                <span>Modifier</span>
+                            </button>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">Endorsements</span>
+                            <span class="score-pill">47</span>
+                        </div>
+                    </div>
+
+                    <div class="skill-actions">
+                        <button class="btn-secondary">Recalculer</button>
+                        <button class="btn-danger">Supprimer</button>
+                    </div>
+                </article>
+
+                <!-- Skill Card 2 -->
+                <article class="skill-card">
+                    <div class="skill-header">
+                        <div class="skill-header__main">
+                            <span class="skill-name">Spring Boot</span>
+                            <span class="skill-category">Backend</span>
+                            <span class="skill-level level-expert">Expert</span>
+                        </div>
+                    </div>
+
+                    <div class="skill-scores">
+                        <div class="score-row">
+                            <span class="score-label">Authenticité</span>
+                            <div class="score-bar-wrapper">
+                                <div class="score-bar auth-high" style="width: 91%;"></div>
+                            </div>
+                            <span class="score-value">91%</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">Score examen</span>
+                            <span class="score-pill">94%</span>
+                            <!-- ✨ BOUTON MODIFIER ULTRA PREMIUM -->
+                            <button class="btn-edit-glass" type="button" onclick="editScore(2)">
+                                <i class="fas fa-pen-to-square"></i>
+                                <span>Modifier</span>
+                            </button>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">Endorsements</span>
+                            <span class="score-pill">38</span>
+                        </div>
+                    </div>
+
+                    <div class="skill-actions">
+                        <button class="btn-secondary">Recalculer</button>
+                        <button class="btn-danger">Supprimer</button>
+                    </div>
+                </article>
+
+                <!-- Skill Card 3 -->
+                <article class="skill-card">
+                    <div class="skill-header">
+                        <div class="skill-header__main">
+                            <span class="skill-name">Docker</span>
+                            <span class="skill-category">DevOps</span>
+                            <span class="skill-level level-confirmed">Confirmé</span>
+                        </div>
+                    </div>
+
+                    <div class="skill-scores">
+                        <div class="score-row">
+                            <span class="score-label">Authenticité</span>
+                            <div class="score-bar-wrapper">
+                                <div class="score-bar auth-medium" style="width: 72%;"></div>
+                            </div>
+                            <span class="score-value">72%</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">Score examen</span>
+                            <span class="score-pill">78%</span>
+                            <!-- ✨ BOUTON MODIFIER ULTRA PREMIUM -->
+                            <button class="btn-edit-glass" type="button" onclick="editScore(3)">
+                                <i class="fas fa-pen-to-square"></i>
+                                <span>Modifier</span>
+                            </button>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">Endorsements</span>
+                            <span class="score-pill">24</span>
+                        </div>
+                    </div>
+
+                    <div class="skill-actions">
+                        <button class="btn-secondary">Recalculer</button>
+                        <button class="btn-danger">Supprimer</button>
+                    </div>
+                </article>
+
+                <!-- Skill Card 4 -->
+                <article class="skill-card">
+                    <div class="skill-header">
+                        <div class="skill-header__main">
+                            <span class="skill-name">React Native</span>
+                            <span class="skill-category">Mobile</span>
+                            <span class="skill-level level-junior">Junior</span>
+                        </div>
+                    </div>
+
+                    <div class="skill-scores">
+                        <div class="score-row">
+                            <span class="score-label">Authenticité</span>
+                            <div class="score-bar-wrapper">
+                                <div class="score-bar auth-low" style="width: 35%;"></div>
+                            </div>
+                            <span class="score-value">35%</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">Score examen</span>
+                            <span class="score-pill">42%</span>
+                            <!-- ✨ BOUTON MODIFIER ULTRA PREMIUM -->
+                            <button class="btn-edit-glass" type="button" onclick="editScore(4)">
+                                <i class="fas fa-pen-to-square"></i>
+                                <span>Modifier</span>
+                            </button>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">Endorsements</span>
+                            <span class="score-pill">8</span>
+                        </div>
+                    </div>
+
+                    <div class="skill-actions">
+                        <button class="btn-secondary">Recalculer</button>
+                        <button class="btn-danger">Supprimer</button>
+                    </div>
+                </article>
+
+                <!-- Skill Card 5 -->
+                <article class="skill-card">
+                    <div class="skill-header">
+                        <div class="skill-header__main">
+                            <span class="skill-name">TensorFlow</span>
+                            <span class="skill-category">AI</span>
+                            <span class="skill-level level-intermediate">Intermédiaire</span>
+                        </div>
+                    </div>
+
+                    <div class="skill-scores">
+                        <div class="score-row">
+                            <span class="score-label">Authenticité</span>
+                            <div class="score-bar-wrapper">
+                                <div class="score-bar auth-medium" style="width: 58%;"></div>
+                            </div>
+                            <span class="score-value">58%</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">Score examen</span>
+                            <span class="score-pill">65%</span>
+                            <!-- ✨ BOUTON MODIFIER ULTRA PREMIUM -->
+                            <button class="btn-edit-glass" type="button" onclick="editScore(5)">
+                                <i class="fas fa-pen-to-square"></i>
+                                <span>Modifier</span>
+                            </button>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">Endorsements</span>
+                            <span class="score-pill">15</span>
+                        </div>
+                    </div>
+
+                    <div class="skill-actions">
+                        <button class="btn-secondary">Recalculer</button>
+                        <button class="btn-danger">Supprimer</button>
+                    </div>
+                </article>
+
+                <!-- Skill Card 6 -->
+                <article class="skill-card">
+                    <div class="skill-header">
+                        <div class="skill-header__main">
+                            <span class="skill-name">AWS Cloud</span>
+                            <span class="skill-category">Cloud</span>
+                            <span class="skill-level level-confirmed">Confirmé</span>
+                        </div>
+                    </div>
+
+                    <div class="skill-scores">
+                        <div class="score-row">
+                            <span class="score-label">Authenticité</span>
+                            <div class="score-bar-wrapper">
+                                <div class="score-bar auth-high" style="width: 81%;"></div>
+                            </div>
+                            <span class="score-value">81%</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">Score examen</span>
+                            <span class="score-pill">86%</span>
+                            <!-- ✨ BOUTON MODIFIER ULTRA PREMIUM -->
+                            <button class="btn-edit-glass" type="button" onclick="editScore(6)">
+                                <i class="fas fa-pen-to-square"></i>
+                                <span>Modifier</span>
+                            </button>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">Endorsements</span>
+                            <span class="score-pill">31</span>
+                        </div>
+                    </div>
+
+                    <div class="skill-actions">
+                        <button class="btn-secondary">Recalculer</button>
+                        <button class="btn-danger">Supprimer</button>
+                    </div>
+                </article>
+
+            </div>
+        </section>
+
     </div>
-    <button class="btn-primary" (click)="toggleForm()">
-      {{ showForm ? 'Annuler' : '+ Ajouter' }}
-    </button>
-  </div>
 
-  <!-- Message d'erreur -->
-  <div class="error-banner" *ngIf="errorMessage">
-    {{ errorMessage }}
-  </div>
+    <script>
+        // Generate floating particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            const particleCount = 25;
 
-  <!-- Formulaire d'ajout -->
-  <div class="add-form" *ngIf="showForm">
-    <h3>Nouvelle compétence</h3>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Nom du skill *</label>
-        <input
-          type="text"
-          [(ngModel)]="newSkill.name"
-          placeholder="Ex: Spring Boot, Angular, Docker..."
-          class="form-control"
-        />
-      </div>
-      <div class="form-group">
-        <label>Score d'examen (0–100)</label>
-        <input
-          type="number"
-          [(ngModel)]="newSkill.examScore"
-          min="0"
-          max="100"
-          class="form-control"
-        />
-        <small>Correspond à votre score sur la plateforme Module 04</small>
-      </div>
-    </div>
-    <button class="btn-primary" (click)="addSkill()">Enregistrer</button>
-  </div>
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                
+                // Random sizes
+                const size = Math.random() * 4 + 2;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                
+                container.appendChild(particle);
+            }
+        }
 
-  <!-- Loader -->
-  <div class="loading" *ngIf="isLoading">Chargement...</div>
+        // Toggle form visibility
+        function toggleForm() {
+            const formCard = document.getElementById('formCard');
+            const formVisible = formCard.style.display !== 'none';
+            
+            formCard.style.display = formVisible ? 'none' : 'block';
+            
+            if (!formVisible) {
+                setTimeout(() => {
+                    formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        }
 
-  <!-- Liste vide -->
-  <div class="empty-state" *ngIf="!isLoading && skills.length === 0">
-    <p>Aucune compétence déclarée. Ajoutez votre premier skill.</p>
-  </div>
+        // Add skill (demo)
+        function addSkill() {
+            showToast('Compétence ajoutée avec succès!', 'success');
+            toggleForm();
+        }
 
-  <!-- Liste des skills -->
-  <div class="skills-grid" *ngIf="!isLoading && skills.length > 0">
-    <div class="skill-card" *ngFor="let skill of skills">
+        // Edit score function
+        function editScore(skillId) {
+            console.log('✏️ Modifier score pour skill ID:', skillId);
+            showToast('Mode édition activé pour le skill #' + skillId, 'success');
+        }
 
-      <div class="skill-header">
-        <span class="skill-name">{{ skill.name }}</span>
-        <span class="skill-level" [ngClass]="getLevelClass(skill.level)">
-          {{ getLevelLabel(skill.level) }}
-        </span>
-      </div>
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toastStack = document.getElementById('toastStack');
+            const toast = document.createElement('div');
+            toast.className = `alert-banner alert-banner--${type}`;
+            toast.innerHTML = `
+                <span class="alert-icon">${type === 'success' ? '✅' : '⚠️'}</span>
+                <span>${message}</span>
+                <button class="alert-close" onclick="this.parentElement.remove()">✕</button>
+            `;
+            
+            toastStack.appendChild(toast);
 
-      <div class="skill-scores">
-        <!-- Score d'authenticité -->
-        <div class="score-row">
-          <span class="score-label">Authenticité</span>
-          <div class="score-bar-wrapper">
-            <div
-              class="score-bar"
-              [ngClass]="getAuthenticityClass(skill.authenticityScore)"
-              [style.width.%]="skill.authenticityScore * 100"
-            ></div>
-          </div>
-          <span class="score-value">{{ (skill.authenticityScore * 100).toFixed(0) }}%</span>
-        </div>
+            // Auto remove after 3.5 seconds
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.style.animation = 'slideInRight 0.4s ease reverse';
+                    setTimeout(() => toast.remove(), 400);
+                }
+            }, 3500);
+        }
 
-        <!-- Endorsements -->
-        <div class="score-row">
-          <span class="score-label">Endorsements</span>
-          <span class="score-value">{{ skill.endorsementCount }}</span>
-        </div>
-      </div>
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            
+            // Animate skill cards on load
+            const cards = document.querySelectorAll('.skill-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                card.style.transition = `all 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${index * 0.1}s`;
+                
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100);
+            });
 
-      <div class="skill-actions">
-        <button class="btn-secondary" (click)="refreshAuthenticity(skill.id)" title="Recalculer le score">
-          Recalculer
-        </button>
-        <button class="btn-danger" (click)="deleteSkill(skill.id)">
-          Supprimer
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-</div>
+            // Animate stats
+            const stats = document.querySelectorAll('.stat-card');
+            stats.forEach((stat, index) => {
+                stat.style.opacity = '0';
+                stat.style.transform = 'translateY(20px)';
+                stat.style.transition = `all 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${index * 0.15}s`;
+                
+                setTimeout(() => {
+                    stat.style.opacity = '1';
+                    stat.style.transform = 'translateY(0)';
+                }, 300);
+            });
+        });
+    </script>
+</body>
+</html>

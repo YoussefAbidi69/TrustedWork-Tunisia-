@@ -5,9 +5,17 @@ import { Education } from '../../../core/models/freelancer.model';
 
 /**
  * Composant Education — parcours académique du freelancer
- * Données déclarées manuellement par l'utilisateur
- * Branché sur le freelancer-profile-service (port 8082)
- * Endpoints : GET/POST/DELETE /api/educations/user/{userId}
+ * Endpoints utilisés :
+ *   GET    /api/educations/user/{userId}
+ *   POST   /api/educations/user/{userId}
+ *   PUT    /api/educations/{eduId}/user/{userId}
+ *   DELETE /api/educations/{eduId}/user/{userId}
+ *
+ * Fonctionnalités :
+ * - Affichage trié par année décroissante (géré côté backend)
+ * - Ajout avec détection doublon (message d'erreur backend)
+ * - Modification inline (formulaire d'édition par card)
+ * - Suppression avec confirmation
  */
 @Component({
   selector: 'app-education',
@@ -19,22 +27,26 @@ export class EducationComponent implements OnInit {
   educations: Education[] = [];
   isLoading = false;
   errorMessage = '';
-  showForm = false;
+  showAddForm = false;
 
   // Formulaire d'ajout
-  newEdu: {
-    degree: string;
-    institution: string;
-    fieldOfStudy: string;
-    graduationYear: number | null;
-  } = {
+  newEdu = {
     degree: '',
     institution: '',
     fieldOfStudy: '',
-    graduationYear: null
+    graduationYear: null as number | null
   };
 
-  // Années disponibles pour le select (1990 → année courante)
+  // Formulaire d'édition — on stocke l'id de la card en cours d'édition
+  editingId: number | null = null;
+  editForm = {
+    degree: '',
+    institution: '',
+    fieldOfStudy: '',
+    graduationYear: null as number | null
+  };
+
+  // Années disponibles pour les selects (1950 → année courante)
   years: number[] = [];
 
   constructor(
@@ -51,20 +63,21 @@ export class EducationComponent implements OnInit {
     return this.authService.getCurrentAuthUser()!.userId;
   }
 
-  // Construire la liste des années pour le select
+  // Construire la liste d'années pour les selects
   private buildYears(): void {
     const current = new Date().getFullYear();
-    for (let y = current; y >= 1990; y--) {
+    for (let y = current; y >= 1950; y--) {
       this.years.push(y);
     }
   }
 
+  // ─── Chargement ──────────────────────────────────────────────────────────
   loadEducations(): void {
     this.isLoading = true;
     this.errorMessage = '';
     this.profileService.getMyEducations(this.currentUserId).subscribe({
       next: (data) => {
-        this.educations = data;
+        this.educations = data; // déjà triées par année DESC côté backend
         this.isLoading = false;
       },
       error: () => {
@@ -74,8 +87,12 @@ export class EducationComponent implements OnInit {
     });
   }
 
+  // ─── Ajout ────────────────────────────────────────────────────────────────
   addEducation(): void {
-    if (!this.newEdu.degree.trim() || !this.newEdu.institution.trim()) return;
+    if (!this.newEdu.degree.trim() || !this.newEdu.institution.trim()) {
+      this.errorMessage = 'Le diplôme et l\'établissement sont obligatoires.';
+      return;
+    }
 
     const payload: Partial<Education> = {
       degree: this.newEdu.degree.trim(),
@@ -86,23 +103,57 @@ export class EducationComponent implements OnInit {
 
     this.profileService.addEducation(this.currentUserId, payload).subscribe({
       next: () => {
-        this.newEdu = {
-          degree: '',
-          institution: '',
-          fieldOfStudy: '',
-          graduationYear: null
-        };
-        this.showForm = false;
+        this.resetAddForm();
+        this.showAddForm = false;
         this.loadEducations();
       },
-      error: () => {
-        this.errorMessage = 'Erreur lors de l\'ajout.';
+      error: (err) => {
+        // Le backend retourne le message métier (ex: doublon détecté)
+        this.errorMessage = err.error || 'Erreur lors de l\'ajout.';
       }
     });
   }
 
+  // ─── Édition ─────────────────────────────────────────────────────────────
+  startEdit(edu: Education): void {
+    this.editingId = edu.id;
+    this.editForm = {
+      degree: edu.degree,
+      institution: edu.institution,
+      fieldOfStudy: edu.fieldOfStudy || '',
+      graduationYear: edu.graduationYear ?? null
+    };
+    this.errorMessage = '';
+  }
+
+  cancelEdit(): void {
+    this.editingId = null;
+    this.errorMessage = '';
+  }
+
+  saveEdit(eduId: number): void {
+    const payload: Partial<Education> = {
+      degree: this.editForm.degree.trim(),
+      institution: this.editForm.institution.trim(),
+      // undefined est compatible avec string | undefined (contrairement à null)
+      fieldOfStudy: this.editForm.fieldOfStudy.trim() || undefined,
+      graduationYear: this.editForm.graduationYear ?? undefined
+    };
+
+    this.profileService.updateEducation(eduId, this.currentUserId, payload).subscribe({
+      next: () => {
+        this.editingId = null;
+        this.loadEducations();
+      },
+      error: (err) => {
+        this.errorMessage = err.error || 'Erreur lors de la modification.';
+      }
+    });
+  }
+
+  // ─── Suppression ─────────────────────────────────────────────────────────
   deleteEducation(eduId: number): void {
-    if (!confirm('Supprimer ce parcours ?')) return;
+    if (!confirm('Supprimer cette formation ?')) return;
     this.profileService.deleteEducation(eduId, this.currentUserId).subscribe({
       next: () => this.loadEducations(),
       error: () => {
@@ -111,8 +162,14 @@ export class EducationComponent implements OnInit {
     });
   }
 
-  toggleForm(): void {
-    this.showForm = !this.showForm;
+  // ─── Utilitaires ─────────────────────────────────────────────────────────
+  toggleAddForm(): void {
+    this.showAddForm = !this.showAddForm;
     this.errorMessage = '';
+    if (!this.showAddForm) this.resetAddForm();
+  }
+
+  private resetAddForm(): void {
+    this.newEdu = { degree: '', institution: '', fieldOfStudy: '', graduationYear: null };
   }
 }

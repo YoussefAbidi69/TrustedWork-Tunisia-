@@ -1,4 +1,4 @@
-<!-- Section Education — parcours académique connecté au freelancer-profile-service -->
+<!-- Section Education — parcours académique -->
 <div class="edu-container">
 
   <!-- En-tête -->
@@ -7,37 +7,39 @@
       <h2>Parcours Académique</h2>
       <p class="subtitle">{{ educations.length }} formation(s) déclarée(s)</p>
     </div>
-    <button class="btn-primary" (click)="toggleForm()">
-      {{ showForm ? 'Annuler' : '+ Ajouter' }}
+    <button class="btn-primary" (click)="toggleAddForm()">
+      {{ showAddForm ? 'Annuler' : '+ Ajouter' }}
     </button>
   </div>
 
-  <!-- Message d'erreur -->
+  <!-- Message d'erreur global -->
   <div class="error-banner" *ngIf="errorMessage">
     {{ errorMessage }}
   </div>
 
-  <!-- Formulaire d'ajout -->
-  <div class="add-form" *ngIf="showForm">
+  <!-- ─── Formulaire d'ajout ─────────────────────────────────────────────── -->
+  <div class="add-form card-form" *ngIf="showAddForm">
     <h3>Nouvelle formation</h3>
 
     <div class="form-row">
       <div class="form-group">
-        <label>Diplôme *</label>
+        <label>Diplôme <span class="required">*</span></label>
         <input
           type="text"
           [(ngModel)]="newEdu.degree"
           placeholder="Ex: Licence en Informatique, Master Cloud..."
           class="form-control"
+          maxlength="100"
         />
       </div>
       <div class="form-group">
-        <label>Établissement *</label>
+        <label>Établissement <span class="required">*</span></label>
         <input
           type="text"
           [(ngModel)]="newEdu.institution"
           placeholder="Ex: ESPRIT, ENSI, Université de Tunis..."
           class="form-control"
+          maxlength="100"
         />
       </div>
     </div>
@@ -50,6 +52,7 @@
           [(ngModel)]="newEdu.fieldOfStudy"
           placeholder="Ex: Génie Logiciel, Cloud Computing..."
           class="form-control"
+          maxlength="100"
         />
       </div>
       <div class="form-group">
@@ -61,44 +64,111 @@
       </div>
     </div>
 
-    <button class="btn-primary" (click)="addEducation()">Enregistrer</button>
+    <div class="form-actions">
+      <button class="btn-primary" (click)="addEducation()">Enregistrer</button>
+      <button class="btn-secondary" (click)="toggleAddForm()">Annuler</button>
+    </div>
   </div>
 
   <!-- Loader -->
-  <div class="loading" *ngIf="isLoading">Chargement...</div>
+  <div class="loading" *ngIf="isLoading">
+    <span>Chargement...</span>
+  </div>
 
-  <!-- Liste vide -->
-  <div class="empty-state" *ngIf="!isLoading && educations.length === 0">
+  <!-- État vide -->
+  <div class="empty-state" *ngIf="!isLoading && educations.length === 0 && !showAddForm">
+    <i class="fa fa-graduation-cap fa-2x"></i>
     <p>Aucune formation déclarée. Ajoutez votre parcours académique.</p>
   </div>
 
-  <!-- Liste des formations -->
+  <!-- ─── Liste des formations ───────────────────────────────────────────── -->
   <div class="edu-list" *ngIf="!isLoading && educations.length > 0">
     <div class="edu-card" *ngFor="let edu of educations">
 
-      <div class="edu-icon">
-        <i class="fa fa-graduation-cap"></i>
-      </div>
+      <!-- ─── Mode LECTURE ──────────────────────────────────────────────── -->
+      <ng-container *ngIf="editingId !== edu.id">
 
-      <div class="edu-content">
-        <div class="edu-header">
-          <span class="edu-degree">{{ edu.degree }}</span>
-          <span class="edu-year" *ngIf="edu.graduationYear">
-            {{ edu.graduationYear }}
+        <div class="edu-icon">
+          <i class="fa fa-graduation-cap"></i>
+        </div>
+
+        <div class="edu-content">
+          <div class="edu-header">
+            <span class="edu-degree">{{ edu.degree }}</span>
+            <span class="edu-year badge" *ngIf="edu.graduationYear">
+              {{ edu.graduationYear }}
+            </span>
+          </div>
+          <span class="edu-institution">{{ edu.institution }}</span>
+          <span class="edu-field" *ngIf="edu.fieldOfStudy">
+            {{ edu.fieldOfStudy }}
           </span>
         </div>
-        <span class="edu-institution">{{ edu.institution }}</span>
-        <span class="edu-field" *ngIf="edu.fieldOfStudy">
-          {{ edu.fieldOfStudy }}
-        </span>
-      </div>
 
-      <div class="edu-actions">
-        <button class="btn-danger" (click)="deleteEducation(edu.id)">
-          Supprimer
-        </button>
-      </div>
+        <div class="edu-actions">
+          <button class="btn-edit" (click)="startEdit(edu)" title="Modifier">
+            <i class="fa fa-pencil"></i> Modifier
+          </button>
+          <button class="btn-danger" (click)="deleteEducation(edu.id)" title="Supprimer">
+            <i class="fa fa-trash"></i> Supprimer
+          </button>
+        </div>
 
+      </ng-container>
+
+      <!-- ─── Mode ÉDITION ────────────────────────────────────────────────── -->
+      <ng-container *ngIf="editingId === edu.id">
+
+        <div class="edit-form-inline">
+          <h4>Modifier la formation</h4>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Diplôme *</label>
+              <input
+                type="text"
+                [(ngModel)]="editForm.degree"
+                class="form-control"
+                maxlength="100"
+              />
+            </div>
+            <div class="form-group">
+              <label>Établissement *</label>
+              <input
+                type="text"
+                [(ngModel)]="editForm.institution"
+                class="form-control"
+                maxlength="100"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Domaine d'études</label>
+              <input
+                type="text"
+                [(ngModel)]="editForm.fieldOfStudy"
+                class="form-control"
+                maxlength="100"
+              />
+            </div>
+            <div class="form-group">
+              <label>Année d'obtention</label>
+              <select [(ngModel)]="editForm.graduationYear" class="form-control">
+                <option [ngValue]="null">-- Sélectionner --</option>
+                <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn-primary" (click)="saveEdit(edu.id)">Sauvegarder</button>
+            <button class="btn-secondary" (click)="cancelEdit()">Annuler</button>
+          </div>
+        </div>
+
+      </ng-container>
     </div>
   </div>
 
