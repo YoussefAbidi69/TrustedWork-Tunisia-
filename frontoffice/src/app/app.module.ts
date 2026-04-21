@@ -15,6 +15,7 @@ import { ProfileModule } from './features/profile/profile.module';
 
 import { tokenInterceptor } from './core/interceptors/token.interceptor';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 
 @NgModule({
@@ -34,7 +35,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     ProfileModule
   ],
   providers: [
-    provideHttpClient(withInterceptors([tokenInterceptor]))
+    provideHttpClient(withInterceptors([tokenInterceptor])),
+    provideAnimationsAsync()
   ],
   bootstrap: [AppComponent]
 })

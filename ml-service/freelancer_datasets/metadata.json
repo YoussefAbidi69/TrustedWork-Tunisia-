@@ -1,0 +1,58 @@
+{
+  "auc": 0.6655,
+  "n_freelancers": 500,
+  "n_training_pairs": 3000,
+  "success_rate": 0.751,
+  "feature_cols": [
+    "project_budget_usd",
+    "project_deadline_days",
+    "fl_hourly_rate",
+    "fl_completion_rate",
+    "fl_on_time_rate",
+    "fl_avg_rating",
+    "fl_dispute_rate",
+    "fl_repeat_client_rate",
+    "fl_available_in_days",
+    "fl_portfolio_score",
+    "budget_match_score",
+    "deadline_feasible",
+    "category_match",
+    "exp_level_num",
+    "project_category_enc"
+  ],
+  "categories": [
+    "data",
+    "writing",
+    "marketing",
+    "dev",
+    "design"
+  ],
+  "top_features": {
+    "budget_match_score": 126,
+    "fl_hourly_rate": 102,
+    "fl_completion_rate": 91,
+    "fl_avg_rating": 86,
+    "fl_repeat_client_rate": 85,
+    "fl_dispute_rate": 83,
+    "fl_portfolio_score": 82,
+    "project_deadline_days": 76
+  },
+  "stats": {
+    "avg_rating": 3.9,
+    "avg_hourly_rate": 46.07,
+    "avg_completion_rate": 0.779,
+    "n_by_category": {
+      "design": 106,
+      "dev": 100,
+      "marketing": 99,
+      "data": 98,
+      "writing": 97
+    },
+    "n_by_level": {
+      "mid": 178,
+      "junior": 128,
+      "senior": 124,
+      "expert": 70
+    }
+  }
+}

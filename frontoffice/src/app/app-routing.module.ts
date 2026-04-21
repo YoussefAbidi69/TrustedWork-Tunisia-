@@ -26,7 +26,12 @@ const routes: Routes = [
     component: PublicLayoutComponent,
     children: [
       { path: '', component: LandingComponent },
-      { path: 'sign/contract/:id', component: ContractSignComponent }
+      { path: 'sign/contract/:id', component: ContractSignComponent },
+      // 👇 NOUVEAU : Page de recommandation publique (accessible sans login)
+      { 
+        path: 'recommendation', 
+        loadChildren: () => import('./features/recommendation/recommendation.module').then(m => m.RecommendationModule)
+      }
     ]
   },
 
@@ -71,6 +76,11 @@ const routes: Routes = [
           import('./features/finance/finance.module').then(
             (m) => m.FinanceModule
           )
+      },
+      // 👇 NOUVEAU : Recommandation dans le dashboard (accessible après login)
+      {
+        path: 'recommendation',
+        loadChildren: () => import('./features/recommendation/recommendation.module').then(m => m.RecommendationModule)
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]

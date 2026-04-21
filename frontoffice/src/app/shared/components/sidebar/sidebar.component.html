@@ -53,6 +53,15 @@
       <i class="fas" [ngClass]="item.icon"></i>
       <span *ngIf="!collapsed">{{ item.label }}</span>
     </a>
+    
+    <a
+      routerLink="/app/recommendation"
+      routerLinkActive="active"
+      class="sidebar-link">
+      <i class="fas fa-robot"></i>
+      <span *ngIf="!collapsed">Recommandation IA</span>
+    </a>
+
 
     <!-- Section: Business -->
     <div class="sidebar-section-label" *ngIf="!collapsed">Business</div>

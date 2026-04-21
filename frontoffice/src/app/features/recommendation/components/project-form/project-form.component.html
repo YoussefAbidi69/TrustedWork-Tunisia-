@@ -1,0 +1,189 @@
+<div class="recommendation-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>🎯 Trouvez le freelancer idéal</h1>
+    <p>Répondez à ces 3 étapes pour obtenir des recommandations personnalisées</p>
+    
+    <!-- Status ML Service -->
+    <div class="ml-status" [class.online]="isMLServiceAvailable" [class.offline]="!isMLServiceAvailable">
+      <span class="status-dot"></span>
+      {{ isMLServiceAvailable ? 'Service IA disponible' : 'Service IA indisponible - Vérifiez que le service ML est démarré' }}
+    </div>
+  </div>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar">
+    <div class="progress-fill" [style.width.%]="getProgressWidth()"></div>
+  </div>
+
+  <!-- Stepper -->
+  <mat-stepper [linear]="true" #stepper (selectionChange)="onStepChange($event.selectedIndex)">
+    
+    <!-- ÉTAPE 1 -->
+    <mat-step [stepControl]="descriptionForm">
+      <form [formGroup]="descriptionForm">
+        <ng-template matStepLabel>📝 Description du projet</ng-template>
+        
+        <div class="step-content">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Décrivez votre projet en détail</mat-label>
+            <textarea matInput formControlName="description" rows="6" 
+                      placeholder="Ex: J'ai besoin d'un développeur React pour créer un dashboard avec authentification..."></textarea>
+            <mat-hint>Plus la description est détaillée, meilleurs seront les résultats</mat-hint>
+            <mat-error>La description est requise (minimum 10 caractères)</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Catégorie</mat-label>
+            <mat-select formControlName="category">
+              <mat-option *ngFor="let cat of categories" [value]="cat.value">
+                {{ cat.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="step-actions">
+          <button mat-button matStepperNext [disabled]="!descriptionForm.valid" color="primary">
+            Suivant <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- ÉTAPE 2 -->
+    <mat-step [stepControl]="budgetForm">
+      <form [formGroup]="budgetForm">
+        <ng-template matStepLabel>💰 Budget & Délai</ng-template>
+        
+        <div class="step-content">
+          <div class="two-columns">
+            <mat-form-field appearance="outline">
+              <mat-label>Budget (USD)</mat-label>
+              <input matInput type="number" formControlName="budget" min="100">
+              <mat-hint>Budget total estimé</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Délai (jours)</mat-label>
+              <input matInput type="number" formControlName="deadlineDays" min="1" max="365">
+              <mat-hint>Durée estimée du projet</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="info-card">
+            <mat-icon>info</mat-icon>
+            <span>Ces informations nous aident à filtrer les freelancers disponibles et à estimer la compatibilité budgétaire.</span>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button mat-button matStepperPrevious>
+            <mat-icon>arrow_back</mat-icon> Retour
+          </button>
+          <button mat-button matStepperNext [disabled]="!budgetForm.valid" color="primary">
+            Suivant <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- ÉTAPE 3 -->
+    <mat-step [stepControl]="modeForm">
+      <form [formGroup]="modeForm">
+        <ng-template matStepLabel>🎯 Mode de recommandation</ng-template>
+        
+        <div class="step-content">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Que souhaitez-vous optimiser ?</mat-label>
+            <mat-select formControlName="optimizationMode">
+              <mat-option *ngFor="let mode of optimizationModes" [value]="mode.value">
+                {{ mode.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div class="mode-description" *ngIf="modeForm.get('optimizationMode')?.value">
+            <mat-icon>info</mat-icon>
+            <p>{{ getModeDescription() }}</p>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button mat-button matStepperPrevious>
+            <mat-icon>arrow_back</mat-icon> Retour
+          </button>
+          <button mat-button color="primary" (click)="onSubmit()" 
+                  [disabled]="!modeForm.valid || isLoading || !isMLServiceAvailable">
+            <mat-icon *ngIf="!isLoading">search</mat-icon>
+            <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
+            {{ isLoading ? 'Recherche en cours...' : '🔍 Trouver des freelancers' }}
+          </button>
+        </div>
+      </form>
+    </mat-step>
+  </mat-stepper>
+
+  <!-- RÉSULTATS -->
+  <div *ngIf="recommendations.length > 0" class="results-section">
+    <div class="results-header">
+      <h2>✨ Top {{ recommendations.length }} freelancers recommandés</h2>
+    </div>
+
+    <div class="freelancer-grid">
+      <mat-card *ngFor="let rec of recommendations; let i = index" class="freelancer-card">
+        <div class="rank-badge">#{{ i + 1 }}</div>
+        
+        <mat-card-header>
+          <div mat-card-avatar class="avatar">{{ rec.name.charAt(0) }}</div>
+          <mat-card-title>{{ rec.name }}</mat-card-title>
+          <mat-card-subtitle>
+            <span class="category-badge">{{ rec.category | uppercase }}</span>
+            <span class="level-badge" [class]="rec.experienceLevel">{{ rec.experienceLevel }}</span>
+          </mat-card-subtitle>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div class="scores">
+            <div class="score-item">
+              <span class="score-label">🎯 Succès</span>
+              <span class="score-value">{{ (rec.successProba * 100).toFixed(0) }}%</span>
+            </div>
+            <div class="score-item">
+              <span class="score-label">📝 Sémantique</span>
+              <span class="score-value">{{ (rec.semanticScore * 100).toFixed(0) }}%</span>
+            </div>
+            <div class="score-item">
+              <span class="score-label">⭐ Note</span>
+              <span class="score-value">{{ rec.avgRating }}/5</span>
+            </div>
+          </div>
+
+          <div class="details">
+            <div class="detail-item">
+              <span>{{ rec.hourlyRateUsd }} DT/h</span>
+            </div>
+            <div class="detail-item">
+              <span>CIN: {{ rec.cin }}</span>
+            </div>
+          </div>
+
+          <div class="skills">
+            <mat-chip-set>
+              <mat-chip *ngFor="let skill of rec.skills.slice(0, 4)" size="small">{{ skill }}</mat-chip>
+              <mat-chip *ngIf="rec.skills.length > 4" size="small">+{{ rec.skills.length - 4 }}</mat-chip>
+            </mat-chip-set>
+          </div>
+        </mat-card-content>
+        
+
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Analyse en cours...</p>
+  </div>
+</div>
