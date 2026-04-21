@@ -116,6 +116,11 @@ export class SidebarComponent implements OnInit {
       route: '/admin/projects/admin/ml-prediction',
       badgeType: 'info'
     },
+    {
+      label: 'Burndown Chart',
+      icon: 'fa-fire-flame-curved',
+      route: '/admin/projects/admin/burndown',
+    },
     // ═══ FIN MODULE 08 ═══
     {
       sectionLabel: 'Platform',

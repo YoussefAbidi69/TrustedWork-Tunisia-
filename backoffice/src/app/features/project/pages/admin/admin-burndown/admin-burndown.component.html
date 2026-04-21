@@ -1,0 +1,244 @@
+<div class="bd-page">
+
+  <!-- ── Page Header ────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fas fa-fire-flame-curved text-accent"></i> Burndown Charts</h1>
+      <p class="page-subtitle">Suivi d'avancement par rapport à la courbe idéale — vélocité & projection de livraison</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" (click)="goBack()"><i class="fas fa-arrow-left"></i> Retour</button>
+      <button class="btn btn-ghost btn-sm" (click)="refresh()" [disabled]="loadingChart || !selectedId">
+        <i class="fas fa-rotate-right" [class.fa-spin]="loadingChart"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Loading projects ──────────────────────────────────────── -->
+  <div class="empty-state" *ngIf="loadingProjects">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Chargement des projets…</p>
+  </div>
+
+  <!-- ── Main layout ───────────────────────────────────────────── -->
+  <div class="bd-layout" *ngIf="!loadingProjects">
+
+    <!-- Left: Project list -->
+    <aside class="bd-sidebar">
+      <div class="bd-sidebar-title">Projets</div>
+      <div class="bd-project-list">
+        <div
+          class="bd-project-item"
+          *ngFor="let p of projects"
+          [class.active]="p.id === selectedId"
+          (click)="selectProject(p.id)">
+          <div class="bd-project-name">{{ p.title }}</div>
+          <span class="badge badge-sm" [ngClass]="projectStatusBadge(p.status)">{{ p.status }}</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right: Burndown panel -->
+    <main class="bd-main">
+
+      <!-- Loading chart -->
+      <div class="bd-loading" *ngIf="loadingChart">
+        <i class="fas fa-spinner fa-spin"></i>
+        <span>Calcul du burndown en cours…</span>
+      </div>
+
+      <!-- No project selected -->
+      <div class="empty-state" *ngIf="!loadingChart && !chart && !selectedId">
+        <i class="fas fa-fire-flame-curved"></i>
+        <p>Sélectionnez un projet pour afficher son burndown</p>
+      </div>
+
+      <!-- Chart panel -->
+      <div class="bd-panel" *ngIf="!loadingChart && chart">
+
+        <!-- Panel header -->
+        <div class="bd-panel-header">
+          <div class="bd-panel-title-row">
+            <h2 class="bd-panel-title">{{ chart.projectTitle }}</h2>
+            <span class="badge" [ngClass]="statusBadge(chart.statutBurndown)">
+              {{ statusLabel(chart.statutBurndown) }}
+            </span>
+          </div>
+          <div class="bd-panel-dates">
+            <span><i class="fas fa-calendar-day"></i> Début : {{ formatDate(chart.startDate) }}</span>
+            <span><i class="fas fa-calendar-check"></i> Fin prévue : {{ formatDate(chart.endDate) }}</span>
+            <span *ngIf="chart.dateLivraisonProjetee">
+              <i class="fas fa-bullseye"></i> Livraison projetée : {{ formatDate(chart.dateLivraisonProjetee) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Metrics row -->
+        <div class="bd-metrics">
+
+          <div class="bd-metric">
+            <i class="fas fa-tasks bd-metric-icon icon-total"></i>
+            <div>
+              <span class="bd-metric-value">{{ chart.tachesCompletees }}/{{ chart.totalTaches }}</span>
+              <span class="bd-metric-label">Tâches complétées</span>
+            </div>
+          </div>
+
+          <div class="bd-metric">
+            <i class="fas fa-hourglass-half bd-metric-icon icon-remaining"></i>
+            <div>
+              <span class="bd-metric-value">{{ chart.tachesRestantesAujourdhui }}</span>
+              <span class="bd-metric-label">Tâches restantes</span>
+            </div>
+          </div>
+
+          <div class="bd-metric">
+            <i class="fas fa-gauge-high bd-metric-icon icon-velocity"></i>
+            <div>
+              <span class="bd-metric-value">{{ velociteLabel(chart.velociteJournaliere) }}</span>
+              <span class="bd-metric-label">Vélocité</span>
+            </div>
+          </div>
+
+          <div class="bd-metric" [ngClass]="retardClass(chart.retardEstimeJours)">
+            <i class="fas fa-clock-rotate-left bd-metric-icon icon-delay"></i>
+            <div>
+              <span class="bd-metric-value">{{ retardLabel(chart.retardEstimeJours) }}</span>
+              <span class="bd-metric-label">Retard estimé</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ── SVG Burndown Chart ──────────────────────────────── -->
+        <div class="bd-chart-wrap">
+          <svg
+            class="bd-svg"
+            [attr.viewBox]="'0 0 ' + VW + ' ' + VH"
+            preserveAspectRatio="xMidYMid meet">
+
+            <defs>
+              <!-- Gradient for real curve area fill -->
+              <linearGradient id="realGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   [attr.stop-color]="statusColor(chart.statutBurndown)" stop-opacity="0.25"/>
+                <stop offset="100%" [attr.stop-color]="statusColor(chart.statutBurndown)" stop-opacity="0.02"/>
+              </linearGradient>
+              <!-- Gradient for ideal area fill -->
+              <linearGradient id="idealGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#6366f1" stop-opacity="0.08"/>
+                <stop offset="100%" stop-color="#6366f1" stop-opacity="0.01"/>
+              </linearGradient>
+            </defs>
+
+            <!-- Background -->
+            <rect [attr.x]="OX" [attr.y]="OY" [attr.width]="CW" [attr.height]="CH"
+                  fill="rgba(255,255,255,0.02)" rx="4"/>
+
+            <!-- Horizontal grid lines -->
+            <g class="bd-grid">
+              <line *ngFor="let gy of gridLines"
+                    [attr.x1]="OX" [attr.y1]="gy.toFixed(1)"
+                    [attr.x2]="OX + CW" [attr.y2]="gy.toFixed(1)"
+                    stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+            </g>
+
+            <!-- Y axis labels -->
+            <g class="bd-y-labels">
+              <text *ngFor="let lbl of yLabels"
+                    [attr.x]="OX - 8" [attr.y]="lbl.y + 4"
+                    text-anchor="end" fill="rgba(255,255,255,0.35)" font-size="10">
+                {{ lbl.value }}
+              </text>
+            </g>
+
+            <!-- X axis labels -->
+            <g class="bd-x-labels">
+              <text *ngFor="let lbl of xLabels"
+                    [attr.x]="lbl.x" [attr.y]="OY + CH + 18"
+                    text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="10">
+                {{ lbl.label }}
+              </text>
+            </g>
+
+            <!-- Ideal curve area fill -->
+            <polygon *ngIf="realAreaPolygon"
+                     [attr.points]="realAreaPolygon"
+                     fill="url(#idealGrad)"/>
+
+            <!-- Real curve area fill -->
+            <polygon *ngIf="realAreaPolygon"
+                     [attr.points]="realAreaPolygon"
+                     fill="url(#realGrad)"/>
+
+            <!-- Ideal curve (dashed indigo) -->
+            <polyline *ngIf="idealPolyline"
+                      [attr.points]="idealPolyline"
+                      fill="none"
+                      stroke="#6366f1"
+                      stroke-width="2"
+                      stroke-dasharray="6 4"
+                      stroke-linecap="round"/>
+
+            <!-- Real curve (solid, status color) -->
+            <polyline *ngIf="realPolyline"
+                      [attr.points]="realPolyline"
+                      fill="none"
+                      [attr.stroke]="statusColor(chart.statutBurndown)"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"/>
+
+            <!-- Today vertical line -->
+            <g *ngIf="todayX >= OX && todayX <= OX + CW">
+              <line [attr.x1]="todayX.toFixed(1)" [attr.y1]="OY"
+                    [attr.x2]="todayX.toFixed(1)" [attr.y2]="OY + CH"
+                    stroke="rgba(251,191,36,0.6)" stroke-width="1.5" stroke-dasharray="4 3"/>
+              <text [attr.x]="todayX + 4" [attr.y]="OY + 12"
+                    fill="rgba(251,191,36,0.85)" font-size="9" font-weight="700">
+                Aujourd'hui
+              </text>
+            </g>
+
+            <!-- Axes -->
+            <line [attr.x1]="OX" [attr.y1]="OY" [attr.x2]="OX" [attr.y2]="OY + CH"
+                  stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+            <line [attr.x1]="OX" [attr.y1]="OY + CH" [attr.x2]="OX + CW" [attr.y2]="OY + CH"
+                  stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+
+          </svg>
+
+          <!-- Legend -->
+          <div class="bd-legend">
+            <span class="bd-legend-item">
+              <svg width="24" height="10"><line x1="0" y1="5" x2="24" y2="5" stroke="#6366f1" stroke-width="2" stroke-dasharray="5 3"/></svg>
+              Courbe idéale
+            </span>
+            <span class="bd-legend-item">
+              <svg width="24" height="10">
+                <line x1="0" y1="5" x2="24" y2="5"
+                      [attr.stroke]="statusColor(chart.statutBurndown)"
+                      stroke-width="2.5"/>
+              </svg>
+              Courbe réelle
+            </span>
+            <span class="bd-legend-item">
+              <svg width="24" height="10"><line x1="12" y1="0" x2="12" y2="10" stroke="rgba(251,191,36,0.8)" stroke-width="1.5" stroke-dasharray="3 2"/></svg>
+              Aujourd'hui
+            </span>
+          </div>
+        </div>
+
+        <!-- AI Analysis -->
+        <div class="bd-analysis">
+          <div class="bd-analysis-header">
+            <i class="fas fa-robot"></i>
+            <span>Analyse automatique</span>
+          </div>
+          <p class="bd-analysis-text">{{ chart.analyse }}</p>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+</div>

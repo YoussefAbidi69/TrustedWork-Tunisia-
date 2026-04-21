@@ -12,6 +12,7 @@ import { AdminRisksComponent } from './pages/admin/admin-risks/admin-risks.compo
 import { AdminReportsComponent } from './pages/admin/admin-reports/admin-reports.component';
 import { AdminDetailComponent } from './pages/admin/admin-detail/admin-detail.component';
 import { AdminMlPredictionComponent } from './pages/admin/admin-ml-prediction/admin-ml-prediction.component';
+import { AdminBurndownComponent } from './pages/admin/admin-burndown/admin-burndown.component';
 
 @NgModule({
   declarations: [
@@ -22,7 +23,8 @@ import { AdminMlPredictionComponent } from './pages/admin/admin-ml-prediction/ad
     AdminRisksComponent,
     AdminReportsComponent,
     AdminDetailComponent,
-    AdminMlPredictionComponent
+    AdminMlPredictionComponent,
+    AdminBurndownComponent
   ],
   imports: [
     CommonModule,

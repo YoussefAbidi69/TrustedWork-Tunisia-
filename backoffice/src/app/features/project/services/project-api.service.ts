@@ -10,7 +10,8 @@ import {
   DeliveryRiskSignal,
   ProjectNotification,
   ProjectStatus,
-  MLPrediction
+  MLPrediction,
+  BurndownChart
 } from '../models/project.models';
 
 @Injectable({ providedIn: 'root' })
@@ -245,6 +246,12 @@ export class ProjectApiService {
   predictDeliveryRisk(projectId: number): Observable<MLPrediction> {
     return this.http.get<MLPrediction>(
       `${this.BASE}/api/projects/${projectId}/risks/ml-predict`, { headers: this.getHeaders() }
+    );
+  }
+
+  getBurndownChart(projectId: number): Observable<BurndownChart> {
+    return this.http.get<BurndownChart>(
+      `${this.BASE}/api/projects/${projectId}/burndown`, { headers: this.getHeaders() }
     );
   }
 

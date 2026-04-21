@@ -9,6 +9,7 @@ import { AdminRisksComponent } from './pages/admin/admin-risks/admin-risks.compo
 import { AdminReportsComponent } from './pages/admin/admin-reports/admin-reports.component';
 import { AdminDetailComponent } from './pages/admin/admin-detail/admin-detail.component';
 import { AdminMlPredictionComponent } from './pages/admin/admin-ml-prediction/admin-ml-prediction.component';
+import { AdminBurndownComponent } from './pages/admin/admin-burndown/admin-burndown.component';
 
 const routes: Routes = [
   // /admin/projects → Dashboard Module 08
@@ -22,6 +23,7 @@ const routes: Routes = [
   { path: 'admin/reports',       component: AdminReportsComponent },
   { path: 'admin/detail/:id',    component: AdminDetailComponent },
   { path: 'admin/ml-prediction', component: AdminMlPredictionComponent },
+  { path: 'admin/burndown',      component: AdminBurndownComponent },
 ];
 
 @NgModule({
