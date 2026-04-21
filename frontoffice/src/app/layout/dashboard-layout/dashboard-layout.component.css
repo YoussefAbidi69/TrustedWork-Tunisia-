@@ -2,8 +2,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 :host {
-  --sidebar-w:     270px;
-  --sidebar-w-col: 72px;
+  /*
+   * ⚠️ Ces valeurs DOIVENT correspondre exactement à la sidebar :
+   * sidebar.component.css → --sidebar-w: 292px / --sidebar-w-col: 84px
+   */
+  --sidebar-w:     292px;
+  --sidebar-w-col: 84px;
   --nav-h:         76px;
 
   display: block;
@@ -12,21 +16,16 @@
   font-family: 'DM Sans', sans-serif;
 }
 
-/*
-  Sidebar est fixed → on compense avec margin-left.
-  Par défaut collapsed = true → margin = 72px.
-  Quand expanded → margin = 270px.
-*/
-
+/* Le wrapper compense le sidebar fixed */
 .dashboard-wrapper {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  margin-left: var(--sidebar-w-col);       /* collapsed par défaut */
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: var(--sidebar-w-col);   /* sidebar collapsed par défaut = 84px */
+  transition: margin-left 0.28s ease;
 }
 
-/* Sidebar étendue */
+/* Sidebar étendue → décaler de 292px */
 :host:not(.sidebar-collapsed) .dashboard-wrapper {
   margin-left: var(--sidebar-w);
 }
@@ -41,11 +40,29 @@ app-navbar {
 
 .dashboard-content {
   flex: 1;
-  padding: 28px;
+  /* padding réduit : la sidebar prend déjà de la place */
+  padding: 24px 20px;
   background: linear-gradient(180deg, #0d1929 0%, #0f1e2f 100%);
   min-height: calc(100vh - var(--nav-h));
   overflow-x: hidden;
+
+  /* Fix visibilité : annule color:#1B1F2A du body global */
+  color: #f1f5f9;
 }
+
+.dashboard-content a { color: inherit; }
+
+.dashboard-content h1,
+.dashboard-content h2,
+.dashboard-content h3,
+.dashboard-content h4,
+.dashboard-content h5,
+.dashboard-content h6 { color: #f1f5f9; }
+
+.dashboard-content p,
+.dashboard-content span,
+.dashboard-content label,
+.dashboard-content small { color: inherit; }
 
 router-outlet + * {
   display: block;
@@ -54,5 +71,5 @@ router-outlet + * {
 
 @keyframes fadeSlideIn {
   from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0);   }
+  to   { opacity: 1; transform: translateY(0); }
 }

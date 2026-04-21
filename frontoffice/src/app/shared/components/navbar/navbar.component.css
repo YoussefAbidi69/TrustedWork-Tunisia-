@@ -139,18 +139,16 @@
   left: 50%;
   transform: translateX(-50%) translateY(4px);
   min-width: 320px;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
-  pointer-events: none;
   z-index: 200;
 }
 
-.nav-item.has-dropdown:hover .dropdown-panel {
-  opacity: 1;
-  visibility: visible;
+.dropdown-panel {
+  position: absolute;
+  top: 100%;
+  left: 50%;
   transform: translateX(-50%) translateY(0);
-  pointer-events: auto;
+  min-width: 320px;
+  z-index: 200;
 }
 
 .dropdown-panel__inner {

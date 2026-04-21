@@ -1,53 +1,130 @@
 ﻿<aside class="dashboard-sidebar" [class.collapsed]="collapsed">
   <a routerLink="/app/dashboard" class="sb-brand">
     <div class="sb-logo">TW</div>
+
     <div class="sb-brand-text" *ngIf="!collapsed">
       <strong>TrustedWork</strong>
       <small>Tunisia</small>
     </div>
   </a>
-  <div class="sb-profile">
-    <div class="profile-avatar">{{ authService.getUserInitials() }}</div>
-    <div class="profile-meta" *ngIf="!collapsed">
-      <strong>{{ currentUser?.email }}</strong>
-      <span class="trust-badge">Trust {{ trustLevel }}/5</span>
+
+  <div class="sb-profile-card">
+    <div class="sb-profile">
+      <div class="profile-avatar">{{ initials }}</div>
+
+      <div class="profile-meta" *ngIf="!collapsed">
+        <strong>{{ displayName }}</strong>
+        <span>{{ roleLabel }}</span>
+      </div>
+    </div>
+
+    <div class="sidebar-trust" *ngIf="!collapsed">
+      <div class="sidebar-trust__head">
+        <span>Trust score</span>
+        <strong>{{ trustLevel }}/5</strong>
+      </div>
+
+      <div class="sidebar-trust__bar">
+        <div class="fill" [style.width.%]="trustPercent"></div>
+      </div>
+
+      <div class="sidebar-trust__foot">
+        <small>{{ visibleTrustLabel }}</small>
+        <small>{{ totalNavItems }} sections</small>
+      </div>
     </div>
   </div>
-  <button type="button" class="sb-collapse-btn" (click)="onToggleCollapse()">
+
+  <button
+    type="button"
+    class="sb-collapse-btn"
+    (click)="onToggleCollapse()"
+    [attr.title]="collapsed ? 'Ouvrir la sidebar' : 'Réduire la sidebar'">
     <i class="fas" [ngClass]="collapsed ? 'fa-angles-right' : 'fa-angles-left'"></i>
+    <span class="sb-collapse-label" *ngIf="!collapsed">
+      {{ collapsed ? 'Ouvrir' : 'Réduire' }}
+    </span>
   </button>
+
   <nav class="sidebar-nav">
-    <a [routerLink]="dashboardLink.route" routerLinkActive="active" class="sidebar-link">
-      <i class="fas" [ngClass]="dashboardLink.icon"></i>
-      <span *ngIf="!collapsed">{{ dashboardLink.label }}</span>
+    <a
+      [routerLink]="dashboardLink.route"
+      routerLinkActive="active"
+      class="sidebar-link"
+      [attr.title]="collapsed ? dashboardLink.label : null">
+      <span class="sidebar-link__icon">
+        <i class="fas" [ngClass]="dashboardLink.icon"></i>
+      </span>
+      <span class="sidebar-link__label" *ngIf="!collapsed">{{ dashboardLink.label }}</span>
     </a>
-    <div class="nav-group" *ngFor="let group of navGroups">
-      <button type="button" class="sidebar-link sidebar-group-btn" [class.group-open]="group.expanded" (click)="toggleGroup(group)" [title]="collapsed ? group.label : ''">
-        <i class="fas" [ngClass]="group.icon"></i>
-        <span *ngIf="!collapsed">{{ group.label }}</span>
-        <i class="fas fa-chevron-down chevron" *ngIf="!collapsed" [class.rotated]="group.expanded"></i>
+
+    <div class="nav-group" *ngFor="let group of navGroups; trackBy: trackByGroup">
+      <button
+        type="button"
+        class="sidebar-link sidebar-group-btn"
+        [class.group-open]="group.expanded"
+        (click)="toggleGroup(group)"
+        [attr.title]="collapsed ? group.label : null">
+
+        <span class="sidebar-link__icon">
+          <i class="fas" [ngClass]="group.icon"></i>
+        </span>
+
+        <span class="sidebar-link__label" *ngIf="!collapsed">{{ group.label }}</span>
+
+        <span class="sidebar-link__badge" *ngIf="!collapsed">{{ group.children.length }}</span>
+
+        <i
+          class="fas fa-chevron-down chevron"
+          *ngIf="!collapsed"
+          [class.rotated]="group.expanded"></i>
       </button>
+
       <div class="group-children" [class.open]="group.expanded && !collapsed">
-        <ng-container *ngFor="let child of group.children">
-          <a [routerLink]="child.route" routerLinkActive="active-child" class="sidebar-child-link">
+        <ng-container *ngFor="let child of group.children; trackBy: trackByChild">
+          <a
+            *ngIf="!child.isDynamic || publicProfileReady"
+            [routerLink]="child.route"
+            routerLinkActive="active-child"
+            class="sidebar-child-link">
             <i class="fas" [ngClass]="child.icon"></i>
             <span>{{ child.label }}</span>
           </a>
+
+          <div
+            *ngIf="child.isDynamic && !publicProfileReady"
+            class="sidebar-child-link sidebar-child-link--disabled">
+            <i class="fas" [ngClass]="child.icon"></i>
+            <span>{{ child.label }}</span>
+            <small>Chargement</small>
+          </div>
         </ng-container>
       </div>
     </div>
+
     <hr class="sidebar-divider" />
-    <div class="sidebar-section-label" *ngIf="!collapsed">Bientot disponible</div>
-    <div *ngFor="let item of comingSoonItems" class="sidebar-link sidebar-link--disabled" [title]="collapsed ? item.label : ''">
-      <i class="fas" [ngClass]="item.icon"></i>
-      <span *ngIf="!collapsed">{{ item.label }}</span>
+
+    <div class="sidebar-section-label" *ngIf="!collapsed">Roadmap produit</div>
+
+    <div
+      *ngFor="let item of comingSoonItems"
+      class="sidebar-link sidebar-link--disabled"
+      [attr.title]="collapsed ? item.label : null">
+      <span class="sidebar-link__icon">
+        <i class="fas" [ngClass]="item.icon"></i>
+      </span>
+
+      <span class="sidebar-link__label" *ngIf="!collapsed">{{ item.label }}</span>
       <small class="coming-soon-badge" *ngIf="!collapsed">Soon</small>
     </div>
   </nav>
+
   <div class="sidebar-footer">
     <button type="button" class="sidebar-link sidebar-link--logout" (click)="onLogout()">
-      <i class="fas fa-right-from-bracket"></i>
-      <span *ngIf="!collapsed">Deconnexion</span>
+      <span class="sidebar-link__icon">
+        <i class="fas fa-right-from-bracket"></i>
+      </span>
+      <span class="sidebar-link__label" *ngIf="!collapsed">Déconnexion</span>
     </button>
   </div>
 </aside>
