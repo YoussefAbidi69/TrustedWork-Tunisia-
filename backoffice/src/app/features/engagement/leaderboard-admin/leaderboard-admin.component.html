@@ -1,0 +1,128 @@
+<div class="page-header animate-fade-in">
+  <div class="header-left">
+    <span class="badge-label">Engagement System</span>
+    <h1 class="page-title">Rankings &amp; Leadership</h1>
+    <p class="page-sub">Monitor user engagement scores and oversee global leadership</p>
+  </div>
+  <div class="actions">
+    <div class="filter-wrap">
+      <i class="fas fa-map-marker-alt"></i>
+      <select [(ngModel)]="selectedGov" (change)="onGovChange()">
+        <option value="">All Regions</option>
+        <option *ngFor="let g of governorates" [value]="g">{{ g }}</option>
+      </select>
+    </div>
+    <button class="btn-refresh" (click)="refresh()" [disabled]="loading">
+      <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> Refresh
+    </button>
+    <button class="btn-recompute" (click)="recompute()" [disabled]="recomputing">
+      <i class="fas fa-calculator" *ngIf="!recomputing"></i>
+      <i class="fas fa-spinner fa-spin" *ngIf="recomputing"></i>
+      {{ recomputing ? 'Calculating...' : 'Recompute All Ranks' }}
+    </button>
+  </div>
+</div>
+
+<div class="glow-line"></div>
+
+<div class="stats-mini">
+  <div class="stat-mini-card">
+    <span class="l">Total Ranked Users</span>
+    <span class="v">{{ displayedEntries.length }}</span>
+  </div>
+  <div class="stat-mini-card">
+    <span class="l">Average Score</span>
+    <span class="v">{{ getAverageScore() | number:'1.0-0' }}</span>
+  </div>
+  <div class="stat-mini-card" *ngIf="displayedEntries.length > 0">
+    <span class="l">Top Score</span>
+    <span class="v gold">{{ displayedEntries[0]?.engagementScore | number:'1.0-0' }}</span>
+  </div>
+</div>
+
+<div class="table-card animate-slide-up">
+  <div class="card-head">
+    <span class="card-head-title">{{ selectedGov ? selectedGov + ' Leaderboard' : 'Global Leaderboard' }}</span>
+    <span class="card-head-count">{{ displayedEntries.length }} members ranked</span>
+  </div>
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 80px;">Rank</th>
+          <th>Member</th>
+          <th>Region</th>
+          <th>Engagement Score</th>
+          <th class="text-right">Activity</th>
+        </tr>
+      </thead>
+      <tbody *ngIf="!loading; else skeleton">
+        <tr *ngFor="let entry of displayedEntries" [class.podium-row]="entry.rank <= 3">
+          <td>
+            <div class="rank-wrapper">
+              <div class="medal-badge medal-gold"   *ngIf="entry.rank === 1">
+                <i class="fas fa-crown"></i> 1
+              </div>
+              <div class="medal-badge medal-silver" *ngIf="entry.rank === 2">
+                <i class="fas fa-medal"></i> 2
+              </div>
+              <div class="medal-badge medal-bronze" *ngIf="entry.rank === 3">
+                <i class="fas fa-medal"></i> 3
+              </div>
+              <div class="rank-circle" *ngIf="entry.rank > 3">{{ entry.rank }}</div>
+            </div>
+          </td>
+          <td>
+            <div class="user-cell">
+              <div class="u-avatar"
+                   [class.avatar-gold]="entry.rank === 1"
+                   [class.avatar-silver]="entry.rank === 2"
+                   [class.avatar-bronze]="entry.rank === 3">
+                {{ getUserName(entry.userId) | slice:0:1 }}
+              </div>
+              <div class="u-info">
+                <span class="u-name">{{ getUserName(entry.userId) }}</span>
+                <span class="u-id">ID: #{{ entry.userId }}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="region-pill">{{ entry.governorate }}</span>
+          </td>
+          <td>
+            <div class="score-display">
+              <span class="score-num" [class.score-gold]="entry.rank === 1">
+                {{ entry.engagementScore | number:'1.0-0' }}
+              </span>
+              <div class="score-bar-bg">
+                <div class="score-bar-fill"
+                     [class.fill-gold]="entry.rank === 1"
+                     [style.width.%]="displayedEntries.length > 0 ? (entry.engagementScore / displayedEntries[0].engagementScore) * 100 : 0">
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="text-right">
+            <span class="badge-status">Active</span>
+          </td>
+        </tr>
+        <tr *ngIf="!loading && displayedEntries.length === 0">
+          <td colspan="5" class="empty-row">
+            <i class="fas fa-trophy" style="margin-right:8px; opacity:0.3;"></i>
+            No rankings found for this region.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<ng-template #skeleton>
+  <tbody>
+    <tr *ngFor="let i of [1,2,3,4,5]">
+      <td colspan="5" style="padding: 24px; text-align: center; color: #4B5563; font-size: 13px;">
+        <i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i> Loading rankings...
+      </td>
+    </tr>
+  </tbody>
+</ng-template>

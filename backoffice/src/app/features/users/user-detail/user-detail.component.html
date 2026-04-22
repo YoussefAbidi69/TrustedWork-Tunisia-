@@ -1,0 +1,99 @@
+<div class="user-detail-page" *ngIf="user">
+    <!-- Header: User Profile Overview -->
+    <div class="header-card">
+      <div class="header-content">
+        <div class="avatar-container">
+          <img [src]="user.photo || 'assets/default-avatar.png'" class="main-avatar" alt="User Photo">
+          <div class="status-indicator" [ngClass]="getStatusClass(user.accountStatus)"></div>
+        </div>
+        <div class="info-container">
+          <h1 class="user-name">{{ user.firstName }} {{ user.lastName }}</h1>
+          <div class="user-meta">
+            <span class="meta-item"><i class="fas fa-envelope"></i> {{ user.email }}</span>
+            <span class="meta-item"><i class="fas fa-id-card"></i> CIN: {{ user.cin }}</span>
+            <div class="role-badge">{{ user.role }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="header-stats">
+        <div class="stat-box">
+          <div class="stat-label">Engagement Score</div>
+          <div class="stat-value text-primary">{{ engagementScore }}%</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Account Status</div>
+          <div class="status-chip" [ngClass]="getStatusClass(user.accountStatus)">
+            {{ user.accountStatus }}
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="detail-grid">
+      <!-- Gamification Card -->
+      <div class="card gamification-card">
+        <div class="card-header">
+          <h3 class="card-title">Progression & XP</h3>
+        </div>
+        <div class="card-body" *ngIf="profile">
+          <div class="level-display">
+            <div class="level-number">Lvl {{ profile.level }}</div>
+            <div class="xp-text">{{ profile.xpPoints }} / {{ profile.xpPoints + profile.xpToNextLevel }} XP</div>
+          </div>
+          <div class="progress-container">
+            <div class="progress-bar" [style.width.%]="getProgressPercentage()"></div>
+          </div>
+          <div class="xp-remaining">
+            {{ profile.xpToNextLevel }} XP restants pour le niveau {{ profile.level + 1 }}
+          </div>
+          
+          <div class="quick-stats">
+             <div class="q-stat">
+                <div class="q-value">{{ badges.length }}</div>
+                <div class="q-label">Badges</div>
+             </div>
+             <div class="q-stat">
+                <div class="q-value">{{ profile.xpPoints }}</div>
+                <div class="q-label">Total XP</div>
+             </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Badges Card -->
+      <div class="card badges-card">
+        <div class="card-header">
+          <h3 class="card-title">Badges Collection</h3>
+        </div>
+        <div class="card-body">
+          <div class="badges-grid" *ngIf="badges.length > 0; else noBadges">
+            <div class="badge-item" *ngFor="let b of badges" [title]="b.description">
+              <div class="badge-wrapper">
+                <button class="remove-badge-btn" (click)="removeBadge(b.id)" title="Retirer ce badge">
+                   <i class="fas fa-times"></i>
+                </button>
+                <div class="badge-icon-wrapper" [ngClass]="b.rarity.toLowerCase() + '-aura'">
+                  <i [class]="b.iconUrl || 'fas fa-award'"></i>
+                </div>
+              </div>
+              <div class="badge-name">{{ b.name }}</div>
+              <div class="badge-rarity" [ngClass]="'text-' + b.rarity.toLowerCase()">
+                {{ b.rarity }}
+              </div>
+            </div>
+          </div>
+          <ng-template #noBadges>
+            <div class="empty-state">
+              <i class="fas fa-certificate empty-icon"></i>
+              <p>Cet utilisateur n'a pas encore débloqué de badges.</p>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="loading-overlay" *ngIf="loading && !user">
+    <div class="spinner"></div>
+    <p>Chargement du profil...</p>
+  </div>

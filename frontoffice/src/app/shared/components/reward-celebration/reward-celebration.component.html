@@ -1,0 +1,35 @@
+<div class="rewards-container">
+  
+  <!-- XP Floating Bubbles -->
+  <div *ngFor="let xp of activeXpGains" class="xp-bubble">
+    +{{ xp.amount }} XP
+  </div>
+
+  <!-- Level Up Notification -->
+  <div *ngIf="activeLevelUp" class="level-up-banner">
+    <div class="level-up-content">
+      <i class="fas fa-arrow-up-right-dots"></i>
+      <span>NIVEAU {{ activeLevelUp }} ATTEINT !</span>
+    </div>
+  </div>
+
+  <!-- Badge Unlock Modal -->
+  <div class="badge-modal-overlay" *ngIf="activeBadge" (click)="closeBadge()">
+    <div class="badge-modal-card" (click)="$event.stopPropagation()">
+      <div class="badge-shine"></div>
+      <div class="badge-content">
+        <h2 class="text-gold">NOUVEAU BADGE DÉBLOQUÉ !</h2>
+        <div class="badge-main-icon" [ngClass]="activeBadge.badge?.rarity || 'COMMON'">
+          <i [class]="activeBadge.badge?.iconUrl || 'fas fa-award'"></i>
+        </div>
+        <h3 class="badge-name">{{ activeBadge.badge?.name }}</h3>
+        <p class="badge-desc">{{ activeBadge.badge?.description }}</p>
+        <div class="badge-reward">
+          <span class="text-success">+{{ activeBadge.badge?.xpReward }} XP</span>
+        </div>
+        <button class="btn-claim" (click)="closeBadge()">GÉNIAL !</button>
+      </div>
+    </div>
+  </div>
+
+</div>

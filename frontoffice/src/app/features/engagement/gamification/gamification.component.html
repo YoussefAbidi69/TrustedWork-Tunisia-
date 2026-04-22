@@ -1,0 +1,182 @@
+<div class="eng-page">
+
+  <div class="eng-header">
+    <h1><i class="fas fa-trophy"></i> Ma Progression</h1>
+    <p>XP, badges et score d'engagement</p>
+  </div>
+
+  <div class="eng-loading" *ngIf="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- Profile Card -->
+    <div class="gam-profile-row">
+
+      <!-- XP Card -->
+      <div class="gam-card gam-card--xp">
+        <div class="gam-card__icon"><i class="fas fa-star"></i></div>
+        <div class="gam-card__body">
+          <span class="gam-label">Points XP</span>
+          <strong class="gam-value">{{ profile?.xpPoints ?? 0 }}</strong>
+        </div>
+      </div>
+
+      <!-- Level Card -->
+      <div class="gam-card gam-card--level">
+        <div class="gam-card__icon"><i class="fas fa-layer-group"></i></div>
+        <div class="gam-card__body">
+          <span class="gam-label">Niveau</span>
+          <strong class="gam-value">{{ profile?.level ?? 1 }}</strong>
+        </div>
+      </div>
+
+      <!-- Score Card -->
+      <div class="gam-card gam-card--score">
+        <div class="gam-card__icon"><i class="fas fa-chart-line"></i></div>
+        <div class="gam-card__body">
+          <span class="gam-label">Score Engagement</span>
+          <strong class="gam-value">{{ (profile?.engagementScore ?? 0) | number:'1.1-2' }}</strong>
+        </div>
+      </div>
+
+      <!-- Streak Card -->
+      <div class="gam-card gam-card--streak" *ngIf="profile">
+        <div class="gam-card__icon"><i class="fas fa-fire" [style.color]="(profile.currentStreak ?? 0) > 0 ? '#ff4500' : '#475569'"></i></div>
+        <div class="gam-card__body">
+          <span class="gam-label">Série Actuelle</span>
+          <strong class="gam-value">{{ profile.currentStreak ?? 0 }} Jours</strong>
+        </div>
+      </div>
+
+      <!-- Influence Card -->
+      <div class="gam-card gam-card--influence" *ngIf="analytics">
+        <div class="gam-card__icon"><i class="fas fa-bullhorn text-info"></i></div>
+        <div class="gam-card__body">
+          <span class="gam-label">Score d'Influence</span>
+          <strong class="gam-value">{{ analytics.influenceScore }}</strong>
+        </div>
+      </div>
+
+      <!-- Churn Risk Card -->
+      <div class="gam-card gam-card--churn" *ngIf="analytics">
+        <div class="gam-card__icon">
+          <i class="fas fa-skull-crossbones" [style.color]="analytics.churnRisk > 0.5 ? '#ef4444' : '#10b981'"></i>
+        </div>
+        <div class="gam-card__body">
+          <span class="gam-label">Risque désengagement</span>
+          <strong class="gam-value">{{ (analytics.churnRisk * 100) | number:'1.0-0' }}%</strong>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Recommendations AI Section -->
+    <div class="gam-recommendations mt-5" *ngIf="analytics?.recommendations">
+      <div class="gam-rec-header">
+        <h2><i class="fas fa-magic text-warning"></i> Suggestions de l'IA Groq</h2>
+        <span class="badge bg-purple-glow">Optimisé pour votre profil</span>
+      </div>
+
+      <!-- Events Recommendations -->
+      <div class="rec-subsection" *ngIf="analytics.recommendations.events?.length > 0">
+        <h3><i class="fas fa-calendar-star"></i> Événements recommandés</h3>
+        <div class="rec-grid">
+          <div class="rec-card rec-card--event" *ngFor="let rec of analytics.recommendations.events">
+            <div class="rec-icon"><i class="fas fa-calendar-check"></i></div>
+            <div class="rec-info">
+              <span class="rec-tag">Événement</span>
+              <strong>{{ rec.title }}</strong>
+              <small>{{ rec.reason }}</small>
+            </div>
+            <button class="btn-detail btn-sm" (click)="goToRecommendation(rec, 'event')">Détails</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Challenges Recommendations -->
+      <div class="rec-subsection mt-4" *ngIf="analytics.recommendations.challenges?.length > 0">
+        <h3><i class="fas fa-rocket"></i> Missions stratégiques</h3>
+        <div class="rec-grid">
+          <div class="rec-card rec-card--mission" *ngFor="let rec of analytics.recommendations.challenges">
+            <div class="rec-icon"><i class="fas fa-bullseye"></i></div>
+            <div class="rec-info">
+              <span class="rec-tag">Mission</span>
+              <strong>{{ rec.title }}</strong>
+              <small>{{ rec.reason }}</small>
+            </div>
+            <button class="btn-detail btn-sm" (click)="goToRecommendation(rec, 'challenge')">Détails</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- XP Progress Bar -->
+    <div class="gam-progress-section">
+      <div class="gam-progress-label">
+        <div class="label-main">
+          <span>Progression vers le niveau {{ (profile?.level ?? 1) + 1 }}</span>
+          <span class="gam-pct-badge">{{ getXpProgress() | number:'1.0-0' }}%</span>
+        </div>
+        <span class="xp-remaining">{{ getXpToNextLevel() }} XP restants</span>
+      </div>
+      <div class="gam-progress-bar">
+        <div class="gam-progress-fill" [style.width.%]="getXpProgress()"></div>
+      </div>
+    </div>
+
+    <!-- Engagement Score Ring -->
+    <div class="gam-score-ring-section">
+      <div class="score-ring">
+        <svg viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="50" stroke="#e2e8f0" stroke-width="12" fill="none"/>
+          <circle cx="60" cy="60" r="50"
+                  stroke="url(#scoreGrad)"
+                  stroke-width="12"
+                  fill="none"
+                  stroke-linecap="round"
+                  [attr.stroke-dasharray]="'314'"
+                  [attr.stroke-dashoffset]="314 - (314 * getScorePercent() / 100)"
+                  transform="rotate(-90 60 60)"/>
+          <defs>
+            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" style="stop-color:#6366f1"/>
+              <stop offset="100%" style="stop-color:#a855f7"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="score-ring__center">
+          <strong>{{ (engagementScore * 100) | number:'1.0-0' }}%</strong>
+          <small>Score</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Badges -->
+    <div class="gam-badges-section">
+      <h2><i class="fas fa-award"></i> Mes Badges ({{ badges.length }})</h2>
+      <div class="badges-grid" *ngIf="badges.length > 0; else noBadges">
+        <div class="badge-card" *ngFor="let badge of badges" [ngClass]="getRarityClass(badge.rarity)">
+          <div class="badge-card__icon">
+            <img *ngIf="badge.iconUrl" [src]="badge.iconUrl" [alt]="badge.name" onerror="this.style.display='none'"/>
+            <i *ngIf="!badge.iconUrl" class="fas fa-medal"></i>
+          </div>
+          <div class="badge-card__info">
+            <strong>{{ badge.name }}</strong>
+            <p>{{ badge.description }}</p>
+            <span class="badge-rarity">{{ badge.rarity }}</span>
+          </div>
+          <div class="badge-xp">+{{ badge.xpReward }} XP</div>
+        </div>
+      </div>
+      <ng-template #noBadges>
+        <div class="eng-empty">
+          <i class="fas fa-ribbon"></i>
+          <p>Participez à des événements pour débloquer vos premiers badges !</p>
+        </div>
+      </ng-template>
+    </div>
+
+  </ng-container>
+</div>

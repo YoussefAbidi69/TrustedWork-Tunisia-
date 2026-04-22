@@ -1,0 +1,68 @@
+@import '../engagement.styles.css';
+
+.btn-registered {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: white !important;
+  border: none !important;
+  opacity: 1 !important;
+  cursor: default !important;
+}
+
+/* Style de l'en-tête de Highlight (Mode Détails) avec contraste maximal */
+.eng-highlight-header {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); /* Indigo très sombre */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+.eng-highlight-header h3 {
+  margin: 0;
+  color: #ffffff !important;
+  font-size: 1.4rem;
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-back, .btn-gam {
+  padding: 0.8rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn-back {
+  background: #ffffff;
+  color: #1e1b4b !important;
+}
+
+.btn-gam {
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  color: #ffffff !important;
+}
+
+.btn-back:hover, .btn-gam:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+  filter: brightness(1.1);
+}
+
+.btn-back:hover {
+  transform: scale(1.05) translateX(-5px);
+}

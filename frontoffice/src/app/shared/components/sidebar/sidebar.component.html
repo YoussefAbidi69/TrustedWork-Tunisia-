@@ -1,0 +1,86 @@
+<aside class="dashboard-sidebar" [class.collapsed]="collapsed">
+
+  <a routerLink="/app/dashboard" class="sb-brand">
+    <div class="sb-logo">TW</div>
+    <div class="sb-brand-text" *ngIf="!collapsed">
+      <strong>TrustedWork</strong>
+      <small>Tunisia</small>
+    </div>
+  </a>
+
+  <div class="sb-profile">
+    <div class="profile-avatar">
+      {{ authService.getUserInitials() }}
+    </div>
+    <div class="profile-meta" *ngIf="!collapsed">
+      <strong>{{ currentUser?.email }}</strong>
+      <span>Session active</span>
+    </div>
+  </div>
+
+  <!-- Trust Level — valeur réelle chargée depuis le backend -->
+  <div class="sidebar-trust">
+    <div class="sidebar-trust__head">
+      <span *ngIf="!collapsed">Trust Level</span>
+      <strong>{{ trustLevel }}/5</strong>
+    </div>
+  </div>
+
+  <button type="button" class="sb-collapse-btn" (click)="onToggleCollapse()">
+    <i class="fas" [ngClass]="collapsed ? 'fa-angles-right' : 'fa-angles-left'"></i>
+  </button>
+
+  <nav class="sidebar-nav">
+
+    <div class="sidebar-section-label" *ngIf="!collapsed">Mon espace</div>
+
+    <a
+      *ngFor="let item of activeItems"
+      [routerLink]="item.route"
+      routerLinkActive="active"
+      class="sidebar-link">
+      <i class="fas" [ngClass]="item.icon"></i>
+      <span *ngIf="!collapsed">{{ item.label }}</span>
+    </a>
+
+    <hr />
+
+    <div class="sidebar-section-label" *ngIf="!collapsed">
+      <i class="fas fa-bolt" style="color:#6366f1;margin-right:5px"></i>
+      Engagement &amp; Gamification
+    </div>
+
+    <a
+      *ngFor="let item of engagementItems"
+      [routerLink]="item.route"
+      routerLinkActive="active"
+      class="sidebar-link">
+      <i class="fas" [ngClass]="item.icon"></i>
+      <span *ngIf="!collapsed">{{ item.label }}</span>
+    </a>
+
+    <hr />
+
+    <div class="sidebar-section-label" *ngIf="!collapsed">Autres modules</div>
+
+    <div
+      *ngFor="let item of comingSoonItems"
+      class="sidebar-link sidebar-link--disabled">
+      <i class="fas" [ngClass]="item.icon"></i>
+      <span *ngIf="!collapsed">{{ item.label }}</span>
+      <small *ngIf="!collapsed">Bientôt</small>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-footer">
+    <button
+      type="button"
+      class="sidebar-link sidebar-link--logout"
+      (click)="onLogout()">
+      <i class="fas fa-right-from-bracket"></i>
+      <span *ngIf="!collapsed">Déconnexion</span>
+    </button>
+  </div>
+
+</aside>

@@ -1,0 +1,126 @@
+<div class="page-header animate-fade-in">
+  <div class="header-left">
+    <span class="badge-label">Admin Panel</span>
+    <h1 class="page-title">User Suspensions</h1>
+    <p class="page-sub">Manage account restrictions and reinstatements</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn-refresh" (click)="loadSuspensions()" [disabled]="loading">
+      <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+      {{ loading ? 'Loading...' : 'Refresh' }}
+    </button>
+  </div>
+</div>
+
+<div class="glow-line"></div>
+
+<!-- STATS PILLS -->
+<div class="stats-row">
+  <div class="stat-pill red">
+    <i class="fas fa-ban"></i>
+    <span>{{ countActive() }} Active</span>
+  </div>
+  <div class="stat-pill green">
+    <i class="fas fa-unlock"></i>
+    <span>{{ countLifted() }} Lifted</span>
+  </div>
+  <div class="stat-pill muted">
+    <i class="fas fa-users"></i>
+    <span>{{ filteredSuspensions.length }} total</span>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="search-wrap">
+    <i class="fas fa-search search-icon"></i>
+    <input
+      class="search-input"
+      type="text"
+      placeholder="Search by user ID, reason, admin..."
+      [(ngModel)]="searchQuery"
+      (input)="onSearch()">
+  </div>
+</div>
+
+<!-- LOADING STATE -->
+<div class="loading-state" *ngIf="loading">
+  <i class="fas fa-spinner fa-spin"></i>
+  <p>Loading suspension records...</p>
+</div>
+
+<!-- TABLE CARD -->
+<div class="table-card animate-slide-up" *ngIf="!loading">
+  <div class="card-head">
+    <span class="card-head-title">Suspension Records</span>
+    <span class="card-head-count">{{ filteredSuspensions.length }} records</span>
+  </div>
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Reason</th>
+          <th>Suspended By</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th class="text-right">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of filteredSuspensions" [class.active-row]="item.active">
+          <td>
+            <div class="user-cell">
+              <div class="u-avatar" [class.avatar-banned]="item.active">
+                <i class="fas fa-user" *ngIf="!item.active"></i>
+                <i class="fas fa-ban" *ngIf="item.active"></i>
+              </div>
+              <div class="u-info">
+                <span class="u-name">User #{{ item.userId }}</span>
+                <span class="u-id">ID {{ item.userId }}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="reason-cell">{{ item.reason || '—' }}</div>
+          </td>
+          <td>
+            <span class="admin-chip" *ngIf="item.suspendedBy; else noAdmin">
+              <i class="fas fa-user-shield"></i>
+              {{ item.suspendedBy }}
+            </span>
+            <ng-template #noAdmin><span class="dim">—</span></ng-template>
+          </td>
+          <td>
+            <div class="time-col">
+              <span class="time-date">{{ item.suspendedAt | date:'d MMM yyyy' }}</span>
+              <span class="time-hour">{{ item.suspendedAt | date:'HH:mm' }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="status-pill" [class.status-active]="item.active" [class.status-lifted]="!item.active">
+              <span class="pill-dot"></span>
+              {{ item.active ? 'SUSPENDED' : 'LIFTED' }}
+            </span>
+          </td>
+          <td class="text-right">
+            <button
+              class="btn-lift"
+              (click)="liftSuspension(item)"
+              [disabled]="actionLoading === item.userId || !item.active"
+              [class.loading]="actionLoading === item.userId">
+              <i class="fas" [class.fa-unlock]="actionLoading !== item.userId" [class.fa-spinner]="actionLoading === item.userId" [class.fa-spin]="actionLoading === item.userId"></i>
+              {{ actionLoading === item.userId ? 'Processing...' : 'Lift Ban' }}
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredSuspensions.length === 0">
+          <td colspan="6" class="empty-row">
+            <i class="fas fa-check-circle" style="opacity:0.3; margin-right:8px;"></i>
+            No suspension records found.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

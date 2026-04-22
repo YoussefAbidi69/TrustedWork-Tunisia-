@@ -1,0 +1,12 @@
+<div class="empty-state">
+  <div class="empty-state__icon">
+    <i class="fas" [class]="icon"></i>
+  </div>
+
+  <h3 class="empty-state__title">{{ title }}</h3>
+  <p class="empty-state__description">{{ description }}</p>
+
+  <button *ngIf="actionLabel" type="button" class="empty-state__action">
+    {{ actionLabel }}
+  </button>
+</div>

@@ -1,0 +1,130 @@
+<div class="leaderboard-page">
+  
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="glow-text">Leadership Board</h1>
+      <p class="subtitle">Rise to the top of the community by earning engagement points</p>
+    </div>
+
+    <!-- Filtre Gouvernorat -->
+    <div class="filter-glass">
+      <i class="fas fa-map-marker-alt"></i>
+      <select [(ngModel)]="selectedGov" (change)="onGovChange()">
+        <option value="">Global Board (All Tunisia)</option>
+        <option *ngFor="let gov of governorates" [value]="gov">{{ gov }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="content-grid" *ngIf="!loading; else loader">
+    
+    <!-- SECTION PODIUM (Top 3) -->
+    <!-- topThree layout: index 0 = 2nd place, index 1 = 1st place, index 2 = 3rd place -->
+    <div class="podium-container" *ngIf="entries.length >= 1">
+      <div class="podium-grid">
+
+        <!-- 2ème Place (topThree[0]) -->
+        <div class="podium-spot rank-2" *ngIf="entries.length >= 2">
+          <div class="user-card" [class.is-me]="isCurrentUser(entries[1])">
+            <div class="avatar-icon-wrap">
+              <i class="fas fa-user-circle podium-avatar-icon"></i>
+              <div class="rank-badge">2</div>
+            </div>
+            <div class="user-name">{{ getUserName(entries[1]) }}</div>
+            <div class="user-score">{{ entries[1].engagementScore | number:'1.0-0' }} PTS</div>
+          </div>
+          <div class="pedestal silver">
+            <div class="medal-icon">🥈</div>
+          </div>
+        </div>
+
+        <!-- 1ère Place (entries[0]) — Centre -->
+        <div class="podium-spot rank-1">
+          <div class="user-card" [class.is-me]="isCurrentUser(entries[0])">
+            <div class="crown"><i class="fas fa-crown"></i></div>
+            <div class="avatar-icon-wrap rank-1-avatar">
+              <i class="fas fa-user-circle podium-avatar-icon"></i>
+              <div class="rank-badge">1</div>
+            </div>
+            <div class="user-name">{{ getUserName(entries[0]) }}</div>
+            <div class="user-score highlight">{{ entries[0].engagementScore | number:'1.0-0' }} PTS</div>
+          </div>
+          <div class="pedestal gold">
+            <div class="medal-icon">🥇</div>
+            <div class="aura"></div>
+          </div>
+        </div>
+
+        <!-- 3ème Place (entries[2]) -->
+        <div class="podium-spot rank-3" *ngIf="entries.length >= 3">
+          <div class="user-card" [class.is-me]="isCurrentUser(entries[2])">
+            <div class="avatar-icon-wrap">
+              <i class="fas fa-user-circle podium-avatar-icon"></i>
+              <div class="rank-badge">3</div>
+            </div>
+            <div class="user-name">{{ getUserName(entries[2]) }}</div>
+            <div class="user-score">{{ entries[2].engagementScore | number:'1.0-0' }} PTS</div>
+          </div>
+          <div class="pedestal bronze">
+            <div class="medal-icon">🥉</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- LISTE COMPLÈTE (tous les utilisateurs triés) -->
+    <div class="ranking-list-section">
+      <div class="section-title">Community Rankings</div>
+      
+      <div class="list-container">
+        <!-- Message si vide -->
+        <div class="empty-state" *ngIf="entries.length === 0">
+          <i class="fas fa-trophy"></i>
+          <p>No rankings available yet. Be the first!</p>
+        </div>
+
+        <!-- Lignes de classement -->
+        <div class="rank-row" *ngFor="let entry of entries; let i = index" 
+             [class.is-me]="isCurrentUser(entry)"
+             [style.animation-delay.ms]="i * 50">
+          <div class="rank-num">{{ entry.rank }}<small>{{ getRankSuffix(entry.rank) }}</small></div>
+          
+          <div class="user-info">
+            <div class="mini-avatar-icon">
+              <i class="fas fa-user-circle"></i>
+            </div>
+            <div class="name-box">
+              <span class="full-name">{{ getUserName(entry) }}</span>
+              <span class="gov-tag">{{ entry.governorate || 'Tunisia' }}</span>
+            </div>
+          </div>
+
+          <div class="xp-progress">
+             <div class="bar-wrap">
+               <div class="bar-fill" [style.width.%]="entries[0].engagementScore > 0 ? (entry.engagementScore / entries[0].engagementScore) * 100 : 0"></div>
+             </div>
+          </div>
+
+          <div class="score-box">
+            <span class="score-val">{{ entry.engagementScore | number:'1.0-0' }}</span>
+            <span class="score-label">pts</span>
+          </div>
+
+          <div class="action-icon" *ngIf="entry.rank <= 10">
+            <i class="fas fa-fire-alt fire"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <ng-template #loader>
+    <div class="loader-container">
+      <div class="premium-spinner"></div>
+      <p>Consulting the hall of fame...</p>
+    </div>
+  </ng-template>
+
+</div>

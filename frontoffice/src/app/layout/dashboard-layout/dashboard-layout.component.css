@@ -1,0 +1,58 @@
+/* ─── DASHBOARD LAYOUT COMPONENT ─── */
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:host {
+  --sidebar-w:     270px;
+  --sidebar-w-col: 72px;
+  --nav-h:         76px;
+
+  display: block;
+  min-height: 100vh;
+  background: #0d1929;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/*
+  Sidebar est fixed → on compense avec margin-left.
+  Par défaut collapsed = true → margin = 72px.
+  Quand expanded → margin = 270px.
+*/
+
+.dashboard-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin-left: var(--sidebar-w-col);       /* collapsed par défaut */
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Sidebar étendue */
+:host:not(.sidebar-collapsed) .dashboard-wrapper {
+  margin-left: var(--sidebar-w);
+}
+
+app-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  flex-shrink: 0;
+  display: block;
+}
+
+.dashboard-content {
+  flex: 1;
+  padding: 28px;
+  background: linear-gradient(180deg, #0d1929 0%, #0f1e2f 100%);
+  min-height: calc(100vh - var(--nav-h));
+  overflow-x: hidden;
+}
+
+router-outlet + * {
+  display: block;
+  animation: fadeSlideIn 0.22s ease;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}

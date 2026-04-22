@@ -1,0 +1,6 @@
+projectKey=com.trustedwork:module06-engagement
+serverUrl=http://localhost:9000
+serverVersion=26.4.0.121862
+dashboardUrl=http://localhost:9000/dashboard?id=com.trustedwork%3Amodule06-engagement
+ceTaskId=817a8037-6feb-4700-a7ea-0c16b3e90727
+ceTaskUrl=http://localhost:9000/api/ce/task?id=817a8037-6feb-4700-a7ea-0c16b3e90727

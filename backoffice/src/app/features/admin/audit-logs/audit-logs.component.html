@@ -1,0 +1,119 @@
+<div class="page-header animate-fade-in">
+  <div class="header-left">
+    <span class="badge-label">Admin Panel</span>
+    <h1 class="page-title">Audit Logs</h1>
+    <p class="page-sub">Complete trail of all security and administrative events</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn-refresh" (click)="loadLogs()" [disabled]="loading">
+      <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+      {{ loading ? 'Syncing...' : 'Refresh' }}
+    </button>
+  </div>
+</div>
+
+<div class="glow-line"></div>
+
+<!-- STATS PILLS -->
+<div class="stats-row">
+  <div class="stat-pill blue">
+    <i class="fas fa-sign-in-alt"></i>
+    <span>{{ countByType('LOGIN') }} Logins</span>
+  </div>
+  <div class="stat-pill orange">
+    <i class="fas fa-id-card"></i>
+    <span>{{ countByType('KYC') }} KYC</span>
+  </div>
+  <div class="stat-pill red">
+    <i class="fas fa-ban"></i>
+    <span>{{ countByType('SUSPEND') }} Suspensions</span>
+  </div>
+  <div class="stat-pill green">
+    <i class="fas fa-shield-alt"></i>
+    <span>{{ countByType('2FA') }} 2FA Events</span>
+  </div>
+  <div class="stat-pill muted">
+    <i class="fas fa-scroll"></i>
+    <span>{{ filteredLogs.length }} total events</span>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="search-wrap">
+    <i class="fas fa-search search-icon"></i>
+    <input
+      class="search-input"
+      type="text"
+      placeholder="Search by event, actor, IP address, target user..."
+      [(ngModel)]="searchQuery"
+      (input)="onSearch()">
+  </div>
+</div>
+
+<!-- LOADING STATE -->
+<div class="loading-state" *ngIf="loading">
+  <i class="fas fa-spinner fa-spin"></i>
+  <p>Syncing audit trail...</p>
+</div>
+
+<!-- TABLE CARD -->
+<div class="table-card animate-slide-up" *ngIf="!loading">
+  <div class="card-head">
+    <span class="card-head-title">Security Event Trail</span>
+    <span class="card-head-count">{{ filteredLogs.length }} records</span>
+  </div>
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Event Type</th>
+          <th>Actor</th>
+          <th>Target User</th>
+          <th>IP Address</th>
+          <th>Timestamp</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let log of filteredLogs">
+          <td>
+            <span class="event-badge" [ngClass]="getEventBadgeClass(getEventType(log))">
+              <i class="fas" [ngClass]="getEventIcon(getEventType(log))"></i>
+              {{ getEventType(log) }}
+            </span>
+          </td>
+          <td>
+            <div class="actor-cell" *ngIf="log.actorEmail; else noActor">
+              <div class="actor-avatar">{{ log.actorEmail | slice:0:1 | uppercase }}</div>
+              <span class="actor-email">{{ log.actorEmail }}</span>
+            </div>
+            <ng-template #noActor><span class="dim">—</span></ng-template>
+          </td>
+          <td>
+            <span class="target-chip" *ngIf="log.targetUser; else noTarget">{{ log.targetUser }}</span>
+            <ng-template #noTarget><span class="dim">—</span></ng-template>
+          </td>
+          <td>
+            <span class="ip-code">{{ getIp(log) }}</span>
+          </td>
+          <td>
+            <div class="time-col">
+              <span class="time-date">{{ log.createdAt | date:'d MMM yyyy' }}</span>
+              <span class="time-hour">{{ log.createdAt | date:'HH:mm:ss' }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="detail-text">{{ log.action || log.details || '—' }}</span>
+          </td>
+        </tr>
+        <tr *ngIf="filteredLogs.length === 0">
+          <td colspan="6" class="empty-row">
+            <i class="fas fa-scroll" style="opacity:0.3; margin-right:8px;"></i>
+            No audit logs found matching your search.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
