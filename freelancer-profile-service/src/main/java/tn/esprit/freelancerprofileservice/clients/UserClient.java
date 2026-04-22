@@ -75,7 +75,7 @@ public class UserClient {
         private String firstName;
         private String lastName;
         private String email;
-        private String phone; // ← AJOUT
+        private String phone;
         private String role;
         private String kycStatus;
         private int trustLevel;
