@@ -30,7 +30,9 @@ class AnalyticsControllerTest {
     private AnalyticsController analyticsController;
 
     @BeforeEach
-    void setUp() {}
+    void setUp() {
+        // Initialisation non requise pour le moment car MockitoExtension gère les mocks @Mock et @InjectMocks
+    }
 
     // ✅ Test 1 : Succès complet
     @Test
@@ -100,5 +102,37 @@ class AnalyticsControllerTest {
 
         assertThrows(RuntimeException.class,
                 () -> analyticsController.getMyAnalytics(mockToken));
+    }
+
+    // ✅ Test 5 : Prédiction ML Churn
+    @Test
+    void testGetChurnPrediction_Success() {
+        when(analyticsService.getChurnPrediction(5L)).thenReturn(Map.of(
+                "churn_probability", 75.0,
+                "risk_label", "HIGH"
+        ));
+
+        ResponseEntity<Map<String, Object>> response = analyticsController.getChurnPrediction(5L);
+        
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(75.0, response.getBody().get("churn_probability"));
+        assertEquals("HIGH", response.getBody().get("risk_label"));
+    }
+
+    // ✅ Test 6 : Statistiques Modèle ML
+    @Test
+    void testGetModelStats_Success() {
+        when(analyticsService.getModelStats()).thenReturn(Map.of(
+                "algorithm", "Random Forest Classifier",
+                "accuracy", 92.5
+        ));
+
+        ResponseEntity<Map<String, Object>> response = analyticsController.getModelStats();
+        
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(92.5, response.getBody().get("accuracy"));
+        assertEquals("Random Forest Classifier", response.getBody().get("algorithm"));
     }
 }

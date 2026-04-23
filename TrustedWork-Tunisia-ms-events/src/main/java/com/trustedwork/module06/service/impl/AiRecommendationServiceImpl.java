@@ -126,7 +126,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
             bodyMap.put("model", "llama-3.3-70b-versatile"); // Modèle gratuit ultra-rapide
             
             List<Map<String, String>> messages = new ArrayList<>();
-            messages.add(Map.of("role", "user", "content", prompt));
+            messages.add(Map.of("role", "user", CONTENT_KEY, prompt));
             bodyMap.put("messages", messages);
             bodyMap.put("max_tokens", 800);
             bodyMap.put("temperature", 0.1);

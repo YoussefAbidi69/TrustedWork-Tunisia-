@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class EventServiceImpl implements EventService {
 
+    private static final String EVENT_NOT_FOUND_MSG = "Event not found";
     private final EventRepository eventRepository;
     private final EventRegistrationRepository registrationRepository;
     private final GamificationService gamificationService;
@@ -47,13 +48,13 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventRegistration registerToEvent(Long eventId, Long userId) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + eventId));
+                .orElseThrow(() -> new ResourceNotFoundException(EVENT_NOT_FOUND_MSG + ": " + eventId));
 
         if (registrationRepository.existsByEventIdAndUserId(eventId, userId))
             throw new AlreadyRegisteredException("User already registered to this event");
 
         if (event.getRegisteredCount() >= event.getCapacity())
-            throw new RuntimeException("Event is full");
+            throw new IllegalStateException("Event is full");
 
         event.setRegisteredCount(event.getRegisteredCount() + 1);
         eventRepository.save(event);
@@ -79,7 +80,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventDTO updateEvent(Long id, EventDTO dto) {
         Event event = eventRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(EVENT_NOT_FOUND_MSG));
         
         event.setTitle(dto.getTitle());
         event.setDescription(dto.getDescription());
@@ -99,7 +100,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public void deleteEvent(Long id) {
         Event event = eventRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(EVENT_NOT_FOUND_MSG));
         eventRepository.delete(event);
     }
 
@@ -126,7 +127,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public void cancelRegistration(Long eventId, Long userId) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(EVENT_NOT_FOUND_MSG));
         
         // Find registration
         List<EventRegistration> regs = registrationRepository.findByUserId(userId);

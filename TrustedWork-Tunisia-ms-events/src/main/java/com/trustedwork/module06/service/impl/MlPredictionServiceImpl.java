@@ -55,10 +55,11 @@ public class MlPredictionServiceImpl implements MlPredictionService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(features, headers);
 
-            ResponseEntity<Map> response = restTemplate.postForEntity(
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                     aiServiceUrl + "/predict/churn",
+                    HttpMethod.POST,
                     request,
-                    Map.class
+                    new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {}
             );
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
@@ -79,9 +80,11 @@ public class MlPredictionServiceImpl implements MlPredictionService {
     @Override
     public Map<String, Object> getModelStats() {
         try {
-            ResponseEntity<Map> response = restTemplate.getForEntity(
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                     aiServiceUrl + "/model/stats",
-                    Map.class
+                    HttpMethod.GET,
+                    null,
+                    new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {}
             );
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 return response.getBody();
@@ -98,9 +101,9 @@ public class MlPredictionServiceImpl implements MlPredictionService {
     @Override
     public boolean isServiceAvailable() {
         try {
-            ResponseEntity<Map> response = restTemplate.getForEntity(
+            ResponseEntity<String> response = restTemplate.getForEntity(
                     aiServiceUrl + "/health",
-                    Map.class
+                    String.class
             );
             return response.getStatusCode().is2xxSuccessful();
         } catch (Exception e) {
@@ -176,7 +179,15 @@ public class MlPredictionServiceImpl implements MlPredictionService {
 
         double churnProbability = Math.min(riskScore * 100, 99.0);
         boolean churnPredicted = churnProbability >= 50;
-        String riskLabel = churnProbability >= 70 ? "HIGH" : churnProbability >= 40 ? "MEDIUM" : "LOW";
+
+        String riskLabel;
+        if (churnProbability >= 70) {
+            riskLabel = "HIGH";
+        } else if (churnProbability >= 40) {
+            riskLabel = "MEDIUM";
+        } else {
+            riskLabel = "LOW";
+        }
 
         Map<String, Object> fallback = new HashMap<>();
         fallback.put("user_id", userId);

@@ -1,6 +1,5 @@
 package com.trustedwork.module06.service;
 
-import java.util.List;
 import java.util.Map;
 
 public interface AiRecommendationService {
