@@ -14,7 +14,6 @@ import tn.esprit.msprojectservice.services.TaskSuggestionService.TaskSuggestionD
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Endpoint de suggestion de tâches IA.
@@ -69,7 +68,7 @@ public class TaskSuggestionController {
                         s.getEstimatedHours(),
                         s.getDeadline()
                 ))
-                .collect(Collectors.toList());
+                .toList();
 
         TaskSuggestionResponseDTO response = new TaskSuggestionResponseDTO(
                 projectId,

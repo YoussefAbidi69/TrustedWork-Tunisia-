@@ -22,6 +22,8 @@ import java.util.*;
 @Service
 public class TaskSuggestionService {
 
+    private static final String SITE_VITRINE = "SITE_VITRINE";
+
     private Evaluator evaluator;
     private Map<String, Integer>              projectTypeEncoding;
     private Map<Integer, String>              taskTitleDecoding;
@@ -72,7 +74,7 @@ public class TaskSuggestionService {
 
         String projectType = detecterType(projectTitle);
         Integer projectTypeCode = projectTypeEncoding.getOrDefault(projectType,
-                projectTypeEncoding.get("SITE_VITRINE"));
+                projectTypeEncoding.get(SITE_VITRINE));
 
         log.info("🔍 Titre='{}' → Type='{}' (code={})", projectTitle, projectType, projectTypeCode);
 
@@ -140,7 +142,7 @@ public class TaskSuggestionService {
      * Détecte le type du projet via mots-clés dans le titre (NLP simple).
      */
     private String detecterType(String titre) {
-        if (titre == null || titre.isBlank()) return "SITE_VITRINE";
+        if (titre == null || titre.isBlank()) return SITE_VITRINE;
         String t = titre.toLowerCase().replace("-", " ").replace("_", " ");
 
         if (contient(t, "ia", "ml", "machine learning", "deep learning", "neural",
@@ -166,7 +168,7 @@ public class TaskSuggestionService {
             return "PORTFOLIO";
         if (contient(t, "api", "backend", "microservice", "rest", "graphql", "spring", "node"))
             return "API_BACKEND";
-        return "SITE_VITRINE";
+        return SITE_VITRINE;
     }
 
     private boolean contient(String texte, String... mots) {
