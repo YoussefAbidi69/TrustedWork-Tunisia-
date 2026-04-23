@@ -1,6 +1,6 @@
 package tn.esprit.msprojectservice.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import tn.esprit.msprojectservice.dto.DeliveryRiskSignalDTO;
 import tn.esprit.msprojectservice.entities.DeliveryRiskSignal;
@@ -8,20 +8,19 @@ import tn.esprit.msprojectservice.repositories.IRiskSignalRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class RiskSignalServiceImpl implements IRiskSignalService {
 
-    @Autowired
-    private IRiskSignalRepository riskSignalRepository;
+    private final IRiskSignalRepository riskSignalRepository;
 
     @Override
     public List<DeliveryRiskSignalDTO> getActiveRisksByProjectId(Long projectId) {
         return riskSignalRepository.findByProjectIdAndResolvedFalse(projectId)
                 .stream()
                 .map(DeliveryRiskSignalDTO::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -37,7 +36,7 @@ public class RiskSignalServiceImpl implements IRiskSignalService {
                 .orElseThrow(() -> new RuntimeException("Signal de risque non trouvé avec l'id : " + id));
 
         if (signal.isResolved()) {
-            throw new RuntimeException("Ce signal est déjà résolu");
+            throw new IllegalStateException("Ce signal est déjà résolu");
         }
 
         signal.setResolved(true);

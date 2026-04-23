@@ -1,6 +1,6 @@
 package tn.esprit.msprojectservice.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import tn.esprit.msprojectservice.dto.SubTaskDTO;
 import tn.esprit.msprojectservice.entities.SubTask;
@@ -9,16 +9,13 @@ import tn.esprit.msprojectservice.repositories.ISubTaskRepository;
 import tn.esprit.msprojectservice.repositories.ITaskRepository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class SubTaskServiceImpl implements ISubTaskService {
 
-    @Autowired
-    private ISubTaskRepository subTaskRepository;
-
-    @Autowired
-    private ITaskRepository taskRepository;
+    private final ISubTaskRepository subTaskRepository;
+    private final ITaskRepository taskRepository;
 
     @Override
     public SubTaskDTO createSubTask(Long taskId, SubTaskDTO subTaskDTO) {
@@ -37,7 +34,7 @@ public class SubTaskServiceImpl implements ISubTaskService {
         return subTaskRepository.findByTaskId(taskId)
                 .stream()
                 .map(SubTaskDTO::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

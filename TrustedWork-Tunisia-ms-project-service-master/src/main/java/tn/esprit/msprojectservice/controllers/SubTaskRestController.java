@@ -2,7 +2,7 @@ package tn.esprit.msprojectservice.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,11 +13,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@RequiredArgsConstructor
 @Tag(name = "Sous-tâches", description = "Gestion des sous-tâches (décomposition granulaire)")
 public class SubTaskRestController {
 
-    @Autowired
-    private ISubTaskService subTaskService;
+    private final ISubTaskService subTaskService;
 
     @PostMapping("/tasks/{taskId}/subtasks")
     @Operation(summary = "Ajouter une sous-tâche", description = "Créer une sous-tâche dans une tâche existante")

@@ -193,8 +193,9 @@ class ProjectServiceImplTest {
     @DisplayName("updateProject — lève RuntimeException si projet non trouvé")
     void updateProject_shouldThrow_whenNotFound() {
         when(projectRepository.findById(99L)).thenReturn(Optional.empty());
+        ProjectDTO dto = buildProjectDTO();
 
-        assertThatThrownBy(() -> projectService.updateProject(99L, buildProjectDTO()))
+        assertThatThrownBy(() -> projectService.updateProject(99L, dto))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("99");
 

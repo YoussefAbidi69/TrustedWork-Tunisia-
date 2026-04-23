@@ -2,7 +2,7 @@ package tn.esprit.msprojectservice.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.msprojectservice.dto.DeliveryRiskSignalDTO;
@@ -14,17 +14,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@RequiredArgsConstructor
 @Tag(name = "Signaux de risque IA", description = "Consultation et résolution des alertes de risque générées par l'IA")
 public class RiskSignalRestController {
 
-    @Autowired
-    private IRiskSignalService riskSignalService;
-
-    @Autowired
-    private DeliveryRiskScheduler deliveryRiskScheduler;
-
-    @Autowired
-    private IMLPredictionService mlPredictionService;
+    private final IRiskSignalService riskSignalService;
+    private final DeliveryRiskScheduler deliveryRiskScheduler;
+    private final IMLPredictionService mlPredictionService;
 
     @GetMapping("/projects/{projectId}/risks")
     @Operation(summary = "Risques actifs", description = "Récupérer tous les signaux de risque actifs d'un projet")

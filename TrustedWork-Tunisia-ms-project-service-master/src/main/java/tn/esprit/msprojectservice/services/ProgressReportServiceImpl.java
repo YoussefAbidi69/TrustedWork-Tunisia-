@@ -1,6 +1,6 @@
 package tn.esprit.msprojectservice.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import tn.esprit.msprojectservice.dto.ProgressReportDTO;
 import tn.esprit.msprojectservice.entities.ProgressReport;
@@ -12,25 +12,16 @@ import tn.esprit.msprojectservice.repositories.IRiskSignalRepository;
 import tn.esprit.msprojectservice.repositories.ITaskRepository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ProgressReportServiceImpl implements IProgressReportService {
 
-    @Autowired
-    private IProgressReportRepository progressReportRepository;
-
-    @Autowired
-    private IProjectRepository projectRepository;
-
-    @Autowired
-    private ITaskRepository taskRepository;
-
-    @Autowired
-    private IDeliverableRepository deliverableRepository;
-
-    @Autowired
-    private IRiskSignalRepository riskSignalRepository;
+    private final IProgressReportRepository progressReportRepository;
+    private final IProjectRepository projectRepository;
+    private final ITaskRepository taskRepository;
+    private final IDeliverableRepository deliverableRepository;
+    private final IRiskSignalRepository riskSignalRepository;
 
     @Override
     public ProgressReportDTO generateReport(Long projectId) {
@@ -74,7 +65,7 @@ public class ProgressReportServiceImpl implements IProgressReportService {
         return progressReportRepository.findByProjectIdOrderByGeneratedAtDesc(projectId)
                 .stream()
                 .map(ProgressReportDTO::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // --- Génération automatique du résumé textuel ---

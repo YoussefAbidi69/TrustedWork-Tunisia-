@@ -117,8 +117,9 @@ class DeliverableServiceImplTest {
     @DisplayName("submitDeliverable — lève EntityNotFoundException si projet introuvable")
     void submitDeliverable_shouldThrow_whenProjectNotFound() {
         when(projectRepository.findById(99L)).thenReturn(Optional.empty());
+        DeliverableDTO dto = buildDeliverableDTO(null);
 
-        assertThatThrownBy(() -> deliverableService.submitDeliverable(99L, buildDeliverableDTO(null)))
+        assertThatThrownBy(() -> deliverableService.submitDeliverable(99L, dto))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessageContaining("99");
 
@@ -185,7 +186,7 @@ class DeliverableServiceImplTest {
 
     @Test
     @DisplayName("reviewDeliverable — approuve et déclenche l'envoi de mail")
-    void reviewDeliverable_shouldApproveAndSendMail() throws Exception {
+    void reviewDeliverable_shouldApproveAndSendMail() {
         when(deliverableRepository.findById(20L)).thenReturn(Optional.of(submittedDeliverable));
         when(deliverableRepository.save(any(Deliverable.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -201,7 +202,7 @@ class DeliverableServiceImplTest {
 
     @Test
     @DisplayName("reviewDeliverable — rejette et déclenche l'envoi de mail")
-    void reviewDeliverable_shouldRejectAndSendMail() throws Exception {
+    void reviewDeliverable_shouldRejectAndSendMail() {
         when(deliverableRepository.findById(20L)).thenReturn(Optional.of(submittedDeliverable));
         when(deliverableRepository.save(any(Deliverable.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -241,7 +242,7 @@ class DeliverableServiceImplTest {
 
     @Test
     @DisplayName("reviewDeliverable — le mail ne bloque pas la sauvegarde si il échoue")
-    void reviewDeliverable_shouldNotFail_whenMailThrows() throws Exception {
+    void reviewDeliverable_shouldNotFail_whenMailThrows() {
         when(deliverableRepository.findById(20L)).thenReturn(Optional.of(submittedDeliverable));
         when(deliverableRepository.save(any(Deliverable.class)))
                 .thenAnswer(inv -> inv.getArgument(0));

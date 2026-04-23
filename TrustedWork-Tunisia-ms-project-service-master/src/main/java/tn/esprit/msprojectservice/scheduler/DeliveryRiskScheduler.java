@@ -89,15 +89,7 @@ public class DeliveryRiskScheduler {
                         project.getTitle(), report.getCompletionRate());
 
                 // MAILING -- 2. Envoyer le rapport par email au client + freelancer
-                try {
-                    mailService.envoyerRapportHebdomadaire(project, report);
-                    logger.info("Email rapport hebdomadaire envoye -- Projet: {} | Client: {} | Freelancer: {}",
-                            project.getTitle(), project.getClientId(), project.getFreelancerId());
-                } catch (Exception mailException) {
-                    // L'erreur mail ne bloque pas le traitement des autres projets
-                    logger.error("Echec envoi email rapport pour le projet {} : {}",
-                            project.getId(), mailException.getMessage());
-                }
+                sendWeeklyReportEmail(project, report);
 
             } catch (Exception e) {
                 logger.error("Erreur generation rapport pour le projet {} : {}", project.getId(), e.getMessage());
@@ -105,6 +97,18 @@ public class DeliveryRiskScheduler {
         }
 
         logger.info("========== FIN GENERATION RAPPORTS ==========");
+    }
+
+    private void sendWeeklyReportEmail(Project project, ProgressReportDTO report) {
+        try {
+            mailService.envoyerRapportHebdomadaire(project, report);
+            logger.info("Email rapport hebdomadaire envoye -- Projet: {} | Client: {} | Freelancer: {}",
+                    project.getTitle(), project.getClientId(), project.getFreelancerId());
+        } catch (Exception mailException) {
+            // L'erreur mail ne bloque pas le traitement des autres projets
+            logger.error("Echec envoi email rapport pour le projet {} : {}",
+                    project.getId(), mailException.getMessage());
+        }
     }
 
     // ============================================================

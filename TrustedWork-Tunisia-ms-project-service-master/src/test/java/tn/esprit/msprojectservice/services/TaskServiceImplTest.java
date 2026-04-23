@@ -19,7 +19,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -92,8 +91,9 @@ class TaskServiceImplTest {
     @DisplayName("createTask — lève RuntimeException si projet introuvable")
     void createTask_shouldThrow_whenProjectNotFound() {
         when(projectRepository.findById(99L)).thenReturn(Optional.empty());
+        TaskDTO dto = buildTaskDTO();
 
-        assertThatThrownBy(() -> taskService.createTask(99L, buildTaskDTO()))
+        assertThatThrownBy(() -> taskService.createTask(99L, dto))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("99");
 
@@ -177,8 +177,9 @@ class TaskServiceImplTest {
     @DisplayName("updateTask — lève RuntimeException si tâche introuvable")
     void updateTask_shouldThrow_whenNotFound() {
         when(taskRepository.findById(99L)).thenReturn(Optional.empty());
+        TaskDTO dto = buildTaskDTO();
 
-        assertThatThrownBy(() -> taskService.updateTask(99L, buildTaskDTO()))
+        assertThatThrownBy(() -> taskService.updateTask(99L, dto))
                 .isInstanceOf(RuntimeException.class);
 
         verify(taskRepository, never()).save(any());
@@ -276,7 +277,7 @@ class TaskServiceImplTest {
         when(projectRepository.findById(1L)).thenReturn(Optional.of(sampleProject));
         when(projectRepository.save(any(Project.class))).thenAnswer(inv -> {
             Project saved = inv.getArgument(0);
-            assertThat(saved.getCompletionRate()).isEqualTo(0);
+            assertThat(saved.getCompletionRate()).isZero();
             return saved;
         });
 

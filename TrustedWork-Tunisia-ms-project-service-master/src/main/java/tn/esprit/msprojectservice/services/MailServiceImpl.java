@@ -2,13 +2,13 @@ package tn.esprit.msprojectservice.services;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.context.Context;
 import tn.esprit.msprojectservice.dto.ProgressReportDTO;
 import tn.esprit.msprojectservice.entities.Deliverable;
@@ -30,19 +30,26 @@ import java.time.format.DateTimeFormatter;
  *   2. Review de livrable    -> template "review-livrable.html"
  */
 @Service
-@RequiredArgsConstructor
 public class MailServiceImpl implements IMailService {
 
     private static final Logger logger = LoggerFactory.getLogger(MailServiceImpl.class);
 
+    private static final String ROLE_FREELANCER = "freelancer";
+
     private static final DateTimeFormatter DATE_FORMATTER     = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy a HH:mm");
 
-    private final JavaMailSender    mailSender;
-    private final TemplateEngine    templateEngine;
+    private final JavaMailSender       mailSender;
+    private final SpringTemplateEngine templateEngine;
+    private final UserServiceClient    userServiceClient;
 
-    // Phase 2 -- Feign client vers Module 01 pour recuperer l'email reel
-    private final UserServiceClient userServiceClient;
+    public MailServiceImpl(JavaMailSender mailSender,
+                           @Qualifier("emailTemplateEngine") SpringTemplateEngine templateEngine,
+                           UserServiceClient userServiceClient) {
+        this.mailSender      = mailSender;
+        this.templateEngine  = templateEngine;
+        this.userServiceClient = userServiceClient;
+    }
 
     // ============================================================
     // 1. RAPPORT HEBDOMADAIRE
@@ -82,13 +89,13 @@ public class MailServiceImpl implements IMailService {
 
         // Phase 2 -- Recuperation des emails reels depuis Module 01
         String emailClient     = recupererEmail(project.getClientId(),     "client");
-        String emailFreelancer = recupererEmail(project.getFreelancerId(), "freelancer");
+        String emailFreelancer = recupererEmail(project.getFreelancerId(), ROLE_FREELANCER);
 
         if (emailClient != null) {
             envoyerEmailHtml(emailClient, sujet, contenuHtml, "client", project.getTitle());
         }
         if (emailFreelancer != null) {
-            envoyerEmailHtml(emailFreelancer, sujet, contenuHtml, "freelancer", project.getTitle());
+            envoyerEmailHtml(emailFreelancer, sujet, contenuHtml, ROLE_FREELANCER, project.getTitle());
         }
     }
 
@@ -114,7 +121,7 @@ public class MailServiceImpl implements IMailService {
         Long freelancerId = deliverable.getProject().getFreelancerId();
 
         // Phase 2 -- Recuperation de l'email reel du freelancer depuis Module 01
-        String emailFreelancer = recupererEmail(freelancerId, "freelancer");
+        String emailFreelancer = recupererEmail(freelancerId, ROLE_FREELANCER);
         if (emailFreelancer == null) {
             logger.warn("Email introuvable pour le freelancerId {} -- email non envoye", freelancerId);
             return;
@@ -143,7 +150,7 @@ public class MailServiceImpl implements IMailService {
                 ? String.format("[TrustedWork] Livrable approuve -- %s", deliverable.getTitle())
                 : String.format("[TrustedWork] Livrable rejete -- %s", deliverable.getTitle());
 
-        envoyerEmailHtml(emailFreelancer, sujet, contenuHtml, "freelancer", deliverable.getTitle());
+        envoyerEmailHtml(emailFreelancer, sujet, contenuHtml, ROLE_FREELANCER, deliverable.getTitle());
     }
 
     // ============================================================

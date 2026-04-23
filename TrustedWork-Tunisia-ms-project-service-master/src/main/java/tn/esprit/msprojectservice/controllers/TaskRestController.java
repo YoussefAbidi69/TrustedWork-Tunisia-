@@ -2,7 +2,7 @@ package tn.esprit.msprojectservice.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,11 +14,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@RequiredArgsConstructor
 @Tag(name = "Tâches", description = "Gestion des tâches et du Kanban Board")
 public class TaskRestController {
 
-    @Autowired
-    private ITaskService taskService;
+    private final ITaskService taskService;
 
     @PostMapping("/projects/{projectId}/tasks")
     @Operation(summary = "Créer une tâche", description = "Ajouter une nouvelle tâche dans un projet")

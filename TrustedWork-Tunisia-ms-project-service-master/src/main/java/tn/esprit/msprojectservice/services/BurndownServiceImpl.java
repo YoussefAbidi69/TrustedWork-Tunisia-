@@ -73,7 +73,7 @@ public class BurndownServiceImpl implements IBurndownService {
         // 4. Isoler les tâches DONE avec leur date de complétion (updatedAt)
         List<Task> tachesDone = toutesLesTaches.stream()
                 .filter(t -> t.getStatus() == TaskStatus.DONE)
-                .collect(Collectors.toList());
+                .toList();
 
         // 5. Construire la map : date → nombre de tâches completées CE JOUR-LÀ
         Map<LocalDate, Long> completionsParJour = tachesDone.stream()
@@ -99,7 +99,7 @@ public class BurndownServiceImpl implements IBurndownService {
         String analyse      = genererAnalyse(project, totalTaches, tachesDone.size(),
                 tachesRestantes, velocite, dateProjete, retard);
 
-        logger.info("Burndown calculé — Projet: {} | Tâches restantes: {} | Vélocité: {:.2f}/j | Retard: {} j",
+        logger.info("Burndown calculé — Projet: {} | Tâches restantes: {} | Vélocité: {}/j | Retard: {} j",
                 project.getTitle(), tachesRestantes, velocite, retard);
 
         return BurndownChartDTO.builder()

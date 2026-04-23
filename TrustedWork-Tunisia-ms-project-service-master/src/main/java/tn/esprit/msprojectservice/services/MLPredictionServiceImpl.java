@@ -36,6 +36,13 @@ public class MLPredictionServiceImpl implements IMLPredictionService {
     // Chemin du modèle dans src/main/resources/
     private static final String MODEL_PATH = "/ml/delivery_risk_model.pmml";
 
+    // Noms des features ML
+    private static final String FEATURE_TASKS_DONE_RATIO    = "tasks_done_ratio";
+    private static final String FEATURE_ACTIVE_RISKS_COUNT  = "active_risks_count";
+    private static final String FEATURE_BOTTLENECK_DAYS_AVG = "bottleneck_days_avg";
+    private static final String FEATURE_ASSIGNEE_PERF_SCORE = "assignee_perf_score";
+    private static final String FEATURE_SCOPE_CREEP_RATIO   = "scope_creep_ratio";
+
     // Seuils de sévérité basés sur P(retard)
     private static final double THRESHOLD_CRITICAL = 0.85;
     private static final double THRESHOLD_HIGH     = 0.70;
@@ -60,7 +67,7 @@ public class MLPredictionServiceImpl implements IMLPredictionService {
             InputStream modelStream = getClass().getResourceAsStream(MODEL_PATH);
 
             if (modelStream == null) {
-                throw new RuntimeException(
+                throw new IllegalStateException(
                         "Modèle PMML introuvable : " + MODEL_PATH +
                                 " — Copier delivery_risk_model.pmml dans src/main/resources/ml/"
                 );
@@ -90,7 +97,7 @@ public class MLPredictionServiceImpl implements IMLPredictionService {
 
         // Vérification que le modèle est chargé
         if (evaluator == null) {
-            throw new RuntimeException(
+            throw new IllegalStateException(
                     "Le modèle ML n'est pas disponible. " +
                             "Vérifier que delivery_risk_model.pmml est dans src/main/resources/ml/"
             );
@@ -131,11 +138,17 @@ public class MLPredictionServiceImpl implements IMLPredictionService {
         // --------------------------------------------------------
         // APPEL DU MODÈLE RANDOM FOREST
         // --------------------------------------------------------
-        double probabilityLate = callModel(
-                daysElapsedRatio, tasksDoneRatio, activeRisksCount,
-                bottleneckDaysAvg, openDeliverablesCount, assigneePerfScore,
-                scopeCreepRatio, budgetConsumptionRatio
-        );
+        Map<String, Object> rawFeatures = new LinkedHashMap<>();
+        rawFeatures.put("days_elapsed_ratio",        daysElapsedRatio);
+        rawFeatures.put(FEATURE_TASKS_DONE_RATIO,    tasksDoneRatio);
+        rawFeatures.put(FEATURE_ACTIVE_RISKS_COUNT,  (double) activeRisksCount);
+        rawFeatures.put(FEATURE_BOTTLENECK_DAYS_AVG, bottleneckDaysAvg);
+        rawFeatures.put("open_deliverables_count",   (double) openDeliverablesCount);
+        rawFeatures.put(FEATURE_ASSIGNEE_PERF_SCORE, assigneePerfScore);
+        rawFeatures.put(FEATURE_SCOPE_CREEP_RATIO,   scopeCreepRatio);
+        rawFeatures.put("budget_consumption_ratio",  budgetConsumptionRatio);
+
+        double probabilityLate = callModel(rawFeatures);
 
         // --------------------------------------------------------
         // DÉDUCTION DE LA SÉVÉRITÉ ET DU MESSAGE
@@ -148,7 +161,7 @@ public class MLPredictionServiceImpl implements IMLPredictionService {
         );
         String message = buildMessage(project, probabilityLate, severity, criticalFeature);
 
-        logger.info("🤖 ML Prédiction — Projet: {} | P(retard): {:.2f} | Sévérité: {}",
+        logger.info("🤖 ML Prédiction — Projet: {} | P(retard): {} | Sévérité: {}",
                 project.getTitle(), probabilityLate, severity);
 
         return MLPredictionDTO.builder()
@@ -172,21 +185,7 @@ public class MLPredictionServiceImpl implements IMLPredictionService {
     // APPEL JPMML
     // ============================================================
 
-    private double callModel(
-            double daysElapsedRatio, double tasksDoneRatio, int activeRisksCount,
-            double bottleneckDaysAvg, int openDeliverablesCount, double assigneePerfScore,
-            double scopeCreepRatio, double budgetConsumptionRatio) {
-
-        // Construction du vecteur de features
-        Map<String, Object> rawFeatures = new LinkedHashMap<>();
-        rawFeatures.put("days_elapsed_ratio",        daysElapsedRatio);
-        rawFeatures.put("tasks_done_ratio",           tasksDoneRatio);
-        rawFeatures.put("active_risks_count",         (double) activeRisksCount);
-        rawFeatures.put("bottleneck_days_avg",        bottleneckDaysAvg);
-        rawFeatures.put("open_deliverables_count",    (double) openDeliverablesCount);
-        rawFeatures.put("assignee_perf_score",        assigneePerfScore);
-        rawFeatures.put("scope_creep_ratio",          scopeCreepRatio);
-        rawFeatures.put("budget_consumption_ratio",   budgetConsumptionRatio);
+    private double callModel(Map<String, Object> rawFeatures) {
 
         // Conversion en FieldValue JPMML
         Map<String, FieldValue> arguments = new LinkedHashMap<>();
@@ -200,8 +199,8 @@ public class MLPredictionServiceImpl implements IMLPredictionService {
 
         // Extraire P(will_be_late = 1) depuis les probabilités
         Object probabilities = results.get("probability(1)");
-        if (probabilities instanceof Number) {
-            return ((Number) probabilities).doubleValue();
+        if (probabilities instanceof Number number) {
+            return number.doubleValue();
         }
 
         // Fallback : extraire depuis la prédiction binaire
@@ -297,27 +296,27 @@ public class MLPredictionServiceImpl implements IMLPredictionService {
         double scopeN       = scopeCreepRatio;
 
         Map<String, Double> scores = new LinkedHashMap<>();
-        scores.put("active_risks_count",  riskNorm     * 0.36); // poids RF
-        scores.put("bottleneck_days_avg", bottleneckN  * 0.16);
-        scores.put("tasks_done_ratio",    gap          * 0.12);
-        scores.put("assignee_perf_score", perfRisk     * 0.08);
-        scores.put("scope_creep_ratio",   scopeN       * 0.07);
+        scores.put(FEATURE_ACTIVE_RISKS_COUNT,  riskNorm     * 0.36); // poids RF
+        scores.put(FEATURE_BOTTLENECK_DAYS_AVG, bottleneckN  * 0.16);
+        scores.put(FEATURE_TASKS_DONE_RATIO,    gap          * 0.12);
+        scores.put(FEATURE_ASSIGNEE_PERF_SCORE, perfRisk     * 0.08);
+        scores.put(FEATURE_SCOPE_CREEP_RATIO,   scopeN       * 0.07);
 
         return scores.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
-                .orElse("active_risks_count");
+                .orElse(FEATURE_ACTIVE_RISKS_COUNT);
     }
 
     private String buildMessage(Project project, double prob, RiskSeverity severity, String criticalFeature) {
 
         String featureLabel = switch (criticalFeature) {
-            case "active_risks_count"  -> "un nombre élevé de signaux de risque actifs";
-            case "bottleneck_days_avg" -> "des tâches bloquées trop longtemps sans mise à jour";
-            case "tasks_done_ratio"    -> "un avancement insuffisant par rapport au temps écoulé";
-            case "assignee_perf_score" -> "un historique de livraison insuffisant du freelancer assigné";
-            case "scope_creep_ratio"   -> "un périmètre de projet qui a trop évolué après le démarrage";
-            default                    -> criticalFeature;
+            case FEATURE_ACTIVE_RISKS_COUNT  -> "un nombre élevé de signaux de risque actifs";
+            case FEATURE_BOTTLENECK_DAYS_AVG -> "des tâches bloquées trop longtemps sans mise à jour";
+            case FEATURE_TASKS_DONE_RATIO    -> "un avancement insuffisant par rapport au temps écoulé";
+            case FEATURE_ASSIGNEE_PERF_SCORE -> "un historique de livraison insuffisant du freelancer assigné";
+            case FEATURE_SCOPE_CREEP_RATIO   -> "un périmètre de projet qui a trop évolué après le démarrage";
+            default                          -> criticalFeature;
         };
 
         int probPercent = (int) Math.round(prob * 100);

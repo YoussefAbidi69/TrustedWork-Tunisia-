@@ -1,6 +1,6 @@
 package tn.esprit.msprojectservice.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import tn.esprit.msprojectservice.dto.NotificationDTO;
 import tn.esprit.msprojectservice.entities.Notification;
@@ -8,13 +8,12 @@ import tn.esprit.msprojectservice.entities.NotificationType;
 import tn.esprit.msprojectservice.repositories.INotificationRepository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class NotificationServiceImpl implements INotificationService {
 
-    @Autowired
-    private INotificationRepository notificationRepository;
+    private final INotificationRepository notificationRepository;
 
     @Override
     public void createNotification(Long userId, String title, String message, NotificationType type, Long projectId, Long taskId) {
@@ -35,7 +34,7 @@ public class NotificationServiceImpl implements INotificationService {
         return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream()
                 .map(NotificationDTO::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -43,7 +42,7 @@ public class NotificationServiceImpl implements INotificationService {
         return notificationRepository.findByUserIdAndReadFalseOrderByCreatedAtDesc(userId)
                 .stream()
                 .map(NotificationDTO::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

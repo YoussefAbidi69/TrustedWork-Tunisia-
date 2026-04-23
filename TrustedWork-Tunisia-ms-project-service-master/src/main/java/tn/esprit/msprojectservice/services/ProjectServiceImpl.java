@@ -1,6 +1,6 @@
 package tn.esprit.msprojectservice.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import tn.esprit.msprojectservice.dto.ProjectDTO;
 import tn.esprit.msprojectservice.entities.Project;
@@ -10,16 +10,15 @@ import tn.esprit.msprojectservice.feign.dto.UserDTO;
 import tn.esprit.msprojectservice.repositories.IProjectRepository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ProjectServiceImpl implements IProjectService {
 
-    @Autowired
-    private IProjectRepository projectRepository;
+    private static final String PROJECT_NOT_FOUND = "Projet non trouvé avec l'id : ";
 
-    @Autowired
-    private UserServiceClient userServiceClient;
+    private final IProjectRepository projectRepository;
+    private final UserServiceClient userServiceClient;
 
     // ==================== CRUD DE BASE ====================
 
@@ -33,7 +32,7 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     public ProjectDTO getProjectById(Long id) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Projet non trouvé avec l'id : " + id));
+                .orElseThrow(() -> new RuntimeException(PROJECT_NOT_FOUND + id));
         return ProjectDTO.fromEntity(project);
     }
 
@@ -49,7 +48,7 @@ public class ProjectServiceImpl implements IProjectService {
         return projectRepository.findAllByUserId(userId)
                 .stream()
                 .map(ProjectDTO::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -57,13 +56,13 @@ public class ProjectServiceImpl implements IProjectService {
         return projectRepository.findAll()
                 .stream()
                 .map(ProjectDTO::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public ProjectDTO updateProject(Long id, ProjectDTO projectDTO) {
         Project existing = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Projet non trouvé avec l'id : " + id));
+                .orElseThrow(() -> new RuntimeException(PROJECT_NOT_FOUND + id));
         existing.setTitle(projectDTO.getTitle());
         existing.setDescription(projectDTO.getDescription());
         existing.setStartDate(projectDTO.getStartDate());
@@ -75,7 +74,7 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     public ProjectDTO updateProjectStatus(Long id, ProjectStatus status) {
         Project existing = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Projet non trouvé avec l'id : " + id));
+                .orElseThrow(() -> new RuntimeException(PROJECT_NOT_FOUND + id));
         existing.setStatus(status);
         return ProjectDTO.fromEntity(projectRepository.save(existing));
     }
@@ -83,7 +82,7 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     public void deleteProject(Long id) {
         Project existing = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Projet non trouvé avec l'id : " + id));
+                .orElseThrow(() -> new RuntimeException(PROJECT_NOT_FOUND + id));
         projectRepository.delete(existing);
     }
 
@@ -95,7 +94,7 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     public ProjectDTO getProjectByIdEnriched(Long id) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Projet non trouvé avec l'id : " + id));
+                .orElseThrow(() -> new RuntimeException(PROJECT_NOT_FOUND + id));
         return enrichProject(project);
     }
 
@@ -108,7 +107,7 @@ public class ProjectServiceImpl implements IProjectService {
         return projectRepository.findAllByUserId(userId)
                 .stream()
                 .map(this::enrichProject)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // ==================== ENRICHISSEMENT PRIVÉ ====================

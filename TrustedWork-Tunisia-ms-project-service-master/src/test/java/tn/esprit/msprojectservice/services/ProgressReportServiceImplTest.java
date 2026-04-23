@@ -102,7 +102,7 @@ class ProgressReportServiceImplTest {
 
         ProgressReportDTO result = progressReportService.generateReport(1L);
 
-        assertThat(result.getCompletionRate()).isEqualTo(0);
+        assertThat(result.getCompletionRate()).isZero();
     }
 
     @Test
