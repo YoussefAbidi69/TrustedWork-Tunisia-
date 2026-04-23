@@ -7,6 +7,10 @@ import com.trustedwork.module06.entity.ChallengeParticipation;
 
 public class ChallengeMapper {
 
+    private ChallengeMapper() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static ChallengeDTO toDTO(Challenge challenge) {
         if (challenge == null) return null;
         return ChallengeDTO.builder()

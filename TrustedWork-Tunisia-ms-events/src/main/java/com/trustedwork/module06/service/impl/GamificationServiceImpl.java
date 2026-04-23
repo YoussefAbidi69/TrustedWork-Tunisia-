@@ -10,12 +10,13 @@ import com.trustedwork.module06.service.GamificationService;
 import com.trustedwork.module06.util.BadgeRules;
 import com.trustedwork.module06.util.XPConstants;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -81,7 +82,7 @@ public class GamificationServiceImpl implements GamificationService {
     }
 
     private void checkAndAwardBadges(Long userId, GrowthProfile profile) {
-        System.out.println("Checking badges for user " + userId + " (Level: " + profile.getLevel() + ")");
+        log.info("Checking badges for user {} (Level: {})", userId, profile.getLevel());
         
         // 1. Dynamic Level Badges (Automatic check for LEVEL_2, LEVEL_3, etc.)
         for (int i = 2; i <= profile.getLevel(); i++) {
@@ -105,7 +106,7 @@ public class GamificationServiceImpl implements GamificationService {
         badgeRepo.findByCode(cleanCode).ifPresentOrElse(badge -> {
             boolean exists = userBadgeRepo.existsByUserIdAndBadgeId(userId, badge.getId());
             if (!exists) {
-                System.out.println(">>> [GAMIFICATION] Awarding Badge: " + cleanCode + " to User: " + userId);
+                log.info(">>> [GAMIFICATION] Awarding Badge: {} to User: {}", cleanCode, userId);
                 UserBadge ub = UserBadge.builder().userId(userId).badge(badge).build();
                 userBadgeRepo.saveAndFlush(ub);
                 
@@ -116,20 +117,18 @@ public class GamificationServiceImpl implements GamificationService {
                     growthRepo.save(p);
                 });
             } else {
-                System.out.println(">>> [GAMIFICATION] User " + userId + " already has " + cleanCode);
+                log.info(">>> [GAMIFICATION] User {} already has {}", userId, cleanCode);
             }
-        }, () -> {
-            System.out.println(">>> [GAMIFICATION] WARNING: Badge with code '" + cleanCode + "' not found in database.");
-        });
+        }, () -> log.warn(">>> [GAMIFICATION] WARNING: Badge with code '{}' not found in database.", cleanCode));
     }
 
     @Override
     public List<BadgeDTO> getUserBadges(Long userId) {
         List<UserBadge> ubs = userBadgeRepo.findByUserId(userId);
-        System.out.println(">>> [API] Found " + ubs.size() + " badges in DB for user " + userId);
+        log.info(">>> [API] Found {} badges in DB for user {}", ubs.size(), userId);
         return ubs.stream()
                 .map(ub -> BadgeMapper.toDto(ub.getBadge()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -150,16 +149,16 @@ public class GamificationServiceImpl implements GamificationService {
                     streakRepo.findByUserId(p.getUserId()).ifPresent(s -> dto.setCurrentStreak(s.getCurrentStreak()));
                     return dto;
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     @Transactional
     public void removeBadge(Long userId, Long badgeId) {
-        System.out.println(">>> [GAMIFICATION] Attempting to remove badge " + badgeId + " from user " + userId);
+        log.info(">>> [GAMIFICATION] Attempting to remove badge {} from user {}", badgeId, userId);
         
         Badge badge = badgeRepo.findById(badgeId)
-                .orElseThrow(() -> new RuntimeException("Badge not found"));
+                .orElseThrow(() -> new IllegalStateException("Badge not found"));
 
         // 1. Deduct XP from user profile
         growthRepo.findByUserId(userId).ifPresent(p -> {
@@ -167,7 +166,7 @@ public class GamificationServiceImpl implements GamificationService {
             p.setLevel(computeLevel(p.getXpPoints()));
             updateEngagementScore(p);
             growthRepo.saveAndFlush(p);
-            System.out.println(">>> [GAMIFICATION] Deducted " + badge.getXpReward() + " XP. New Total: " + p.getXpPoints());
+            log.info(">>> [GAMIFICATION] Deducted {} XP. New Total: {}", badge.getXpReward(), p.getXpPoints());
         });
 
         // 2. Remove the badge assignment (finding the specific record first)
@@ -178,9 +177,7 @@ public class GamificationServiceImpl implements GamificationService {
            .ifPresentOrElse(ub -> {
                userBadgeRepo.delete(ub);
                userBadgeRepo.flush();
-               System.out.println(">>> [GAMIFICATION] Successfully deleted UserBadge record.");
-           }, () -> {
-               System.out.println(">>> [GAMIFICATION] WARNING: No UserBadge found for this user/badge combination.");
-           });
+               log.info(">>> [GAMIFICATION] Successfully deleted UserBadge record.");
+           }, () -> log.warn(">>> [GAMIFICATION] WARNING: No UserBadge found for this user/badge combination."));
     }
 }

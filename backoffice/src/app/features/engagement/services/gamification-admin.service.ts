@@ -28,4 +28,15 @@ export class GamificationAdminService {
   removeUserBadge(userId: number, badgeId: number): Observable<void> {
     return this.http.delete<void>(`${BASE}/user/${userId}/badges/${badgeId}`);
   }
+
+  // --- Analytics & ML ---
+  
+  getChurnPrediction(userId: number): Observable<any> {
+    return this.http.get<any>(`http://localhost:8086/api/analytics/churn-prediction/${userId}`);
+  }
+
+  getModelStats(): Observable<any> {
+    return this.http.get<any>(`http://localhost:8086/api/analytics/model/stats`);
+  }
 }
+

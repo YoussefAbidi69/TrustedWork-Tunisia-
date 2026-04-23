@@ -162,3 +162,105 @@ tbody td { padding: 16px 20px; color: #94A3B8; vertical-align: middle; }
 
 .empty-row { text-align: center; padding: 60px 20px; color: #4B5563; font-size: 14px; }
 .text-right { text-align: right; }
+
+/* ── TEXT COLORS ── */
+.text-purple { color: #A855F7; }
+.text-success { color: #10B981; }
+.text-warning { color: #F59E0B; }
+.text-info { color: #3B82F6; }
+.text-danger { color: #EF4444; }
+
+/* ── FEATURE IMPORTANCE (XAI) ── */
+.feature-importance-container {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fi-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  opacity: 0;
+  transform: translateX(-20px);
+  animation: slideInRight 0.6s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.fi-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.05);
+  transform: translateX(4px);
+}
+
+.fi-label-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.fi-label {
+  color: #E2E8F0;
+  font-weight: 600;
+  text-transform: capitalize;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.5px;
+}
+
+.fi-label i {
+  font-size: 8px;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.fi-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.fi-bar-bg {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 99px;
+  overflow: hidden; 
+}
+
+.fi-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  max-width: 0; 
+  animation: growBar 1.2s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+  position: relative;
+}
+
+.fi-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shine 2s infinite linear;
+}
+
+@keyframes slideInRight {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes growBar {
+  from { max-width: 0; }
+  to { max-width: 100%; }
+}
+
+@keyframes shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}

@@ -79,4 +79,13 @@ export class GamificationService {
   getAnalytics(): Observable<any> {
     return this.http.get<any>(`${BASE}/analytics/me`);
   }
+
+  getChurnPrediction(userId: number): Observable<any> {
+    return this.http.get<any>(`${BASE}/analytics/churn-prediction/${userId}`);
+  }
+
+  getModelStats(): Observable<any> {
+    return this.http.get<any>(`${BASE}/analytics/model/stats`);
+  }
 }
+

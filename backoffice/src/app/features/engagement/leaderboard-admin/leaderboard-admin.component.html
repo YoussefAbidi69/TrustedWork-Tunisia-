@@ -25,6 +25,54 @@
 
 <div class="glow-line"></div>
 
+<!-- ML Model Stats Section -->
+<div class="stats-mini" *ngIf="modelStats">
+  <div class="stat-mini-card">
+    <span class="l"><i class="fas fa-brain text-purple"></i> Modèle IA</span>
+    <span class="v" style="font-size: 1.2rem;">{{ modelStats.algorithm }}</span>
+  </div>
+  <div class="stat-mini-card">
+    <span class="l"><i class="fas fa-bullseye text-success"></i> Précision (Accuracy)</span>
+    <span class="v">{{ modelStats.metrics?.accuracy | number:'1.0-2' }}%</span>
+  </div>
+  <div class="stat-mini-card">
+    <span class="l"><i class="fas fa-chart-line text-warning"></i> F1-Score</span>
+    <span class="v">{{ modelStats.metrics?.f1_score | number:'1.0-2' }}%</span>
+  </div>
+  <div class="stat-mini-card">
+    <span class="l"><i class="fas fa-database text-info"></i> Données d'entraînement</span>
+    <span class="v">{{ modelStats.training_samples }} users</span>
+  </div>
+</div>
+
+<!-- ML Feature Importance (XAI) -->
+<div class="table-card animate-slide-up" style="margin-bottom: 24px;" *ngIf="modelStats">
+  <div class="card-head">
+    <span class="card-head-title"><i class="fas fa-chart-bar text-purple"></i> Importance des Variables (Feature Importance)</span>
+    <span class="card-head-count">Explainable AI</span>
+  </div>
+  <div class="feature-importance-container">
+    <div *ngIf="featureImportanceList.length === 0" style="color: #94A3B8;">Données d'importance non disponibles.</div>
+    
+    <div class="fi-row" *ngFor="let item of featureImportanceList; let i = index" [style.animation-delay]="(i * 0.1) + 's'">
+      <div class="fi-label-container">
+        <span class="fi-label">
+          <i class="fas fa-circle" [style.color]="getFeatureColor(item.value)"></i>
+          {{ item.key }}
+        </span>
+        <strong class="fi-value" [style.color]="getFeatureColor(item.value)">{{ item.value | number:'1.0-1' }}%</strong>
+      </div>
+      <div class="fi-bar-bg">
+        <div class="fi-bar-fill" 
+             [style.width.%]="item.value" 
+             [style.background]="getFeatureGradient(item.value)"
+             [style.box-shadow]="'0 0 10px ' + getFeatureColor(item.value)">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="stats-mini">
   <div class="stat-mini-card">
     <span class="l">Total Ranked Users</span>

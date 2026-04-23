@@ -26,7 +26,7 @@ public class JwtUtil {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (Exception e) {
-            return null;
+            return Jwts.claims();
         }
     }
 

@@ -12,7 +12,6 @@ import com.trustedwork.module06.util.XPConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,13 +35,13 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventDTO> getAllEvents() {
         return eventRepository.findAll()
-                .stream().map(this::toDtoWithUsers).collect(Collectors.toList());
+                .stream().map(this::toDtoWithUsers).toList();
     }
 
     @Override
     public List<EventDTO> getEventsByGovernorate(String governorate) {
         return eventRepository.findByGovernorate(governorate)
-                .stream().map(this::toDtoWithUsers).collect(Collectors.toList());
+                .stream().map(this::toDtoWithUsers).toList();
     }
 
     @Override
@@ -121,7 +120,7 @@ public class EventServiceImpl implements EventService {
         return registrationRepository.findByUserId(userId)
                 .stream()
                 .map(reg -> reg.getEvent().getId())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -151,7 +150,7 @@ public class EventServiceImpl implements EventService {
         List<Long> userIds = registrationRepository.findByEventId(event.getId())
                 .stream()
                 .map(EventRegistration::getUserId)
-                .collect(Collectors.toList());
+                .toList();
         return EventMapper.toDto(event, userIds);
     }
 }

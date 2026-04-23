@@ -15,6 +15,7 @@ export class GamificationComponent implements OnInit {
   engagementScore = 0;
   loading = true;
   analytics: any = null;
+  churnPrediction: any = null;
 
   constructor(
     private gamService: GamificationService,
@@ -24,7 +25,15 @@ export class GamificationComponent implements OnInit {
   ngOnInit(): void {
     this.gamService.profile$.subscribe(p => {
       this.profile = p;
-      if(p) this.loading = false;
+      if(p) {
+        this.loading = false;
+        // Appel au modèle ML pour la prédiction de churn
+        this.gamService.getChurnPrediction(p.userId).subscribe({
+          next: (prediction) => {
+            this.churnPrediction = prediction;
+          }
+        });
+      }
     });
     this.gamService.badges$.subscribe(b => {
       this.badges = b;
@@ -43,6 +52,7 @@ export class GamificationComponent implements OnInit {
         this.analytics = data;
         if (this.profile) {
           this.profile.influenceScore = data.influenceScore;
+          // On garde ça pour compatibilité au cas où
           this.profile.churnRisk = data.churnRisk;
         }
       }
@@ -81,3 +91,4 @@ export class GamificationComponent implements OnInit {
     }
   }
 }
+

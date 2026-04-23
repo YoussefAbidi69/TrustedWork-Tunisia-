@@ -59,14 +59,15 @@
         </div>
       </div>
 
-      <!-- Churn Risk Card -->
-      <div class="gam-card gam-card--churn" *ngIf="analytics">
+      <!-- Churn Risk Card (ML Prediction) -->
+      <div class="gam-card gam-card--churn" *ngIf="churnPrediction || analytics">
         <div class="gam-card__icon">
-          <i class="fas fa-skull-crossbones" [style.color]="analytics.churnRisk > 0.5 ? '#ef4444' : '#10b981'"></i>
+          <i class="fas fa-skull-crossbones" [style.color]="churnPrediction ? churnPrediction.risk_color : (analytics.churnRisk > 0.5 ? '#ef4444' : '#10b981')"></i>
         </div>
         <div class="gam-card__body">
-          <span class="gam-label">Risque désengagement</span>
-          <strong class="gam-value">{{ (analytics.churnRisk * 100) | number:'1.0-0' }}%</strong>
+          <span class="gam-label">Risque d'abandon (ML)</span>
+          <strong class="gam-value">{{ churnPrediction ? churnPrediction.churn_probability : (analytics.churnRisk * 100) | number:'1.0-0' }}%</strong>
+          <small *ngIf="churnPrediction" [style.color]="churnPrediction.risk_color">{{ churnPrediction.risk_label }}</small>
         </div>
       </div>
 
@@ -110,10 +111,36 @@
           </div>
         </div>
       </div>
+      
+    </div>
+
+    <!-- ML Recommendation (Independent Section) -->
+    <div class="gam-recommendations mt-4" *ngIf="churnPrediction?.recommendation">
+      <div class="rec-subsection">
+        <h3><i class="fas fa-robot text-danger"></i> Conseil du Modèle IA</h3>
+        <div class="rec-grid">
+          <div class="rec-card" style="border-left: 4px solid {{ churnPrediction.risk_color }}">
+            <div class="rec-icon"><i class="fas fa-exclamation-triangle" [style.color]="churnPrediction.risk_color"></i></div>
+            <div class="rec-info">
+              <span class="rec-tag" [style.color]="churnPrediction.risk_color">Alerte Churn</span>
+              <strong>{{ churnPrediction.recommendation }}</strong>
+              
+              <div class="risk-factors mt-2" *ngIf="churnPrediction.top_risk_factors?.length > 0">
+                <small class="text-muted d-block mb-1">Facteurs déterminants (Explainable AI) :</small>
+                <ul class="mb-1 pl-3" style="font-size: 0.85rem; color: #94A3B8;">
+                  <li *ngFor="let factor of churnPrediction.top_risk_factors">{{ factor }}</li>
+                </ul>
+              </div>
+
+              <small>Basé sur Random Forest Classifier</small>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- XP Progress Bar -->
-    <div class="gam-progress-section">
+    <div class="gam-progress-section mt-5">
       <div class="gam-progress-label">
         <div class="label-main">
           <span>Progression vers le niveau {{ (profile?.level ?? 1) + 1 }}</span>

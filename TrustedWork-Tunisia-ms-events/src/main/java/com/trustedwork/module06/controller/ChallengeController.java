@@ -20,6 +20,7 @@ public class ChallengeController {
 
     private final ChallengeService challengeService;
     private final JwtUtil jwtUtil;
+    private static final String MESSAGE_KEY = "message";
 
     // ==================== USER ENDPOINTS ====================
 
@@ -32,44 +33,44 @@ public class ChallengeController {
     }
 
     @PostMapping("/{id}/join")
-    public ResponseEntity<?> joinChallenge(
+    public ResponseEntity<Map<String, String>> joinChallenge(
             @PathVariable Long id,
             @RequestHeader(value = "Authorization", required = false) String token) {
         Long userId = getUserId(token);
         if (userId == null) return ResponseEntity.status(401).build();
         try {
             challengeService.joinChallenge(userId, id);
-            return ResponseEntity.ok(Map.of("message", "Mission joined! Time to complete your tasks."));
+            return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Mission joined! Time to complete your tasks."));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(MESSAGE_KEY, e.getMessage()));
         }
     }
 
     @PostMapping("/{id}/succeed")
-    public ResponseEntity<?> succeedChallenge(
+    public ResponseEntity<Map<String, String>> succeedChallenge(
             @PathVariable Long id,
             @RequestHeader(value = "Authorization", required = false) String token) {
         Long userId = getUserId(token);
         if (userId == null) return ResponseEntity.status(401).build();
         try {
             challengeService.succeedChallenge(userId, id);
-            return ResponseEntity.ok(Map.of("message", "Mission successful! You can now claim your reward."));
+            return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Mission successful! You can now claim your reward."));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(MESSAGE_KEY, e.getMessage()));
         }
     }
 
     @PostMapping("/{id}/claim")
-    public ResponseEntity<?> claimReward(
+    public ResponseEntity<Map<String, String>> claimReward(
             @PathVariable Long id,
             @RequestHeader(value = "Authorization", required = false) String token) {
         Long userId = getUserId(token);
         if (userId == null) return ResponseEntity.status(401).build();
         try {
             challengeService.claimReward(userId, id);
-            return ResponseEntity.ok(Map.of("message", "Reward claimed! XP points added to your profile."));
+            return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Reward claimed! XP points added to your profile."));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(MESSAGE_KEY, e.getMessage()));
         }
     }
 

@@ -4,6 +4,11 @@ import com.trustedwork.module06.dto.GrowthProfileDTO;
 import com.trustedwork.module06.entity.GrowthProfile;
 
 public class GrowthProfileMapper {
+
+    private GrowthProfileMapper() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static GrowthProfileDTO toDto(GrowthProfile profile) {
         if(profile == null) return null;
         return GrowthProfileDTO.builder()

@@ -4,6 +4,11 @@ import com.trustedwork.module06.dto.EventDTO;
 import com.trustedwork.module06.entity.Event;
 
 public class EventMapper {
+
+    private EventMapper() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static EventDTO toDto(Event ev, java.util.List<Long> userIds) {
         if(ev == null) return null;
         return EventDTO.builder()

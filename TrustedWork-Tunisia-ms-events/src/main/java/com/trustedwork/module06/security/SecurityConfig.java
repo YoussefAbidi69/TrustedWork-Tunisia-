@@ -17,6 +17,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+    private static final String API_EVENTS_PATH = "/api/events/**";
+    private static final String API_CHALLENGES_PATH = "/api/challenges/**";
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -27,18 +29,21 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
                         // EVENTS
-                        .requestMatchers(HttpMethod.GET, "/api/events", "/api/events/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/events", "/api/events/**").permitAll() // ✅ FIX (Permit all POSTs to events for now)
-                        .requestMatchers(HttpMethod.PUT, "/api/events/**").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/api/events/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/events", API_EVENTS_PATH).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/events", API_EVENTS_PATH).permitAll()
+                        .requestMatchers(HttpMethod.PUT, API_EVENTS_PATH).permitAll()
+                        .requestMatchers(HttpMethod.DELETE, API_EVENTS_PATH).permitAll()
 
                         // LEADERBOARD
                         .requestMatchers(HttpMethod.GET, "/api/leaderboard/**").permitAll()
 
                         // CHALLENGES
                         .requestMatchers(HttpMethod.GET, "/api/challenges", "/api/challenges/admin").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/challenges/**").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/api/challenges/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, API_CHALLENGES_PATH).permitAll()
+                        .requestMatchers(HttpMethod.DELETE, API_CHALLENGES_PATH).permitAll()
+
+                        // ANALYTICS & ML
+                        .requestMatchers(HttpMethod.GET, "/api/analytics/**").permitAll()
 
                         .anyRequest().authenticated()
                 )

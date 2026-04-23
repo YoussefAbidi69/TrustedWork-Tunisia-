@@ -38,6 +38,12 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
     private String apiUrl;
 
     private static final String USER_SERVICE_URL = "http://localhost:8081/api/identity/users/";
+    private static final String EVENTS_KEY = "events";
+    private static final String CHALLENGES_KEY = "challenges";
+    private static final String REASON_KEY = "reason";
+    private static final String TITLE_KEY = "title";
+    private static final String CONTENT_KEY = "content";
+    private static final String MESSAGE_KEY = "message";
 
     @Override
     public Map<String, Object> getSmartRecommendations(Long userId) {
@@ -47,7 +53,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
         List<Challenge> challenges = challengeRepo.findAll();
 
         if (events.isEmpty() && challenges.isEmpty()) {
-            return Map.of("events", List.of(), "challenges", List.of());
+            return Map.of(EVENTS_KEY, List.of(), CHALLENGES_KEY, List.of());
         }
 
         String prompt = buildPrompt(profile, events, challenges);
@@ -55,7 +61,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
         Map<String, Object> result = parseAiResponse(aiJson, events, challenges);
 
         // Mode Secours si IA vide
-        List<?> evList = (List<?>) result.get("events");
+        List<?> evList = (List<?>) result.get(EVENTS_KEY);
         if (evList == null || evList.isEmpty()) {
             log.warn(">>> IA Vide. Mode Secours activé.");
             List<Map<String, Object>> fallback = events.stream()
@@ -64,12 +70,12 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
                     .map(e -> {
                         Map<String, Object> m = new HashMap<>();
                         m.put("id", e.getId());
-                        m.put("title", e.getTitle());
-                        m.put("reason", "Incontournable en ce moment (Recommandé)");
+                        m.put(TITLE_KEY, e.getTitle());
+                        m.put(REASON_KEY, "Incontournable en ce moment (Recommandé)");
                         return m;
                     })
-                    .collect(Collectors.toList());
-            result.put("events", fallback);
+                    .toList();
+            result.put(EVENTS_KEY, fallback);
         }
         return result;
     }
@@ -135,23 +141,30 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
             org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(jsonRequest, headers);
 
-            try {
-                org.springframework.http.ResponseEntity<String> response = restTemplate.postForEntity(apiUrl.trim(), entity, String.class);
-                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                    Map<String, Object> resMap = mapper.readValue(response.getBody(), Map.class);
-                    List<Map<String, Object>> choices = (List<Map<String, Object>>) resMap.get("choices");
-                    if (choices != null && !choices.isEmpty()) {
-                        Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-                        if (message != null && message.get("content") != null) {
-                            return cleanJson((String) message.get("content"));
-                        }
-                    }
-                }
-            } catch (org.springframework.web.client.HttpClientErrorException | org.springframework.web.client.HttpServerErrorException e) {
-                log.error(">>> [GROQ] API Error {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
-            }
+            return executeGroqCall(apiUrl, entity, mapper);
         } catch (Exception e) {
             log.error(">>> [GROQ] Fatal Error: {}", e.getMessage(), e);
+        }
+        return "";
+    }
+
+    private String executeGroqCall(String url, HttpEntity<String> entity, com.fasterxml.jackson.databind.ObjectMapper mapper) {
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(url.trim(), entity, String.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> resMap = mapper.readValue(response.getBody(), Map.class);
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) resMap.get("choices");
+                if (choices != null && !choices.isEmpty()) {
+                    Map<String, Object> message = (Map<String, Object>) choices.get(0).get(MESSAGE_KEY);
+                    if (message != null && message.get(CONTENT_KEY) != null) {
+                        return cleanJson((String) message.get(CONTENT_KEY));
+                    }
+                }
+            }
+        } catch (HttpClientErrorException | org.springframework.web.client.HttpServerErrorException e) {
+            log.error(">>> [GROQ] API Error {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(">>> [GROQ] Processing Error: {}", e.getMessage());
         }
         return "";
     }
@@ -169,8 +182,8 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
     private Map<String, Object> parseAiResponse(String json, List<Event> events, List<Challenge> challenges) {
         Map<String, Object> result = new HashMap<>();
-        result.put("events", new ArrayList<>());
-        result.put("challenges", new ArrayList<>());
+        result.put(EVENTS_KEY, new ArrayList<>());
+        result.put(CHALLENGES_KEY, new ArrayList<>());
         if (json == null || json.isEmpty()) return result;
 
         try {
@@ -179,20 +192,20 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
             List<Map<String, Object>> evRecs = (List<Map<String, Object>>) aiMap.get("eventRecommendations");
             if (evRecs != null) {
-                result.put("events", evRecs.stream().map(rec -> {
+                result.put(EVENTS_KEY, evRecs.stream().map(rec -> {
                     Long id = Long.valueOf(rec.get("id").toString());
                     Event e = events.stream().filter(ev -> ev.getId().equals(id)).findFirst().orElse(null);
-                    return e != null ? Map.of("id", e.getId(), "title", e.getTitle(), "reason", rec.get("reason")) : null;
-                }).filter(Objects::nonNull).collect(Collectors.toList()));
+                    return e != null ? Map.of("id", e.getId(), TITLE_KEY, e.getTitle(), REASON_KEY, rec.get(REASON_KEY)) : null;
+                }).filter(Objects::nonNull).toList());
             }
 
             List<Map<String, Object>> chRecs = (List<Map<String, Object>>) aiMap.get("challengeRecommendations");
             if (chRecs != null) {
-                result.put("challenges", chRecs.stream().map(rec -> {
+                result.put(CHALLENGES_KEY, chRecs.stream().map(rec -> {
                     Long id = Long.valueOf(rec.get("id").toString());
                     Challenge c = challenges.stream().filter(ch -> ch.getId().equals(id)).findFirst().orElse(null);
-                    return c != null ? Map.of("id", c.getId(), "title", c.getTitle(), "reason", rec.get("reason")) : null;
-                }).filter(Objects::nonNull).collect(Collectors.toList()));
+                    return c != null ? Map.of("id", c.getId(), TITLE_KEY, c.getTitle(), REASON_KEY, rec.get(REASON_KEY)) : null;
+                }).filter(Objects::nonNull).toList());
             }
         } catch (Exception e) {
             log.error("Parsing Error: {}", e.getMessage());

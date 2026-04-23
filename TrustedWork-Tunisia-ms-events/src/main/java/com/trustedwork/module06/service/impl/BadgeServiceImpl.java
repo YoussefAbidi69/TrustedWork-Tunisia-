@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +27,7 @@ public class BadgeServiceImpl implements BadgeService {
                     var ownerships = userBadgeRepository.findByBadgeId(badge.getId());
                     return BadgeMapper.toDto(badge, ownerships);
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

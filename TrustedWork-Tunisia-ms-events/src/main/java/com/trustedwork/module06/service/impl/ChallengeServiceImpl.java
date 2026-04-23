@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +33,7 @@ public class ChallengeServiceImpl implements ChallengeService {
     public List<ChallengeDTO> getAllChallenges() {
         return challengeRepository.findAll().stream()
                 .map(ChallengeMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -49,7 +48,7 @@ public class ChallengeServiceImpl implements ChallengeService {
                     .findFirst();
             dto.setCurrentParticipation(p.map(ChallengeMapper::toParticipationDTO).orElse(null));
             return dto;
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
     @Override
@@ -63,7 +62,7 @@ public class ChallengeServiceImpl implements ChallengeService {
     @Transactional
     public ChallengeDTO updateChallenge(Long id, ChallengeDTO challengeDTO) {
         Challenge existing = challengeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Challenge not found"));
+                .orElseThrow(() -> new IllegalStateException("Challenge not found"));
         
         Challenge updated = ChallengeMapper.toEntity(challengeDTO);
         existing.setTitle(updated.getTitle());
@@ -85,10 +84,10 @@ public class ChallengeServiceImpl implements ChallengeService {
     @Transactional
     public void joinChallenge(Long userId, Long challengeId) {
         Challenge challenge = challengeRepository.findById(challengeId)
-                .orElseThrow(() -> new RuntimeException("Challenge not found"));
+                .orElseThrow(() -> new IllegalStateException("Challenge not found"));
         
         participationRepository.findByUserIdAndChallengeId(userId, challengeId).ifPresent(p -> {
-            throw new RuntimeException("Vous avez déjà rejoint cette mission");
+            throw new IllegalStateException("Vous avez déjà rejoint cette mission");
         });
 
         ChallengeParticipation p = ChallengeParticipation.builder()
@@ -103,49 +102,37 @@ public class ChallengeServiceImpl implements ChallengeService {
     @Transactional
     public void succeedChallenge(Long userId, Long challengeId) {
         ChallengeParticipation p = participationRepository.findByUserIdAndChallengeId(userId, challengeId)
-                .orElseThrow(() -> new RuntimeException("Participation non trouvée"));
+                .orElseThrow(() -> new IllegalStateException("Participation non trouvée"));
         
         if (p.getStatus() != ParticipationStatus.JOINED) {
-            throw new RuntimeException("Cette mission n'est pas en cours");
+            throw new IllegalStateException("Cette mission n'est pas en cours");
         }
 
         Challenge c = p.getChallenge();
         String typeCode = c.getChallengeTypeCode();
 
         // --- REAL VERIFICATION ENGINE ---
-        boolean isVerified = false;
-
-        if (typeCode == null || typeCode.isEmpty() || typeCode.equals("MANUAL")) {
-            // Permettre la validation manuelle pour les types non configurés
-            isVerified = true;
-        } else if (typeCode.equals("REG_EVENT")) {
-            // Vérifier si l'utilisateur est inscrit à au moins un événement
-            isVerified = !eventRegistrationRepository.findByUserId(userId).isEmpty();
-            if (!isVerified) throw new RuntimeException("Action requise : Vous devez vous inscrire à au moins un événement !");
-        } else if (typeCode.equals("FIRST_BADGE")) {
-            // Vérifier si l'utilisateur possède au moins un badge
-            isVerified = !userBadgeRepository.findByUserId(userId).isEmpty();
-            if (!isVerified) throw new RuntimeException("Action requise : Vous devez gagner au moins un badge d'abord !");
-        } else {
-            // Par défaut, si le code est inconnu
-            isVerified = true; 
+        if ("REG_EVENT".equals(typeCode) && eventRegistrationRepository.findByUserId(userId).isEmpty()) {
+            throw new IllegalStateException("Action requise : Vous devez vous inscrire à au moins un événement !");
+        } 
+        
+        if ("FIRST_BADGE".equals(typeCode) && userBadgeRepository.findByUserId(userId).isEmpty()) {
+            throw new IllegalStateException("Action requise : Vous devez gagner au moins un badge d'abord !");
         }
 
-        if (isVerified) {
-            p.setStatus(ParticipationStatus.SUCCESS);
-            p.setCompletedAt(java.time.LocalDateTime.now());
-            participationRepository.save(p);
-        }
+        p.setStatus(ParticipationStatus.SUCCESS);
+        p.setCompletedAt(java.time.LocalDateTime.now());
+        participationRepository.save(p);
     }
 
     @Override
     @Transactional
     public void claimReward(Long userId, Long challengeId) {
         ChallengeParticipation p = participationRepository.findByUserIdAndChallengeId(userId, challengeId)
-                .orElseThrow(() -> new RuntimeException("Participation non trouvée"));
+                .orElseThrow(() -> new IllegalStateException("Participation non trouvée"));
         
         if (p.getStatus() != ParticipationStatus.SUCCESS) {
-            throw new RuntimeException("La mission n'est pas encore réussie");
+            throw new IllegalStateException("La mission n'est pas encore réussie");
         }
 
         Challenge c = p.getChallenge();

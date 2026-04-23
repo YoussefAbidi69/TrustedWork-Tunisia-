@@ -7,6 +7,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class BadgeMapper {
+
+    private BadgeMapper() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static BadgeDTO toDto(Badge badge) {
         return toDto(badge, null);
     }
