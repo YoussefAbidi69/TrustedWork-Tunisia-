@@ -6,6 +6,10 @@ import java.util.Map;
  * Service de communication avec le microservice Python IA (Flask - port 5001).
  * Appelle le modèle Random Forest entraîné pour prédire le risque de churn.
  */
+/**
+ * Service de prédiction basé sur l'Intelligence Artificielle pour le module d'engagement.
+ * Fournit des analyses sur le risque de désengagement (churn) et les statistiques du modèle.
+ */
 public interface MlPredictionService {
 
     /**
