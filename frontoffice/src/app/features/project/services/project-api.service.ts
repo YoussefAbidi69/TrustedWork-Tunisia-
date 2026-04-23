@@ -8,9 +8,10 @@ import {
   Deliverable, CreateDeliverableDTO, DeliverableStatus,
   ProgressReport,
   DeliveryRiskSignal,
-  MLPrediction,           // ← AJOUTER
+  MLPrediction,
   ProjectNotification,
-  ProjectStatus
+  ProjectStatus,
+  TaskSuggestionResponse
 } from '../models/project.models';
 
 
@@ -235,9 +236,16 @@ export class ProjectApiService {
   }
 
   // Prédiction ML Random Forest
-predictDeliveryRisk(projectId: number): Observable<MLPrediction> {
-  return this.http.get<MLPrediction>(
-    `${GATEWAY_URL}/api/projects/${projectId}/risks/ml-predict`
-  );
-}
+  predictDeliveryRisk(projectId: number): Observable<MLPrediction> {
+    return this.http.get<MLPrediction>(
+      `${GATEWAY_URL}/api/projects/${projectId}/risks/ml-predict`
+    );
+  }
+
+  // Suggestion IA de tâches (RandomForest)
+  getSuggestedTasks(projectId: number): Observable<TaskSuggestionResponse> {
+    return this.http.get<TaskSuggestionResponse>(
+      `${GATEWAY_URL}/api/projects/${projectId}/suggest-tasks`
+    );
+  }
 }

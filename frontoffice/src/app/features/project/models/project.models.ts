@@ -161,6 +161,23 @@ export interface CreateDeliverableDTO {
   taskId?: number;
 }
 
+// ── TaskSuggestion IA ─────────────────────────────────────────────
+
+export interface TacheSuggere {
+  title: string;
+  description: string;
+  order: number;
+  estimatedHours: number;
+  deadline: string;
+}
+
+export interface TaskSuggestionResponse {
+  projectId: number;
+  projectTitle: string;
+  detectedType: string;
+  suggestedTasks: TacheSuggere[];
+}
+
 // ── MLPredictionDTO — Résultat du modèle Random Forest ──────────
 
 export interface MLPrediction {

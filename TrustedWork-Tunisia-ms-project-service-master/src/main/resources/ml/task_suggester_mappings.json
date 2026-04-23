@@ -1,0 +1,377 @@
+{
+  "project_type_encoding": {
+    "AI_ML_PROJECT": 0,
+    "API_BACKEND": 1,
+    "APP_MOBILE": 2,
+    "BLOG_CMS": 3,
+    "BOOKING_SYSTEM": 4,
+    "DASHBOARD": 5,
+    "E_COMMERCE": 6,
+    "IOT_PLATFORM": 7,
+    "PORTFOLIO": 8,
+    "SAAS_PLATFORM": 9,
+    "SITE_VITRINE": 10,
+    "SOCIAL_NETWORK": 11
+  },
+  "task_title_decoding": {
+    "0": "API d'inférence endpoint ML",
+    "1": "API publique & webhooks",
+    "2": "Alertes & seuils automatiques",
+    "3": "Analyse exploratoire des données EDA",
+    "4": "Architecture backend Spring Boot",
+    "5": "Authentification JWT",
+    "6": "Calendrier & disponibilités",
+    "7": "Catalogue produits & catégories",
+    "8": "Charte graphique & Design System",
+    "9": "Collecte & préparation des données",
+    "10": "Conception base de données",
+    "11": "Confirmation & rappels email SMS",
+    "12": "Dashboard admin",
+    "13": "Dashboard admin SaaS",
+    "14": "Dashboard analytique",
+    "15": "Dashboard monitoring temps réel",
+    "16": "Design responsive mobile-first",
+    "17": "Documentation Swagger OpenAPI",
+    "18": "Documentation technique",
+    "19": "Déploiement & mise en production",
+    "20": "Développement API REST",
+    "21": "Développement pages frontend",
+    "22": "Développement écrans principaux",
+    "23": "Editeur de contenu WYSIWYG",
+    "24": "Entraînement du modèle ML",
+    "25": "Evaluation & métriques du modèle",
+    "26": "Exports PDF CSV rapports",
+    "27": "Fil d'actualité",
+    "28": "Fil d'actualité Feed",
+    "29": "Formulaire de contact",
+    "30": "Gestion abonnements & billing",
+    "31": "Gestion abonnements billing",
+    "32": "Gestion annulations & remboursements",
+    "33": "Gestion categories & tags articles",
+    "34": "Gestion des rôles & permissions",
+    "35": "Gestion stocks & inventaire",
+    "36": "Graphiques & visualisation données",
+    "37": "Intégration capteurs IoT",
+    "38": "Intégration capteurs IoT MQTT WebSocket",
+    "39": "Intégration frontend",
+    "40": "Intégration paiement Flouci",
+    "41": "Intégration paiement Flouci/D17",
+    "42": "KPIs & métriques temps réel",
+    "43": "Maquette UI/UX",
+    "44": "Messagerie instantanée",
+    "45": "Module avis & notation produits",
+    "46": "Multi-tenancy architecture",
+    "47": "Navigation & Routing",
+    "48": "Notifications push",
+    "49": "Offline mode & synchronisation",
+    "50": "Optimisation SEO",
+    "51": "Panier & gestion commandes",
+    "52": "Profils utilisateurs",
+    "53": "Publication App Store Play Store",
+    "54": "Section projets & réalisations",
+    "55": "Setup projet mobile Flutter React Native",
+    "56": "Système de commentaires",
+    "57": "Système de followers abonnements",
+    "58": "Système de réservation en ligne",
+    "59": "Sécurisation des endpoints API",
+    "60": "Tests unitaires & intégration",
+    "61": "Wireframes & Prototypes"
+  },
+  "task_details": {
+    "Maquette UI/UX": {
+      "description": "Créer les wireframes et maquettes Figma pour toutes les pages du site e-commerce",
+      "order": 1,
+      "estimatedHours": 16
+    },
+    "Catalogue produits & catégories": {
+      "description": "Développer le module de gestion des produits avec catégories et filtres",
+      "order": 5,
+      "estimatedHours": 20
+    },
+    "Panier & gestion commandes": {
+      "description": "Implémenter le panier d'achat et le workflow de commande complet",
+      "order": 6,
+      "estimatedHours": 24
+    },
+    "Intégration paiement Flouci/D17": {
+      "description": "Intégrer les APIs de paiement Flouci et D17 pour les transactions en ligne",
+      "order": 7,
+      "estimatedHours": 16
+    },
+    "Gestion stocks & inventaire": {
+      "description": "Développer le module de suivi des stocks avec alertes de rupture",
+      "order": 6,
+      "estimatedHours": 16
+    },
+    "Module avis & notation produits": {
+      "description": "Permettre aux clients de laisser des avis et notes sur les produits",
+      "order": 7,
+      "estimatedHours": 12
+    },
+    "Dashboard admin": {
+      "description": "Créer le tableau de bord administrateur avec statistiques de ventes",
+      "order": 5,
+      "estimatedHours": 20
+    },
+    "Sécurisation des endpoints API": {
+      "description": "Sécuriser toutes les routes REST avec validation et protection CSRF",
+      "order": 5,
+      "estimatedHours": 8
+    },
+    "Tests unitaires & intégration": {
+      "description": "Écrire les tests unitaires et d'intégration pour tous les modules",
+      "order": 8,
+      "estimatedHours": 16
+    },
+    "Déploiement & mise en production": {
+      "description": "Configurer le serveur et déployer l'application en production",
+      "order": 9,
+      "estimatedHours": 8
+    },
+    "Charte graphique & Design System": {
+      "description": "Définir l'identité visuelle couleurs typographies et composants UI",
+      "order": 2,
+      "estimatedHours": 10
+    },
+    "Design responsive mobile-first": {
+      "description": "Adapter tous les écrans pour mobile tablette et desktop",
+      "order": 2,
+      "estimatedHours": 8
+    },
+    "Développement pages frontend": {
+      "description": "Développer toutes les pages du site avec Angular ou React",
+      "order": 3,
+      "estimatedHours": 20
+    },
+    "Optimisation SEO": {
+      "description": "Optimiser les balises meta titres descriptions et structure HTML",
+      "order": 5,
+      "estimatedHours": 8
+    },
+    "Formulaire de contact": {
+      "description": "Intégrer un formulaire de contact avec validation et envoi d'email",
+      "order": 5,
+      "estimatedHours": 6
+    },
+    "Wireframes & Prototypes": {
+      "description": "Créer les wireframes et prototypes interactifs pour l'application mobile",
+      "order": 1,
+      "estimatedHours": 12
+    },
+    "Setup projet mobile Flutter React Native": {
+      "description": "Initialiser le projet mobile avec configuration et dépendances",
+      "order": 2,
+      "estimatedHours": 6
+    },
+    "Authentification JWT": {
+      "description": "Implémenter la connexion sécurisée avec gestion des tokens",
+      "order": 3,
+      "estimatedHours": 12
+    },
+    "Navigation & Routing": {
+      "description": "Configurer la navigation entre les écrans de l'application",
+      "order": 4,
+      "estimatedHours": 8
+    },
+    "Développement écrans principaux": {
+      "description": "Développer tous les écrans principaux de l'application",
+      "order": 5,
+      "estimatedHours": 32
+    },
+    "Notifications push": {
+      "description": "Configurer Firebase et implémenter les notifications push",
+      "order": 6,
+      "estimatedHours": 10
+    },
+    "Offline mode & synchronisation": {
+      "description": "Gérer le mode hors ligne et la synchronisation des données",
+      "order": 7,
+      "estimatedHours": 16
+    },
+    "Publication App Store Play Store": {
+      "description": "Préparer et soumettre l'application sur les stores officiels",
+      "order": 8,
+      "estimatedHours": 8
+    },
+    "Conception base de données": {
+      "description": "Modéliser le schéma relationnel et créer les migrations",
+      "order": 1,
+      "estimatedHours": 10
+    },
+    "Architecture backend Spring Boot": {
+      "description": "Mettre en place la structure du projet et les couches applicatives",
+      "order": 2,
+      "estimatedHours": 8
+    },
+    "Gestion des rôles & permissions": {
+      "description": "Configurer Spring Security avec les rôles et permissions",
+      "order": 3,
+      "estimatedHours": 8
+    },
+    "Développement API REST": {
+      "description": "Développer tous les endpoints REST avec validation et gestion d'erreurs",
+      "order": 4,
+      "estimatedHours": 28
+    },
+    "Documentation Swagger OpenAPI": {
+      "description": "Documenter tous les endpoints avec Swagger et exemples de requêtes",
+      "order": 6,
+      "estimatedHours": 6
+    },
+    "Dashboard analytique": {
+      "description": "Développer le tableau de bord principal avec vue d'ensemble",
+      "order": 5,
+      "estimatedHours": 20
+    },
+    "Graphiques & visualisation données": {
+      "description": "Intégrer des graphiques interactifs avec Chart.js ou D3.js",
+      "order": 6,
+      "estimatedHours": 18
+    },
+    "KPIs & métriques temps réel": {
+      "description": "Afficher les indicateurs clés de performance en temps réel",
+      "order": 6,
+      "estimatedHours": 16
+    },
+    "Exports PDF CSV rapports": {
+      "description": "Permettre l'export des données en PDF et CSV",
+      "order": 7,
+      "estimatedHours": 12
+    },
+    "Editeur de contenu WYSIWYG": {
+      "description": "Intégrer un éditeur riche pour la création d'articles",
+      "order": 4,
+      "estimatedHours": 14
+    },
+    "Gestion categories & tags articles": {
+      "description": "Développer le système de catégorisation et tagging des articles",
+      "order": 4,
+      "estimatedHours": 10
+    },
+    "Système de commentaires": {
+      "description": "Permettre aux lecteurs de commenter les articles avec modération",
+      "order": 5,
+      "estimatedHours": 12
+    },
+    "Multi-tenancy architecture": {
+      "description": "Implémenter l'isolation des données entre les tenants",
+      "order": 4,
+      "estimatedHours": 20
+    },
+    "Gestion abonnements & billing": {
+      "description": "Intégrer la gestion des abonnements et facturation automatique",
+      "order": 5,
+      "estimatedHours": 20
+    },
+    "Dashboard admin SaaS": {
+      "description": "Développer le dashboard d'administration de la plateforme",
+      "order": 6,
+      "estimatedHours": 18
+    },
+    "API publique & webhooks": {
+      "description": "Exposer une API publique avec documentation et webhooks",
+      "order": 7,
+      "estimatedHours": 16
+    },
+    "Section projets & réalisations": {
+      "description": "Créer la galerie de projets avec descriptions et liens",
+      "order": 4,
+      "estimatedHours": 10
+    },
+    "Calendrier & disponibilités": {
+      "description": "Développer le module de gestion des créneaux et disponibilités",
+      "order": 4,
+      "estimatedHours": 18
+    },
+    "Système de réservation en ligne": {
+      "description": "Implémenter le workflow complet de réservation",
+      "order": 5,
+      "estimatedHours": 20
+    },
+    "Confirmation & rappels email SMS": {
+      "description": "Envoyer des confirmations et rappels automatiques par email et SMS",
+      "order": 6,
+      "estimatedHours": 12
+    },
+    "Intégration paiement Flouci": {
+      "description": "Intégrer le paiement en ligne pour les réservations",
+      "order": 6,
+      "estimatedHours": 14
+    },
+    "Gestion annulations & remboursements": {
+      "description": "Gérer les annulations avec politique de remboursement",
+      "order": 7,
+      "estimatedHours": 12
+    },
+    "Profils utilisateurs": {
+      "description": "Développer les profils avec photo bio et informations personnelles",
+      "order": 4,
+      "estimatedHours": 14
+    },
+    "Fil d'actualité Feed": {
+      "description": "Implémenter le feed algorithmique avec pagination infinie",
+      "order": 5,
+      "estimatedHours": 20
+    },
+    "Système de followers abonnements": {
+      "description": "Gérer les relations follower following et abonnements",
+      "order": 5,
+      "estimatedHours": 12
+    },
+    "Messagerie instantanée": {
+      "description": "Développer le chat en temps réel avec WebSocket",
+      "order": 6,
+      "estimatedHours": 20
+    },
+    "Intégration capteurs IoT MQTT WebSocket": {
+      "description": "Connecter les capteurs physiques via protocoles MQTT et WebSocket",
+      "order": 4,
+      "estimatedHours": 20
+    },
+    "Dashboard monitoring temps réel": {
+      "description": "Développer le tableau de bord de surveillance en temps réel",
+      "order": 5,
+      "estimatedHours": 18
+    },
+    "Alertes & seuils automatiques": {
+      "description": "Configurer les alertes automatiques selon les seuils définis",
+      "order": 6,
+      "estimatedHours": 12
+    },
+    "Collecte & préparation des données": {
+      "description": "Collecter nettoyer et préparer le dataset pour l'entraînement",
+      "order": 1,
+      "estimatedHours": 20
+    },
+    "Analyse exploratoire des données EDA": {
+      "description": "Analyser les distributions corrélations et visualiser les données",
+      "order": 2,
+      "estimatedHours": 14
+    },
+    "Entraînement du modèle ML": {
+      "description": "Entraîner et optimiser le modèle avec validation croisée",
+      "order": 3,
+      "estimatedHours": 24
+    },
+    "Evaluation & métriques du modèle": {
+      "description": "Évaluer les performances avec accuracy precision recall et F1-score",
+      "order": 4,
+      "estimatedHours": 10
+    },
+    "API d'inférence endpoint ML": {
+      "description": "Développer l'endpoint REST pour exposer le modèle en production",
+      "order": 5,
+      "estimatedHours": 12
+    },
+    "Intégration frontend": {
+      "description": "Intégrer les prédictions du modèle dans l'interface utilisateur",
+      "order": 6,
+      "estimatedHours": 14
+    },
+    "Documentation technique": {
+      "description": "Rédiger la documentation du modèle métriques et guide d'utilisation",
+      "order": 7,
+      "estimatedHours": 8
+    }
+  }
+}

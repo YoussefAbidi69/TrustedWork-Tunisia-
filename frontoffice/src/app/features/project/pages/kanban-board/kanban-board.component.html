@@ -194,6 +194,56 @@
   </div>
 </div>
 
+<!-- ══ MODAL IA SUGGESTION ══ -->
+<div class="modal-overlay" *ngIf="showAiModal" (click)="dismissAiModal()">
+  <div class="modal-card modal-card--ai" (click)="$event.stopPropagation()">
+
+    <div class="modal-header modal-header--ai">
+      <div>
+        <h3><i class="fas fa-robot"></i> Suggestions IA</h3>
+        <p class="ai-subtitle">
+          Type détecté : <span class="ai-type-badge">{{ formatAiType(aiDetectedType) }}</span>
+          · {{ aiSuggestions.length }} tâches recommandées
+        </p>
+      </div>
+      <button class="modal-close" (click)="dismissAiModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <div class="ai-selbar">
+      <button class="ai-link" (click)="selectAllAi()">Tout sélectionner</button>
+      <span>·</span>
+      <button class="ai-link" (click)="deselectAllAi()">Tout décocher</button>
+    </div>
+
+    <div class="modal-body ai-task-list">
+      <div class="ai-task-item"
+           *ngFor="let task of aiSuggestions; let i = index"
+           [class.ai-task-item--on]="aiSelected[i]"
+           (click)="toggleAiTask(i)">
+        <i class="fas ai-check" [ngClass]="aiSelected[i] ? 'fa-square-check' : 'fa-square'"></i>
+        <div class="ai-task-info">
+          <div class="ai-task-title">{{ task.title }}</div>
+          <div class="ai-task-desc">{{ task.description }}</div>
+          <div class="ai-task-meta">
+            <span class="ai-badge">Étape {{ task.order }}</span>
+            <span class="ai-badge"><i class="fas fa-clock"></i> {{ task.estimatedHours }}h</span>
+            <span class="ai-badge"><i class="fas fa-calendar"></i> {{ task.deadline }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="dismissAiModal()">Ignorer</button>
+      <button class="btn-primary" (click)="acceptAiSuggestions()" [disabled]="aiSelectedCount === 0">
+        <i class="fas fa-wand-magic-sparkles"></i>
+        Ajouter {{ aiSelectedCount }} tâche{{ aiSelectedCount > 1 ? 's' : '' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+
 <!-- ══ MODAL ÉDITION TÂCHE ══ -->
 <div class="modal-overlay" *ngIf="showEditModal && editingTask" (click)="closeEditModal()">
   <div class="modal-card" (click)="$event.stopPropagation()">

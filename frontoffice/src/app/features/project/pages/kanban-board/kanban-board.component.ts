@@ -5,7 +5,7 @@ import { ProjectApiService } from '../../services/project-api.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import {
   Project, Task, SubTask, TaskStatus, TaskPriority,
-  CreateTaskDTO, CreateSubTaskDTO
+  CreateTaskDTO, CreateSubTaskDTO, TacheSuggere
 } from '../../models/project.models';
 
 @Component({
@@ -51,6 +51,12 @@ export class KanbanBoardComponent implements OnInit {
   showEditModal = false;
   editingTask: Task | null = null;
 
+  // ── Modal IA suggestion ──
+  showAiModal = false;
+  aiDetectedType = '';
+  aiSuggestions: TacheSuggere[] = [];
+  aiSelected: boolean[] = [];
+
   // ── IDs des colonnes pour CDK ──
   columnIds: string[] = ['col-TODO', 'col-IN_PROGRESS', 'col-IN_REVIEW', 'col-DONE'];
 
@@ -90,6 +96,11 @@ private loadData(): void {
     next: (tasks) => {
       this.distributeTasksToColumns(tasks);
       this.loading = false;
+      if (tasks.length === 0
+          && this.currentRole === 'FREELANCER'
+          && !localStorage.getItem(this.aiStorageKey)) {
+        this.loadAiSuggestions();
+      }
     },
     error: () => {
       this.error = 'Impossible de charger les tâches.';
@@ -308,13 +319,68 @@ private loadData(): void {
     this.router.navigate(['/app/projects', this.projectId]);
   }
 
-  /** Le freelancer et l'admin peuvent créer/modifier/supprimer des tâches */
-get canEditTasks(): boolean {
-  return this.isFreelancer || this.isAdmin;
-}
+  get canEditTasks(): boolean { return this.isFreelancer || this.isAdmin; }
+  get canDragTasks(): boolean { return this.isFreelancer || this.isAdmin; }
 
-/** Le client ne peut que consulter, pas déplacer */
-get canDragTasks(): boolean {
-  return this.isFreelancer || this.isAdmin;
-}
+  // ══════════════════════════════════════
+  // IA SUGGESTION
+  // ══════════════════════════════════════
+
+  private get aiStorageKey(): string {
+    return `ai_suggested_project_${this.projectId}`;
+  }
+
+  get aiSelectedCount(): number {
+    return this.aiSelected.filter(Boolean).length;
+  }
+
+  private loadAiSuggestions(): void {
+    this.projectApi.getSuggestedTasks(this.projectId).subscribe({
+      next: (res) => {
+        localStorage.setItem(this.aiStorageKey, '1');
+        if (!res.suggestedTasks.length) return;
+        this.aiDetectedType = res.detectedType;
+        this.aiSuggestions = res.suggestedTasks;
+        this.aiSelected = res.suggestedTasks.map(() => true);
+        this.showAiModal = true;
+      },
+      error: () => localStorage.setItem(this.aiStorageKey, '1')
+    });
+  }
+
+  toggleAiTask(index: number): void {
+    this.aiSelected[index] = !this.aiSelected[index];
+  }
+
+  selectAllAi(): void   { this.aiSelected = this.aiSelected.map(() => true); }
+  deselectAllAi(): void { this.aiSelected = this.aiSelected.map(() => false); }
+  dismissAiModal(): void { this.showAiModal = false; }
+
+  formatAiType(type: string): string {
+    return type.replace(/_/g, ' ');
+  }
+
+  acceptAiSuggestions(): void {
+    const assigneeId = this.authService.getCurrentAuthUser()?.userId || 0;
+    const selected = this.aiSuggestions.filter((_, i) => this.aiSelected[i]);
+    if (!selected.length) { this.showAiModal = false; return; }
+
+    let done = 0;
+    selected.forEach(s => {
+      const dto: CreateTaskDTO = {
+        title: s.title,
+        description: s.description,
+        priority: 'MEDIUM',
+        assigneeId,
+        deadline: s.deadline,
+        estimatedHours: s.estimatedHours
+      };
+      this.projectApi.createTask(this.projectId, dto).subscribe({
+        next: (task) => {
+          this.tasksByColumn['TODO'].push(task);
+          if (++done === selected.length) this.showAiModal = false;
+        }
+      });
+    });
+  }
 }
