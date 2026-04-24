@@ -1,0 +1,37 @@
+:host {
+  display: block;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(244, 248, 255, 0.72));
+  border: 1px solid rgba(15, 27, 45, 0.06);
+  box-shadow:
+    0 20px 40px rgba(1, 8, 20, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.52);
+}
+
+.footer__left,
+.footer__right {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.footer__left strong {
+  color: #10203a;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.footer__left span,
+.footer__right span {
+  color: #6b7788;
+  font-size: 12px;
+  font-weight: 600;
+}

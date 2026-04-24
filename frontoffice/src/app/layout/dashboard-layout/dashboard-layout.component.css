@@ -1,0 +1,75 @@
+/* ─── DASHBOARD LAYOUT COMPONENT ─── */
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:host {
+  /*
+   * ⚠️ Ces valeurs DOIVENT correspondre exactement à la sidebar :
+   * sidebar.component.css → --sidebar-w: 292px / --sidebar-w-col: 84px
+   */
+  --sidebar-w:     292px;
+  --sidebar-w-col: 84px;
+  --nav-h:         76px;
+
+  display: block;
+  min-height: 100vh;
+  background: #0d1929;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* Le wrapper compense le sidebar fixed */
+.dashboard-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin-left: var(--sidebar-w-col);   /* sidebar collapsed par défaut = 84px */
+  transition: margin-left 0.28s ease;
+}
+
+/* Sidebar étendue → décaler de 292px */
+:host:not(.sidebar-collapsed) .dashboard-wrapper {
+  margin-left: var(--sidebar-w);
+}
+
+app-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  flex-shrink: 0;
+  display: block;
+}
+
+.dashboard-content {
+  flex: 1;
+  /* padding réduit : la sidebar prend déjà de la place */
+  padding: 24px 20px;
+  background: linear-gradient(180deg, #0d1929 0%, #0f1e2f 100%);
+  min-height: calc(100vh - var(--nav-h));
+  overflow-x: hidden;
+
+  /* Fix visibilité : annule color:#1B1F2A du body global */
+  color: #f1f5f9;
+}
+
+.dashboard-content a { color: inherit; }
+
+.dashboard-content h1,
+.dashboard-content h2,
+.dashboard-content h3,
+.dashboard-content h4,
+.dashboard-content h5,
+.dashboard-content h6 { color: #f1f5f9; }
+
+.dashboard-content p,
+.dashboard-content span,
+.dashboard-content label,
+.dashboard-content small { color: inherit; }
+
+router-outlet + * {
+  display: block;
+  animation: fadeSlideIn 0.22s ease;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

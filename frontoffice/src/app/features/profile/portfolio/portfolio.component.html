@@ -1,0 +1,402 @@
+<div class="portfolio-page">
+  <div class="portfolio-shell">
+
+    <!-- Header -->
+    <div class="portfolio-header">
+      <div class="header-left">
+        <span class="page-chip">Portfolio</span>
+
+        <div class="title-row">
+          <h1>Mon Portfolio</h1>
+          <span class="badge-count">{{ projectsCountLabel }}</span>
+        </div>
+
+        <p>
+          Présentez vos réalisations pour renforcer votre crédibilité et valoriser
+          votre expertise auprès des clients.
+        </p>
+
+        <div class="portfolio-stats" *ngIf="hasItems">
+          <div class="stat-pill">
+            <span class="stat-pill__label">Épinglés</span>
+            <strong>{{ pinnedCount }}/{{ maxPinnedItems }}</strong>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-pill__label">Total projets</span>
+            <strong>{{ portfolioItems.length }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn-add" type="button" (click)="showForm = !showForm">
+          {{ showForm ? 'Fermer le formulaire' : '+ Ajouter un projet' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="alert-error" *ngIf="errorMessage">
+      <span>{{ errorMessage }}</span>
+      <button type="button" (click)="errorMessage = ''">✕</button>
+    </div>
+
+    <div class="alert-success" *ngIf="successMessage">
+      <span>{{ successMessage }}</span>
+      <button type="button" (click)="successMessage = ''">✕</button>
+    </div>
+
+    <!-- Formulaire -->
+    <div class="form-card" *ngIf="showForm">
+      <div class="form-card__header">
+        <span class="section-chip">Nouveau projet</span>
+        <h2>Ajoutez une réalisation à votre portfolio</h2>
+        <p>
+          Mettez en avant un projet concret, les technologies utilisées et, si possible,
+          un lien de démonstration ou de repository.
+        </p>
+      </div>
+
+      <div class="form-grid">
+        <div class="mini-section-title">Informations principales</div>
+
+        <div class="form-group">
+          <label for="title">Titre du projet <span>*</span></label>
+          <input
+            id="title"
+            type="text"
+            [(ngModel)]="newItem.title"
+            placeholder="Ex: Plateforme e-commerce"
+            class="form-control"
+          />
+          <div class="field-meta">
+            <small>Choisissez un titre clair et professionnel.</small>
+            <small>{{ titleLength }}/150</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="technologies">Technologies</label>
+          <input
+            id="technologies"
+            type="text"
+            [(ngModel)]="newItem.technologies"
+            placeholder="Ex: Spring Boot, Angular, MySQL"
+            class="form-control"
+          />
+          <small>Séparez les technologies par des virgules.</small>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="description">Description</label>
+          <textarea
+            id="description"
+            [(ngModel)]="newItem.description"
+            placeholder="Décrivez l’objectif du projet, votre rôle, les fonctionnalités clés et la valeur apportée..."
+            rows="4"
+            class="form-control"
+          ></textarea>
+        </div>
+
+        <div class="mini-section-title">Liens et finalisation</div>
+
+        <div class="form-group">
+          <label for="projectUrl">URL du projet</label>
+          <input
+            id="projectUrl"
+            type="url"
+            [(ngModel)]="newItem.projectUrl"
+            placeholder="https://github.com/... ou https://demo.com"
+            class="form-control"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="imageUrl">URL de l’image</label>
+          <input
+            id="imageUrl"
+            type="url"
+            [(ngModel)]="newItem.imageUrl"
+            placeholder="https://..."
+            class="form-control"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="completionDate">Date de réalisation</label>
+          <input
+            id="completionDate"
+            type="date"
+            [(ngModel)]="newItem.completionDate"
+            class="form-control"
+          />
+        </div>
+
+        <div class="form-group form-group--checkbox">
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              [(ngModel)]="newItem.pinned"
+              [disabled]="!canPinMore && !newItem.pinned"
+            />
+            <span>Épingler ce projet</span>
+          </label>
+          <small *ngIf="!canPinMore && !newItem.pinned">
+            Limite atteinte : vous avez déjà {{ maxPinnedItems }} projets épinglés.
+          </small>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button
+          class="btn-save"
+          type="button"
+          (click)="addItem()"
+          [disabled]="!newItem.title.trim() || isSubmitting"
+        >
+          {{ isSubmitting ? 'Enregistrement...' : 'Enregistrer le projet' }}
+        </button>
+
+        <button
+          class="btn-cancel"
+          type="button"
+          (click)="showForm = false; resetForm()"
+        >
+          Annuler
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="loading-spinner"></div>
+      <p>Chargement du portfolio...</p>
+    </div>
+
+    <!-- Empty state -->
+    <div class="empty-state" *ngIf="!isLoading && !hasItems">
+      <div class="empty-state__icon">📁</div>
+      <h3>Aucun projet pour l’instant</h3>
+      <p>
+        Ajoutez vos réalisations pour donner plus de poids à votre profil freelancer.
+      </p>
+      <button class="btn-add" type="button" (click)="showForm = true">
+        + Ajouter mon premier projet
+      </button>
+    </div>
+
+    <!-- Projets épinglés -->
+    <section class="portfolio-section" *ngIf="!isLoading && pinnedItems.length > 0">
+      <div class="section-header">
+        <div>
+          <span class="section-chip">Pinned Projects</span>
+          <h2>Projets épinglés</h2>
+          <p>Vos réalisations les plus importantes mises en avant sur votre profil.</p>
+        </div>
+      </div>
+
+      <div class="projects-grid projects-grid--pinned">
+        <article
+          class="project-card project-card--pinned"
+          *ngFor="let item of pinnedItems; trackBy: trackByProjectId"
+        >
+          <div class="project-card__top">
+            <div class="project-badges">
+              <span class="badge-pinned">📌 Épinglé</span>
+              <span class="badge-score">{{ item.projectScore }}%</span>
+            </div>
+
+            <div class="card-actions">
+              <button
+                class="btn-pin btn-pin--active"
+                type="button"
+                (click)="unpinItem(item)"
+                [disabled]="isPinning"
+              >
+                Désépingler
+              </button>
+
+              <button
+                class="btn-delete"
+                type="button"
+                (click)="deleteItem(item.id)"
+                title="Supprimer ce projet"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <div class="project-cover" *ngIf="hasProjectImage(item); else pinnedFallbackImage">
+            <img [src]="item.imageUrl" [alt]="item.title" />
+          </div>
+
+          <ng-template #pinnedFallbackImage>
+            <div class="project-cover project-cover--fallback">
+              <span>Projet premium</span>
+            </div>
+          </ng-template>
+
+          <div class="project-card__body">
+            <h3>{{ item.title }}</h3>
+
+            <div class="score-block">
+              <div class="score-head">
+                <span>Project Score</span>
+                <strong>{{ getProjectScoreLabel(item.projectScore) }}</strong>
+              </div>
+              <div class="score-bar">
+                <div
+                  class="score-bar__fill"
+                  [style.width]="getProjectScoreWidth(item.projectScore)"
+                ></div>
+              </div>
+            </div>
+
+            <p class="card-description" *ngIf="item.description; else noPinnedDescription">
+              {{ item.description }}
+            </p>
+
+            <ng-template #noPinnedDescription>
+              <p class="card-description card-description--muted">
+                Aucune description fournie pour ce projet.
+              </p>
+            </ng-template>
+
+            <div class="tech-tags" *ngIf="item.technologies">
+              <span
+                class="tech-tag"
+                *ngFor="let tech of getTechArray(item.technologies)"
+              >
+                {{ tech }}
+              </span>
+            </div>
+          </div>
+
+          <div class="project-card__footer">
+            <span class="completion-date" *ngIf="item.completionDate">
+              {{ item.completionDate | date:'MMM yyyy' }}
+            </span>
+
+            <a
+              *ngIf="hasProjectLink(item)"
+              [href]="item.projectUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-link"
+            >
+              Voir le projet
+            </a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Tous les projets -->
+    <section class="portfolio-section" *ngIf="!isLoading && regularItems.length > 0">
+      <div class="section-header">
+        <div>
+          <span class="section-chip">All Projects</span>
+          <h2>Tous les projets</h2>
+          <p>L’ensemble de vos réalisations visibles dans votre portfolio.</p>
+        </div>
+      </div>
+
+      <div class="projects-grid">
+        <article
+          class="project-card"
+          *ngFor="let item of regularItems; trackBy: trackByProjectId"
+        >
+          <div class="project-card__top">
+            <div class="project-badges">
+              <span class="badge-score">{{ item.projectScore }}%</span>
+            </div>
+
+            <div class="card-actions">
+              <button
+                class="btn-pin"
+                type="button"
+                (click)="pinItem(item)"
+                [disabled]="isPinning || !canPinMore"
+              >
+                Épingler
+              </button>
+
+              <button
+                class="btn-delete"
+                type="button"
+                (click)="deleteItem(item.id)"
+                title="Supprimer ce projet"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <div class="project-cover" *ngIf="hasProjectImage(item); else regularFallbackImage">
+            <img [src]="item.imageUrl" [alt]="item.title" />
+          </div>
+
+          <ng-template #regularFallbackImage>
+            <div class="project-cover project-cover--fallback">
+              <span>{{ item.title }}</span>
+            </div>
+          </ng-template>
+
+          <div class="project-card__body">
+            <h3>{{ item.title }}</h3>
+
+            <div class="score-block">
+              <div class="score-head">
+                <span>Project Score</span>
+                <strong>{{ getProjectScoreLabel(item.projectScore) }}</strong>
+              </div>
+              <div class="score-bar">
+                <div
+                  class="score-bar__fill"
+                  [style.width]="getProjectScoreWidth(item.projectScore)"
+                ></div>
+              </div>
+            </div>
+
+            <p class="card-description" *ngIf="item.description; else noRegularDescription">
+              {{ item.description }}
+            </p>
+
+            <ng-template #noRegularDescription>
+              <p class="card-description card-description--muted">
+                Aucune description fournie pour ce projet.
+              </p>
+            </ng-template>
+
+            <div class="tech-tags" *ngIf="item.technologies">
+              <span
+                class="tech-tag"
+                *ngFor="let tech of getTechArray(item.technologies)"
+              >
+                {{ tech }}
+              </span>
+            </div>
+          </div>
+
+          <div class="project-card__footer">
+            <span class="completion-date" *ngIf="item.completionDate">
+              {{ item.completionDate | date:'MMM yyyy' }}
+            </span>
+
+            <a
+              *ngIf="hasProjectLink(item)"
+              [href]="item.projectUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-link"
+            >
+              Voir le projet
+            </a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+  </div>
+</div>
