@@ -90,5 +90,17 @@ export class GamificationComponent implements OnInit {
       this.router.navigate(['/app/engagement/missions'], { queryParams: { highlight: item.id } });
     }
   }
+
+  getRiskColor(prediction: any): string {
+    if (!prediction) return '#94A3B8';
+    if (prediction.risk_color) return prediction.risk_color;
+    
+    const colors: Record<string, string> = {
+      'HIGH': '#ef4444',
+      'MEDIUM': '#f59e0b',
+      'LOW': '#10b981'
+    };
+    return colors[prediction.risk_label] || '#94A3B8';
+  }
 }
 

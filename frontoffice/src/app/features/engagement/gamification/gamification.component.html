@@ -62,12 +62,12 @@
       <!-- Churn Risk Card (ML Prediction) -->
       <div class="gam-card gam-card--churn" *ngIf="churnPrediction || analytics">
         <div class="gam-card__icon">
-          <i class="fas fa-skull-crossbones" [style.color]="churnPrediction ? churnPrediction.risk_color : (analytics.churnRisk > 0.5 ? '#ef4444' : '#10b981')"></i>
+          <i class="fas fa-skull-crossbones" [style.color]="getRiskColor(churnPrediction)"></i>
         </div>
         <div class="gam-card__body">
           <span class="gam-label">Risque d'abandon (ML)</span>
           <strong class="gam-value">{{ churnPrediction ? churnPrediction.churn_probability : (analytics.churnRisk * 100) | number:'1.0-0' }}%</strong>
-          <small *ngIf="churnPrediction" [style.color]="churnPrediction.risk_color">{{ churnPrediction.risk_label }}</small>
+          <small *ngIf="churnPrediction" [style.color]="getRiskColor(churnPrediction)">{{ churnPrediction.risk_label }}</small>
         </div>
       </div>
 
@@ -119,10 +119,10 @@
       <div class="rec-subsection">
         <h3><i class="fas fa-robot text-danger"></i> Conseil du Modèle IA</h3>
         <div class="rec-grid">
-          <div class="rec-card" style="border-left: 4px solid {{ churnPrediction.risk_color }}">
-            <div class="rec-icon"><i class="fas fa-exclamation-triangle" [style.color]="churnPrediction.risk_color"></i></div>
+          <div class="rec-card" [style.border-left]="'4px solid ' + getRiskColor(churnPrediction)">
+            <div class="rec-icon"><i class="fas fa-exclamation-triangle" [style.color]="getRiskColor(churnPrediction)"></i></div>
             <div class="rec-info">
-              <span class="rec-tag" [style.color]="churnPrediction.risk_color">Alerte Churn</span>
+              <span class="rec-tag" [style.color]="getRiskColor(churnPrediction)">Alerte Churn</span>
               <strong>{{ churnPrediction.recommendation }}</strong>
               
               <div class="risk-factors mt-2" *ngIf="churnPrediction.top_risk_factors?.length > 0">
