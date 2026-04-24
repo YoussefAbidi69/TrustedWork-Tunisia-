@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { Contract } from '../models/contract.model';
+import { FinancialMetrics } from '../models/financial-metrics.model';
 
 @Injectable({
   providedIn: 'root'
@@ -57,5 +58,9 @@ export class ContractService {
 
   getSignedByFreelancer(freelancerCin: string): Observable<Contract[]> {
     return this.api.get<Contract[]>(`${this.endpoint}/freelancer/${freelancerCin}/signed`);
+  }
+
+  getFinancialMetrics(id: number): Observable<FinancialMetrics> {
+    return this.api.get<FinancialMetrics>(`${this.endpoint}/${id}/financial-metrics`);
   }
 }

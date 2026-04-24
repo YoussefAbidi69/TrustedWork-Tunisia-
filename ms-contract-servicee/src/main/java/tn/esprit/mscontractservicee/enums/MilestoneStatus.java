@@ -6,5 +6,6 @@ public enum MilestoneStatus {
     SUBMITTED,
     APPROVED,
     AUTO_APPROVED,
-    REJECTED
+    REJECTED,
+    CANCELLED
 }

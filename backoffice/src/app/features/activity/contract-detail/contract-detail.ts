@@ -135,7 +135,10 @@ export class ContractDetailComponent implements OnInit {
   }
 
   getTotalMilestonesAmount(): number {
-    return this.milestones.reduce((sum, m) => sum + m.montant, 0);
+    return this.milestones.reduce((sum, m) => {
+      const v = Number((m as any)?.montant);
+      return sum + (Number.isFinite(v) ? v : 0);
+    }, 0);
   }
 
   getReleasedAmount(): number {
@@ -150,11 +153,23 @@ export class ContractDetailComponent implements OnInit {
 
   isDraftReady(): boolean {
     if (!this.contract || this.contract.status !== 'DRAFT') return false;
-    return this.getTotalMilestonesAmount() === this.contract.montantTotal;
+    if (!this.milestones || this.milestones.length === 0) return false;
+
+    const total = Number((this.contract as any)?.montantTotal);
+    const sum = this.getTotalMilestonesAmount();
+    if (!Number.isFinite(total) || !Number.isFinite(sum)) return false;
+
+    // Avoid strict float equality (BigDecimal -> JS number).
+    return Math.abs(sum - total) < 0.01;
   }
 
   finalizeAndSend(): void {
     if (!this.contract?.id) return;
+    if (!this.isDraftReady()) {
+      this.error = "Le contrat doit etre en DRAFT, avoir au moins un jalon, et la somme des jalons doit egaler le montant total.";
+      alert("Impossible de finaliser : " + this.error);
+      return;
+    }
     
     console.log('--- Finalizing Contract ---');
     console.log('ID:', this.contract.id);
@@ -179,7 +194,7 @@ export class ContractDetailComponent implements OnInit {
       },
       error: (err: any) => {
         console.error('--- FULL ERROR OBJECT ---', err);
-        const msg = err.error?.message || err.error || "Erreur lors de la finalisation du contrat.";
+        const msg = err?.error?.message || err?.error?.error || err?.error || "Erreur lors de la finalisation du contrat.";
         this.error = msg;
         this.loading = false;
         alert("Erreur de finalisation : " + (typeof msg === 'string' ? msg : JSON.stringify(msg)));

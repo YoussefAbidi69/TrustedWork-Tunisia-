@@ -133,17 +133,37 @@ public class SignatureRequestServiceImpl implements ISignatureRequestService {
 
         // Send emails
         String subject = "Signature request - Contract " + contract.getReference();
-        sendEmail(clientEmail, subject, signerLink(req.getId(), clientSigner.token()), contract);
-        sendEmail(freelancerEmail, subject, signerLink(req.getId(), freelancerSigner.token()), contract);
+        boolean clientMailSent = true;
+        boolean freelancerMailSent = true;
+        try {
+            sendEmail(clientEmail, subject, signerLink(req.getId(), clientSigner.token()), contract);
+        } catch (Exception e) {
+            clientMailSent = false;
+            log.error("Failed to send signature email to client={} contractId={}: {}", clientEmail, contractId, e.getMessage(), e);
+        }
+        try {
+            sendEmail(freelancerEmail, subject, signerLink(req.getId(), freelancerSigner.token()), contract);
+        } catch (Exception e) {
+            freelancerMailSent = false;
+            log.error("Failed to send signature email to freelancer={} contractId={}: {}", freelancerEmail, contractId, e.getMessage(), e);
+        }
 
-        req.setStatus(SignatureRequestStatus.SENT);
-        req.setSentAt(LocalDateTime.now());
-        signatureRequestRepository.save(req);
+        boolean emailsSent = clientMailSent && freelancerMailSent;
+        if (emailsSent) {
+            req.setStatus(SignatureRequestStatus.SENT);
+            req.setSentAt(LocalDateTime.now());
+            signatureRequestRepository.save(req);
+        } else {
+            // Keep the request CREATED so it can be retried; signing links are still valid.
+            req.setStatus(SignatureRequestStatus.CREATED);
+            req.setSentAt(null);
+            signatureRequestRepository.save(req);
+        }
 
         return SignatureRequestCreateResponse.builder()
                 .signatureRequestId(req.getId())
                 .status(req.getStatus().name())
-                .emailsSent(true)
+                .emailsSent(emailsSent)
                 .build();
     }
 

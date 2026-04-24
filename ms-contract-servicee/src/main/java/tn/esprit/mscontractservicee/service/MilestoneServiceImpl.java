@@ -9,13 +9,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import tn.esprit.mscontractservicee.dto.DeliveryProofSubmitRequest;
+import tn.esprit.mscontractservicee.entity.Contract;
 import tn.esprit.mscontractservicee.entity.DeliveryProof;
 import tn.esprit.mscontractservicee.entity.Milestone;
 import tn.esprit.mscontractservicee.enums.DeliveryStatus;
+import tn.esprit.mscontractservicee.enums.ContractStatus;
 import tn.esprit.mscontractservicee.enums.MilestoneStatus;
+import tn.esprit.mscontractservicee.repository.ContractRepository;
 import tn.esprit.mscontractservicee.repository.DeliveryProofRepository;
 import tn.esprit.mscontractservicee.repository.MilestoneRepository;
+import tn.esprit.mscontractservicee.service.calculation.ContractAmountCalculator;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,6 +35,30 @@ public class MilestoneServiceImpl implements IMilestoneService {
     private final MilestoneRepository milestoneRepository;
     private final DeliveryProofRepository deliveryProofRepository;
     private final IPaymentService paymentService;
+    private final ContractRepository contractRepository;
+
+    private Contract requireDraftContractWithBudget(Long contractId) {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Contract not found with id: " + contractId));
+        if (contract.getStatus() != ContractStatus.DRAFT) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Milestones can only be modified while contract is DRAFT. Current status: " + contract.getStatus());
+        }
+        if (contract.getMontantTotal() == null || contract.getMontantTotal().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Contract montantTotal (budget) is required before creating milestones");
+        }
+        return contract;
+    }
+
+    private void assertWithinBudget(Contract contract, BigDecimal newTotal) {
+        if (newTotal.compareTo(contract.getMontantTotal()) > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Milestones total exceeds contract budget. budget=" + contract.getMontantTotal()
+                            + " milestonesTotal=" + newTotal);
+        }
+    }
 
     @Override
     public Milestone createMilestone(Milestone milestone) {
@@ -37,6 +66,22 @@ public class MilestoneServiceImpl implements IMilestoneService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "contractId is required");
         }
         log.info("Creating milestone for contract: {}", milestone.getContractId());
+
+        Contract contract = requireDraftContractWithBudget(milestone.getContractId());
+        if (milestone.getMontant() == null || milestone.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "milestone.montant is required and must be > 0");
+        }
+
+        List<Milestone> existing = milestoneRepository.findByContractIdOrderByOrdreAsc(milestone.getContractId());
+        BigDecimal currentTotal;
+        try {
+            currentTotal = ContractAmountCalculator.computeMilestonesTotal(existing);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+        BigDecimal newTotal = currentTotal.add(milestone.getMontant());
+        assertWithinBudget(contract, newTotal);
+
         milestone.setStatus(MilestoneStatus.PENDING);
         return milestoneRepository.save(milestone);
     }
@@ -52,6 +97,26 @@ public class MilestoneServiceImpl implements IMilestoneService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Only PENDING milestones can be updated. Current status: " + existing.getStatus());
         }
+
+        Contract contract = requireDraftContractWithBudget(existing.getContractId());
+        if (milestone.getMontant() == null || milestone.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "milestone.montant is required and must be > 0");
+        }
+
+        List<Milestone> all = milestoneRepository.findByContractIdOrderByOrdreAsc(existing.getContractId());
+        BigDecimal otherTotal = BigDecimal.ZERO;
+        for (Milestone m : all) {
+            if (m == null || m.getId() == null || m.getId().equals(existing.getId())) {
+                continue;
+            }
+            if (m.getMontant() == null || m.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Milestone montant must be set and > 0. milestoneId=" + m.getId());
+            }
+            otherTotal = otherTotal.add(m.getMontant());
+        }
+        BigDecimal newTotal = otherTotal.add(milestone.getMontant());
+        assertWithinBudget(contract, newTotal);
 
         existing.setTitre(milestone.getTitre());
         existing.setDescription(milestone.getDescription());

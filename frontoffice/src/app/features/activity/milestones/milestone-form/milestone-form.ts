@@ -210,7 +210,7 @@ export class MilestoneFormComponent implements OnInit {
           this.router.navigate(['/app/activity/contracts', this.milestone.contractId]);
         },
         error: (err) => {
-          this.error = 'Erreur lors de la modification (Vérifiez les données)';
+          this.error = err?.error?.message || err?.error?.error || 'Erreur lors de la modification (vérifiez les données).';
           this.loading = false;
           console.error('Update Error:', err);
         }
@@ -221,7 +221,7 @@ export class MilestoneFormComponent implements OnInit {
           this.router.navigate(['/app/activity/contracts', milestone.contractId]);
         },
         error: (err) => {
-          this.error = 'Erreur lors de la création';
+          this.error = err?.error?.message || err?.error?.error || 'Erreur lors de la création du jalon.';
           this.loading = false;
           console.error('Create Error:', err);
         }

@@ -7,6 +7,7 @@ import { MilestoneService } from '../../../core/services/milestone.service';
 import { ContractSignatureService } from '../../../core/services/contract-signature.service';
 import { Contract } from '../../../core/models/contract.model';
 import { Milestone } from '../../../core/models/milestone.model';
+import { FinancialMetrics } from '../../../core/models/financial-metrics.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { Router } from '@angular/router';
 import { DeliveryProofResponse } from '../../../core/models/delivery-proof.model';
@@ -27,6 +28,7 @@ import { DeliveryProofResponse } from '../../../core/models/delivery-proof.model
 export class ContractDetailComponent implements OnInit {
   contract: Contract | null = null;
   milestones: Milestone[] = [];
+  financialMetrics: FinancialMetrics | null = null;
   loading = false;
   error = '';
 
@@ -90,6 +92,11 @@ export class ContractDetailComponent implements OnInit {
       next: (contract) => {
         this.contract = contract;
         this.loading = false;
+        // Load financial metrics to detect mismatch
+        this.contractService.getFinancialMetrics(id).subscribe({
+          next: (metrics) => { this.financialMetrics = metrics; },
+          error: () => { this.financialMetrics = null; }
+        });
       },
       error: (err) => {
         this.error = 'Erreur lors du chargement du contrat';
@@ -135,7 +142,10 @@ export class ContractDetailComponent implements OnInit {
   }
 
   getTotalMilestonesAmount(): number {
-    return this.milestones.reduce((sum, m) => sum + m.montant, 0);
+    return this.milestones.reduce((sum, m) => {
+      const v = Number((m as any)?.montant);
+      return sum + (Number.isFinite(v) ? v : 0);
+    }, 0);
   }
 
   getReleasedAmount(): number {
@@ -148,13 +158,52 @@ export class ContractDetailComponent implements OnInit {
     return !!this.contract && this.contract.status === 'PENDING_PAYMENT';
   }
 
+  isPaymentBlocked(): boolean {
+    return !!this.financialMetrics && this.financialMetrics.mismatch;
+  }
+
   isDraftReady(): boolean {
     if (!this.contract || this.contract.status !== 'DRAFT') return false;
-    return this.getTotalMilestonesAmount() === this.contract.montantTotal;
+    if (!this.milestones || this.milestones.length === 0) return false;
+
+    // Backend metrics take precedence when available
+    if (this.financialMetrics !== null) {
+      return !this.financialMetrics.mismatch;
+    }
+
+    // Fallback: local calculation (metrics not yet loaded)
+    const total = Number(this.contract?.montantTotal);
+    const sum = this.getTotalMilestonesAmount();
+    if (!Number.isFinite(total) || !Number.isFinite(sum)) return false;
+    return Math.abs(sum - total) < 0.01;
+  }
+
+  get draftStatusMessage(): string {
+    if (!this.contract || this.contract.status !== 'DRAFT') return '';
+    if (!this.milestones || this.milestones.length === 0) {
+      return 'Ajoutez au moins un jalon avant de finaliser le contrat.';
+    }
+    if (this.financialMetrics?.mismatch) {
+      const stored = this.financialMetrics.storedMontantTotal;
+      const computed = this.financialMetrics.computedMontantTotal;
+      const delta = Math.abs(this.financialMetrics.delta);
+      return `Le total des jalons (${computed} DT) doit être égal au budget du contrat (${stored} DT) avant de finaliser — écart de ${delta} DT.`;
+    }
+    // Fallback local check
+    const total = Number(this.contract?.montantTotal);
+    const sum = this.getTotalMilestonesAmount();
+    if (Math.abs(sum - total) >= 0.01) {
+      return `Le total des jalons (${sum.toFixed(2)} DT) doit être égal au budget du contrat (${total.toFixed(2)} DT).`;
+    }
+    return '';
   }
 
   finalizeAndSend(): void {
     if (!this.contract?.id) return;
+    if (!this.isDraftReady()) {
+      this.error = this.draftStatusMessage || 'Le contrat doit être en DRAFT, avoir au moins un jalon, et la somme des jalons doit égaler le montant total.';
+      return;
+    }
     
     console.log('--- Finalizing Contract ---');
     console.log('ID:', this.contract.id);
@@ -178,7 +227,7 @@ export class ContractDetailComponent implements OnInit {
       },
       error: (err) => {
         console.error('--- FULL ERROR OBJECT ---', err);
-        const msg = err.error?.message || err.error || "Erreur lors de la finalisation du contrat.";
+        const msg = err?.error?.message || err?.error?.error || err?.error || "Erreur lors de la finalisation du contrat.";
         this.error = msg;
         this.loading = false;
         alert("Erreur de finalisation : " + (typeof msg === 'string' ? msg : JSON.stringify(msg)));

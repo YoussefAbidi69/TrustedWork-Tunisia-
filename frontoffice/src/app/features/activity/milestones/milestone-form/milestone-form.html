@@ -226,6 +226,50 @@
             </div>
           </div>
 
+          <!-- SECTION: Budget Summary (UI display only, backend is source of truth) -->
+          <div class="form-divider"></div>
+          <div class="form-section" *ngIf="totalContractAmount > 0">
+            <div class="form-section-label">
+              <div class="form-section-icon" style="background: linear-gradient(135deg,#10b981,#059669);"><i class="bi bi-pie-chart-fill"></i></div>
+              <div>
+                <strong>Répartition des jalons (aperçu UI)</strong>
+                <span>Le backend synchronisera le total après sauvegarde</span>
+              </div>
+            </div>
+            <div class="row g-3 mt-2">
+              <div class="col-6 col-md-3">
+                <div class="p-3 rounded-3 text-center" style="background:#f0f9ff; border:1px solid #bae6fd;">
+                  <div class="small text-muted mb-1">Budget contrat</div>
+                  <div class="fw-bold text-primary">{{ totalContractAmount | number:'1.2-2' }} DT</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="p-3 rounded-3 text-center" style="background:#f0fdf4; border:1px solid #bbf7d0;">
+                  <div class="small text-muted mb-1">Autres jalons</div>
+                  <div class="fw-bold text-success">{{ otherMilestonesTotal | number:'1.2-2' }} DT</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="p-3 rounded-3 text-center" style="background:#fefce8; border:1px solid #fde68a;">
+                  <div class="small text-muted mb-1">Ce jalon</div>
+                  <div class="fw-bold text-warning">{{ (milestone.montant || 0) | number:'1.2-2' }} DT</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="p-3 rounded-3 text-center"
+                     [style.background]="(remainingContractAmount - (milestone.montant || 0)) < -0.01 ? '#fef2f2' : '#f0f9ff'"
+                     [style.border]="(remainingContractAmount - (milestone.montant || 0)) < -0.01 ? '1px solid #fecaca' : '1px solid #bae6fd'">
+                  <div class="small text-muted mb-1">Reste après</div>
+                  <div class="fw-bold"
+                       [class.text-danger]="(remainingContractAmount - (milestone.montant || 0)) < -0.01"
+                       [class.text-primary]="(remainingContractAmount - (milestone.montant || 0)) >= -0.01">
+                    {{ (remainingContractAmount - (milestone.montant || 0)) | number:'1.2-2' }} DT
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- ACTIONS -->
           <div class="form-actions">
             <button type="button" class="btn btn-ghost" routerLink="/app/activity/contracts">

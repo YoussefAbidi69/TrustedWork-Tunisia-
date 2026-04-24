@@ -29,6 +29,7 @@ import tn.esprit.mscontractservicee.entity.SignatureRequest;
 import tn.esprit.mscontractservicee.entity.SignatureSigner;
 import tn.esprit.mscontractservicee.dto.signing.SignatureRequestCreateResponse;
 import tn.esprit.mscontractservicee.dto.signing.ContractSignatureStatusResponse;
+import tn.esprit.mscontractservicee.dto.ContractFinancialMetricsResponse;
 import tn.esprit.mscontractservicee.enums.ContractStatus;
 import tn.esprit.mscontractservicee.enums.SignatureRequestStatus;
 import tn.esprit.mscontractservicee.repository.MilestoneRepository;
@@ -36,6 +37,7 @@ import tn.esprit.mscontractservicee.repository.SignatureRequestRepository;
 import tn.esprit.mscontractservicee.repository.SignatureSignerRepository;
 import tn.esprit.mscontractservicee.service.IContractService;
 import tn.esprit.mscontractservicee.service.ISignatureRequestService;
+import tn.esprit.mscontractservicee.service.ContractTotalService;
 import tn.esprit.mscontractservicee.service.document.ContractDocumentService;
 
 import java.util.Collections;
@@ -60,6 +62,7 @@ public class ContractController {
     private final SignatureRequestRepository signatureRequestRepository;
     private final SignatureSignerRepository signatureSignerRepository;
     private final tn.esprit.mscontractservicee.service.IContractAiGenerationService contractAiService;
+    private final ContractTotalService contractTotalService;
 
     private static boolean hasRole(Authentication authentication, SimpleGrantedAuthority role) {
         return authentication != null
@@ -175,6 +178,35 @@ public class ContractController {
         }
 
         return ResponseEntity.ok(contractService.getWalletIds(id));
+    }
+
+    @GetMapping("/{id}/financial-metrics")
+    @Operation(summary = "Calculer le montant total depuis les jalons + detecter mismatch")
+    @PreAuthorize("hasAnyRole('CLIENT','FREELANCER','ADMIN')")
+    public ResponseEntity<ContractFinancialMetricsResponse> getContractFinancialMetrics(Authentication authentication,
+                                                                                        @PathVariable Long id) {
+        Long cin = currentCin(authentication);
+        boolean admin = isAdmin(authentication);
+
+        Contract contract = contractService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Contract not found with id: " + id));
+
+        if (!isContractParticipant(contract, cin, admin)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You are not allowed to access this contract");
+        }
+
+        if (!admin
+                && hasRole(authentication, ROLE_FREELANCER)
+                && contract.getFreelancerCin() != null
+                && contract.getFreelancerCin().equals(cin)
+                && contract.getDateSignature() == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You are not allowed to access an unsigned contract");
+        }
+
+        return ResponseEntity.ok(contractTotalService.getFinancialMetrics(id));
     }
 
     @GetMapping("/me")

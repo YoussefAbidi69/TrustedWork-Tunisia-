@@ -49,10 +49,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntime(RuntimeException ex, HttpServletRequest request) {
+        // Include the stack trace to make production/debug diagnosis possible.
         log.warn("Runtime error [{} {}]: {}",
                 request.getMethod(),
                 request.getRequestURI(),
-                ex.getMessage());
+                ex.getMessage(),
+                ex);
         return buildResponse(ex.getMessage() != null ? ex.getMessage() : "Bad request", HttpStatus.BAD_REQUEST);
     }
 
@@ -66,7 +68,10 @@ public class GlobalExceptionHandler {
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now());
         response.put("status", status.value());
+        // Keep backward compatibility ("error") while also exposing a clearer field name ("message")
+        // for frontend clients.
         response.put("error", message);
+        response.put("message", message);
         return new ResponseEntity<>(response, status);
     }
 }

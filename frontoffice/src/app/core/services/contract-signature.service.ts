@@ -26,9 +26,7 @@ export class ContractSignatureService {
     return this.http.post(`${API}/contracts/${contractId}/signature-requests`, {});
   }
 
-  /**
-   * 3. PUBLIC: Récupérer le snapshot du contrat via le token (depuis l'email).
-   */
+
   getPublicRequest(requestId: string, token: string): Observable<any> {
     return this.http.get(`${API}/signing/requests/${requestId}`, {
       params: { token }
@@ -42,10 +40,7 @@ export class ContractSignatureService {
     });
   }
 
-  /**
-   * 4. PUBLIC: Soumettre la signature.
-   * payload: { token, signatureType, signaturePayload }
-   */
+ 
   submitPublicSignature(requestId: string, payload: {
     token: string,
     signatureType: 'DRAWN' | 'TYPED',

@@ -14,5 +14,12 @@ public class NoopAppEmailService implements AppEmailService {
         log.warn("Mail disabled (app.mail.enabled=false). Would have sent email to={} subject={}\n{}",
                 toEmail, subject, body);
     }
+    
+    @Override
+    public void sendSimpleEmail(String toEmail, String subject, String body) {
+        log.info("[NOOP EMAIL] Suppressed sending simple email to: {}", toEmail);
+        log.debug("[NOOP EMAIL] Subject: {}", subject);
+        log.debug("[NOOP EMAIL] Body:\n{}", body);
+    }
 }
 

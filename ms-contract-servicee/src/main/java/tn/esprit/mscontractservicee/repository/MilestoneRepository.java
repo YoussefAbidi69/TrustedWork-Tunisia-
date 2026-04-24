@@ -12,6 +12,7 @@ import java.util.List;
 public interface MilestoneRepository extends JpaRepository<Milestone, Long> {
     List<Milestone> findByContractIdOrderByOrdreAsc(Long contractId);
     long countByContractId(Long contractId);
+    List<Milestone> findByStatus(tn.esprit.mscontractservicee.enums.MilestoneStatus status);
 
     @Query("""
             select m

@@ -10,10 +10,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
 
-/**
- * Configuration du RestTemplate utilisé par DisputeAiServiceImpl
- * pour appeler l'API Google Gemini.
- */
+
 @Configuration
 public class RestTemplateConfig {
 

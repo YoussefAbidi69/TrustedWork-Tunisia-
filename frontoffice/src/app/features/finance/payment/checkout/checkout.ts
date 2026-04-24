@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { StripeService } from '../../../core/services/stripe.service';
 import { ContractService } from '../../../core/services/contract.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { FinancialMetrics } from '../../../core/models/financial-metrics.model';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -17,6 +18,7 @@ import { environment } from '../../../../environments/environment';
 export class CheckoutComponent implements OnInit {
   contractId: number = 0;
   contract: any = null;
+  financialMetrics: FinancialMetrics | null = null;
   amount: number = 0;
   email: string = '';
   
@@ -66,6 +68,16 @@ export class CheckoutComponent implements OnInit {
         if (contract.status === 'ACTIVE' || contract.status === 'COMPLETED') {
           this.error = 'Ce contrat a déjà été payé et est actif.';
         }
+        // Verify financial metrics to detect mismatch
+        this.contractService.getFinancialMetrics(this.contractId).subscribe({
+          next: (metrics) => {
+            this.financialMetrics = metrics;
+            if (metrics.mismatch) {
+              this.error = `Montant total incohérent — Paiement bloqué. Montant stocké : ${metrics.storedMontantTotal} DT, somme jalons : ${metrics.computedMontantTotal} DT. Merci de corriger les jalons avant de payer.`;
+            }
+          },
+          error: () => { /* non-bloquant si endpoint indisponible */ }
+        });
       },
       error: (err) => {
         this.error = 'Erreur lors du chargement du contrat';
@@ -103,6 +115,11 @@ export class CheckoutComponent implements OnInit {
   async onSubmit() {
     if (this.contract?.status === 'ACTIVE' || this.contract?.status === 'COMPLETED') {
       this.error = 'Paiement impossible : ce contrat est déjà actif.';
+      return;
+    }
+    // Guard: block payment if mismatch detected
+    if (this.financialMetrics?.mismatch) {
+      this.error = `Paiement bloqué : montant incohérent (stocké ${this.financialMetrics.storedMontantTotal} DT ≠ jalons ${this.financialMetrics.computedMontantTotal} DT). Corrigez les jalons d'abord.`;
       return;
     }
     // Validation des champs

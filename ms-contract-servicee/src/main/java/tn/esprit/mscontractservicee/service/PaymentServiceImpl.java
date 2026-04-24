@@ -28,6 +28,7 @@ public class PaymentServiceImpl implements IPaymentService {
     private final WalletRepository walletRepository;
     private final IWalletService walletService;
     private final IStripeService stripeService;
+    private final ContractTotalService contractTotalService;
 
     @Value("${payment.simulation.enabled:false}")
     private boolean simulationEnabled;
@@ -43,6 +44,9 @@ public class PaymentServiceImpl implements IPaymentService {
     public PaymentIntentResponse createPaymentIntent(Long contractId, String email) throws Exception {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new RuntimeException("Contract not found"));
+
+        // Safety: prevent charging a contract whose stored total differs from milestones sum.
+        contractTotalService.assertStoredTotalMatchesMilestones(contract);
 
         if (signatureRequired) {
             if (contract.getStatus() != ContractStatus.PENDING_PAYMENT) {
@@ -96,6 +100,8 @@ public class PaymentServiceImpl implements IPaymentService {
             // En simulation, on valide directement sans appeler Stripe
             Contract contract = contractRepository.findById(contractId)
                     .orElseThrow(() -> new RuntimeException("Contract not found"));
+
+            contractTotalService.assertStoredTotalMatchesMilestones(contract);
 
             if (contract.getStatus() != ContractStatus.DRAFT && contract.getStatus() != ContractStatus.PENDING_PAYMENT) {
                 throw new RuntimeException("Contract cannot be paid. Status: " + contract.getStatus());
@@ -159,6 +165,8 @@ public class PaymentServiceImpl implements IPaymentService {
 
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new RuntimeException("Contract not found"));
+
+        contractTotalService.assertStoredTotalMatchesMilestones(contract);
 
         if (signatureRequired) {
             if (contract.getStatus() != ContractStatus.PENDING_PAYMENT) {
@@ -393,5 +401,66 @@ public class PaymentServiceImpl implements IPaymentService {
 
         var paymentIntent = stripeService.getPaymentIntent(paymentIntentId);
         return paymentIntent.getStatus();
+    }
+
+    @Override
+    public void refundMilestoneToClient(Long milestoneId) throws Exception {
+        Milestone milestone = milestoneRepository.findById(milestoneId)
+                .orElseThrow(() -> new RuntimeException("Milestone not found"));
+
+        Long contractId = milestone.getContractId();
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new RuntimeException("Contract not found"));
+
+        BigDecimal amount = requireMilestoneAmount(milestone, null);
+
+        if (contract.getStatus() != ContractStatus.ACTIVE) {
+            throw new RuntimeException("Contract is not active. contractId=" + contract.getId());
+        }
+        if (milestone.getStatus() != MilestoneStatus.CANCELLED) {
+            throw new RuntimeException("Milestone is not cancelled. milestoneId=" + milestone.getId());
+        }
+
+        EscrowAccount escrow = escrowAccountRepository.findByContractId(contract.getId())
+                .orElseThrow(() -> new RuntimeException("Escrow not found"));
+
+        if (escrow.getMontantBloque() == null || escrow.getMontantBloque().compareTo(amount) < 0) {
+            throw new RuntimeException("Insufficient escrow balance for refund");
+        }
+
+        // Mettre à jour l'escrow
+        escrow.setMontantBloque(escrow.getMontantBloque().subtract(amount));
+        escrow.setMontantTotal(escrow.getMontantTotal().subtract(amount)); // Refunding reduces the total project value held
+        if (escrow.getMontantBloque().compareTo(BigDecimal.ZERO) == 0 && escrow.getMontantLibere().compareTo(BigDecimal.ZERO) == 0) {
+            escrow.setStatus(EscrowStatus.RELEASED);
+        }
+        escrow.setUpdatedAt(LocalDateTime.now());
+        escrowAccountRepository.save(escrow);
+
+        // Rembourser le client
+        walletService.credit(contract.getClientCin(), amount,
+                (simulationEnabled ? "SIMULATION: " : "") + "Remboursement contrat #" + contract.getId() + " - Jalon annulé: " + milestone.getTitre());
+
+        // Créer la transaction de remboursement
+        Wallet clientWallet = walletService.getOrCreateWallet(contract.getClientCin());
+
+        Transaction transaction = Transaction.builder()
+                .reference((simulationEnabled ? "TRX-SIM-REF-" : "TRX-REF-") + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                .contractId(contract.getId())
+                .milestoneId(milestone.getId())
+                .escrowId(escrow.getId())
+                .walletId(clientWallet.getId())
+                .type(TransactionType.REFUND)
+                .montant(amount)
+                .methodePaiement(simulationEnabled ? PaymentMethod.WALLET : PaymentMethod.STRIPE)
+                .description("Remboursement suite à l'annulation du jalon")
+                .status(TransactionStatus.PROCESSED)
+                .createdAt(LocalDateTime.now())
+                .processedAt(LocalDateTime.now())
+                .build();
+        transactionRepository.save(transaction);
+
+        log.info("{} Refunded {} DT to client {} for cancelled milestone {}",
+                simulationEnabled ? "🔧 SIMULATION:" : "", amount, contract.getClientCin(), milestone.getId());
     }
 }

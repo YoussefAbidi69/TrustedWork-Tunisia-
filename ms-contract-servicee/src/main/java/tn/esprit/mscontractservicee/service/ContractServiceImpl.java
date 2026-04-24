@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import java.math.BigDecimal;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -36,6 +37,7 @@ public class ContractServiceImpl implements IContractService {
     private final MilestoneRepository milestoneRepository;
     private final UserServiceClient userServiceClient;
     private final IWalletService walletService;
+    private final ContractTotalService contractTotalService;
 
     @Override
     public Contract createContract(Contract contract, Long authenticatedCin) {
@@ -101,7 +103,20 @@ public class ContractServiceImpl implements IContractService {
 
         existing.setProjectTitle(contract.getProjectTitle());
         existing.setDescription(contract.getDescription());
-        existing.setMontantTotal(contract.getMontantTotal());
+        BigDecimal newBudget = contract.getMontantTotal() != null ? contract.getMontantTotal() : existing.getMontantTotal();
+        if (newBudget != null && newBudget.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "montantTotal (budget) must be > 0");
+        }
+
+        long milestoneCount = milestoneRepository.countByContractId(id);
+        if (milestoneCount > 0 && newBudget != null) {
+            BigDecimal allocated = contractTotalService.computeMilestonesTotal(id);
+            if (allocated.compareTo(newBudget) > 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Cannot set contract budget below milestones total. budget=" + newBudget + " milestonesTotal=" + allocated);
+            }
+        }
+        existing.setMontantTotal(newBudget);
         existing.setSlaFreelancerHeures(contract.getSlaFreelancerHeures());
         existing.setSlaClientJours(contract.getSlaClientJours());
         existing.setDateDebut(contract.getDateDebut());
@@ -231,6 +246,21 @@ public class ContractServiceImpl implements IContractService {
         if (milestoneCount <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Cannot finalize a contract without milestones");
+        }
+
+        if (contract.getMontantTotal() == null || contract.getMontantTotal().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "montantTotal (budget) is required before finalize");
+        }
+        BigDecimal computed;
+        try {
+            computed = contractTotalService.computeMilestonesTotal(contractId);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+        if (computed.compareTo(contract.getMontantTotal()) != 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Milestones total must equal contract budget before finalize. budget=" + contract.getMontantTotal()
+                            + " milestonesTotal=" + computed);
         }
 
         if (contract.getVersion() == null || contract.getVersion() < 1) {

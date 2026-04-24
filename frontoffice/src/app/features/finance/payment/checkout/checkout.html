@@ -92,7 +92,8 @@
             <i class="bi bi-exclamation-octagon-fill me-2"></i> {{ error }}
           </div>
 
-          <button type="submit" class="btn btn-pay" [disabled]="loading || contract?.status === 'ACTIVE' || contract?.status === 'COMPLETED'">
+          <button type="submit" class="btn btn-pay" 
+                  [disabled]="loading || contract?.status === 'ACTIVE' || contract?.status === 'COMPLETED' || financialMetrics?.mismatch">
             <span *ngIf="!loading">
               <i class="bi bi-lock-fill me-2"></i> Sécuriser {{ amount | number:'1.2-2' }} DT
             </span>

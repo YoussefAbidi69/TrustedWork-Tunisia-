@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MilestoneService } from '../../../../core/services/milestone.service';
+import { ContractService } from '../../../../core/services/contract.service';
 import { Milestone } from '../../../../core/models/milestone.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { FormsModule } from '@angular/forms';
@@ -14,9 +15,10 @@ import { FormsModule } from '@angular/forms';
 export class MilestoneListComponent implements OnInit {
   milestones: Milestone[] = [];
   contractId: number | null = null;
+  contractBudget = 0;
   loading = false;
   error = '';
-  
+
   // Rejection Modal State
   showRejectModal = false;
   rejectionReason = '';
@@ -24,9 +26,18 @@ export class MilestoneListComponent implements OnInit {
   selectedMilestoneId: number | null = null;
   minDate = new Date().toISOString().split('T')[0];
 
+  get totalAllocated(): number {
+    return this.milestones.reduce((sum, m) => sum + (m.montant || 0), 0);
+  }
+
+  get remainingBudget(): number {
+    return this.contractBudget - this.totalAllocated;
+  }
+
   constructor(
     private route: ActivatedRoute,
     private milestoneService: MilestoneService,
+    private contractService: ContractService,
     public authService: AuthService
   ) {}
 
@@ -45,6 +56,12 @@ export class MilestoneListComponent implements OnInit {
   ngOnInit(): void {
     this.contractId = this.route.snapshot.params['contractId'];
     this.loadMilestones();
+    if (this.contractId) {
+      this.contractService.getById(this.contractId).subscribe({
+        next: (c) => { this.contractBudget = c.montantTotal; },
+        error: () => {}
+      });
+    }
   }
 
   loadMilestones(): void {
@@ -85,13 +102,12 @@ export class MilestoneListComponent implements OnInit {
 
   deleteMilestone(id: number): void {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce jalon ?')) {
+      this.error = '';
       this.milestoneService.delete(id).subscribe({
-        next: () => {
-          this.loadMilestones();
-        },
+        next: () => { this.loadMilestones(); },
         error: (err) => {
+          this.error = err?.error?.message || err?.error?.error || 'Erreur lors de la suppression du jalon.';
           console.error(err);
-          alert('Erreur lors de la suppression');
         }
       });
     }

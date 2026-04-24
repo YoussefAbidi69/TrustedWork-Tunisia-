@@ -23,4 +23,10 @@ public interface IPaymentService {
 
     String getPaymentStatus(String paymentIntentId) throws Exception;
 
+    /**
+     * Refunds the amount of a milestone back to the client's wallet.
+     * Used when a milestone is cancelled due to SLA breaches.
+     */
+    void refundMilestoneToClient(Long milestoneId) throws Exception;
+
 }

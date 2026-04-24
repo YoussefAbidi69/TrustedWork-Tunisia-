@@ -21,16 +21,22 @@
       
       <div class="header-actions mt-3 mt-md-0 d-flex flex-wrap gap-3">
         <!-- New Step 1: Finalize & Send -->
-        <button *ngIf="isClient && contract.status === 'DRAFT' && isDraftReady()" 
+        <button *ngIf="isClient && contract.status === 'DRAFT'" 
                 (click)="finalizeAndSend()" 
+                [disabled]="!isDraftReady()"
+                [class.opacity-50]="!isDraftReady()"
+                [title]="!isDraftReady() ? draftStatusMessage : ''"
                 class="btn-premium primary shadow-lg hover-up">
-          <i class="bi bi-send-fill me-2"></i> Finaliser & Demander Signature
+          <i class="bi bi-send-fill me-2"></i> Finaliser &amp; Demander Signature
         </button>
 
         <!-- New Step 2: Pay (only after both have signed) -->
         <button *ngIf="isClient && contract.status === 'PENDING_PAYMENT'" 
                 (click)="goToPayment()" 
-                class="btn-premium success shadow-lg hover-up">
+                [disabled]="isPaymentBlocked()"
+                [title]="isPaymentBlocked() ? 'Montant incohérent — corrigez les jalons avant de payer' : ''"
+                class="btn-premium success shadow-lg hover-up"
+                [class.opacity-50]="isPaymentBlocked()">
           <i class="bi bi-shield-lock-fill me-2"></i> Payer (Dépôt Escrow)
         </button>
 
@@ -76,6 +82,98 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- DRAFT Premium Status Dashboard -->
+    <div *ngIf="contract.status === 'DRAFT'" class="premium-draft-dashboard mb-4">
+      <!-- Warning Banner if not ready -->
+      <div *ngIf="!isDraftReady() && draftStatusMessage" 
+           class="draft-warning-banner d-flex align-items-center gap-3">
+        <div class="warning-icon-wrapper">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <div class="warning-text">
+          <h6 class="mb-1 fw-bold">Finalisation bloquée</h6>
+          <p class="mb-0 small">{{ draftStatusMessage }}</p>
+        </div>
+      </div>
+
+      <!-- Ready Banner if ready -->
+      <div *ngIf="isDraftReady()" 
+           class="draft-ready-banner d-flex align-items-center gap-3">
+        <div class="success-icon-wrapper">
+          <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <div class="success-text">
+          <h6 class="mb-1 fw-bold">Prêt pour la finalisation</h6>
+          <p class="mb-0 small">Le budget est entièrement alloué. Vous pouvez maintenant finaliser le contrat.</p>
+        </div>
+      </div>
+
+      <!-- Budget Breakdown -->
+      <div class="budget-breakdown-wrapper p-4">
+        <div class="row g-4 text-center">
+          <div class="col-md-4">
+            <div class="budget-stat-box primary-box">
+              <div class="stat-icon"><i class="bi bi-wallet2"></i></div>
+              <div class="stat-label">Budget Contrat</div>
+              <div class="stat-value">{{ contract.montantTotal | number:'1.2-2' }} <span class="currency">DT</span></div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="budget-stat-box success-box">
+              <div class="stat-icon"><i class="bi bi-layers"></i></div>
+              <div class="stat-label">Somme Jalons</div>
+              <div class="stat-value">{{ getTotalMilestonesAmount() | number:'1.2-2' }} <span class="currency">DT</span></div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="budget-stat-box" 
+                 [ngClass]="{'danger-box': (contract.montantTotal - getTotalMilestonesAmount()) < -0.01,
+                             'success-box': (contract.montantTotal - getTotalMilestonesAmount()) >= -0.01 && (contract.montantTotal - getTotalMilestonesAmount()) <= 0.01,
+                             'warning-box': (contract.montantTotal - getTotalMilestonesAmount()) > 0.01}">
+              <div class="stat-icon"><i class="bi bi-pie-chart-fill"></i></div>
+              <div class="stat-label">Restant à Allouer</div>
+              <div class="stat-value">
+                {{ (contract.montantTotal - getTotalMilestonesAmount()) | number:'1.2-2' }} <span class="currency">DT</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="allocation-progress-container mt-4">
+          <div class="d-flex justify-content-between align-items-end mb-2">
+            <span class="progress-label fw-bold text-muted small text-uppercase tracking-wider">Taux d'allocation</span>
+            <span class="progress-percentage fw-bold" 
+                  [ngClass]="getTotalMilestonesAmount() > contract.montantTotal ? 'text-danger' : 'text-primary'">
+              {{ contract.montantTotal > 0 ? ((getTotalMilestonesAmount() / contract.montantTotal) * 100 | number:'1.0-0') : 0 }}%
+            </span>
+          </div>
+          <div class="progress premium-progress">
+            <div class="progress-bar premium-progress-bar"
+                 [ngClass]="getTotalMilestonesAmount() > contract.montantTotal ? 'bg-danger' : 'bg-primary'"
+                 [style.width.%]="contract.montantTotal > 0 ? (getTotalMilestonesAmount() / contract.montantTotal) * 100 : 0">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Financial Mismatch Warning (PENDING_PAYMENT) -->
+    <div *ngIf="financialMetrics?.mismatch && contract.status === 'PENDING_PAYMENT'" 
+         class="alert border-0 rounded-4 shadow-sm mb-4 px-4 py-3 d-flex align-items-start gap-3"
+         style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-left: 4px solid #f39c12 !important;">
+      <i class="bi bi-exclamation-triangle-fill fs-4 mt-1" style="color:#e67e22;"></i>
+      <div>
+        <strong style="color:#b7570a;">Montant total incohérent — Paiement bloqué</strong>
+        <p class="mb-1 small" style="color:#7d4a05;">
+          Le montant stocké <strong>{{ financialMetrics?.storedMontantTotal | number:'1.2-2' }} DT</strong>
+          ne correspond pas à la somme des jalons <strong>{{ financialMetrics?.computedMontantTotal | number:'1.2-2' }} DT</strong>
+          (écart : {{ financialMetrics?.delta | number:'1.2-2' }} DT).
+        </p>
+        <p class="mb-0 small" style="color:#7d4a05;">Merci de corriger les montants des jalons avant de procéder au paiement.</p>
       </div>
     </div>
 

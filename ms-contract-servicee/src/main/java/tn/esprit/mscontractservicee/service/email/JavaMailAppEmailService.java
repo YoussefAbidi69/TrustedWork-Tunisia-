@@ -21,14 +21,36 @@ public class JavaMailAppEmailService implements AppEmailService {
 
     @Override
     public void sendSignatureRequestEmail(String toEmail, String subject, String body) {
-        SimpleMailMessage msg = new SimpleMailMessage();
-        if (from != null && !from.isBlank()) {
-            msg.setFrom(from);
+        try {
+            SimpleMailMessage msg = new SimpleMailMessage();
+            if (from != null && !from.isBlank()) {
+                msg.setFrom(from);
+            }
+            msg.setTo(toEmail);
+            msg.setSubject(subject);
+            msg.setText(body);
+            mailSender.send(msg);
+            log.info("Signature request email sent to {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send signature request email to {}: {}", toEmail, e.getMessage());
         }
-        msg.setTo(toEmail);
-        msg.setSubject(subject);
-        msg.setText(body);
-        mailSender.send(msg);
-        log.info("Signature request email sent to {}", toEmail);
+    }
+
+    @Override
+    public void sendSimpleEmail(String toEmail, String subject, String body) {
+        log.info("Preparing to send simple email to {}", toEmail);
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            if (from != null && !from.isBlank()) {
+                message.setFrom(from);
+            }
+            message.setTo(toEmail);
+            message.setSubject(subject);
+            message.setText(body);
+            mailSender.send(message);
+            log.info("Simple email sent successfully to {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send simple email to {}", toEmail, e);
+        }
     }
 }
