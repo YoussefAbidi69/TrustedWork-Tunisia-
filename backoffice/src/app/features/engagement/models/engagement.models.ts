@@ -30,6 +30,8 @@ export interface GrowthProfileDTO {
   xpToNextLevel: number;
   level: number;
   engagementScore: number;
+  influenceScore?: number;
+  churnRisk?: number;
 }
 
 export interface BadgeDTO {
