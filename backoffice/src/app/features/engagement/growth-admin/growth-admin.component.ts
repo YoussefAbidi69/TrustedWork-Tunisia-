@@ -67,6 +67,7 @@ import { catchError } from 'rxjs/operators';
               <th>Level &amp; XP Progress</th>
               <th>XP Points</th>
               <th>Engagement Score</th>
+              <th>Churn Risk (ML)</th>
               <th>Efficiency</th>
             </tr>
           </thead>
@@ -109,6 +110,17 @@ import { catchError } from 'rxjs/operators';
               </td>
               <td>
                 <strong class="score-value">{{ p.engagementScore | number }} PTS</strong>
+              </td>
+              <td>
+                <div class="risk-cell" *ngIf="churnMap.get(p.userId) as risk">
+                  <span class="risk-badge" [style.background]="getRiskColor(risk)">
+                    {{ risk.risk_label }}
+                  </span>
+                  <small class="risk-pct">{{ risk.churn_probability | number:'1.0-0' }}%</small>
+                </div>
+                <div *ngIf="!churnMap.has(p.userId)" class="loading-mini">
+                  <i class="fas fa-spinner fa-spin"></i>
+                </div>
               </td>
               <td>
                 <div class="efficiency-bar-wrap">
@@ -212,12 +224,18 @@ import { catchError } from 'rxjs/operators';
     .efficiency-fill  { height: 100%; background: linear-gradient(90deg, #6366F1, #8B5CF6); border-radius: 10px; transition: width 0.5s ease; }
     .efficiency-pct   { font-size: 12px; font-weight: 700; color: #94A3B8; min-width: 32px; }
 
+    .risk-cell { display: flex; flex-direction: column; gap: 4px; }
+    .risk-badge { font-size: 10px; font-weight: 800; color: white; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; width: fit-content; }
+    .risk-pct { font-size: 11px; color: #64748B; font-weight: 600; }
+    .loading-mini { color: #475569; font-size: 12px; }
+
     .empty-row { text-align: center; padding: 60px; color: #4B5563; font-size: 14px; }
   `]
 })
 export class GrowthAdminComponent implements OnInit {
   profiles: GrowthProfileDTO[] = [];
   userMap: Map<number, string> = new Map();
+  churnMap: Map<number, any> = new Map();
   loading = false;
 
   totalXp = 0;
@@ -242,6 +260,7 @@ export class GrowthAdminComponent implements OnInit {
         this.profiles = data.sort((a, b) => (b.engagementScore || 0) - (a.engagementScore || 0));
         this.calculateStats();
         this.resolveNames();
+        this.fetchChurnPredictions();
         this.loading = false;
       },
       error: (err) => {
@@ -293,5 +312,24 @@ export class GrowthAdminComponent implements OnInit {
     if (this.topScore === 0) return 0;
     if (!score) return 0;
     return Math.min(100, Math.max(1, Math.round((score / this.topScore) * 100)));
+  }
+
+  fetchChurnPredictions(): void {
+    this.profiles.forEach(p => {
+      this.growthService.getChurnPrediction(p.userId).subscribe({
+        next: (res) => this.churnMap.set(p.userId, res),
+        error: () => this.churnMap.set(p.userId, { risk_label: 'UNKNOWN', churn_probability: 0 })
+      });
+    });
+  }
+
+  getRiskColor(risk: any): string {
+    const colors: any = {
+      'HIGH': '#ef4444',
+      'MEDIUM': '#f59e0b',
+      'LOW': '#10b981',
+      'UNKNOWN': '#64748b'
+    };
+    return colors[risk.risk_label] || '#64748b';
   }
 }
