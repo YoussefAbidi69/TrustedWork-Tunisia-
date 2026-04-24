@@ -20,7 +20,6 @@ import tn.esprit.msprojectservice.feign.dto.UserDTO;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Properties;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;

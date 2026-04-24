@@ -7,7 +7,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import tn.esprit.msprojectservice.dto.MLPredictionDTO;
 import tn.esprit.msprojectservice.entities.*;
 import tn.esprit.msprojectservice.repositories.*;
@@ -120,42 +119,35 @@ class MLPredictionServiceImplTest {
     @DisplayName("buildMessage — severity null → message succès ✅")
     void buildMessage_nullSeverity_returnsSuccessMessage() throws Exception {
         String msg = invokeBuildMessage(sampleProject, 0.20, null, "active_risks_count");
-        assertThat(msg).contains("✅");
-        assertThat(msg).contains(sampleProject.getTitle());
-        assertThat(msg).contains("20%");
+        assertThat(msg).contains("✅").contains(sampleProject.getTitle()).contains("20%");
     }
 
     @Test
     @DisplayName("buildMessage — severity LOW → message vigilance 🟡")
     void buildMessage_lowSeverity_returnsLowRiskMessage() throws Exception {
         String msg = invokeBuildMessage(sampleProject, 0.40, RiskSeverity.LOW, "active_risks_count");
-        assertThat(msg).contains("🟡");
-        assertThat(msg).contains(sampleProject.getTitle());
-        assertThat(msg).contains("40%");
+        assertThat(msg).contains("🟡").contains(sampleProject.getTitle()).contains("40%");
     }
 
     @Test
     @DisplayName("buildMessage — severity MEDIUM → message modéré 🟠")
     void buildMessage_mediumSeverity_returnsMediumRiskMessage() throws Exception {
         String msg = invokeBuildMessage(sampleProject, 0.60, RiskSeverity.MEDIUM, "tasks_done_ratio");
-        assertThat(msg).contains("🟠");
-        assertThat(msg).contains("60%");
+        assertThat(msg).contains("🟠").contains("60%");
     }
 
     @Test
     @DisplayName("buildMessage — severity HIGH → message élevé 🔴")
     void buildMessage_highSeverity_returnsHighRiskMessage() throws Exception {
         String msg = invokeBuildMessage(sampleProject, 0.75, RiskSeverity.HIGH, "bottleneck_days_avg");
-        assertThat(msg).contains("🔴");
-        assertThat(msg).contains("75%");
+        assertThat(msg).contains("🔴").contains("75%");
     }
 
     @Test
     @DisplayName("buildMessage — severity CRITICAL → message critique 🚨")
     void buildMessage_criticalSeverity_returnsCriticalMessage() throws Exception {
         String msg = invokeBuildMessage(sampleProject, 0.92, RiskSeverity.CRITICAL, "scope_creep_ratio");
-        assertThat(msg).contains("🚨");
-        assertThat(msg).contains("92%");
+        assertThat(msg).contains("🚨").contains("92%");
     }
 
     @Test
@@ -254,14 +246,16 @@ class MLPredictionServiceImplTest {
     }
 
     @Test
-    @DisplayName("predictDeliveryRisk — projet introuvable → RuntimeException")
+    @DisplayName("predictDeliveryRisk — projet introuvable → RuntimeException et repository sollicité")
     void predictDeliveryRisk_projectNotFound_throwsRuntimeException() {
         mlService.loadModel();
-        when(projectRepository.findById(99L)).thenReturn(Optional.empty());
+        when(projectRepository.findById(404L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> mlService.predictDeliveryRisk(99L))
+        assertThatThrownBy(() -> mlService.predictDeliveryRisk(404L))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("99");
+                .hasMessageContaining("404");
+
+        verify(projectRepository).findById(404L);
     }
 
     // ─── calculateAssigneePerfScore — score de performance ────────────────────
@@ -293,6 +287,62 @@ class MLPredictionServiceImplTest {
         MLPredictionDTO result = mlService.predictDeliveryRisk(3L);
 
         assertThat(result.getAssigneePerfScore()).isEqualTo(0.65);
+    }
+
+    // ─── predictDeliveryRisk — couverture lambdas ────────────────────────────
+
+    @Test
+    @DisplayName("predictDeliveryRisk — tâches bloquées et assignées → couvre tous les lambdas")
+    void predictDeliveryRisk_withRichTaskData_coversAllLambdas() {
+        mlService.loadModel();
+
+        LocalDate startDate = sampleProject.getStartDate(); // now-30
+
+        // DONE on time: deadline in future, createdAt before startDate
+        Task doneOnTime = Task.builder()
+                .id(10L).status(TaskStatus.DONE)
+                .deadline(LocalDate.now().plusDays(5))
+                .updatedAt(LocalDateTime.now().minusDays(1))
+                .createdAt(startDate.atStartOfDay().minusDays(5))
+                .build();
+
+        // DONE late: deadline in past (updated after deadline)
+        Task doneLate = Task.builder()
+                .id(11L).status(TaskStatus.DONE)
+                .deadline(LocalDate.now().minusDays(10))
+                .updatedAt(LocalDateTime.now().minusDays(1))
+                .createdAt(startDate.atStartOfDay().minusDays(3))
+                .build();
+
+        // DONE with null deadline (covers deadline==null branch)
+        Task doneNullDeadline = Task.builder()
+                .id(12L).status(TaskStatus.DONE)
+                .deadline(null)
+                .updatedAt(LocalDateTime.now().minusDays(2))
+                .createdAt(startDate.atStartOfDay().plusDays(5)) // after startDate → scope creep
+                .build();
+
+        // Blocked task for bottleneck avg (7 days stale)
+        Task blockedTask = Task.builder()
+                .id(13L).status(TaskStatus.IN_PROGRESS)
+                .updatedAt(LocalDateTime.now().minusDays(7))
+                .createdAt(startDate.atStartOfDay())
+                .build();
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(sampleProject));
+        when(taskRepository.countTotalTasksByProjectId(1L)).thenReturn(4);
+        when(taskRepository.countCompletedTasksByProjectId(1L)).thenReturn(3);
+        when(riskSignalRepository.countActiveRisksByProjectId(1L)).thenReturn(1);
+        when(taskRepository.findBlockedTasksByProjectId(1L)).thenReturn(List.of(blockedTask));
+        when(deliverableRepository.countOpenDeliverablesByProjectId(1L)).thenReturn(0);
+        when(taskRepository.findByAssigneeId(20L)).thenReturn(List.of(doneOnTime, doneLate, doneNullDeadline));
+        when(taskRepository.findByProjectId(1L)).thenReturn(List.of(doneOnTime, doneLate, doneNullDeadline));
+
+        MLPredictionDTO result = mlService.predictDeliveryRisk(1L);
+
+        assertThat(result.getBottleneckDaysAvg()).isGreaterThan(0.0);
+        assertThat(result.getAssigneePerfScore()).isBetween(0.3, 1.0);
+        assertThat(result.getScopeCreepRatio()).isGreaterThan(0.0);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

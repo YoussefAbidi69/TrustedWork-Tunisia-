@@ -57,8 +57,8 @@ class TaskSuggestionControllerTest {
         );
 
         when(projectService.getProjectById(1L)).thenReturn(sampleProjectDTO);
-        when(suggestionService.suggererTaches(eq("TuniShop E-Commerce Platform"),
-                eq(LocalDate.of(2026, 5, 1)))).thenReturn(suggestions);
+        when(suggestionService.suggererTaches("TuniShop E-Commerce Platform",
+                LocalDate.of(2026, 5, 1))).thenReturn(suggestions);
 
         ResponseEntity<TaskSuggestionResponseDTO> response = controller.suggererTaches(1L);
 
@@ -131,8 +131,8 @@ class TaskSuggestionControllerTest {
 
         verify(projectService).getProjectById(1L);
         verify(suggestionService).suggererTaches(
-                eq("TuniShop E-Commerce Platform"),
-                eq(LocalDate.of(2026, 5, 1)));
+                "TuniShop E-Commerce Platform",
+                LocalDate.of(2026, 5, 1));
     }
 
     @Test

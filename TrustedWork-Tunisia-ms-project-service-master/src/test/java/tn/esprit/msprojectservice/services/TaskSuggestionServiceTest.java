@@ -1,14 +1,19 @@
 package tn.esprit.msprojectservice.services;
 
+import org.jpmml.evaluator.Evaluator;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests unitaires pour TaskSuggestionService.
@@ -200,6 +205,50 @@ class TaskSuggestionServiceTest {
                 service.suggererTaches("REST API Backend Microservice Spring", LocalDate.now());
 
         assertThat(suggestions).isNotNull();
+    }
+
+    // ─── predire — chemins d'erreur ───────────────────────────────────────────
+
+    @Test
+    @DisplayName("predire — probability(1) absent du résultat → aucune suggestion retournée")
+    void predire_nullProbability_returnsZero() throws Exception {
+        Evaluator mockEval = mock(Evaluator.class);
+        when(mockEval.getInputFields()).thenReturn(List.of());
+        doReturn(Map.of()).when(mockEval).evaluate(anyMap());
+
+        Field evalField = TaskSuggestionService.class.getDeclaredField("evaluator");
+        evalField.setAccessible(true);
+        Object realEvaluator = evalField.get(service);
+        evalField.set(service, mockEval);
+
+        try {
+            List<TaskSuggestionService.TaskSuggestionDTO> result =
+                    service.suggererTaches("E-Commerce Boutique", LocalDate.now());
+            assertThat(result).isEmpty();
+        } finally {
+            evalField.set(service, realEvaluator);
+        }
+    }
+
+    @Test
+    @DisplayName("predire — exception pendant evaluate → retourne 0 silencieusement")
+    void predire_evaluateThrowsException_returnsZeroGracefully() throws Exception {
+        Evaluator mockEval = mock(Evaluator.class);
+        when(mockEval.getInputFields()).thenReturn(List.of());
+        when(mockEval.evaluate(anyMap())).thenThrow(new RuntimeException("Erreur JPMML test"));
+
+        Field evalField = TaskSuggestionService.class.getDeclaredField("evaluator");
+        evalField.setAccessible(true);
+        Object realEvaluator = evalField.get(service);
+        evalField.set(service, mockEval);
+
+        try {
+            List<TaskSuggestionService.TaskSuggestionDTO> result =
+                    service.suggererTaches("API Backend REST", LocalDate.now());
+            assertThat(result).isEmpty();
+        } finally {
+            evalField.set(service, realEvaluator);
+        }
     }
 
     // ─── TaskSuggestionDTO ────────────────────────────────────────────────────
