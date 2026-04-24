@@ -2,6 +2,7 @@
   
   <div class="page-header">
     <div class="header-content">
+      <div class="badge-label animate-fade-in"><i class="fas fa-trophy"></i> Hall of Fame</div>
       <h1 class="glow-text">Leadership Board</h1>
       <p class="subtitle">Rise to the top of the community by earning engagement points</p>
     </div>
@@ -88,7 +89,12 @@
         <div class="rank-row" *ngFor="let entry of entries; let i = index" 
              [class.is-me]="isCurrentUser(entry)"
              [style.animation-delay.ms]="i * 50">
-          <div class="rank-num">{{ entry.rank }}<small>{{ getRankSuffix(entry.rank) }}</small></div>
+          <div class="rank-num">
+            <span *ngIf="entry.rank === 1" class="medal-list">🥇</span>
+            <span *ngIf="entry.rank === 2" class="medal-list">🥈</span>
+            <span *ngIf="entry.rank === 3" class="medal-list">🥉</span>
+            <span *ngIf="entry.rank > 3">{{ entry.rank }}<small>{{ getRankSuffix(entry.rank) }}</small></span>
+          </div>
           
           <div class="user-info">
             <div class="mini-avatar-icon">
