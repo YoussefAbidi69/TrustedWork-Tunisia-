@@ -1,0 +1,198 @@
+<div class="scheduler-page">
+
+  <!-- ── En-tête ──────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-icon">
+        <i class="fas fa-clock-rotate-left"></i>
+      </div>
+      <div>
+        <h1 class="page-title">Scheduler Management</h1>
+        <p class="page-subtitle">Configurez les tâches planifiées en temps réel sans redémarrage.</p>
+      </div>
+    </div>
+    <button class="btn btn-outline" (click)="loadConfigs()" [disabled]="loading">
+      <i class="fas fa-rotate-right" [class.fa-spin]="loading"></i>
+      Actualiser
+    </button>
+  </div>
+
+  <!-- ── Feedback toast ─────────────────────────────────────────── -->
+  <div *ngIf="feedback" class="feedback-toast" [class.feedback-success]="feedback.type === 'success'" [class.feedback-error]="feedback.type === 'error'">
+    <i class="fas" [ngClass]="feedback.type === 'success' ? 'fa-circle-check' : 'fa-circle-xmark'"></i>
+    {{ feedback.message }}
+  </div>
+
+  <!-- ── Loader ─────────────────────────────────────────────────── -->
+  <div *ngIf="loading" class="scheduler-loading">
+    <i class="fas fa-spinner fa-spin"></i>
+    <span>Chargement des configurations...</span>
+  </div>
+
+  <!-- ── Grille des jobs ────────────────────────────────────────── -->
+  <div *ngIf="!loading" class="scheduler-grid">
+
+    <div
+      *ngFor="let config of configs"
+      class="job-card"
+      [class.job-card--disabled]="!config.enabled"
+    >
+      <!-- Header de la carte -->
+      <div class="job-card-header">
+        <div class="job-icon-wrap" [ngClass]="'job-icon--' + getJobColor(config.jobName)">
+          <i class="fas" [ngClass]="getJobIcon(config.jobName)"></i>
+        </div>
+        <div class="job-info">
+          <span class="job-name">{{ config.jobName }}</span>
+          <span class="job-description">{{ config.description }}</span>
+        </div>
+        <!-- Toggle enabled -->
+        <label class="toggle-switch" [title]="config.enabled ? 'Désactiver' : 'Activer'">
+          <input type="checkbox" [checked]="config.enabled" (change)="toggleEnabled(config)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <!-- Méta-données -->
+      <div class="job-meta">
+        <div class="job-meta-item">
+          <i class="fas fa-timer"></i>
+          <span>Intervalle : <strong>{{ formatInterval(config.intervalMinutes) }}</strong></span>
+        </div>
+        <div class="job-meta-item">
+          <i class="fas fa-code"></i>
+          <span>Cron : <code>{{ config.cronExpression }}</code></span>
+        </div>
+        <div class="job-meta-item">
+          <i class="fas fa-history"></i>
+          <span>Dernier run : <strong>{{ formatLastRun(config.lastRun) }}</strong></span>
+        </div>
+      </div>
+
+      <!-- Badge statut + actions -->
+      <div class="job-footer">
+        <span class="status-badge" [class.status-active]="config.enabled" [class.status-inactive]="!config.enabled">
+          <span class="status-dot"></span>
+          {{ config.enabled ? 'Actif' : 'Inactif' }}
+        </span>
+        <div class="job-actions">
+          <!-- Bouton "Tester maintenant" — déclenche le job immédiatement -->
+          <button
+            class="btn btn-sm btn-run"
+            (click)="runJobNow(config)"
+            [disabled]="runningJobs.has(config.jobName)"
+            title="Déclencher ce job immédiatement"
+          >
+            <i class="fas" [ngClass]="runningJobs.has(config.jobName) ? 'fa-spinner fa-spin' : 'fa-play'"></i>
+            {{ runningJobs.has(config.jobName) ? 'En cours...' : 'Tester' }}
+          </button>
+          <button class="btn btn-sm btn-outline" (click)="openEdit(config)">
+            <i class="fas fa-pen"></i>
+            Configurer
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── État vide ──────────────────────────────────────────────── -->
+  <div *ngIf="!loading && configs.length === 0" class="scheduler-empty">
+    <i class="fas fa-clock"></i>
+    <p>Aucune configuration trouvée.</p>
+    <small>Vérifiez que le service est démarré et que les configs sont initialisées en base.</small>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- MODAL ÉDITION                                                  -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="editingConfig" (click)="closeEdit()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+
+    <!-- Header modal -->
+    <div class="modal-header">
+      <div class="modal-title-wrap">
+        <div class="modal-icon" [ngClass]="'job-icon--' + getJobColor(editingConfig.jobName)">
+          <i class="fas" [ngClass]="getJobIcon(editingConfig.jobName)"></i>
+        </div>
+        <div>
+          <h2 class="modal-title">Configurer le job</h2>
+          <span class="modal-subtitle">{{ editingConfig.jobName }}</span>
+        </div>
+      </div>
+      <button class="modal-close" (click)="closeEdit()">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Body modal -->
+    <div class="modal-body">
+
+      <!-- Intervalle en minutes -->
+      <div class="form-group">
+        <label class="form-label">
+          <i class="fas fa-timer"></i>
+          Intervalle (minutes)
+        </label>
+        <input
+          type="number"
+          class="form-input"
+          [(ngModel)]="editForm.intervalMinutes"
+          min="1"
+          step="1"
+          placeholder="Ex: 1440 = toutes les 24h"
+        />
+        <small class="form-hint">
+          Équivalent : {{ formatInterval(editForm.intervalMinutes) }}
+        </small>
+      </div>
+
+      <!-- Expression Cron -->
+      <div class="form-group">
+        <label class="form-label">
+          <i class="fas fa-code"></i>
+          Expression Cron
+        </label>
+        <input
+          type="text"
+          class="form-input"
+          [(ngModel)]="editForm.cronExpression"
+          placeholder="Ex: 0 0 1 * * *"
+        />
+        <small class="form-hint">
+          Format Spring : seconde minute heure jour mois jour-semaine<br>
+          Exemples : <code>0 0 1 * * *</code> = nuit à 1h &nbsp;|&nbsp;
+          <code>0 0 0 * * MON</code> = lundi minuit &nbsp;|&nbsp;
+          <code>0 0 0 1 * *</code> = 1er du mois
+        </small>
+      </div>
+
+      <!-- Toggle enabled -->
+      <div class="form-group form-group--inline">
+        <label class="form-label">
+          <i class="fas fa-power-off"></i>
+          Activer le job
+        </label>
+        <label class="toggle-switch">
+          <input type="checkbox" [(ngModel)]="editForm.enabled">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+    </div>
+
+    <!-- Footer modal -->
+    <div class="modal-footer">
+      <button class="btn btn-ghost" (click)="closeEdit()" [disabled]="saving">
+        Annuler
+      </button>
+      <button class="btn btn-primary" (click)="saveConfig()" [disabled]="saving">
+        <i class="fas" [ngClass]="saving ? 'fa-spinner fa-spin' : 'fa-floppy-disk'"></i>
+        {{ saving ? 'Enregistrement...' : 'Sauvegarder' }}
+      </button>
+    </div>
+
+  </div>
+</div>

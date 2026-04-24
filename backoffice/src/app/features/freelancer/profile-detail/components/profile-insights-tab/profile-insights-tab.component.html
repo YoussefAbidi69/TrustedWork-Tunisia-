@@ -1,0 +1,204 @@
+<!-- ================= SKILL GAP ================= -->
+<div *ngIf="skillGapDiagnostic || skillGapRecommendations" class="card section-card">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="fas fa-brain text-accent"></i> Analyse des compétences
+      </span>
+    </div>
+  
+    <div class="skillgap-layout">
+  
+      <div class="skillgap-col" *ngIf="skillGapDiagnostic">
+        <div class="skillgap-col-header">
+          <i class="fas fa-chart-bar text-warning"></i>
+          <span>Diagnostic plateforme</span>
+          <span class="badge badge-warning" style="margin-left: auto;">
+            {{ skillGapDiagnostic.gapCount }} gap{{ skillGapDiagnostic.gapCount !== 1 ? 's' : '' }}
+          </span>
+        </div>
+  
+        <div class="skillgap-block" *ngIf="skillGapDiagnostic.mySkills.length > 0">
+          <div class="skillgap-block-label text-success">
+            <i class="fas fa-check-circle"></i> Compétences actuelles
+          </div>
+          <div class="chip-list">
+            <span class="chip chip-success" *ngFor="let s of skillGapDiagnostic.mySkills">{{ s }}</span>
+          </div>
+        </div>
+  
+        <div class="skillgap-block" *ngIf="skillGapDiagnostic.topSkills.length > 0">
+          <div class="skillgap-block-label text-accent">
+            <i class="fas fa-fire"></i> Top compétences du marché
+          </div>
+          <div class="gap-compare-list">
+            <div
+              class="gap-compare-item"
+              *ngFor="let s of skillGapDiagnostic.topSkills"
+              [class.gap-has]="skillGapDiagnostic.mySkills.includes(s)"
+              [class.gap-missing]="!skillGapDiagnostic.mySkills.includes(s)">
+              <i class="fas" [ngClass]="skillGapDiagnostic.mySkills.includes(s) ? 'fa-check' : 'fa-xmark'"></i>
+              {{ s }}
+            </div>
+          </div>
+        </div>
+  
+        <div class="skillgap-block" *ngIf="skillGapDiagnostic.gapSkills.length > 0">
+          <div class="skillgap-block-label text-danger">
+            <i class="fas fa-triangle-exclamation"></i> Compétences manquantes
+          </div>
+          <div class="chip-list">
+            <span class="chip chip-danger" *ngFor="let s of skillGapDiagnostic.gapSkills">{{ s }}</span>
+          </div>
+        </div>
+      </div>
+  
+      <div class="skillgap-col" *ngIf="skillGapRecommendations">
+        <div class="skillgap-col-header">
+          <i class="fas fa-lightbulb text-accent"></i>
+          <span>Recommandations</span>
+        </div>
+  
+        <div class="skillgap-block" *ngIf="skillGapRecommendations.missingSkills.length">
+          <div class="skillgap-block-label text-danger">
+            <i class="fas fa-triangle-exclamation"></i> Compétences manquantes
+          </div>
+          <div class="chip-list">
+            <span class="chip chip-danger" *ngFor="let s of skillGapRecommendations.missingSkills">{{ s }}</span>
+          </div>
+        </div>
+  
+        <div class="skillgap-block" *ngIf="skillGapRecommendations.recommendedCourses.length">
+          <div class="skillgap-block-label text-accent">
+            <i class="fas fa-book"></i> Cours recommandés
+          </div>
+          <ul class="suggestions-list">
+            <li *ngFor="let course of skillGapRecommendations.recommendedCourses">
+              <i class="fas fa-arrow-right text-accent"></i> {{ course }}
+            </li>
+          </ul>
+        </div>
+  
+        <div class="skillgap-block" *ngIf="skillGapRecommendations.marketDemand && (skillGapRecommendations.marketDemand | keyvalue).length > 0">
+          <div class="skillgap-block-label text-warning">
+            <i class="fas fa-chart-line"></i> Demande du marché
+          </div>
+          <div class="market-demand-list">
+            <div class="market-demand-item" *ngFor="let entry of skillGapRecommendations.marketDemand | keyvalue">
+              <span class="market-skill">{{ entry.key }}</span>
+              <div class="mini-bar-track">
+                <div class="mini-bar-fill" [style.width.%]="entry.value"></div>
+              </div>
+              <span class="market-score">{{ entry.value }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+    </div>
+  </div>
+  
+  <!-- ================= COMPLETENESS ================= -->
+  <div class="card section-card" *ngIf="completeness">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="fas fa-chart-pie text-accent"></i> Analyse de complétude
+      </span>
+    </div>
+  
+    <div class="stats-grid">
+      <div class="card stat-mini">
+        <div class="stat-mini-label">Score global</div>
+        <div class="stat-mini-value" [ngClass]="getScoreClass(completeness.score)">
+          {{ completeness.score }}%
+        </div>
+      </div>
+  
+      <div class="card stat-mini">
+        <div class="stat-mini-label">Bio</div>
+        <div class="stat-mini-value">{{ completeness.bioScore }}%</div>
+      </div>
+  
+      <div class="card stat-mini">
+        <div class="stat-mini-label">Avatar</div>
+        <div class="stat-mini-value">{{ completeness.avatarScore }}%</div>
+      </div>
+  
+      <div class="card stat-mini">
+        <div class="stat-mini-label">Skills</div>
+        <div class="stat-mini-value">{{ completeness.skillsScore }}%</div>
+      </div>
+  
+      <div class="card stat-mini">
+        <div class="stat-mini-label">Portfolio</div>
+        <div class="stat-mini-value">{{ completeness.portfolioScore }}%</div>
+      </div>
+  
+      <div class="card stat-mini">
+        <div class="stat-mini-label">Certifications</div>
+        <div class="stat-mini-value">{{ completeness.certifScore }}%</div>
+      </div>
+  
+      <div class="card stat-mini">
+        <div class="stat-mini-label">Expérience</div>
+        <div class="stat-mini-value">{{ completeness.workExpScore }}%</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- ================= SUGGESTIONS ================= -->
+  <div class="card section-card" *ngIf="completeness && completeness.suggestions.length > 0">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="fas fa-lightbulb text-warning"></i> Suggestions d'amélioration
+      </span>
+    </div>
+  
+    <ul class="suggestions-list">
+      <li *ngFor="let s of completeness.suggestions">
+        <i class="fas fa-arrow-right text-accent"></i> {{ s }}
+      </li>
+    </ul>
+  </div>
+  
+  <!-- ================= CAREER PATH ================= -->
+  <div class="card section-card" *ngIf="careerPath">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="fas fa-route text-accent"></i> Parcours de carrière
+      </span>
+    </div>
+  
+    <div class="career-info">
+      <p>
+        <strong>Parcours détecté :</strong>
+        <span class="badge badge-accent">{{ careerPath.detectedPath }}</span>
+      </p>
+  
+      <p *ngIf="careerPath.description" class="text-secondary">
+        {{ careerPath.description }}
+      </p>
+  
+      <div *ngIf="careerPath.currentSkills.length > 0" style="margin-top: 12px;">
+        <strong>Compétences actuelles :</strong>
+        <div class="chip-list" style="margin-top: 8px;">
+          <span class="chip chip-success" *ngFor="let s of careerPath.currentSkills">{{ s }}</span>
+        </div>
+      </div>
+  
+      <div *ngIf="careerPath.missingSkills.length > 0" style="margin-top: 12px;">
+        <strong>Compétences à acquérir :</strong>
+        <div class="chip-list" style="margin-top: 8px;">
+          <span class="chip chip-danger" *ngFor="let s of careerPath.missingSkills">{{ s }}</span>
+        </div>
+      </div>
+  
+      <div *ngIf="careerPath.nextSteps.length > 0" style="margin-top: 12px;">
+        <strong>Prochaines étapes :</strong>
+        <ul class="suggestions-list">
+          <li *ngFor="let step of careerPath.nextSteps">
+            <i class="fas fa-check text-success"></i> {{ step }}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>

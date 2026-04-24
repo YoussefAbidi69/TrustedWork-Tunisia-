@@ -1,0 +1,91 @@
+<div class="card section-card reputation-summary-card">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="fas fa-shield-heart"></i> Réputation freelancer
+      </span>
+    </div>
+  
+    <div class="reputation-summary">
+      <div class="reputation-score-box">
+        <div class="reputation-score-value">
+          {{ averageRating | number:'1.1-1' }}
+        </div>
+  
+        <div class="reputation-score-stars">
+          <span *ngFor="let star of getStars(averageRating)">
+            <i [class]="star"></i>
+          </span>
+        </div>
+  
+        <div class="reputation-score-label">
+          {{ getRatingLabel(averageRating) }}
+        </div>
+      </div>
+  
+      <div class="reputation-metrics">
+        <div class="reputation-metric">
+          <span class="reputation-metric-label">Nombre d’avis</span>
+          <strong>{{ reviews.length }}</strong>
+        </div>
+  
+        <div class="reputation-metric">
+          <span class="reputation-metric-label">Statut réputation</span>
+          <strong>{{ reviews.length > 0 ? 'Active' : 'À construire' }}</strong>
+        </div>
+  
+        <div class="reputation-metric">
+          <span class="reputation-metric-label">Signal global</span>
+          <strong>{{ getRatingLabel(averageRating) }}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card section-card">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="fas fa-star"></i> Avis ({{ reviews.length }})
+      </span>
+    </div>
+  
+    <ng-container *ngIf="reviews.length > 0; else emptyReviews">
+      <div class="reviews-list">
+        <div class="review-item" *ngFor="let r of reviews">
+          <div class="review-item-top">
+            <div class="review-author">
+              <div class="avatar avatar-sm avatar-accent">
+                {{ r.clientInitials }}
+              </div>
+  
+              <div>
+                <div class="reviewer-name">{{ r.clientFullName }}</div>
+                <div class="text-muted review-date">
+                  {{ r.reviewedAt | date:'dd/MM/yyyy' }}
+                </div>
+              </div>
+            </div>
+  
+            <span class="badge badge-muted">{{ r.status }}</span>
+          </div>
+  
+          <div class="review-rating-row">
+            <span *ngFor="let star of getStars(r.rating)">
+              <i [class]="star"></i>
+            </span>
+            <strong>{{ r.rating | number:'1.1-1' }}</strong>
+          </div>
+  
+          <p class="review-comment">
+            {{ r.comment || 'Pas de commentaire' }}
+          </p>
+        </div>
+      </div>
+    </ng-container>
+  
+    <ng-template #emptyReviews>
+      <div class="empty-state-inline">
+        <i class="fas fa-star"></i>
+        <span>Aucun avis pour ce profil.</span>
+      </div>
+    </ng-template>
+  </div>

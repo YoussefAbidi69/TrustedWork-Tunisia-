@@ -1,0 +1,140 @@
+<!-- ================= CERTIFICATIONS ================= -->
+<div class="card section-card">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="fas fa-certificate"></i> Certifications ({{ certifications.length }})
+      </span>
+    </div>
+  
+    <ng-container *ngIf="certifications.length > 0; else emptyCert">
+      <div class="timeline-list">
+        <div class="timeline-item" *ngFor="let c of certifications">
+          <div class="timeline-header">
+            <div>
+              <strong>{{ c.title }}</strong>
+              <span class="text-muted"> — {{ c.issuer }}</span>
+  
+              <span class="badge" [ngClass]="getCertStatusClass(c)">
+                {{ getCertStatusLabel(c) }}
+              </span>
+  
+              <span class="badge badge-muted" *ngIf="c.type">{{ c.type }}</span>
+            </div>
+          </div>
+  
+          <div class="text-muted" style="font-size:12px;">
+            <span *ngIf="c.issueDate">Obtenue le {{ c.issueDate | date:'dd/MM/yyyy' }}</span>
+            <span *ngIf="c.expiryDate"> · Expire le {{ c.expiryDate | date:'dd/MM/yyyy' }}</span>
+            <span *ngIf="!c.expiryDate"> · Sans expiration</span>
+          </div>
+  
+          <a
+            *ngIf="c.certificateUrl"
+            [href]="c.certificateUrl"
+            target="_blank"
+            class="btn btn-ghost btn-sm"
+            style="margin-top:8px;">
+            <i class="fas fa-external-link-alt"></i> Voir certificat
+          </a>
+        </div>
+      </div>
+    </ng-container>
+  
+    <ng-template #emptyCert>
+      <div class="empty-state-inline">
+        <i class="fas fa-certificate"></i>
+        <span>Aucune certification</span>
+      </div>
+    </ng-template>
+  </div>
+  
+  <!-- ================= EXPERIENCE ================= -->
+  <div class="card section-card">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="fas fa-briefcase"></i> Expériences ({{ workExperiences.length }})
+      </span>
+    </div>
+  
+    <ng-container *ngIf="workExperiences.length > 0; else emptyExp">
+      <div class="timeline-list">
+        <div class="timeline-item" *ngFor="let w of workExperiences">
+          <div class="timeline-header">
+            <div>
+              <strong>{{ w.jobTitle }}</strong>
+              <span class="text-muted"> — {{ w.company }}</span>
+  
+              <span *ngIf="w.isCurrent" class="badge badge-success" style="margin-left: 8px;">
+                En poste
+              </span>
+  
+              <span class="badge badge-muted" *ngIf="w.durationLabel" style="margin-left: 8px;">
+                {{ w.durationLabel }}
+              </span>
+            </div>
+          </div>
+  
+          <div class="text-muted" style="font-size:12px;">
+            <span *ngIf="w.periodLabel">{{ w.periodLabel }}</span>
+            <span *ngIf="!w.periodLabel">
+              {{ w.startDate | date:'MM/yyyy' }} — {{ w.isCurrent ? 'Présent' : (w.endDate | date:'MM/yyyy') }}
+            </span>
+          </div>
+  
+          <div class="text-muted" style="font-size:12px; margin-top:4px;" *ngIf="w.location">
+            <i class="fas fa-location-dot"></i> {{ w.location }}
+          </div>
+  
+          <p *ngIf="w.description" class="text-secondary" style="margin-top: 6px;">
+            {{ w.description }}
+          </p>
+  
+          <div class="text-muted" style="font-size:12px; margin-top:6px;" *ngIf="!w.durationLabel">
+            {{ getWorkDurationLabel(w) }}
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  
+    <ng-template #emptyExp>
+      <div class="empty-state-inline">
+        <i class="fas fa-briefcase"></i>
+        <span>Aucune expérience</span>
+      </div>
+    </ng-template>
+  </div>
+  
+  <!-- ================= EDUCATION ================= -->
+  <div class="card section-card">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="fas fa-graduation-cap"></i> Formations ({{ educations.length }})
+      </span>
+    </div>
+  
+    <ng-container *ngIf="educations.length > 0; else emptyEdu">
+      <div class="timeline-list">
+        <div class="timeline-item" *ngFor="let e of educations">
+          <div class="timeline-header">
+            <div>
+              <strong>{{ e.degree }}</strong>
+              <span class="text-muted"> — {{ e.institution }}</span>
+              <span class="badge-year" *ngIf="e.graduationYear"> Promo {{ e.graduationYear }}</span>
+              <span class="badge-year badge-unknown" *ngIf="!e.graduationYear"> Année non renseignée</span>
+            </div>
+          </div>
+  
+          <div class="text-muted" style="font-size:12px;" *ngIf="e.fieldOfStudy">
+            {{ e.fieldOfStudy }}
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  
+    <ng-template #emptyEdu>
+      <div class="empty-state-inline">
+        <i class="fas fa-graduation-cap"></i>
+        <span>Aucune formation</span>
+      </div>
+    </ng-template>
+  </div>

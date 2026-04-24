@@ -1,0 +1,136 @@
+.reputation-summary-card {
+    margin-bottom: 20px;
+  }
+  
+  .reputation-summary {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 20px;
+    align-items: stretch;
+  }
+  
+  .reputation-score-box {
+    border: 1px solid var(--border);
+    background: var(--bg-input);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .reputation-score-value {
+    font-family: var(--font-display);
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+  
+  .reputation-score-stars {
+    margin-top: 12px;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    color: var(--warning);
+  }
+  
+  .reputation-score-label {
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  
+  .reputation-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  
+  .reputation-metric {
+    border: 1px solid var(--border);
+    background: var(--bg-input);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .reputation-metric-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  
+  .review-item-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  
+  .review-author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .reviewer-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  
+  .review-date {
+    font-size: 12px;
+  }
+  
+  .review-rating-row {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--warning);
+  }
+  
+  .review-rating-row strong {
+    margin-left: 4px;
+    color: var(--text-primary);
+    font-size: 13px;
+  }
+  
+  .review-comment {
+    margin-top: 10px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  
+  .empty-state-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  
+  .empty-state-inline i {
+    color: var(--accent);
+  }
+  
+  @media (max-width: 768px) {
+    .reputation-summary {
+      grid-template-columns: 1fr;
+    }
+  
+    .reputation-metrics {
+      grid-template-columns: 1fr;
+    }
+  
+    .review-item-top {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
