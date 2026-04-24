@@ -33,10 +33,10 @@ import { catchError } from 'rxjs/operators';
         <span class="stat-badge accent">Platform Wide</span>
       </div>
       <div class="stat-card">
-        <div class="stat-icon green"><i class="fas fa-users"></i></div>
-        <div class="stat-label">Ranked Members</div>
-        <div class="stat-val">{{ profiles.length }}</div>
-        <span class="stat-badge green">Active Users</span>
+        <div class="stat-icon green"><i class="fas fa-medal"></i></div>
+        <div class="stat-label">Total Influence Score</div>
+        <div class="stat-val">{{ totalInfluence | number:'1.0-0' }}</div>
+        <span class="stat-badge green">Community Authority</span>
       </div>
       <div class="stat-card">
         <div class="stat-icon warning"><i class="fas fa-crown"></i></div>
@@ -66,7 +66,8 @@ import { catchError } from 'rxjs/operators';
               <th>Member</th>
               <th>Level &amp; XP Progress</th>
               <th>XP Points</th>
-              <th>Engagement Score</th>
+              <th>Engagement</th>
+              <th>Influence</th>
               <th>Churn Risk (ML)</th>
               <th>Efficiency</th>
             </tr>
@@ -112,6 +113,12 @@ import { catchError } from 'rxjs/operators';
                 <strong class="score-value">{{ p.engagementScore | number }} PTS</strong>
               </td>
               <td>
+                <div class="influence-chip">
+                  <i class="fas fa-shield-alt"></i>
+                  <span>{{ p.influenceScore | number }}</span>
+                </div>
+              </td>
+              <td>
                 <div class="risk-cell" *ngIf="churnMap.get(p.userId) as risk">
                   <span class="risk-badge" [style.background]="getRiskColor(risk)">
                     {{ risk.risk_label }}
@@ -132,13 +139,13 @@ import { catchError } from 'rxjs/operators';
               </td>
             </tr>
             <tr *ngIf="profiles.length === 0 && !loading">
-              <td colspan="6" class="empty-row">
+              <td colspan="8" class="empty-row">
                 <i class="fas fa-chart-line" style="opacity:0.3; margin-right:8px;"></i>
                 No growth profiles found. Start engaging users to see analytics.
               </td>
             </tr>
             <tr *ngIf="loading">
-              <td colspan="6" class="empty-row">
+              <td colspan="8" class="empty-row">
                 <i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i> Loading profiles...
               </td>
             </tr>
@@ -216,6 +223,9 @@ import { catchError } from 'rxjs/operators';
 
     .xp-chip { display: flex; align-items: center; gap: 6px; background: rgba(16,185,129,0.1); color: #10B981; padding: 4px 10px; border-radius: 20px; font-weight: 700; width: fit-content; }
     .xp-chip i { font-size: 10px; }
+ 
+    .influence-chip { display: flex; align-items: center; gap: 6px; background: rgba(99,102,241,0.1); color: #818CF8; padding: 4px 10px; border-radius: 20px; font-weight: 700; width: fit-content; font-size: 13px; }
+    .influence-chip i { font-size: 10px; }
 
     .score-value { color: #F1F5F9; font-weight: 700; font-size: 14px; }
 
@@ -239,6 +249,7 @@ export class GrowthAdminComponent implements OnInit {
   loading = false;
 
   totalXp = 0;
+  totalInfluence = 0;
   maxLevel = 0;
   topScore = 0;
 
@@ -272,6 +283,7 @@ export class GrowthAdminComponent implements OnInit {
 
   calculateStats(): void {
     this.totalXp = this.profiles.reduce((acc, p) => acc + (p.xpPoints || 0), 0);
+    this.totalInfluence = this.profiles.reduce((acc, p) => acc + (p.influenceScore || 0), 0);
     this.maxLevel = Math.max(...this.profiles.map(p => p.level || 1), 0);
     this.topScore = Math.max(...this.profiles.map(p => p.engagementScore || 0), 0);
   }
