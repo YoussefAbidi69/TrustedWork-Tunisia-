@@ -11,7 +11,8 @@ import {
   MLPrediction,
   ProjectNotification,
   ProjectStatus,
-  TaskSuggestionResponse
+  TaskSuggestionResponse,
+  BurndownChart
 } from '../models/project.models';
 
 
@@ -246,6 +247,13 @@ export class ProjectApiService {
   getSuggestedTasks(projectId: number): Observable<TaskSuggestionResponse> {
     return this.http.get<TaskSuggestionResponse>(
       `${GATEWAY_URL}/api/projects/${projectId}/suggest-tasks`
+    );
+  }
+
+  // Burndown Chart
+  getBurndownChart(projectId: number): Observable<BurndownChart> {
+    return this.http.get<BurndownChart>(
+      `${GATEWAY_URL}/api/projects/${projectId}/burndown`
     );
   }
 }

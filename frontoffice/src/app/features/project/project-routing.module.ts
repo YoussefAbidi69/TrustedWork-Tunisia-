@@ -7,6 +7,7 @@ import { DeliverablesComponent } from './pages/deliverables/deliverables.compone
 import { RiskSignalsComponent } from './pages/risk-signals/risk-signals.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
 import { GanttChartComponent } from './pages/gantt-chart/gantt-chart.component';
+import { BurndownComponent } from './pages/burndown/burndown.component';
 
 const routes: Routes = [
   { path: '',                    component: ProjectListComponent },
@@ -15,7 +16,8 @@ const routes: Routes = [
   { path: ':id/kanban',          component: KanbanBoardComponent },
   { path: ':id/deliverables',    component: DeliverablesComponent },
   { path: ':id/risks',           component: RiskSignalsComponent },
-  { path: ':id/gantt', component: GanttChartComponent }
+  { path: ':id/gantt',           component: GanttChartComponent },
+  { path: ':id/burndown',        component: BurndownComponent }
 ];
 
 @NgModule({

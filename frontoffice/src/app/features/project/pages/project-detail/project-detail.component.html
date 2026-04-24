@@ -69,6 +69,9 @@
         <button class="btn-ghost" (click)="router.navigate(['/app/projects', projectId, 'gantt'])">
           <i class="fas fa-chart-gantt"></i> Gantt Chart
         </button>
+        <button class="btn-ghost" (click)="router.navigate(['/app/projects', projectId, 'burndown'])" *ngIf="isClient">
+          <i class="fas fa-fire-flame-curved"></i> Burndown
+        </button>
       </div>
     </div>
   </section>

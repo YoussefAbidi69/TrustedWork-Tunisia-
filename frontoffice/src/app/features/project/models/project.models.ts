@@ -178,6 +178,32 @@ export interface TaskSuggestionResponse {
   suggestedTasks: TacheSuggere[];
 }
 
+// ── Burndown Chart ───────────────────────────────────────────────
+
+export type BurndownStatus = 'EN_AVANCE' | 'DANS_LES_DELAIS' | 'EN_RETARD' | 'CRITIQUE';
+
+export interface BurndownPoint {
+  date: string | number[];
+  tachesRestantes: number;
+}
+
+export interface BurndownChart {
+  projectId: number;
+  projectTitle: string;
+  startDate: string | number[];
+  endDate: string | number[];
+  totalTaches: number;
+  courbeIdeale: BurndownPoint[];
+  courbeReelle: BurndownPoint[];
+  tachesRestantesAujourdhui: number;
+  tachesCompletees: number;
+  retardEstimeJours: number;
+  velociteJournaliere: number;
+  dateLivraisonProjetee: string | number[] | null;
+  statutBurndown: BurndownStatus;
+  analyse: string;
+}
+
 // ── MLPredictionDTO — Résultat du modèle Random Forest ──────────
 
 export interface MLPrediction {

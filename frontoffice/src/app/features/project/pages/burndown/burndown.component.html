@@ -1,0 +1,255 @@
+<!-- ══ LOADING ══ -->
+<div *ngIf="loading" class="loading-screen">
+  <div class="loading-spinner"></div>
+  <span>Chargement du Burndown…</span>
+</div>
+
+<!-- ══ ERROR ══ -->
+<div *ngIf="!loading && error" class="error-screen">
+  <i class="fas fa-circle-xmark"></i>
+  <p>{{ error }}</p>
+  <button class="btn-ghost" (click)="goBack()">
+    <i class="fas fa-arrow-left"></i> Retour
+  </button>
+</div>
+
+<!-- ══ MAIN PAGE ══ -->
+<div class="burn-page" *ngIf="!loading && !error && project">
+
+  <!-- ══ HEADER ══ -->
+  <div class="burn-header">
+    <div class="burn-header__left">
+      <button class="back-btn" (click)="goBack()" title="Retour au projet">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div class="header-icon-box">
+        <i class="fas fa-fire-flame-curved"></i>
+      </div>
+      <div>
+        <h1>Burndown Chart</h1>
+        <p>{{ project.title }} · Suivi d'avancement des tâches</p>
+      </div>
+    </div>
+    <button class="refresh-btn" (click)="refresh()" [disabled]="loadingChart" title="Actualiser">
+      <i class="fas fa-rotate-right" [class.spinning]="loadingChart"></i>
+      Actualiser
+    </button>
+  </div>
+
+  <!-- ══ LOADING CHART ══ -->
+  <div *ngIf="loadingChart" class="chart-loading">
+    <div class="loading-spinner"></div>
+    <span>Calcul du burndown…</span>
+  </div>
+
+  <!-- ══ CHART CONTENT ══ -->
+  <ng-container *ngIf="!loadingChart && chart">
+
+    <!-- STATUS BANNER -->
+    <div class="status-banner" [style.--status-color]="statusColor(chart.statutBurndown)">
+      <i class="fas" [ngClass]="statusIcon(chart.statutBurndown)"></i>
+      <div class="status-text">
+        <strong>{{ statusLabel(chart.statutBurndown) }}</strong>
+        <span>Statut global du projet · mis à jour en temps réel</span>
+      </div>
+      <div class="status-dates">
+        <span><i class="fas fa-calendar-day"></i> Début : {{ formatDate(chart.startDate) }}</span>
+        <span><i class="fas fa-flag-checkered"></i> Fin : {{ formatDate(chart.endDate) }}</span>
+        <span *ngIf="chart.dateLivraisonProjetee">
+          <i class="fas fa-clock"></i> Livraison estimée : {{ formatDate(chart.dateLivraisonProjetee) }}
+        </span>
+      </div>
+    </div>
+
+    <!-- METRICS GRID -->
+    <div class="metrics-grid">
+
+      <div class="metric-card">
+        <div class="metric-icon metric-icon--green">
+          <i class="fas fa-circle-check"></i>
+        </div>
+        <div class="metric-body">
+          <span class="metric-value">{{ chart.tachesCompletees }}</span>
+          <span class="metric-label">Tâches terminées</span>
+        </div>
+        <div class="metric-bar">
+          <div class="metric-bar-fill metric-bar-fill--green" [style.width.%]="completionPct"></div>
+        </div>
+        <span class="metric-pct">{{ completionPct }}%</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon metric-icon--blue">
+          <i class="fas fa-list-check"></i>
+        </div>
+        <div class="metric-body">
+          <span class="metric-value">{{ chart.tachesRestantesAujourdhui }}</span>
+          <span class="metric-label">Tâches restantes</span>
+        </div>
+        <div class="metric-sub">sur {{ chart.totalTaches }} au total</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon metric-icon--orange">
+          <i class="fas fa-gauge-high"></i>
+        </div>
+        <div class="metric-body">
+          <span class="metric-value mono">{{ velociteLabel(chart.velociteJournaliere) }}</span>
+          <span class="metric-label">Vélocité journalière</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon" [ngClass]="retardClass(chart.retardEstimeJours) === 'metric-ok' ? 'metric-icon--green' : retardClass(chart.retardEstimeJours) === 'metric-warn' ? 'metric-icon--orange' : 'metric-icon--red'">
+          <i class="fas" [ngClass]="chart.retardEstimeJours <= 0 ? 'fa-rocket' : 'fa-hourglass-half'"></i>
+        </div>
+        <div class="metric-body">
+          <span class="metric-value" [ngClass]="retardClass(chart.retardEstimeJours)">
+            {{ retardLabel(chart.retardEstimeJours) }}
+          </span>
+          <span class="metric-label">Retard estimé</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-strip">
+      <span class="strip-label">Progression globale</span>
+      <div class="strip-track">
+        <div class="strip-fill" [style.width.%]="completionPct"></div>
+      </div>
+      <span class="strip-pct mono">{{ completionPct }}%</span>
+    </div>
+
+    <!-- SVG CHART CARD -->
+    <div class="chart-card">
+      <div class="chart-card__header">
+        <span class="chart-title"><i class="fas fa-chart-line"></i> Courbe d'avancement</span>
+        <div class="chart-legend">
+          <span class="legend-item">
+            <svg width="28" height="10"><line x1="0" y1="5" x2="28" y2="5" stroke="#8896AB" stroke-width="2" stroke-dasharray="5,3"/></svg>
+            Idéale
+          </span>
+          <span class="legend-item">
+            <svg width="28" height="10"><line x1="0" y1="5" x2="28" y2="5" stroke="#C85C3B" stroke-width="2.5"/></svg>
+            Réelle
+          </span>
+          <span class="legend-item">
+            <svg width="10" height="10"><line x1="5" y1="0" x2="5" y2="10" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="2,2"/></svg>
+            Aujourd'hui
+          </span>
+        </div>
+      </div>
+
+      <div class="chart-svg-wrapper">
+        <svg [attr.viewBox]="'0 0 ' + VW + ' ' + VH" preserveAspectRatio="xMidYMid meet" class="burn-svg">
+
+          <defs>
+            <linearGradient id="realGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="#C85C3B" stop-opacity="0.18"/>
+              <stop offset="100%" stop-color="#C85C3B" stop-opacity="0.02"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Grid lines -->
+          <g class="grid">
+            <line *ngFor="let gy of gridLines"
+              [attr.x1]="OX" [attr.y1]="gy"
+              [attr.x2]="OX + CW" [attr.y2]="gy"
+              stroke="rgba(26,35,50,0.06)" stroke-width="1"/>
+          </g>
+
+          <!-- Y Labels -->
+          <g class="y-labels">
+            <text *ngFor="let lbl of yLabels"
+              [attr.x]="OX - 8" [attr.y]="lbl.y + 4"
+              text-anchor="end" font-size="9" fill="#8896AB" font-family="JetBrains Mono, monospace">
+              {{ lbl.value }}
+            </text>
+          </g>
+
+          <!-- X Labels -->
+          <g class="x-labels">
+            <text *ngFor="let lbl of xLabels"
+              [attr.x]="lbl.x" [attr.y]="OY + CH + 16"
+              text-anchor="middle" font-size="9" fill="#8896AB" font-family="JetBrains Mono, monospace">
+              {{ lbl.label }}
+            </text>
+          </g>
+
+          <!-- Axes -->
+          <line [attr.x1]="OX" [attr.y1]="OY" [attr.x2]="OX" [attr.y2]="OY + CH"
+            stroke="rgba(26,35,50,0.15)" stroke-width="1.5"/>
+          <line [attr.x1]="OX" [attr.y1]="OY + CH" [attr.x2]="OX + CW" [attr.y2]="OY + CH"
+            stroke="rgba(26,35,50,0.15)" stroke-width="1.5"/>
+
+          <!-- Real area fill -->
+          <polygon *ngIf="realAreaPolygon"
+            [attr.points]="realAreaPolygon"
+            fill="url(#realGrad)"/>
+
+          <!-- Ideal curve -->
+          <polyline *ngIf="idealPolyline"
+            [attr.points]="idealPolyline"
+            fill="none" stroke="#8896AB" stroke-width="1.8"
+            stroke-dasharray="6,4" stroke-linecap="round"/>
+
+          <!-- Real curve -->
+          <polyline *ngIf="realPolyline"
+            [attr.points]="realPolyline"
+            fill="none" stroke="#C85C3B" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round"/>
+
+          <!-- Today marker -->
+          <g *ngIf="todayX >= OX && todayX <= OX + CW">
+            <line [attr.x1]="todayX" [attr.y1]="OY" [attr.x2]="todayX" [attr.y2]="OY + CH"
+              stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.7"/>
+            <rect [attr.x]="todayX - 22" [attr.y]="OY - 2"
+              width="44" height="14" rx="4"
+              fill="#ef4444" opacity="0.9"/>
+            <text [attr.x]="todayX" [attr.y]="OY + 8"
+              text-anchor="middle" font-size="7.5" fill="white"
+              font-family="DM Sans, sans-serif" font-weight="700">
+              Auj.
+            </text>
+          </g>
+
+          <!-- Real curve dots -->
+          <g *ngFor="let p of chart.courbeReelle; let i = index">
+            <circle *ngIf="i === chart.courbeReelle.length - 1"
+              [attr.cx]="x(p.date)" [attr.cy]="y(p.tachesRestantes)"
+              r="4" fill="#C85C3B" stroke="white" stroke-width="2"/>
+          </g>
+
+        </svg>
+      </div>
+    </div>
+
+    <!-- AI ANALYSIS -->
+    <div class="analysis-card" *ngIf="chart.analyse">
+      <div class="analysis-card__header">
+        <div class="analysis-icon">
+          <i class="fas fa-brain"></i>
+        </div>
+        <div>
+          <strong>Analyse IA</strong>
+          <span>Insights générés automatiquement sur l'avancement du projet</span>
+        </div>
+      </div>
+      <p class="analysis-text">{{ chart.analyse }}</p>
+    </div>
+
+  </ng-container>
+
+  <!-- ══ EMPTY STATE (no chart data) ══ -->
+  <div *ngIf="!loadingChart && !chart" class="empty-state">
+    <div class="empty-icon"><i class="fas fa-chart-line"></i></div>
+    <h3>Données insuffisantes</h3>
+    <p>Le burndown chart sera disponible dès que des tâches sont enregistrées pour ce projet.</p>
+    <button class="btn-ghost" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i> Retour au projet
+    </button>
+  </div>
+
+</div>

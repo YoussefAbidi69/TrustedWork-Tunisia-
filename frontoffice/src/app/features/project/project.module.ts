@@ -12,6 +12,7 @@ import { DeliverablesComponent } from './pages/deliverables/deliverables.compone
 import { RiskSignalsComponent } from './pages/risk-signals/risk-signals.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
 import { GanttChartComponent } from './pages/gantt-chart/gantt-chart.component';
+import { BurndownComponent } from './pages/burndown/burndown.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +22,8 @@ import { GanttChartComponent } from './pages/gantt-chart/gantt-chart.component';
     DeliverablesComponent,
     RiskSignalsComponent,
     NotificationsComponent,
-    GanttChartComponent
+    GanttChartComponent,
+    BurndownComponent
   ],
   imports: [
     CommonModule,
