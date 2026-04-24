@@ -2,6 +2,8 @@ package com.trustedwork.module06.service.impl;
 
 import com.trustedwork.module06.entity.GrowthProfile;
 import com.trustedwork.module06.entity.Streak;
+import com.trustedwork.module06.repository.ChallengeParticipationRepository;
+import com.trustedwork.module06.repository.EventRegistrationRepository;
 import com.trustedwork.module06.repository.GrowthProfileRepository;
 import com.trustedwork.module06.repository.StreakRepository;
 import com.trustedwork.module06.repository.UserBadgeRepository;
@@ -22,6 +24,8 @@ public class AdvancedAnalyticsServiceImpl implements AdvancedAnalyticsService {
     private final GrowthProfileRepository growthRepo;
     private final UserBadgeRepository userBadgeRepo;
     private final StreakRepository streakRepo;
+    private final EventRegistrationRepository eventRegistrationRepo;
+    private final ChallengeParticipationRepository challengeParticipationRepo;
     private final AiRecommendationService aiRecommendationService;
     private final MlPredictionService mlPredictionService;
 
@@ -33,8 +37,12 @@ public class AdvancedAnalyticsServiceImpl implements AdvancedAnalyticsService {
         long badgeCount = userBadgeRepo.findByUserId(userId).size();
         int xp = growthRepo.findByUserId(userId).map(GrowthProfile::getXpPoints).orElse(0);
         int streak = streakRepo.findByUserId(userId).map(Streak::getCurrentStreak).orElse(0);
+        long eventsCount = eventRegistrationRepo.countByUserId(userId);
+        long challengesCount = challengeParticipationRepo.findByUserId(userId).size();
 
-        double score = (badgeCount * 50.0) + (xp * 0.1) + (streak * 20.0);
+        double score = (badgeCount * 50.0) + (xp * 0.1) + (streak * 20.0) 
+                     + (eventsCount * 30.0) + (challengesCount * 40.0);
+        
         return Math.round(score * 100.0) / 100.0;
     }
 
