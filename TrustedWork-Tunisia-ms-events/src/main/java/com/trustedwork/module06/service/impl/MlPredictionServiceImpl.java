@@ -181,12 +181,16 @@ public class MlPredictionServiceImpl implements MlPredictionService {
         boolean churnPredicted = churnProbability >= 50;
 
         String riskLabel;
+        String recommendation;
         if (churnProbability >= 70) {
             riskLabel = "HIGH";
+            recommendation = "Attention : Votre engagement baisse. Relevez un nouveau défi pour booster votre profil !";
         } else if (churnProbability >= 40) {
             riskLabel = "MEDIUM";
+            recommendation = "Pas mal ! Pourquoi ne pas participer à un événement pour augmenter votre score ?";
         } else {
             riskLabel = "LOW";
+            recommendation = "Excellent ! Continuez ainsi pour maintenir votre série d'activité.";
         }
 
         Map<String, Object> fallback = new HashMap<>();
@@ -194,7 +198,7 @@ public class MlPredictionServiceImpl implements MlPredictionService {
         fallback.put("churn_predicted", churnPredicted);
         fallback.put("churn_probability", Math.round(churnProbability * 100.0) / 100.0);
         fallback.put("risk_label", riskLabel);
-        fallback.put("recommendation", "[Fallback] Service ML indisponible - prédiction locale approximative.");
+        fallback.put("recommendation", recommendation);
         fallback.put("model", "Fallback (Python service down)");
         return fallback;
     }

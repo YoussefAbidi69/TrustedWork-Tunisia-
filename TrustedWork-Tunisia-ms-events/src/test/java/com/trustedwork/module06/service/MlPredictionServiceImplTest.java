@@ -111,7 +111,7 @@ class MlPredictionServiceImplTest {
 
         assertNotNull(result);
         assertEquals("HIGH", result.get("risk_label"));
-        assertTrue(result.containsKey("recommendation"));
+        assertEquals("Attention : Votre engagement baisse. Relevez un nouveau défi pour booster votre profil !", result.get("recommendation"));
     }
 
     @Test
@@ -177,6 +177,7 @@ class MlPredictionServiceImplTest {
         
         assertNotNull(result);
         assertEquals("MEDIUM", result.get("risk_label"));
+        assertEquals("Pas mal ! Pourquoi ne pas participer à un événement pour augmenter votre score ?", result.get("recommendation"));
     }
 
     @Test
@@ -197,6 +198,7 @@ class MlPredictionServiceImplTest {
         Map<String, Object> result = mlPredictionService.predictChurnRisk(1L);
         // riskScore = 0 (inactive < 3j) + 0 (streak > 0) + 0 (score > 30) = 0 -> LOW
         assertEquals("LOW", result.get("risk_label"));
+        assertEquals("Excellent ! Continuez ainsi pour maintenir votre série d'activité.", result.get("recommendation"));
     }
 
     @Test
