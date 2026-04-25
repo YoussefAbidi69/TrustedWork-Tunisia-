@@ -1,9 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DisputeService } from '../../../../core/services/dispute.service';
-import { Dispute, DisputeEvidence, DisputeResolveRequest } from '../../../../core/models/dispute.model';
+import { GeminiService } from '../../../../core/services/gemini.service';
+import { MilestoneService } from '../../../../core/services/milestone.service';
+import { Dispute, DisputeEvidence, DisputeResolveRequest, DisputeAiRecommendation } from '../../../../core/models/dispute.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { environment } from '../../../../../environments/environment';
+import { forkJoin, of, Observable } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-dispute-detail',
@@ -41,8 +45,16 @@ export class DisputeDetailComponent implements OnInit {
     montantLibere: 0
   };
 
+  // ─── AI Analysis ─────────────────────────────────────────
+  aiRecommendation: DisputeAiRecommendation | null = null;
+  aiLoading = false;
+  aiError = '';
+  showAiPanel = false;
+
   constructor(
     private disputeService: DisputeService,
+    private geminiService: GeminiService,
+    private milestoneService: MilestoneService,
     public authService: AuthService,
     private route: ActivatedRoute,
     private router: Router
@@ -259,5 +271,157 @@ export class DisputeDetailComponent implements OnInit {
       case 'DISMISSED': return 'Rejeté';
       default: return status;
     }
+  }
+
+  // ─── AI ANALYSIS ─────────────────────────────────────────
+
+  runAiAnalysis(): void {
+    this.aiLoading = true;
+    this.aiError = '';
+    this.aiRecommendation = null;
+    this.showAiPanel = true;
+
+    if (!this.dispute) {
+      this.aiError = 'Litige non chargé.';
+      this.aiLoading = false;
+      return;
+    }
+
+    // Charger le jalon si un milestoneId est présent avant de lancer l'IA
+    if (this.dispute.milestoneId) {
+      this.milestoneService.getById(this.dispute.milestoneId).subscribe({
+        next: (milestone) => {
+          this.callGeminiAnalysis(milestone);
+        },
+        error: (err) => {
+          console.warn('Impossible de charger le jalon pour l\'IA, on continue sans le jalon...', err);
+          this.callGeminiAnalysis();
+        }
+      });
+    } else {
+      this.callGeminiAnalysis();
+    }
+  }
+
+  private callGeminiAnalysis(milestoneInfo?: any): void {
+    // 1. Filtrer les pièces jointes compatibles avec Gemini (Images et PDF)
+    // Limité à 3 fichiers max pour éviter les payloads trop lourds (limites HTTP)
+    const supportedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif', 'application/pdf'];
+    const filesToAnalyze = this.evidences
+      .filter(ev => ev.contentType && supportedTypes.includes(ev.contentType.toLowerCase()))
+      .slice(0, 3);
+
+    if (filesToAnalyze.length === 0) {
+      this.executeGeminiCall(milestoneInfo, []);
+      return;
+    }
+
+    // 2. Télécharger les fichiers et les convertir en Base64
+    const downloadJobs: Observable<{mimeType: string, base64: string} | null>[] = filesToAnalyze.map(ev => 
+      this.disputeService.downloadEvidenceFile(this.disputeId, ev.id!).pipe(
+        switchMap(res => {
+          const blob = res.body as Blob;
+          return this.blobToBase64(blob).pipe(
+            map(base64Data => ({
+              mimeType: ev.contentType!,
+              // Enlever le prefix "data:image/jpeg;base64," pour Gemini
+              base64: base64Data.split(',')[1] || base64Data
+            }))
+          );
+        }),
+        catchError(err => {
+          console.warn(`Failed to process evidence ${ev.id} for AI`, err);
+          return of(null);
+        })
+      )
+    );
+
+    forkJoin(downloadJobs).subscribe(results => {
+      // Filtrer les éventuels échecs (null)
+      const validFiles = results.filter(r => r !== null) as {mimeType: string, base64: string}[];
+      this.executeGeminiCall(milestoneInfo, validFiles);
+    });
+  }
+
+  private blobToBase64(blob: Blob): Observable<string> {
+    return new Observable<string>(observer => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        observer.next(reader.result as string);
+        observer.complete();
+      };
+      reader.onerror = () => {
+        observer.error('Failed to read blob');
+      };
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  private executeGeminiCall(milestoneInfo: any, evidenceFiles: {mimeType: string, base64: string}[]): void {
+    // Appel Gemini directement depuis le navigateur (contourne le firewall backend)
+    // On lui passe le jalon ET les fichiers (multimodalité)
+    this.geminiService.analyzeDispute(this.dispute!, undefined, milestoneInfo, evidenceFiles).subscribe({
+      next: (rec) => {
+        this.aiRecommendation = rec;
+        this.aiLoading = false;
+      },
+      error: (err) => {
+        console.warn('[AI] Gemini unreachable or failed, using rule-based fallback:', err);
+        // Fallback local si Gemini inaccessible
+        this.aiRecommendation = this.geminiService.buildFallback(this.dispute!);
+        this.aiLoading = false;
+      }
+    });
+  }
+
+  applyAiSuggestion(): void {
+    if (!this.aiRecommendation) return;
+    this.resolveForm.status = this.aiRecommendation.suggestedDecision;
+    this.resolveForm.montantRembourse = this.aiRecommendation.suggestedMontantRembourse || 0;
+    this.resolveForm.montantLibere = this.aiRecommendation.suggestedMontantLibere || 0;
+    this.resolveForm.decision = this.aiRecommendation.reasoning;
+    this.showResolveModal = true;
+  }
+
+  getRiskClass(level: string): string {
+    switch (level) {
+      case 'LOW': return 'risk-low';
+      case 'MEDIUM': return 'risk-medium';
+      case 'HIGH': return 'risk-high';
+      default: return '';
+    }
+  }
+
+  getRiskLabel(level: string): string {
+    switch (level) {
+      case 'LOW': return 'Risque Faible';
+      case 'MEDIUM': return 'Risque Modéré';
+      case 'HIGH': return 'Risque Élevé';
+      default: return level;
+    }
+  }
+
+  getAiDecisionLabel(decision: string): string {
+    switch (decision) {
+      case 'RESOLVED_CLIENT': return '⚖️ Faveur Client';
+      case 'RESOLVED_FREELANCER': return '⚖️ Faveur Freelancer';
+      case 'SPLIT': return '⚖️ Partage';
+      case 'DISMISSED': return '⚖️ Rejeté';
+      default: return decision;
+    }
+  }
+
+  getAiDecisionClass(decision: string): string {
+    switch (decision) {
+      case 'RESOLVED_CLIENT': return 'ai-decision-client';
+      case 'RESOLVED_FREELANCER': return 'ai-decision-freelancer';
+      case 'SPLIT': return 'ai-decision-split';
+      case 'DISMISSED': return 'ai-decision-dismissed';
+      default: return '';
+    }
+  }
+
+  getConfidencePct(): number {
+    return Math.round((this.aiRecommendation?.confidenceScore || 0) * 100);
   }
 }

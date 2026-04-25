@@ -24,4 +24,8 @@ public interface UserServiceClient {
 
     @GetMapping("/users/me")
     UserDTO getCurrentUser();
+
+    // Endpoint public pour communication inter-microservices (pas besoin de token)
+    @GetMapping("/identity/users/by-cin/{cin}")
+    UserDTO getPublicUserByCin(@PathVariable("cin") Long cin);
 }

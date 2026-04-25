@@ -21,6 +21,8 @@ export interface DisputeEvidence {
   fileName: string;
   originalFilename?: string;
   fileType?: string;
+  contentType?: string;
+  sizeBytes?: number;
   uploadedAt?: string;
   uploadedBy?: string;
 }
@@ -37,4 +39,18 @@ export interface DisputeResolveRequest {
   decision: string;
   montantRembourse: number;
   montantLibere: number;
+}
+
+export interface DisputeAiRecommendation {
+  disputeId: number;
+  suggestedDecision: 'RESOLVED_CLIENT' | 'RESOLVED_FREELANCER' | 'SPLIT' | 'DISMISSED';
+  confidenceScore: number;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  summary: string;
+  reasoning: string;
+  suggestedMontantRembourse: number;
+  suggestedMontantLibere: number;
+  keyFactors: string[];
+  generatedAt: string;
+  fallback: boolean;
 }

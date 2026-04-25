@@ -211,7 +211,139 @@
     </div>
   </div>
 
+    <!-- ═══ AI ANALYSIS PANEL ═══ -->
+    <div class="ai-panel mt-4" *ngIf="isAdmin">
+
+      <!-- Trigger Button -->
+      <div class="ai-trigger-bar" *ngIf="!showAiPanel">
+        <div class="ai-trigger-info">
+          <div class="ai-icon-wrap">
+            <i class="bi bi-stars"></i>
+          </div>
+          <div>
+            <strong>Analyse AI disponible</strong>
+            <small>Obtenez une recommandation de résolution basée sur Gemini AI</small>
+          </div>
+        </div>
+        <button class="btn-ai-launch" (click)="runAiAnalysis()" id="btn-ai-analyze">
+          <i class="bi bi-cpu me-2"></i> Analyser avec l'IA
+        </button>
+      </div>
+
+      <!-- AI Panel Content -->
+      <div class="ai-panel-card" *ngIf="showAiPanel">
+
+        <!-- Panel Header -->
+        <div class="ai-panel-header">
+          <div class="d-flex align-items-center gap-3">
+            <div class="ai-icon-wrap large">
+              <i class="bi bi-stars"></i>
+            </div>
+            <div>
+              <h5 class="mb-0 fw-800">Recommandation AI — Gemini</h5>
+              <small class="text-muted">Litige {{ dispute?.reference }}</small>
+            </div>
+          </div>
+          <button class="btn-ai-rerun" (click)="runAiAnalysis()" [disabled]="aiLoading" title="Re-analyser">
+            <i class="bi bi-arrow-clockwise" [class.spin]="aiLoading"></i>
+          </button>
+        </div>
+
+        <!-- Loading -->
+        <div class="ai-loading" *ngIf="aiLoading">
+          <div class="ai-loading-dots"><span></span><span></span><span></span></div>
+          <p>Analyse en cours par Gemini AI...</p>
+        </div>
+
+        <!-- Error -->
+        <div class="ai-error-state" *ngIf="!aiLoading && aiError">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span>{{ aiError }}</span>
+        </div>
+
+        <!-- Results -->
+        <div class="ai-results" *ngIf="!aiLoading && aiRecommendation">
+
+          <div class="ai-fallback-notice" *ngIf="aiRecommendation.fallback">
+            <i class="bi bi-info-circle me-2"></i>
+            Analyse basée sur le moteur d'arbitrage intelligent local — réseau Gemini Cloud indisponible.
+          </div>
+
+          <!-- Metrics Row -->
+          <div class="ai-metrics-row">
+            <div class="ai-metric-card" [ngClass]="getAiDecisionClass(aiRecommendation.suggestedDecision)">
+              <span class="ai-metric-label">Décision suggérée</span>
+              <span class="ai-metric-value decision">{{ getAiDecisionLabel(aiRecommendation.suggestedDecision) }}</span>
+            </div>
+            <div class="ai-metric-card" [ngClass]="getRiskClass(aiRecommendation.riskLevel)">
+              <span class="ai-metric-label">Niveau de risque</span>
+              <span class="ai-metric-value"><i class="bi bi-shield-fill me-1"></i>{{ getRiskLabel(aiRecommendation.riskLevel) }}</span>
+            </div>
+            <div class="ai-metric-card confidence">
+              <span class="ai-metric-label">Confiance</span>
+              <span class="ai-metric-value">{{ getConfidencePct() }}%</span>
+              <div class="confidence-bar">
+                <div class="confidence-fill" [style.width.%]="getConfidencePct()"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <div class="ai-section" *ngIf="aiRecommendation.summary">
+            <div class="ai-section-label"><i class="bi bi-file-text me-2"></i>Résumé</div>
+            <p class="ai-text">{{ aiRecommendation.summary }}</p>
+          </div>
+
+          <!-- Reasoning -->
+          <div class="ai-section">
+            <div class="ai-section-label"><i class="bi bi-chat-quote me-2"></i>Raisonnement de l'IA</div>
+            <p class="ai-text">{{ aiRecommendation.reasoning }}</p>
+          </div>
+
+          <!-- Key Factors -->
+          <div class="ai-section" *ngIf="aiRecommendation.keyFactors?.length">
+            <div class="ai-section-label"><i class="bi bi-list-check me-2"></i>Facteurs Clés</div>
+            <ul class="ai-factors-list">
+              <li *ngFor="let f of aiRecommendation.keyFactors">
+                <i class="bi bi-check2-circle text-success me-2"></i>{{ f }}
+              </li>
+            </ul>
+          </div>
+
+          <!-- Suggested Amounts -->
+          <div class="ai-section" *ngIf="aiRecommendation.suggestedMontantRembourse > 0 || aiRecommendation.suggestedMontantLibere > 0">
+            <div class="ai-section-label"><i class="bi bi-cash-stack me-2"></i>Montants Suggérés</div>
+            <div class="ai-amounts-row">
+              <div class="ai-amount-item" *ngIf="aiRecommendation.suggestedMontantRembourse > 0">
+                <span class="ai-amount-label">Remboursement Client</span>
+                <span class="ai-amount-value danger">{{ aiRecommendation.suggestedMontantRembourse | number:'1.2-2' }} DT</span>
+              </div>
+              <div class="ai-amount-item" *ngIf="aiRecommendation.suggestedMontantLibere > 0">
+                <span class="ai-amount-label">Libération Freelancer</span>
+                <span class="ai-amount-value success">{{ aiRecommendation.suggestedMontantLibere | number:'1.2-2' }} DT</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Apply Suggestion -->
+          <div class="ai-apply-row" *ngIf="isResolvable">
+            <button class="btn-ai-apply" (click)="applyAiSuggestion()" id="btn-ai-apply">
+              <i class="bi bi-magic me-2"></i>Appliquer dans le formulaire de résolution
+            </button>
+            <small>La décision finale reste sous votre contrôle</small>
+          </div>
+
+          <!-- Timestamp -->
+          <div class="ai-timestamp">
+            <i class="bi bi-clock me-1"></i>
+            Générée le {{ aiRecommendation.generatedAt | date:'dd/MM/yyyy à HH:mm:ss' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
   <!-- ═══ MODALS ═══ -->
+
 
   <!-- Respond Modal -->
   <div class="modal-overlay" *ngIf="showRespondModal" (click)="closeRespondModal()">

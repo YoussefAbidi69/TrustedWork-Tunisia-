@@ -55,6 +55,7 @@
     </a>
     
     <a
+      *ngIf="currentUser?.role !== 'FREELANCER'"
       routerLink="/app/recommendation"
       routerLinkActive="active"
       class="sidebar-link">

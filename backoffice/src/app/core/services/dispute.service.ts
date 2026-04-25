@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Dispute, DisputeEvidence, DisputeCreateRequest, DisputeResolveRequest } from '../models/dispute.model';
+import { Dispute, DisputeEvidence, DisputeCreateRequest, DisputeResolveRequest, DisputeAiRecommendation } from '../models/dispute.model';
 
 const API = environment.apiUrl;
 
@@ -77,5 +77,10 @@ export class DisputeService {
       responseType: 'blob',
       observe: 'response'
     });
+  }
+
+  /** Analyse AI du litige — recommandation Gemini à la volée (ADMIN uniquement) */
+  analyzeWithAi(disputeId: number): Observable<DisputeAiRecommendation> {
+    return this.http.post<DisputeAiRecommendation>(`${API}/disputes/${disputeId}/ai-analysis`, {});
   }
 }

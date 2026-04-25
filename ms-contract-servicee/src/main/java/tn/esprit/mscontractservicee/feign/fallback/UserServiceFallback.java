@@ -28,4 +28,10 @@ public class UserServiceFallback implements UserServiceClient {
         log.error("Fallback: Unable to get current user");
         throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "User service unavailable");
     }
+
+    @Override
+    public UserDTO getPublicUserByCin(Long cin) {
+        log.error("Fallback: Unable to get public user with CIN: {}", cin);
+        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "User service unavailable");
+    }
 }

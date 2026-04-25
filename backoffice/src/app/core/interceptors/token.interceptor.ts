@@ -15,12 +15,17 @@ export class TokenInterceptor implements HttpInterceptor {
   constructor(private authService: AuthService) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // ⚡ Ne pas injecter le JWT pour les APIs externes (Gemini, Stripe, etc.)
+    const isExternalApi = req.url.includes('googleapis.com') ||
+                          req.url.includes('generativelanguage') ||
+                          req.url.includes('stripe.com');
+
     const token =
       localStorage.getItem('access_token') ||
       localStorage.getItem('token');
 
     let request = req;
-    if (token) {
+    if (token && !isExternalApi) {
       request = req.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`
