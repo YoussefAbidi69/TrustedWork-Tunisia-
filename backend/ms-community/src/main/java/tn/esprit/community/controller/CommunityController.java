@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tn.esprit.community.service.CommunityService;
-import tn.esprit.community.dto.CommunityDTO;
+import tn.esprit.community.dto.request.CommunityRequest;
+import tn.esprit.community.dto.response.CommunityResponse;
 
 @RestController
 @RequestMapping("/api/communities")
@@ -22,20 +23,20 @@ public class CommunityController {
     }
 
     @PostMapping
-    public ResponseEntity<CommunityDTO> createCommunity(@RequestBody CommunityDTO communityDTO) {
-        CommunityDTO createdCommunity = communityService.createCommunity(communityDTO);
+    public ResponseEntity<CommunityResponse> createCommunity(@RequestBody CommunityRequest communityRequest) {
+        CommunityResponse createdCommunity = communityService.createCommunity(communityRequest);
         return new ResponseEntity<>(createdCommunity, HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CommunityDTO> getCommunity(@PathVariable Long id) {
-        CommunityDTO community = communityService.getCommunity(id);
+    public ResponseEntity<CommunityResponse> getCommunity(@PathVariable Long id) {
+        CommunityResponse community = communityService.getCommunity(id);
         return new ResponseEntity<>(community, HttpStatus.OK);
     }
 
     @GetMapping
-    public ResponseEntity<List<CommunityDTO>> listCommunities() {
-        List<CommunityDTO> communities = communityService.listCommunities();
+    public ResponseEntity<List<CommunityResponse>> listCommunities() {
+        List<CommunityResponse> communities = communityService.listCommunities();
         return new ResponseEntity<>(communities, HttpStatus.OK);
     }
 }

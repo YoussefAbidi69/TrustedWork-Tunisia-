@@ -1,8 +1,8 @@
 package tn.esprit.community.service;
 
-import tn.esprit.community.dto.VoteDTO;
-import tn.esprit.community.entity.Enum.VoteType;
+import tn.esprit.community.dto.request.VoteRequest;
+import tn.esprit.community.dto.response.VoteResponse;
 
 public interface VoteService {
-    VoteDTO vote(Long postId, VoteType type, Long userId);
+    VoteResponse vote(Long postId, VoteRequest voteRequest);
 }

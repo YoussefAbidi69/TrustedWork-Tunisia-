@@ -69,11 +69,11 @@
                 <span>Author #{{ post.createdBy }}</span>
               </div>
               <h3 class="cm-feed-card__title">
-                <a [routerLink]="['../posts', post.id]">{{ post.title }}</a>
+                <a [routerLink]="['../post', post.id]">{{ post.title }}</a>
               </h3>
               <p class="cm-feed-card__preview">{{ truncate(post.content, 200) }}</p>
               <div class="cm-btn-group" style="margin-top: 8px">
-                <a class="cm-btn cm-btn--secondary cm-btn--sm" [routerLink]="['../posts', post.id]">Open</a>
+                <a class="cm-btn cm-btn--secondary cm-btn--sm" [routerLink]="['../post', post.id]">Open</a>
                 <button type="button" class="cm-btn cm-btn--ghost cm-btn--sm" (click)="toggleReport(post.id)">Report</button>
                 <button
                   *ngIf="canDownload(post)"
@@ -119,7 +119,7 @@
             *ngFor="let course of courses"
             class="cm-lesson-link"
             style="display: block; margin-bottom: 8px"
-            [routerLink]="['courses', course.id]"
+            [routerLink]="['course', course.id]"
             [relativeTo]="route.parent">
             {{ course.title }}
           </a>
@@ -127,7 +127,7 @@
             *ngIf="authService.isLoggedIn()"
             class="cm-btn cm-btn--secondary"
             style="width: 100%; margin-top: 10px"
-            [routerLink]="['courses', 'new']"
+            [routerLink]="['course', 'new']"
             [relativeTo]="route.parent"
             [queryParams]="{ communityId: c.id }">
             Create learning course

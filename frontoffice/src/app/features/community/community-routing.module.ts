@@ -6,27 +6,31 @@ import { CommunityShellComponent } from './community-shell/community-shell.compo
 import { PostFeedComponent } from './post-feed/post-feed.component';
 import { PostDetailComponent } from './post-detail/post-detail.component';
 import { CourseDetailComponent } from './course-detail/course-detail.component';
-import { LessonViewerComponent } from './lesson-viewer/lesson-viewer.component';
 import { ContributionComponent } from './contribution/contribution.component';
-import { ApiTestComponent } from './api-test/api-test.component';
 import { CommunityListComponent } from './community-list/community-list.component';
 import { CommunityCreateComponent } from './community-create/community-create.component';
 import { CommunityDetailComponent } from './community-detail/community-detail.component';
 import { PostCreateComponent } from './post-create/post-create.component';
-import { CourseEditorComponent } from './course-editor/course-editor.component';
+import { CourseCreateComponent } from './course-create/course-create.component';
+import { MyCoursesComponent } from './my-courses/my-courses.component';
 
 const communityChildRoutes: Routes = [
   { path: '', component: PostFeedComponent },
-  { path: 'api-test', component: ApiTestComponent, canActivate: [authGuard] },
+  { path: 'post/:id', component: PostDetailComponent },
+  { path: 'course/new', component: CourseCreateComponent, canActivate: [authGuard] },
+  { path: 'my-courses', component: MyCoursesComponent, canActivate: [authGuard] },
+  { path: 'course/:id/download', component: CourseDetailComponent },
+  { path: 'course/:id', component: CourseDetailComponent },
   { path: 'contributions', component: ContributionComponent, canActivate: [authGuard] },
   { path: 'browse', component: CommunityListComponent },
   { path: 'create', component: CommunityCreateComponent, canActivate: [authGuard] },
-  { path: 'courses/new', component: CourseEditorComponent, canActivate: [authGuard] },
-  { path: 'courses/:id/learn', component: LessonViewerComponent },
-  { path: 'courses/:id', component: CourseDetailComponent },
-  /** Must be before `posts/:id` so "new" is not parsed as a post id */
-  { path: 'posts/new', component: PostCreateComponent, canActivate: [authGuard] },
-  { path: 'posts/:id', component: PostDetailComponent },
+  { path: 'post/new', component: PostCreateComponent, canActivate: [authGuard] },
+  /** Legacy aliases */
+  { path: 'posts/new', redirectTo: 'post/new', pathMatch: 'full' },
+  { path: 'posts/:id', redirectTo: 'post/:id', pathMatch: 'full' },
+  { path: 'courses/new', redirectTo: 'course/new', pathMatch: 'full' },
+  { path: 'courses/:id/download', redirectTo: 'course/:id/download', pathMatch: 'full' },
+  { path: 'courses/:id', redirectTo: 'course/:id', pathMatch: 'full' },
   { path: 'communities/:id/posts/new', component: PostCreateComponent, canActivate: [authGuard] },
   { path: 'communities/:id', component: CommunityDetailComponent },
   /** Legacy: post detail at .../:id (numeric post id) */

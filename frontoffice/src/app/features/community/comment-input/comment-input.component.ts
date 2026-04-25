@@ -8,6 +8,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 export class CommentInputComponent {
   @Input() disabled = false;
   @Input() submitting = false;
+  @Input() error = '';
 
   @Output() submitComment = new EventEmitter<string>();
 

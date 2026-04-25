@@ -1,5 +1,317 @@
-@import '../community-layout-system.css';
+@import '../community-shared.css';
 
 :host {
   display: block;
+  background-color: var(--comm-bg-base);
+  min-height: 100vh;
+}
+
+.post-create-container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-section);
+}
+
+.post-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-section);
+}
+
+.form-section {
+  background: var(--comm-bg-surface);
+  border: 1px solid var(--comm-border);
+  border-radius: 8px;
+  padding: var(--space-card);
+}
+
+.form-section:hover {
+  border-color: var(--comm-border-strong);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-card);
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--comm-text-primary);
+}
+
+textarea,
+input[type="text"],
+input[type="email"],
+select {
+  background: var(--comm-bg-input);
+  border: 1px solid var(--comm-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  color: var(--comm-text-primary);
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+textarea:focus,
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--comm-accent);
+  background: var(--comm-bg-base);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.6;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-base);
+  padding-top: var(--space-card);
+  border-top: 1px solid var(--comm-border);
+}
+
+.form-actions button {
+  min-height: 40px;
+  padding: 10px 24px;
+}
+
+@media (max-width: 768px) {
+  .post-create-container {
+    padding: var(--space-card);
+  }
+
+  .form-section {
+    padding: var(--space-base);
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 375px) {
+  .post-create-container {
+    padding: var(--space-base);
+  }
+
+  .post-form {
+    gap: var(--space-base);
+  }
+
+  textarea {
+    min-height: 100px;
+    font-size: 16px;
+  }
+}
+
+/* Old class name support (.cm-* and .cs-*) */
+:host ::ng-deep .cm-page {
+  background: #0f1117;
+  color: #e8eaf0;
+}
+
+:host ::ng-deep .cm-split {
+  display: flex;
+  gap: 32px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+:host ::ng-deep .cm-split--wide-aside {
+  flex-direction: row;
+}
+
+:host ::ng-deep .cm-panel {
+  flex: 1;
+  background: #1a1d27;
+  border: 1px solid #2e3347;
+  border-radius: 16px;
+  padding: 28px 32px;
+}
+
+:host ::ng-deep .cm-panel__head {
+  margin-bottom: 24px;
+  border-bottom: 1px solid #2e3347;
+  padding-bottom: 16px;
+}
+
+:host ::ng-deep .cm-panel__title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #e8eaf0;
+  margin: 0;
+}
+
+:host ::ng-deep .cm-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+:host ::ng-deep .cm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+:host ::ng-deep .cm-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #8b90a7;
+}
+
+:host ::ng-deep .cm-input,
+:host ::ng-deep .cm-textarea,
+:host ::ng-deep .cm-select {
+  width: 100%;
+  background: #12141e;
+  border: 1px solid #2e3347;
+  border-radius: 10px;
+  color: #e8eaf0;
+  font-size: 15px;
+  font-family: inherit;
+  padding: 12px 16px;
+  outline: none;
+  transition: border-color 150ms ease;
+  box-sizing: border-box;
+}
+
+:host ::ng-deep .cm-input::placeholder,
+:host ::ng-deep .cm-textarea::placeholder,
+:host ::ng-deep .cm-select::placeholder {
+  color: #3d4460;
+}
+
+:host ::ng-deep .cm-input:focus,
+:host ::ng-deep .cm-textarea:focus,
+:host ::ng-deep .cm-select:focus {
+  border-color: #6c7fff;
+  background: #14162060;
+}
+
+:host ::ng-deep .cm-textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.6;
+}
+
+:host ::ng-deep .cm-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b90a7' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+:host ::ng-deep .cm-select option {
+  background: #1a1d27;
+  color: #e8eaf0;
+}
+
+:host ::ng-deep .cm-btn {
+  background: #6c7fff;
+  border: none;
+  border-radius: 8px;
+  color: #0f1117;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 150ms ease;
+}
+
+:host ::ng-deep .cm-btn:hover {
+  background: #8b9fff;
+}
+
+:host ::ng-deep .cm-btn--secondary {
+  background: transparent;
+  border: 1px solid #2e3347;
+  color: #8b90a7;
+  font-weight: 500;
+}
+
+:host ::ng-deep .cm-btn--secondary:hover {
+  border-color: #3d4460;
+  color: #e8eaf0;
+}
+
+:host ::ng-deep .cm-btn--ghost {
+  background: transparent;
+  border: none;
+  color: #8b90a7;
+  padding: 6px 12px;
+}
+
+:host ::ng-deep .cm-btn--ghost:hover {
+  color: #e8eaf0;
+  background: #222636;
+}
+
+:host ::ng-deep .cm-btn--sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+:host ::ng-deep .cm-banner {
+  background: #2d0f0f;
+  border: 1px solid #f87171;
+  border-radius: 8px;
+  color: #fca5a5;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+:host ::ng-deep .cm-banner--warn {
+  background: #2d1f06;
+  border-color: #fbbf24;
+  color: #fcd34d;
+}
+
+:host ::ng-deep .cm-muted {
+  color: #555c7a;
+  font-size: 13px;
+}
+
+:host ::ng-deep .cm-error {
+  color: #f87171;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+:host ::ng-deep .cm-hint {
+  color: #555c7a;
+  font-size: 12px;
+  margin-top: -4px;
+}
+
+:host ::ng-deep .cm-btn-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }

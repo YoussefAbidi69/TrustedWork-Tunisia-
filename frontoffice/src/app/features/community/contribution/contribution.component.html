@@ -62,7 +62,7 @@
                     <td>#{{ post.communityId }}</td>
                     <td>#{{ post.createdBy }}</td>
                     <td style="text-align: right">
-                      <a class="cm-btn cm-btn--secondary cm-btn--sm" [routerLink]="['posts', post.id]" [relativeTo]="route.parent">View</a>
+                      <a class="cm-btn cm-btn--secondary cm-btn--sm" [routerLink]="['post', post.id]" [relativeTo]="route.parent">View</a>
                       <button type="button" class="cm-btn cm-btn--primary cm-btn--sm" (click)="downloadPost(post)">Download</button>
                     </td>
                   </tr>

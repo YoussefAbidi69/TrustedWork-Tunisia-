@@ -26,6 +26,27 @@
   --danger: #C0392B;
   --danger-light: #FCEAE8;
 
+  /* Community Module Dark Theme Variables */
+  --comm-bg-base:        #0f1117;
+  --comm-bg-surface:     #1a1d27;
+  --comm-bg-elevated:    #222636;
+  --comm-bg-input:       #1e2130;
+  --comm-border:         #2e3347;
+  --comm-border-strong:  #3d4460;
+  --comm-text-primary:   #e8eaf0;
+  --comm-text-secondary: #8b90a7;
+  --comm-text-muted:     #555c7a;
+  --comm-text-inverse:   #0f1117;
+  --comm-accent:         #6c7fff;
+  --comm-accent-hover:   #8b9fff;
+  --comm-accent-subtle:  #1e2352;
+  --comm-success:        #34d399;
+  --comm-success-subtle: #0d2e22;
+  --comm-warning:        #fbbf24;
+  --comm-warning-subtle: #2d1f06;
+  --comm-danger:         #f87171;
+  --comm-danger-subtle:  #2d0f0f;
+
   --font-display: 'Playfair Display', Georgia, serif;
   --font-body: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -69,4 +90,89 @@ a {
 
 ul {
   list-style: none;
+}
+
+/* ======================================================================
+   COMMUNITY MODULE DARK THEME OVERRIDE
+   Override global body styles (light theme) with dark theme for
+   community components. This is necessary because:
+   1. Global body sets color: var(--midnight) which is dark
+   2. Community components need dark backgrounds with light text
+   3. ViewEncapsulation.Emulated means component styles don't pierce
+      the global body rule, so we must override it here
+   ====================================================================== */
+
+app-community-shell,
+app-community,
+app-community-list,
+app-community-detail,
+app-community-create,
+app-community-filter,
+app-community-panel,
+app-community-page-header,
+app-post-create,
+app-post-detail,
+app-post-feed,
+app-post-card,
+app-course-card,
+app-course-create,
+app-course-detail,
+app-comment-input,
+app-comment-list,
+app-contribution,
+app-my-courses {
+  background-color: #0f1117;
+  color: #8b90a7;
+}
+
+/* Ensure headings are visible in dark theme */
+app-community-shell h1,
+app-community-shell h2,
+app-community-shell h3,
+app-community-shell h4,
+app-community-shell h5,
+app-community-shell h6,
+app-community-list h1,
+app-community-list h2,
+app-community-list h3,
+app-community-list h4,
+app-community-detail h1,
+app-community-detail h2,
+app-community-detail h3,
+app-community-detail h4,
+app-post-create h1,
+app-post-create h2,
+app-post-create h3,
+app-course-create h1,
+app-course-create h2,
+app-course-create h3,
+app-course-detail h1,
+app-course-detail h2,
+app-course-detail h3 {
+  color: #e8eaf0;
+}
+
+/* Ensure cards are visible */
+app-community-shell [class*="card"],
+app-community-shell [class*="panel"],
+app-community-list [class*="card"],
+app-community-detail [class*="card"],
+app-post-detail [class*="card"],
+app-course-detail [class*="card"] {
+  background-color: #1a1d27;
+  border-color: #2e3347;
+  color: #8b90a7;
+}
+
+/* Ensure buttons are visible */
+app-community-shell button,
+app-community-list button,
+app-community-detail button,
+app-post-create button,
+app-post-detail button,
+app-course-create button,
+app-course-detail button {
+  background-color: #6c7fff;
+  color: #0f1117;
+  border: none;
 }

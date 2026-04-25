@@ -1,10 +1,13 @@
 package tn.esprit.community.service;
 
 import java.util.List;
-import tn.esprit.community.dto.CommunityDTO;
+import tn.esprit.community.dto.request.CommunityRequest;
+import tn.esprit.community.dto.response.CommunityResponse;
 
 public interface CommunityService {
-    CommunityDTO createCommunity(CommunityDTO communityDTO);
-    CommunityDTO getCommunity(Long id);
-    List<CommunityDTO> listCommunities();
+    CommunityResponse createCommunity(CommunityRequest communityRequest);
+
+    CommunityResponse getCommunity(Long id);
+
+    List<CommunityResponse> listCommunities();
 }

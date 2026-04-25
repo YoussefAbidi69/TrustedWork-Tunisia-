@@ -3,10 +3,20 @@ import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/ro
 import { combineLatest, forkJoin, of, Subject, Observable } from 'rxjs';
 import { catchError, map, takeUntil } from 'rxjs/operators';
 
-import { Community, Post, VoteType } from '../../../core/models/community.model';
+import { Community, Course, VoteType } from '../../../core/models/community.model';
 import { CommunityService } from '../../../core/services/community.service';
+import { CourseService } from '../../../core/services/course.service';
 import { PostService } from '../../../core/services/post.service';
 import { AuthService } from '../../../core/services/auth.service';
+import {
+  CommunityFeedCourseItem,
+  CommunityFeedItem,
+  CommunityFeedPostItem,
+  isCommunityFeedCourseItem,
+  isCommunityFeedPostItem,
+  normalizeCommunityFeed,
+  normalizeCommunityFeedItem
+} from '../models/community-feed-item.model';
 
 @Component({
   selector: 'app-post-feed',
@@ -17,12 +27,12 @@ export class PostFeedComponent implements OnInit, OnDestroy {
   loading = true;
   error = '';
 
-  posts: Post[] = [];
+  feedItems: CommunityFeedItem[] = [];
   communities: Community[] = [];
   commentCountByPost: Record<number, number> = {};
   activeCommunityId: number | null = null;
 
-  myPosts$: Observable<Post[]>;
+  myPosts$: Observable<CommunityFeedPostItem[]>;
 
   private readonly destroy$ = new Subject<void>();
 
@@ -30,6 +40,7 @@ export class PostFeedComponent implements OnInit, OnDestroy {
     public readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly postService: PostService,
+    private readonly courseService: CourseService,
     private readonly communityService: CommunityService,
     private readonly authService: AuthService
   ) {
@@ -44,8 +55,13 @@ export class PostFeedComponent implements OnInit, OnDestroy {
     const currentUser = this.authService.getCurrentAuthUser();
     if (currentUser) {
       this.myPosts$ = this.postService.getAll({ voterId: currentUser.userId }).pipe(
-        map((posts) => posts.filter((post) => post.createdBy === currentUser.userId)),
-        catchError(() => of([] as Post[]))
+        map((items) =>
+          normalizeCommunityFeed(items as unknown[]).filter(
+            (item): item is CommunityFeedPostItem =>
+              isCommunityFeedPostItem(item) && item.createdBy === currentUser.userId
+          )
+        ),
+        catchError(() => of([] as CommunityFeedPostItem[]))
       );
     }
 
@@ -94,9 +110,19 @@ export class PostFeedComponent implements OnInit, OnDestroy {
       next: () => {
         this.postService.getById(payload.postId, userId).subscribe({
           next: (updated) => {
-            const idx = this.posts.findIndex((p) => p.id === updated.id);
+            const normalized = normalizeCommunityFeedItem(updated, this.activeCommunityId);
+            if (!normalized || !isCommunityFeedPostItem(normalized)) {
+              return;
+            }
+            const idx = this.feedItems.findIndex(
+              (item) => isCommunityFeedPostItem(item) && item.id === normalized.id
+            );
             if (idx >= 0) {
-              this.posts = [...this.posts.slice(0, idx), updated, ...this.posts.slice(idx + 1)];
+              this.feedItems = [
+                ...this.feedItems.slice(0, idx),
+                normalized,
+                ...this.feedItems.slice(idx + 1)
+              ];
             }
           }
         });
@@ -116,12 +142,12 @@ export class PostFeedComponent implements OnInit, OnDestroy {
     if (!parent) return;
     const cid = this.activeCommunityId;
     if (cid != null) {
-      this.router.navigate(['posts', 'new'], {
+      this.router.navigate(['post', 'new'], {
         relativeTo: parent,
         queryParams: { communityId: cid }
       });
     } else {
-      this.router.navigate(['posts', 'new'], { relativeTo: parent });
+      this.router.navigate(['post', 'new'], { relativeTo: parent });
     }
   }
 
@@ -137,8 +163,16 @@ export class PostFeedComponent implements OnInit, OnDestroy {
     return this.communityNameById(this.activeCommunityId);
   }
 
-  trackByPostId(_index: number, post: Post): number {
-    return post.id;
+  trackByFeedItemId(_index: number, item: CommunityFeedItem): string {
+    return `${item.type}-${item.id}`;
+  }
+
+  isPostItem(item: CommunityFeedItem): item is CommunityFeedPostItem {
+    return isCommunityFeedPostItem(item);
+  }
+
+  isCourseItem(item: CommunityFeedItem): item is CommunityFeedCourseItem {
+    return isCommunityFeedCourseItem(item);
   }
 
   private loadFeed(): void {
@@ -156,18 +190,32 @@ export class PostFeedComponent implements OnInit, OnDestroy {
 
     forkJoin({
       communities: this.communityService.getAll().pipe(catchError(() => of([] as Community[]))),
-      posts: this.postService.getAll(postQuery).pipe(catchError(() => of([] as Post[])))
+      posts: this.postService.getAll(postQuery).pipe(catchError(() => of([] as unknown[])))
     }).subscribe({
       next: ({ communities, posts }) => {
         this.communities = communities;
 
-        if (this.activeCommunityId == null && posts.length === 0 && communities.length > 0) {
-          this.loadAllCommunityPosts(communities);
+        if (this.activeCommunityId != null) {
+          this.courseService
+            .listByCommunity(this.activeCommunityId)
+            .pipe(catchError(() => of([] as Course[])))
+            .subscribe({
+              next: (courses) => {
+                this.feedItems = this.mergeFeedItems(
+                  normalizeCommunityFeed(posts as unknown[], this.activeCommunityId),
+                  courses
+                );
+                this.loadCommentCounts(this.feedItems);
+              },
+              error: () => {
+                this.feedItems = normalizeCommunityFeed(posts as unknown[], this.activeCommunityId);
+                this.loadCommentCounts(this.feedItems);
+              }
+            });
           return;
         }
 
-        this.posts = posts;
-        this.loadCommentCounts(posts);
+        this.loadAllCommunityFeed(communities, posts as unknown[]);
       },
       error: () => {
         this.error = 'Unable to load the post feed right now.';
@@ -176,32 +224,54 @@ export class PostFeedComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadAllCommunityPosts(communities: Community[]): void {
-    const voterId = this.authService.getCurrentAuthUser()?.userId;
-    const postRequests = communities.map((community) =>
-      this.postService
-        .getAll({
-          communityId: community.id,
-          ...(voterId != null ? { voterId } : {})
-        })
-        .pipe(catchError(() => of([] as Post[])))
+  private loadAllCommunityFeed(communities: Community[], posts: unknown[]): void {
+    if (communities.length === 0) {
+      this.feedItems = normalizeCommunityFeed(posts, this.activeCommunityId);
+      this.loadCommentCounts(this.feedItems);
+      return;
+    }
+
+    const courseRequests = communities.map((community) =>
+      this.courseService
+        .listByCommunity(community.id)
+        .pipe(catchError(() => of([] as Course[])))
     );
 
-    forkJoin(postRequests).subscribe({
-      next: (postGroups) => {
-        const deduped = new Map<number, Post>();
-        postGroups.flat().forEach((post) => {
-          deduped.set(post.id, post);
-        });
-
-        this.posts = Array.from(deduped.values());
-        this.loadCommentCounts(this.posts);
+    forkJoin(courseRequests).subscribe({
+      next: (courseGroups) => {
+        const courses = courseGroups.flat();
+        this.feedItems = this.mergeFeedItems(
+          normalizeCommunityFeed(posts, this.activeCommunityId),
+          courses
+        );
+        this.loadCommentCounts(this.feedItems);
       },
       error: () => {
-        this.posts = [];
-        this.loadCommentCounts([]);
+        this.feedItems = normalizeCommunityFeed(posts, this.activeCommunityId);
+        this.loadCommentCounts(this.feedItems);
       }
     });
+  }
+
+  private mergeFeedItems(posts: CommunityFeedItem[], courses: Course[]): CommunityFeedItem[] {
+    const mappedCourses: CommunityFeedCourseItem[] = courses
+      .filter((course) => course.id != null)
+      .map((course) => ({
+        id: course.id,
+        type: 'COURSE',
+        title: course.title || `Course #${course.id}`,
+        description: course.description || '',
+        published: !!course.published,
+        communityId: course.communityId ?? 0,
+        createdBy: course.authorId
+      }));
+
+    const deduped = new Map<string, CommunityFeedItem>();
+    [...posts, ...mappedCourses].forEach((item) => {
+      deduped.set(`${item.type}-${item.id}`, item);
+    });
+
+    return Array.from(deduped.values()).sort((a, b) => b.id - a.id);
   }
 
   private resolveCommunityIdParam(paramMaps: ParamMap[]): string | null {
@@ -215,7 +285,8 @@ export class PostFeedComponent implements OnInit, OnDestroy {
     return null;
   }
 
-  private loadCommentCounts(posts: Post[]): void {
+  private loadCommentCounts(items: CommunityFeedItem[]): void {
+    const posts = items.filter(isCommunityFeedPostItem);
     if (posts.length === 0) {
       this.commentCountByPost = {};
       this.loading = false;

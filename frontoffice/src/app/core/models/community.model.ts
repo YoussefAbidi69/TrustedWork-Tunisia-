@@ -32,6 +32,9 @@ export interface Community {
   name: string;
   description: string;
   createdBy: number;
+  joined?: boolean;
+  memberCount?: number;
+  postCount?: number;
 }
 
 export interface Post {

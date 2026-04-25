@@ -39,4 +39,31 @@
 
 .cm-comment-list__state {
   padding: 24px;
+  height: 3px;
+  border-radius: 50%;
+  background-color: var(--comm-text-dim);
+}
+
+.comment-body {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.comment-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: -8px;
+}
+
+.danger-text {
+  color: var(--comm-danger);
+}
+
+.empty-comments {
+  padding: 32px;
+  text-align: center;
+  background: var(--comm-bg-level1);
+  border-radius: 12px;
+  border: 1px dashed var(--comm-border-default);
 }

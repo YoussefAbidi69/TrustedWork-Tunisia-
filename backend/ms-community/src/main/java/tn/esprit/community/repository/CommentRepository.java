@@ -6,4 +6,6 @@ import tn.esprit.community.entity.Comment;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByPost_IdOrderByIdAsc(Long postId);
+    List<Comment> findByCourse_IdOrderByIdAsc(Long courseId);
+
 }

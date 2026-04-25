@@ -16,4 +16,5 @@
     <i class="fas fa-paper-plane" aria-hidden="true"></i>
     {{ submitting ? 'Posting…' : 'Post comment' }}
   </button>
+  <div class="error-text" *ngIf="error" style="margin-top: 12px; color: var(--error)">{{ error }}</div>
 </form>

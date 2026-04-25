@@ -72,7 +72,7 @@
               <a
                 *ngFor="let post of myPosts"
                 class="cm-feed-nav__link"
-                [routerLink]="['posts', post.id]"
+                [routerLink]="['post', post.id]"
                 [relativeTo]="shell">
                 <span class="cm-feed-nav__link-title">{{ post.title }}</span>
                 <i class="fas fa-arrow-right" aria-hidden="true"></i>
@@ -88,7 +88,7 @@
         <div class="cm-toolbar__left">
           <h2 class="cm-feed-main__heading">{{ getCommunityName() }}</h2>
         </div>
-        <div class="cm-toolbar__right cm-muted">{{ posts.length }} posts</div>
+        <div class="cm-toolbar__right cm-muted">{{ feedItems.length }} posts</div>
       </div>
 
       <app-community-filter
@@ -102,21 +102,30 @@
       <div *ngIf="!loading && error" class="cm-state cm-state--error">{{ error }}</div>
 
       <app-empty-state
-        *ngIf="!loading && !error && posts.length === 0"
+        *ngIf="!loading && !error && feedItems.length === 0"
         icon="fa-note-sticky"
         title="No posts in this view"
         description="Pick another community or add the first post.">
       </app-empty-state>
 
-      <div class="cm-feed-cards" *ngIf="!loading && !error && posts.length > 0">
-        <app-post-card
-          *ngFor="let post of posts; trackBy: trackByPostId"
-          [post]="post"
-          [shell]="shell"
-          [communityName]="communityNameById(post.communityId)"
-          [commentCount]="commentCountByPost[post.id] || 0"
-          (vote)="onVote($event)">
-        </app-post-card>
+      <div class="cm-feed-cards" *ngIf="!loading && !error && feedItems.length > 0">
+        <ng-container *ngFor="let item of feedItems; trackBy: trackByFeedItemId">
+          <app-post-card
+            *ngIf="isPostItem(item)"
+            [post]="item"
+            [shell]="shell"
+            [communityName]="communityNameById(item.communityId)"
+            [commentCount]="commentCountByPost[item.id] || 0"
+            (vote)="onVote($event)">
+          </app-post-card>
+
+          <app-course-card
+            *ngIf="isCourseItem(item)"
+            [course]="item"
+            [shell]="shell"
+            [communityName]="communityNameById(item.communityId)">
+          </app-course-card>
+        </ng-container>
       </div>
     </div>
   </div>

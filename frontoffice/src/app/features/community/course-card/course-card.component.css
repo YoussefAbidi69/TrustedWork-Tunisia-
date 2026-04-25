@@ -1,0 +1,301 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:host {
+  display: block;
+  font-family: 'Outfit', sans-serif;
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.cs-course-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.03);
+  transition: var(--transition);
+  overflow: hidden;
+  height: 100%;
+}
+
+.cs-course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 50px rgba(99, 102, 241, 0.1);
+  border-color: rgba(255, 255, 255, 1);
+}
+
+/* Subtle background glow on hover */
+.cs-glow {
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+  transition: var(--transition);
+  opacity: 0;
+  z-index: 0;
+}
+.cs-course-card:hover .cs-glow {
+  opacity: 1;
+}
+
+/* Header Sections */
+.cs-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  z-index: 1;
+}
+
+.cs-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.cs-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.cs-community-tag { background: #e0e7ff; color: #4338ca; }
+.cs-status-live { background: #dcfce7; color: #166534; }
+.cs-status-live i { font-size: 7px; color: #22c55e; }
+.cs-status-draft { background: #ffedd5; color: #9a3412; }
+
+.cs-author-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 4px 12px 4px 4px;
+  border-radius: 99px;
+}
+.cs-author-avatar {
+  width: 24px;
+  height: 24px;
+  background: #cbd5e1;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+.cs-author-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+/* Content */
+.cs-card-content {
+  flex: 1;
+  z-index: 1;
+}
+.cs-card-title {
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+}
+.cs-card-title a {
+  text-decoration: none;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  transition: color 0.2s;
+}
+.cs-card-title a:hover {
+  color: #6366f1;
+}
+.cs-card-preview {
+  font-size: 15px;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Footer Actions */
+.cs-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 16px;
+  border-top: 1px solid rgba(226, 232, 240, 0.7);
+  z-index: 1;
+}
+.cs-stats-group {
+  display: flex;
+  gap: 12px;
+}
+.cs-stat {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cs-btn-group {
+  display: flex;
+  gap: 8px;
+}
+.cs-btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.cs-btn-icon:hover:not([disabled]) {
+  background: #f8fafc;
+  color: #4f46e5;
+  border-color: #4f46e5;
+}
+.cs-btn-icon[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cs-btn-pill {
+  padding: 8px 20px;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition);
+}
+.cs-btn-gradient {
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+.cs-btn-gradient:hover {
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
+  color: white;
+  display: flex;
+  gap: var(--comm-space-12);
+}
+
+.action-btn {
+  padding: 6px 14px;
+  
+  color: #3d4460;
+  font-weight: 500;
+}
+
+:host ::ng-deep .cs-stat {
+  font-size: 12px;
+  color: #3d4460;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  i {
+    font-size: 11px;
+  }
+}
+
+:host ::ng-deep .cs-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Download icon button */
+:host ::ng-deep .cs-btn-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  color: #555c7a;
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  font-size: 12px;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.13);
+    color: #8b90a7;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* Explore button */
+:host ::ng-deep .cs-btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #6c7fff 0%, #5a6fd6 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 0 16px rgba(108, 127, 255, 0.18);
+  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+
+  &:hover {
+    background: linear-gradient(135deg, #7d8fff 0%, #6c7fff 100%);
+    box-shadow: 0 0 24px rgba(108, 127, 255, 0.3);
+    transform: translateY(-1px);
+
+    i {
+      transform: translateX(2px);
+    }
+  }
+
+  i {
+    font-size: 11px;
+    transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+:host ::ng-deep .cs-btn-gradient {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+}

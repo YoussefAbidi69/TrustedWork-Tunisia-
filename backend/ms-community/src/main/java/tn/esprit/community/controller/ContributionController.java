@@ -32,7 +32,7 @@ public class ContributionController {
             contribution = Contribution.builder()
                     .id(0L)
                     .userId(userId)
-                    .sharedCourseCount(0)
+                    .score(0)
                     .build();
         }
         return new ResponseEntity<>(contribution, HttpStatus.OK);

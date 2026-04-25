@@ -2,4 +2,38 @@
 
 :host {
   display: block;
+
+  margin-bottom: 8px;
 }
+
+.progress-track {
+  height: 6px;
+  background-color: var(--comm-bg-level2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6c7fff 0%, #a5b4fc 100%);
+  border-radius: 99px;
+}
+
+.rules-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.rules-list i {
+  color: var(--comm-text-dim);
+  margin-right: 8px;
+}
+
+.mt-2 { margin-top: 8px; }
+.mt-4 { margin-top: 16px; }
+.text-right { text-align: right; }
+.full-width { width: 100%; }

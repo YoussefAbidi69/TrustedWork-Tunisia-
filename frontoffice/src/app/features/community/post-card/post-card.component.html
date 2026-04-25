@@ -5,7 +5,7 @@
   </div>
 
   <h3 class="cm-feed-card__title">
-    <a [routerLink]="['posts', post.id]" [relativeTo]="shell">{{ post.title }}</a>
+    <a [routerLink]="['post', post.id]" [relativeTo]="shell">{{ post.title }}</a>
   </h3>
 
   <p class="cm-feed-card__preview">{{ preview }}</p>
@@ -14,8 +14,6 @@
     <div class="cm-feed-card__stats">
       <span><i class="fas fa-comment" aria-hidden="true"></i> {{ commentCount }}</span>
       <span><i class="fas fa-arrow-trend-up" aria-hidden="true"></i> {{ voteDifference }}</span>
-    </div>
-    <div class="cm-btn-group">
       <button
         type="button"
         class="cm-btn cm-btn--sm"
@@ -36,6 +34,9 @@
         [attr.aria-pressed]="post.myVote === VoteType.DOWN">
         <i class="fas fa-arrow-down" aria-hidden="true"></i>
       </button>
+    </div>
+    <div class="cm-btn-group">
+      
       <button
         *ngIf="showCourseDownload"
         type="button"
@@ -46,7 +47,7 @@
         <i class="fas fa-download" aria-hidden="true"></i>
         {{ downloadBusy ? '…' : 'Download' }}
       </button>
-      <a class="cm-btn cm-btn--primary cm-btn--sm" [routerLink]="['posts', post.id]" [relativeTo]="shell">
+      <a class="cm-btn cm-btn--primary cm-btn--sm" [routerLink]="['post', post.id]" [relativeTo]="shell">
         Open
         <i class="fas fa-arrow-right" aria-hidden="true"></i>
       </a>

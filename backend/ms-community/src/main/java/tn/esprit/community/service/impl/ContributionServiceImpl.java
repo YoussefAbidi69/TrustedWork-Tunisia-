@@ -16,8 +16,8 @@ public class ContributionServiceImpl implements ContributionService {
     @Override
     public Contribution recordSharedCourse(Long userId) {
         Contribution contribution = contributionRepository.findByUserId(userId)
-                .orElse(Contribution.builder().userId(userId).sharedCourseCount(0).build());
-        contribution.setSharedCourseCount(contribution.getSharedCourseCount() + 1);
+                .orElse(Contribution.builder().userId(userId).score(0).build());
+        contribution.setScore(contribution.getScore() + 1);
         return contributionRepository.save(contribution);
     }
 

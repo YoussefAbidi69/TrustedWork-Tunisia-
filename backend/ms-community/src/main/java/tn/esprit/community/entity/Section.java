@@ -46,5 +46,5 @@ public class Section {
     @Builder.Default
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private List<Lesson> lessons = new ArrayList<>();
+    private List<Block> blocks = new ArrayList<>();
 }

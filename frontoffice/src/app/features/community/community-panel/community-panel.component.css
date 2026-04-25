@@ -1,5 +1,31 @@
-@import '../community-layout-system.css';
+@import '../community-shared.css';
 
 :host {
   display: block;
+  background-color: var(--comm-bg-base);
+}
+
+.comm-panel {
+  background: var(--comm-bg-surface);
+  border: 1px solid var(--comm-border);
+  border-radius: 8px;
+  padding: var(--space-card);
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.comm-panel:hover {
+  border-color: var(--comm-border-strong);
+}
+
+.panel-header {
+  margin-bottom: var(--space-base);
+  padding-bottom: var(--space-base);
+  border-bottom: 1px solid var(--comm-border);
+}
+
+.panel-title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--comm-text-primary);
+  margin: 0;
 }

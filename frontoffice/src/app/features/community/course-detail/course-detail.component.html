@@ -1,48 +1,259 @@
-<div class="cm-page">
-  <div *ngIf="loading" class="cm-state">Loading course…</div>
-  <div *ngIf="!loading && error" class="cm-state cm-state--error">{{ error }}</div>
+<div class="cs-dashboard cs-viewer-mode">
+  <!-- Interactive Background Blobs -->
+  <div class="cs-bg-blobs">
+    <div class="cs-blob cs-blob-1"></div>
+    <div class="cs-blob cs-blob-2"></div>
+    <div class="cs-blob cs-blob-3"></div>
+  </div>
 
-  <ng-container *ngIf="!loading && course as c">
-    <app-community-page-header eyebrow="Course" [title]="c.title" [subtitle]="c.description">
-      <a cmActions class="cm-btn cm-btn--ghost" [routerLink]="['']" [relativeTo]="route.parent">Back to feed</a>
-    </app-community-page-header>
+  <div class="cs-wrapper" *ngIf="!loading && course">
+    <!-- Navbar / Breadcrumbs -->
+    <nav class="cs-nav">
+      <div class="cs-nav-glass">
+        <div class="cs-nav-left">
+           <a [routerLink]="['']" [relativeTo]="route.parent" class="cs-btn-back">
+             <i class="fas fa-arrow-left"></i> Back to feed
+           </a>
+        </div>
+        <div class="cs-nav-right">
+            <span class="cs-badge" [class.cs-status-live]="course.published" [class.cs-status-draft]="!course.published">
+              <i class="fas" [class.fa-check-circle]="course.published" [class.fa-edit]="!course.published"></i>
+              {{ course.published ? 'Published' : 'Draft' }}
+            </span>
+        </div>
+      </div>
+    </nav>
 
-    <div class="cm-split cm-split--wide-aside">
-      <main class="cm-page-body">
-        <section class="cm-panel" *ngIf="canCertificate">
-          <div class="cm-panel__body">
-            <p class="cm-muted">All lessons marked complete. Issue your certificate below.</p>
-            <button type="button" class="cm-btn cm-btn--primary" (click)="issueCertificate()">Issue certificate</button>
-          </div>
-        </section>
-      </main>
-
-      <aside class="cm-aside-stack">
-        <section class="cm-aside-card">
-          <h3 class="cm-aside-card__title">Lessons</h3>
-          <div class="cm-aside-card__body">
-            <p class="cm-muted">{{ completedCount }} / {{ totalLessons }} completed</p>
-            <div class="cm-progress">
-              <div
-                class="cm-progress__bar"
-                [style.width.%]="totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0"></div>
-            </div>
-            <div *ngIf="totalLessons === 0" class="cm-banner cm-banner--warn">No lessons in this course.</div>
-            <ng-container *ngFor="let section of sections">
-              <p class="cm-label" style="margin-top: 14px">{{ section.title }}</p>
-              <a
-                *ngFor="let row of lessonsForSection(section)"
-                class="cm-lesson-link"
-                [routerLink]="['courses', courseId, 'learn']"
-                [relativeTo]="route.parent"
-                [queryParams]="{ lessonId: row.lesson.id }">
-                <span>{{ row.lesson.title }}</span>
-                <span class="cm-badge cm-badge--slate">{{ row.lesson.type }}</span>
-              </a>
-            </ng-container>
-          </div>
-        </section>
-      </aside>
+    <div *ngIf="downloadError" class="cs-alert-error">
+      <i class="fas fa-exclamation-triangle"></i> {{ downloadError }}
     </div>
-  </ng-container>
+
+    <!-- Main Layout -->
+    <main class="cs-viewer-layout">
+      
+      <!-- Left Column: Curriculum -->
+      <div class="cs-viewer-main">
+        <header class="cs-course-header">
+          <h1 class="cs-title">{{ course.title || 'Untitled Course' }}</h1>
+          <p class="cs-subtitle">{{ course.description || 'No description provided.' }}</p>
+        </header>
+
+        <section class="cs-curriculum glass-panel">
+          <h2 class="cs-panel-title"><i class="fas fa-list-ul"></i> Course Curriculum</h2>
+          
+          <div *ngIf="curriculum.length === 0" class="cs-empty-state">
+             <p>This course doesn't have any content sections yet.</p>
+          </div>
+
+          <div class="cs-accordion" *ngFor="let node of curriculum; let i = index">
+            <!-- Section Header -->
+            <button class="cs-accordion-header" (click)="toggleSection(node)" [attr.aria-expanded]="node.expanded">
+              <div class="cs-sec-meta">
+                <span class="cs-sec-number">Section {{i + 1}}</span>
+                <span class="cs-sec-title">{{ node.section.title || 'Overview' }}</span>
+              </div>
+              <div class="cs-sec-controls">
+                <span class="cs-lesson-count">{{node.lessons.length}} lessons</span>
+                <i class="fas fa-chevron-down cs-chevron" [class.rotated]="node.expanded"></i>
+              </div>
+            </button>
+
+            <!-- Section Content (Lessons) -->
+            <div class="cs-accordion-body" *ngIf="node.expanded">
+              <ul class="cs-lesson-list">
+                <li *ngIf="node.lessons.length === 0" class="cs-lesson-empty">No content in this section.</li>
+                
+                <li *ngFor="let lesson of node.lessons" class="cs-lesson-item">
+                  <div class="cs-lesson-icon">
+                     <i class="fas" [ngClass]="getLessonIcon(lesson.type)"></i>
+                  </div>
+                  <div class="cs-lesson-details">
+                    <span class="cs-lesson-title">{{ lesson.title || 'Lesson Item' }}</span>
+                    <span class="cs-lesson-type">{{ lesson.type }}</span>
+                  </div>
+                  <button class="cs-btn-icon-inline" title="Preview content" disabled>
+                    <i class="far fa-play-circle"></i>
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Column: Sidebar -->
+      <aside class="cs-viewer-sidebar">
+        <div class="glass-panel cs-meta-card">
+          <div class="cs-meta-visual">
+            <i class="fas fa-graduation-cap"></i>
+          </div>
+
+          <h3 class="cs-meta-title">Enroll & Download</h3>
+          <p class="cs-meta-desc">Get offline access to the full curriculum alongside resources and generated quizzes.</p>
+          
+          <button type="button" class="cs-btn cs-btn-gradient cs-btn-full" [disabled]="downloadBusy" (click)="downloadCourse()">
+            <i class="fas" [class.fa-cloud-download-alt]="!downloadBusy" [class.fa-spinner]="downloadBusy" [class.fa-spin]="downloadBusy"></i>
+            {{ downloadBusy ? 'Downloading Bundle…' : 'Free Download' }}
+          </button>
+
+          <hr class="cs-divider" />
+
+          <ul class="cs-meta-list">
+            <li>
+              <span class="cs-meta-label">Author ID</span>
+              <span class="cs-meta-val">#{{ course.authorId }}</span>
+            </li>
+            <li>
+              <span class="cs-meta-label">Community</span>
+              <span class="cs-meta-val">
+                 <a *ngIf="course.communityId != null" [routerLink]="['../communities', course.communityId]" [relativeTo]="route.parent" class="cs-link">#{{ course.communityId }}</a>
+                 <span *ngIf="course.communityId == null">Not linked</span>
+              </span>
+            </li>
+            <li>
+              <span class="cs-meta-label">Course ID</span>
+              <span class="cs-meta-val">#{{ course.id }}</span>
+            </li>
+          </ul>
+
+        </div>
+
+        <!-- Engagement Features Section -->
+        <div class="glass-panel cs-engagement-card">
+          <h3 class="cs-meta-title"><i class="fas fa-comments"></i> Comments & Engagement</h3>
+          
+          <!-- Vote Buttons -->
+          <div class="cs-vote-buttons">
+            <button type="button" class="cs-btn-vote cs-btn-upvote" (click)="vote(VoteType.UP)" title="Upvote">
+              <i class="fas fa-thumbs-up"></i> Upvote
+            </button>
+            <button type="button" class="cs-btn-vote cs-btn-downvote" (click)="vote(VoteType.DOWN)" title="Downvote">
+              <i class="fas fa-thumbs-down"></i> Downvote
+            </button>
+          </div>
+
+          <hr class="cs-divider" />
+
+          <!-- Comments Section -->
+          <div class="cs-comments-section">
+            <h4 class="cs-comments-title"><i class="fas fa-comment"></i> Comments ({{ comments.length }})</h4>
+            
+            <!-- Add Comment Form -->
+            <div class="cs-add-comment">
+              <textarea 
+                class="cs-comment-input" 
+                placeholder="Share your thoughts..." 
+                [(ngModel)]="commentText" 
+                (keydown.enter)="addComment()">
+              </textarea>
+              <button 
+                type="button" 
+                class="cs-btn cs-btn-sm cs-btn-gradient" 
+                (click)="addComment()" 
+                [disabled]="!commentText.trim()">
+                <i class="fas fa-paper-plane"></i> Post
+              </button>
+            </div>
+
+            <!-- Comments List -->
+            <div class="cs-comments-list" *ngIf="!commentsLoading; else loadingComments">
+              <div *ngIf="comments.length === 0" class="cs-empty-comments">
+                <p>No comments yet. Be the first to share!</p>
+              </div>
+              
+              <div *ngFor="let comment of comments" class="cs-comment-item">
+                <div class="cs-comment-header">
+                  <span class="cs-comment-user">User #{{ comment.userId }}</span>
+                </div>
+                <p class="cs-comment-text">{{ comment.content }}</p>
+              </div>
+            </div>
+
+            <ng-template #loadingComments>
+              <div class="cs-loading-comments">Loading comments...</div>
+            </ng-template>
+          </div>
+
+          <hr class="cs-divider" />
+
+          <!-- Report Button -->
+          <button 
+            type="button" 
+            class="cs-btn cs-btn-sm cs-btn-danger-outline" 
+            (click)="toggleReport()"
+            title="Report inappropriate content">
+            <i class="fas fa-flag"></i> Report Course
+          </button>
+
+          <!-- Report Modal -->
+          <div class="cs-report-modal" *ngIf="reportOpen" [@.disabled]="true">
+            <div class="cs-report-content">
+              <h4><i class="fas fa-exclamation-circle"></i> Report This Course</h4>
+              
+              <div class="cs-form-group">
+                <label for="reportReason">Reason</label>
+                <input 
+                  id="reportReason"
+                  type="text" 
+                  class="cs-form-input" 
+                  placeholder="e.g., Spam, Inappropriate content" 
+                  [(ngModel)]="reportReason">
+              </div>
+
+              <div class="cs-form-group">
+                <label for="reportDescription">Description</label>
+                <textarea 
+                  id="reportDescription"
+                  class="cs-form-input" 
+                  placeholder="Please describe why you're reporting this course..." 
+                  [(ngModel)]="reportDescription">
+                </textarea>
+              </div>
+
+              <div class="cs-report-actions">
+                <button 
+                  type="button" 
+                  class="cs-btn cs-btn-sm cs-btn-secondary" 
+                  (click)="cancelReport()">
+                  Cancel
+                </button>
+                <button 
+                  type="button" 
+                  class="cs-btn cs-btn-sm cs-btn-danger" 
+                  (click)="submitReport()"
+                  [disabled]="!reportReason.trim() || !reportDescription.trim()">
+                  Submit Report
+                </button>
+              </div>
+
+              <div *ngIf="reportSubmitted" class="cs-report-success">
+                <i class="fas fa-check-circle"></i> Report submitted successfully.
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </aside>
+
+    </main>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="cs-loading-screen">
+    <div class="loading-bars"><span></span><span></span><span></span></div>
+    Loading Course Platform...
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!loading && !course && error" class="cs-wrapper">
+    <div class="cs-empty-state glass-panel">
+      <div class="cs-empty-icon" style="color: #ef4444; background: #fef2f2"><i class="fas fa-exclamation-triangle"></i></div>
+      <h3>Course Unavailable</h3>
+      <p>{{ error }}</p>
+      <a [routerLink]="['']" [relativeTo]="route.parent" class="cs-btn cs-btn-gradient" style="margin-top: 16px;">
+        Return to feed
+      </a>
+    </div>
+  </div>
 </div>

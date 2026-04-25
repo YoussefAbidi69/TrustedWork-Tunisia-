@@ -56,25 +56,7 @@
             </p>
           </div>
 
-          <div class="cm-field">
-            <span class="cm-label">Post type</span>
-            <div class="cm-seg" role="group" aria-label="Post type">
-              <button
-                type="button"
-                class="cm-seg__btn"
-                [class.cm-seg__btn--active]="form.get('type')?.value === PostType.INFO"
-                (click)="form.patchValue({ type: PostType.INFO })">
-                Discussion
-              </button>
-              <button
-                type="button"
-                class="cm-seg__btn"
-                [class.cm-seg__btn--active]="form.get('type')?.value === PostType.COURSE"
-                (click)="form.patchValue({ type: PostType.COURSE })">
-                Course
-              </button>
-            </div>
-          </div>
+          
 
           <div class="cm-field">
             <label class="cm-label" for="ptitle">Title</label>

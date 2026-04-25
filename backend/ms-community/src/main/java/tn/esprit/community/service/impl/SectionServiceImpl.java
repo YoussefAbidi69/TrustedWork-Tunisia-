@@ -1,0 +1,117 @@
+package tn.esprit.community.service.impl;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import tn.esprit.community.dto.request.SectionRequest;
+import tn.esprit.community.dto.response.BlockResponse;
+import tn.esprit.community.dto.response.SectionResponse;
+import tn.esprit.community.entity.Block;
+import tn.esprit.community.entity.Course;
+import tn.esprit.community.entity.Section;
+import tn.esprit.community.exception.LearningNotFoundException;
+import tn.esprit.community.repository.BlockRepository;
+import tn.esprit.community.repository.CourseRepository;
+import tn.esprit.community.repository.SectionRepository;
+import tn.esprit.community.service.SectionService;
+
+@Service
+@Transactional(readOnly = true)
+public class SectionServiceImpl implements SectionService {
+
+    private final SectionRepository sectionRepository;
+    private final CourseRepository courseRepository;
+    private final BlockRepository blockRepository;
+
+    public SectionServiceImpl(
+            SectionRepository sectionRepository, CourseRepository courseRepository, BlockRepository blockRepository) {
+        this.sectionRepository = sectionRepository;
+        this.courseRepository = courseRepository;
+        this.blockRepository = blockRepository;
+    }
+
+    @Override
+    @Transactional
+    public SectionResponse createSection(Long courseId, SectionRequest sectionRequest) {
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new LearningNotFoundException("Course not found"));
+
+        int orderIndex = sectionRequest.getOrderIndex() != null
+                ? sectionRequest.getOrderIndex()
+                : nextSectionOrder(courseId);
+
+        Section section = Section.builder()
+                .course(course)
+                .title(sectionRequest.getTitle())
+                .orderIndex(orderIndex)
+                .build();
+
+        return toSectionResponse(sectionRepository.save(section));
+    }
+
+    @Override
+    @Transactional
+    public SectionResponse updateSection(Long sectionId, SectionRequest sectionRequest) {
+        Section section = sectionRepository
+                .findById(sectionId)
+                .orElseThrow(() -> new LearningNotFoundException("Section not found"));
+
+        if (sectionRequest.getTitle() != null) {
+            section.setTitle(sectionRequest.getTitle());
+        }
+        if (sectionRequest.getOrderIndex() != null) {
+            section.setOrderIndex(sectionRequest.getOrderIndex());
+        }
+
+        return toSectionResponse(sectionRepository.save(section));
+    }
+
+    @Override
+    public List<SectionResponse> listSections(Long courseId) {
+        return sectionRepository.findByCourse_IdOrderByOrderIndexAsc(courseId).stream()
+                .map(this::toSectionResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void deleteSection(Long sectionId) {
+        if (!sectionRepository.existsById(sectionId)) {
+            throw new LearningNotFoundException("Section not found");
+        }
+        sectionRepository.deleteById(sectionId);
+    }
+
+    private int nextSectionOrder(Long courseId) {
+        return sectionRepository.findByCourse_IdOrderByOrderIndexAsc(courseId).stream()
+                .mapToInt(Section::getOrderIndex)
+                .max()
+                .orElse(-1) + 1;
+    }
+
+    private SectionResponse toSectionResponse(Section section) {
+        List<BlockResponse> blocks = blockRepository.findBySection_IdOrderByOrderIndexAsc(section.getId()).stream()
+                .map(this::toBlockResponse)
+                .collect(Collectors.toList());
+
+        return SectionResponse.builder()
+                .id(section.getId())
+                .courseId(section.getCourse() != null ? section.getCourse().getId() : null)
+                .title(section.getTitle())
+                .orderIndex(section.getOrderIndex())
+                .blocks(blocks)
+                .build();
+    }
+
+    private BlockResponse toBlockResponse(Block block) {
+        return BlockResponse.builder()
+                .id(block.getId())
+                .sectionId(block.getSection() != null ? block.getSection().getId() : null)
+                .title(block.getTitle())
+                .content(block.getContent())
+                .fileUrl(block.getFileUrl())
+                .orderIndex(block.getOrderIndex())
+                .type(block.getType())
+                .build();
+    }
+}

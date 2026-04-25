@@ -1,0 +1,52 @@
+<article class="cs-course-card glass-panel" [class.cs-card-draft]="!course.published">
+  <!-- Glowing Overlay for Depth -->
+  <div class="cs-glow"></div>
+
+  <!-- Header Section -->
+  <header class="cs-card-header">
+    <div class="cs-tags">
+      <span class="cs-tag cs-community-tag" *ngIf="communityName">
+        <i class="fas fa-layer-group"></i> {{ communityName }}
+      </span>
+      <span class="cs-tag cs-status-live" *ngIf="course.published">
+        <i class="fas fa-circle"></i> Published
+      </span>
+      <span class="cs-tag cs-status-draft" *ngIf="!course.published">
+        <i class="far fa-edit"></i> Draft
+      </span>
+    </div>
+    <div class="cs-author-meta" *ngIf="course.createdBy != null">
+      <div class="cs-author-avatar"><i class="fas fa-user-astronaut"></i></div>
+      <span class="cs-author-name">Author #{{ course.createdBy }}</span>
+    </div>
+  </header>
+
+  <!-- Title & Preview -->
+  <div class="cs-card-content">
+    <h3 class="cs-card-title">
+      <a [routerLink]="['course', course.id]" [relativeTo]="shell">{{ course.title || 'Untitled Course' }}</a>
+    </h3>
+    <p class="cs-card-preview">{{ preview || 'Explore this meticulously crafted course...' }}</p>
+  </div>
+
+  <!-- Footer Actions -->
+  <footer class="cs-card-footer">
+    <div class="cs-stats-group">
+      <span class="cs-stat" title="Course Format"><i class="fas fa-graduation-cap"></i> Curriculum</span>
+    </div>
+
+    <div class="cs-btn-group">
+      <button
+        type="button"
+        class="cs-btn-icon cs-btn-download"
+        [disabled]="downloadBusy || !canDownload"
+        (click)="onDownloadCourse($event)"
+        title="Download offline bundle">
+        <i class="fas" [class.fa-download]="!downloadBusy" [class.fa-spinner]="downloadBusy" [class.fa-spin]="downloadBusy"></i>
+      </button>
+      <a class="cs-btn-pill cs-btn-gradient" [routerLink]="['course', course.id]" [relativeTo]="shell">
+        Explore <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+  </footer>
+</article>

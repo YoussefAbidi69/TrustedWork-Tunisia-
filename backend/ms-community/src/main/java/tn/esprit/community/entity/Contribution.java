@@ -19,5 +19,5 @@ public class Contribution {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long userId;
-    private int sharedCourseCount;
+    private int score;
 }

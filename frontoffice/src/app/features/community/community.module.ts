@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 import { CommunityRoutingModule } from './community-routing.module';
 import { SharedModule } from '../../shared/shared.module';
@@ -9,19 +10,19 @@ import { CommunityCreateComponent } from './community-create/community-create.co
 import { CommunityDetailComponent } from './community-detail/community-detail.component';
 import { PostCreateComponent } from './post-create/post-create.component';
 import { PostDetailComponent } from './post-detail/post-detail.component';
-import { CourseDetailComponent } from './course-detail/course-detail.component';
-import { LessonViewerComponent } from './lesson-viewer/lesson-viewer.component';
 import { ContributionComponent } from './contribution/contribution.component';
 import { PostFeedComponent } from './post-feed/post-feed.component';
 import { PostCardComponent } from './post-card/post-card.component';
 import { CommentListComponent } from './comment-list/comment-list.component';
 import { CommentInputComponent } from './comment-input/comment-input.component';
 import { CommunityFilterComponent } from './community-filter/community-filter.component';
-import { ApiTestComponent } from './api-test/api-test.component';
 import { CommunityShellComponent } from './community-shell/community-shell.component';
 import { CommunityPageHeaderComponent } from './community-page-header/community-page-header.component';
 import { CommunityPanelComponent } from './community-panel/community-panel.component';
-import { CourseEditorComponent } from './course-editor/course-editor.component';
+import { CourseCardComponent } from './course-card/course-card.component';
+import { CourseDetailComponent } from './course-detail/course-detail.component';
+import { CourseCreateComponent } from './course-create/course-create.component';
+import { MyCoursesComponent } from './my-courses/my-courses.component';
 
 @NgModule({
   declarations: [
@@ -33,21 +34,22 @@ import { CourseEditorComponent } from './course-editor/course-editor.component';
     CommunityDetailComponent,
     PostCreateComponent,
     PostDetailComponent,
-    CourseDetailComponent,
-    LessonViewerComponent,
     ContributionComponent,
     PostFeedComponent,
     PostCardComponent,
     CommentListComponent,
     CommentInputComponent,
     CommunityFilterComponent,
-    ApiTestComponent,
-    CourseEditorComponent
+    CourseCardComponent,
+    CourseDetailComponent,
+    CourseCreateComponent,
+    MyCoursesComponent
   ],
   imports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    DragDropModule,
     CommunityRoutingModule,
     SharedModule
   ]

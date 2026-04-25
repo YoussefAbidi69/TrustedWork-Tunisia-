@@ -1,87 +1,93 @@
 package tn.esprit.community.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import tn.esprit.community.dto.PostDTO;
+import tn.esprit.community.dto.request.PostRequest;
+import tn.esprit.community.dto.response.PostResponse;
+import tn.esprit.community.entity.Community;
+import tn.esprit.community.entity.Enum.PostStatus;
 import tn.esprit.community.entity.Enum.VoteType;
 import tn.esprit.community.entity.Post;
 import tn.esprit.community.entity.Vote;
 import tn.esprit.community.exception.PostDeleteForbiddenException;
 import tn.esprit.community.exception.PostNotFoundException;
-import tn.esprit.community.mapper.PostMapper;
-import tn.esprit.community.entity.Enum.PostStatus;
-import tn.esprit.community.entity.Enum.PostType;
 import tn.esprit.community.repository.CommunityRepository;
 import tn.esprit.community.repository.PostRepository;
 import tn.esprit.community.repository.VoteRepository;
 import tn.esprit.community.service.PostService;
-import tn.esprit.community.entity.Enum.ValidationResult;
-import tn.esprit.community.service.ValidationService;
 
 @Service
 public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final CommunityRepository communityRepository;
-    private final PostMapper postMapper;
-    private final ValidationService validationService;
     private final VoteRepository voteRepository;
 
     public PostServiceImpl(
             PostRepository postRepository,
             CommunityRepository communityRepository,
-            PostMapper postMapper,
-            ValidationService validationService,
             VoteRepository voteRepository) {
         this.postRepository = postRepository;
         this.communityRepository = communityRepository;
-        this.postMapper = postMapper;
-        this.validationService = validationService;
         this.voteRepository = voteRepository;
     }
 
     @Override
-    public PostDTO createPost(PostDTO postDTO) {
-        Post post = postMapper.toEntity(postDTO);
-        post.setCommunity(communityRepository.getReferenceById(postDTO.getCommunityId()));
-        PostDTO dto = postMapper.toDto(postRepository.save(post));
-        enrichVoteCounts(dto);
-        return dto;
+    public PostResponse createPost(PostRequest postRequest) {
+        Community community = communityRepository
+                .findById(postRequest.getCommunityId())
+                .orElseThrow(() -> new PostNotFoundException("Community not found"));
+
+        Post post = Post.builder()
+                .title(postRequest.getTitle())
+                .content(postRequest.getContent())
+                .createdBy(postRequest.getCreatedBy())
+                .community(community)
+                .status(postRequest.getStatus() == null ? PostStatus.DRAFT : postRequest.getStatus())
+                .reportCount(0)
+                .build();
+
+        return toPostResponse(postRepository.save(post), null);
     }
 
     @Override
-    public PostDTO getPost(Long id, Long voterId) {
-        PostDTO dto = postMapper.toDto(
-                postRepository.findById(id).orElseThrow(() -> new PostNotFoundException("Post not found")));
-        enrichVoteCounts(dto);
-        enrichMyVote(dto, voterId);
-        return dto;
+    public PostResponse getPost(Long id, Long voterId) {
+        Post post = postRepository.findById(id).orElseThrow(() -> new PostNotFoundException("Post not found"));
+        return toPostResponse(post, voterId);
     }
 
     @Override
-    public PostDTO updatePost(Long id, PostDTO postDTO) {
-        postRepository.findById(id).orElseThrow(() -> new PostNotFoundException("Post not found"));
-        Post updated = postMapper.toEntity(postDTO);
-        updated.setId(id);
-        updated.setCommunity(communityRepository.getReferenceById(postDTO.getCommunityId()));
-        PostDTO dto = postMapper.toDto(postRepository.save(updated));
-        enrichVoteCounts(dto);
-        return dto;
-    }
+    public PostResponse updatePost(Long id, PostRequest postRequest) {
+        Post post = postRepository.findById(id).orElseThrow(() -> new PostNotFoundException("Post not found"));
 
-    @Override
-    public PostDTO publishPost(Long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not found"));
-        if (validationService.validate(post) == ValidationResult.REJECTED) {
-            throw new tn.esprit.community.exception.ValidationException("Post rejected by validation rules");
+        if (postRequest.getTitle() != null) {
+            post.setTitle(postRequest.getTitle());
         }
+        if (postRequest.getContent() != null) {
+            post.setContent(postRequest.getContent());
+        }
+        if (postRequest.getStatus() != null) {
+            post.setStatus(postRequest.getStatus());
+        }
+        if (postRequest.getCommunityId() != null) {
+            Community community = communityRepository
+                    .findById(postRequest.getCommunityId())
+                    .orElseThrow(() -> new PostNotFoundException("Community not found"));
+            post.setCommunity(community);
+        }
+
+        return toPostResponse(postRepository.save(post), null);
+    }
+
+    @Override
+    public PostResponse publishPost(Long postId) {
+        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not found"));
         post.setStatus(PostStatus.PUBLISHED);
-        PostDTO dto = postMapper.toDto(postRepository.save(post));
-        enrichVoteCounts(dto);
-        return dto;
+        return toPostResponse(postRepository.save(post), null);
     }
 
     @Override
@@ -95,42 +101,54 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public List<PostDTO> listPosts(Long communityId, PostType type, PostStatus status, Long voterId) {
-        List<PostDTO> list = postRepository.findAll().stream()
-                .filter(p -> communityId == null
-                        || (p.getCommunity() != null && communityId.equals(p.getCommunity().getId())))
-                .filter(p -> type == null || type == p.getType())
-                .filter(p -> status == null || status == p.getStatus())
-                .map(postMapper::toDto)
-                .peek(this::enrichVoteCounts)
-                .collect(Collectors.toList());
-        enrichMyVotes(list, voterId);
-        return list;
-    }
-
-    private void enrichVoteCounts(PostDTO dto) {
-        if (dto == null || dto.getId() == null) {
-            return;
+    public List<PostResponse> listPosts(Long communityId, PostStatus status, Long voterId) {
+        List<Post> posts;
+        if (communityId != null && status != null) {
+            posts = postRepository.findByCommunity_IdAndStatusOrderByIdDesc(communityId, status);
+        } else if (communityId != null) {
+            posts = postRepository.findByCommunity_IdOrderByIdDesc(communityId);
+        } else if (status != null) {
+            posts = postRepository.findByStatus(status);
+        } else {
+            posts = postRepository.findAll();
         }
-        long up = voteRepository.countByPost_IdAndType(dto.getId(), VoteType.UP);
-        long down = voteRepository.countByPost_IdAndType(dto.getId(), VoteType.DOWN);
-        dto.setUpvoteCount((int) Math.min(up, Integer.MAX_VALUE));
-        dto.setDownvoteCount((int) Math.min(down, Integer.MAX_VALUE));
-    }
 
-    private void enrichMyVote(PostDTO dto, Long voterId) {
-        if (dto == null || dto.getId() == null || voterId == null) {
-            return;
+        List<PostResponse> responses = new ArrayList<>(posts.size());
+        for (Post post : posts) {
+            responses.add(toPostResponse(post, null));
         }
-        voteRepository.findByPost_IdAndUserId(dto.getId(), voterId).ifPresent(v -> dto.setMyVote(v.getType()));
+        enrichMyVotes(responses, voterId);
+        return responses;
     }
 
-    private void enrichMyVotes(List<PostDTO> dtos, Long voterId) {
+    private PostResponse toPostResponse(Post post, Long voterId) {
+        long up = voteRepository.countByPost_IdAndType(post.getId(), VoteType.UP);
+        long down = voteRepository.countByPost_IdAndType(post.getId(), VoteType.DOWN);
+
+        PostResponse response = PostResponse.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .createdBy(post.getCreatedBy())
+                .communityId(post.getCommunity() != null ? post.getCommunity().getId() : null)
+                .status(post.getStatus())
+                .reportCount(post.getReportCount())
+                .upvoteCount(up)
+                .downvoteCount(down)
+                .build();
+
+        if (voterId != null) {
+            voteRepository.findByPost_IdAndUserId(post.getId(), voterId).ifPresent(v -> response.setMyVote(v.getType()));
+        }
+        return response;
+    }
+
+    private void enrichMyVotes(List<PostResponse> dtos, Long voterId) {
         if (voterId == null || dtos == null || dtos.isEmpty()) {
             return;
         }
         List<Long> ids = dtos.stream()
-                .map(PostDTO::getId)
+                .map(PostResponse::getId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
@@ -140,7 +158,7 @@ public class PostServiceImpl implements PostService {
         List<Vote> votes = voteRepository.findByUserIdAndPost_IdIn(voterId, ids);
         Map<Long, VoteType> byPostId =
                 votes.stream().collect(Collectors.toMap(v -> v.getPost().getId(), Vote::getType, (a, b) -> a));
-        for (PostDTO dto : dtos) {
+        for (PostResponse dto : dtos) {
             if (dto.getId() != null && byPostId.containsKey(dto.getId())) {
                 dto.setMyVote(byPostId.get(dto.getId()));
             }

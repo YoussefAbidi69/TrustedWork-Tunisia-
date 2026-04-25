@@ -5,11 +5,15 @@ import { map, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   Certificate,
+  Comment,
   Course,
   Lesson,
   Post,
   Progress,
-  Section
+  Report,
+  Section,
+  Vote,
+  VoteType
 } from '../models/community.model';
 import { courseDownloadFilename, triggerBlobDownload } from '../utils/file-download.util';
 
@@ -27,6 +31,13 @@ export class CourseService {
       .set('communityId', String(communityId))
       .set('publishedOnly', publishedOnly ? 'true' : 'false');
     return this.http.get<Course[]>(`${this.baseUrl}/courses`, { params });
+  }
+
+  /** All courses authored by a specific user. */
+  getMyCourses(userId: number): Observable<Course[]> {
+    return this.http.get<Course[]>(`${this.baseUrl}/courses`).pipe(
+      map(courses => courses.filter(course => course.authorId === userId))
+    );
   }
 
   createCourse(payload: Partial<Course>): Observable<Course> {
@@ -117,5 +128,44 @@ export class CourseService {
 
   getQuiz(lessonContent: string): Observable<unknown[]> {
     return this.http.post<unknown[]>(`${this.baseUrl}/ai/quiz`, { lessonContent });
+  }
+
+  // Course Comments
+  getComments(courseId: number): Observable<Comment[]> {
+    return this.http.get<Comment[]>(`${this.baseUrl}/course-comments/course/${courseId}`);
+  }
+
+  addComment(courseId: number, content: string, userId: number): Observable<Comment> {
+    return this.http.post<Comment>(`${this.baseUrl}/course-comments/course/${courseId}`, {
+      content,
+      userId
+    });
+  }
+
+  // Course Votes
+  vote(courseId: number, type: VoteType, userId: number): Observable<Vote> {
+    return this.http.post<Vote>(`${this.baseUrl}/course-votes/course/${courseId}`, {
+      userId,
+      type
+    });
+  }
+
+  // Course Reports
+  report(
+    courseId: number,
+    reason: string,
+    description: string,
+    reportedBy: number
+  ): Observable<Report> {
+    const params = new HttpParams()
+      .set('reportedBy', String(reportedBy))
+      .set('courseId', String(courseId))
+      .set('reason', reason)
+      .set('description', description);
+    return this.http.post<Report>(`${this.baseUrl}/course-reports/course/${courseId}`, {
+      reportedBy,
+      reason,
+      description
+    });
   }
 }

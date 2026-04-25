@@ -1,14 +1,22 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { switchMap, map, catchError } from 'rxjs/operators';
+
+import { Course, Section, Lesson, Comment, Vote, VoteType } from '../../../core/models/community.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { CourseService } from '../../../core/services/course.service';
-import { Course, Lesson, Progress, Section } from '../../../core/models/community.model';
+import { messageFromApiHttpError } from '../../../core/utils/api-error-message.util';
+import {
+  courseDownloadFilename,
+  triggerBlobDownload
+} from '../../../core/utils/file-download.util';
 
-interface LessonRow {
-  lesson: Lesson;
-  sectionTitle: string;
+export interface CourseNode {
+  section: Section;
+  lessons: Lesson[];
+  expanded?: boolean;
 }
 
 @Component({
@@ -18,131 +26,197 @@ interface LessonRow {
 })
 export class CourseDetailComponent implements OnInit {
   course: Course | null = null;
-  sections: Section[] = [];
-  lessonRows: LessonRow[] = [];
-  progressMap = new Map<number, Progress>();
+  curriculum: CourseNode[] = [];
+  comments: Comment[] = [];
+  
   loading = true;
   error = '';
-  userId: number | null = null;
-  courseId: number | null = null;
+  downloadBusy = false;
+  downloadError = '';
+  commentsLoading = false;
+  commentText = '';
+  reportOpen = false;
+  reportReason = '';
+  reportDescription = '';
+  reportSubmitted = false;
+
+  readonly VoteType = VoteType;
+
+  private courseId: number | null = null;
+  private readonly autoDownload: boolean;
 
   constructor(
     public route: ActivatedRoute,
+    private router: Router,
     private authService: AuthService,
     private courseService: CourseService
-  ) {}
+  ) {
+    const routePath = this.route.snapshot.routeConfig?.path ?? '';
+    this.autoDownload = routePath.endsWith('download');
+  }
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
-    const id = idParam ? Number(idParam) : NaN;
-    if (Number.isNaN(id)) {
-      this.error = 'Cours introuvable.';
+    const parsed = idParam ? Number(idParam) : NaN;
+    if (!Number.isFinite(parsed)) {
+      this.error = 'Course not found.';
       this.loading = false;
       return;
     }
-    this.courseId = id;
-    const authUser = this.authService.getCurrentAuthUser();
-    this.userId = authUser?.userId ?? null;
 
-    this.courseService      .getCourse(id)
-      .pipe(
-        catchError(() => of(null as Course | null)),
-        switchMap((course) => {
-          this.course = course;
-          if (!course) return of(null);
-          return this.courseService.getSections(id).pipe(
-            catchError(() => of([] as Section[])),
-            switchMap((sections) => {
-              this.sections = [...sections].sort(
-                (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
-              );
-              if (this.sections.length === 0) return of([]);
-              return forkJoin(
-                this.sections.map((s) =>
-                  this.courseService.getLessons(s.id).pipe(
-                    map((lessons) => ({ section: s, lessons })),
-                    catchError(() => of({ section: s, lessons: [] as Lesson[] }))
-                  )
-                )
-              );
-            })
-          );
-        })
-      )
-      .subscribe({
-        next: (result) => {
-          if (result === null) {
-            this.error = 'Course not found.';
-            this.loading = false;
-            return;
-          }
-          const rows: LessonRow[] = [];
-          for (const block of result) {
-            const sorted = [...block.lessons].sort(
-              (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
-            );
-            for (const lesson of sorted) {
-              rows.push({ lesson, sectionTitle: block.section.title });
+    this.courseId = parsed;
+
+    // Load Course -> Sections -> Lessons recursively
+    this.courseService.getCourse(parsed).pipe(
+      switchMap((course) => {
+        this.course = course;
+        return this.courseService.getSections(course.id).pipe(
+          switchMap((sections) => {
+            if (!sections || sections.length === 0) {
+              return of([]);
             }
-          }
-          this.lessonRows = rows;
-          this.loadProgressForLessons();
-        },
-        error: () => {
-          this.error = 'Impossible de charger le cours.';
-          this.loading = false;
-        }
-      });
-  }
-
-  private loadProgressForLessons(): void {
-    const uid = this.userId;
-    if (uid == null || this.lessonRows.length === 0) {
-      this.loading = false;
-      return;
-    }
-    forkJoin(
-      this.lessonRows.map((row) =>
-        this.courseService.getProgress(uid, row.lesson.id).pipe(
-          catchError(() => of(null as Progress | null))
-        )
-      )
+            // Fetch lessons for each section
+            const lessonRequests = sections.map(sec => 
+              this.courseService.getLessons(sec.id).pipe(
+                map(lessons => ({ section: sec, lessons: lessons, expanded: true } as CourseNode)),
+                catchError(() => of({ section: sec, lessons: [], expanded: false } as CourseNode))
+              )
+            );
+            return forkJoin(lessonRequests);
+          }),
+          catchError(() => of([]))
+        );
+      })
     ).subscribe({
-      next: (progressList) => {
-        progressList.forEach((p, i) => {
-          const lid = this.lessonRows[i].lesson.id;
-          if (p) this.progressMap.set(lid, p);
-        });
+      next: (fullCurriculum) => {
+        // Sort sections just in case
+        this.curriculum = fullCurriculum.sort((a, b) => a.section.orderIndex - b.section.orderIndex);
         this.loading = false;
+        
+        if (this.autoDownload) {
+          this.downloadCourse();
+        }
+        
+        // Load engagement features
+        if (this.courseId) {
+          this.loadComments();
+        }
       },
       error: () => {
+        this.error = 'Unable to load this course right now.';
         this.loading = false;
       }
     });
   }
 
-  get totalLessons(): number {
-    return this.lessonRows.length;
+  toggleSection(node: CourseNode) {
+    node.expanded = !node.expanded;
   }
 
-  get completedCount(): number {
-    return this.lessonRows.filter(
-      (r) => this.progressMap.get(r.lesson.id)?.completed === true
-    ).length;
+  getLessonIcon(type: string): string {
+    switch (type) {
+        case 'VIDEO': return 'fa-video';
+        case 'PDF': return 'fa-file-pdf';
+        case 'CODE': return 'fa-code';
+        case 'QUIZ': return 'fa-question-circle';
+        default: return 'fa-file-alt';
+    }
   }
 
-  get canCertificate(): boolean {
-    return this.totalLessons > 0 && this.completedCount === this.totalLessons;
+  downloadCourse(): void {
+    if (!this.course || this.downloadBusy) {
+      return;
+    }
+    const uid = this.authService.getCurrentAuthUser()?.userId;
+    if (uid == null) {
+      void this.router.navigate(['/auth/login'], { queryParams: { returnUrl: this.router.url } });
+      return;
+    }
+
+    this.downloadBusy = true;
+    this.downloadError = '';
+    this.courseService.downloadCourse(this.course.id, uid).subscribe({
+      next: (blob) => {
+        triggerBlobDownload(blob, courseDownloadFilename(this.course!.id, blob));
+        this.downloadBusy = false;
+      },
+      error: (err: HttpErrorResponse) => {
+        this.downloadBusy = false;
+        void (async () => {
+          const serverMsg = await messageFromApiHttpError(err);
+          this.downloadError = serverMsg ?? 'Download failed. Please try again.';
+        })();
+      }
+    });
   }
 
-  issueCertificate(): void {
-    const uid = this.userId;
-    const cid = this.courseId;
-    if (uid == null || cid == null) return;
-    this.courseService.issueCertificate(uid, cid).subscribe();
+  get downloadRoute(): string[] {
+    if (this.courseId == null) {
+      return ['/community'];
+    }
+    return ['/community', 'course', String(this.courseId), 'download'];
   }
 
-  lessonsForSection(section: Section): LessonRow[] {
-    return this.lessonRows.filter((r) => r.lesson.sectionId === section.id);
+  // Course Engagement Features
+  loadComments(): void {
+    if (!this.courseId) return;
+    this.commentsLoading = true;
+    this.courseService.getComments(this.courseId).subscribe({
+      next: (comments) => {
+        this.comments = comments;
+        this.commentsLoading = false;
+      },
+      error: () => {
+        this.commentsLoading = false;
+      }
+    });
+  }
+
+  addComment(): void {
+    const userId = this.authService.getCurrentAuthUser()?.userId;
+    const content = this.commentText.trim();
+    
+    if (!this.courseId || !userId || !content) return;
+    
+    this.courseService.addComment(this.courseId, content, userId).subscribe({
+      next: (comment) => {
+        this.comments.push(comment);
+        this.commentText = '';
+      }
+    });
+  }
+
+  vote(type: VoteType): void {
+    const userId = this.authService.getCurrentAuthUser()?.userId;
+    if (!this.courseId || !userId) return;
+    
+    this.courseService.vote(this.courseId, type, userId).subscribe({
+      next: () => {
+        // Vote successful
+      }
+    });
+  }
+
+  toggleReport(): void {
+    this.reportOpen = !this.reportOpen;
+  }
+
+  submitReport(): void {
+    const reason = this.reportReason.trim();
+    const description = this.reportDescription.trim();
+    const userId = this.authService.getCurrentAuthUser()?.userId;
+    
+    if (!this.courseId || !reason || !description || !userId) return;
+    
+    this.courseService.report(this.courseId, reason, description, userId).subscribe({
+      next: () => {
+        this.reportSubmitted = true;
+        this.reportOpen = false;
+      }
+    });
+  }
+
+  cancelReport(): void {
+    this.reportOpen = false;
   }
 }

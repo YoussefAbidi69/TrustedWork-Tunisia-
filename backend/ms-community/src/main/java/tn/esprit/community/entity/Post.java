@@ -21,7 +21,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import tn.esprit.community.entity.Enum.PostStatus;
-import tn.esprit.community.entity.Enum.PostType;
 
 @Entity
 @Data
@@ -42,14 +41,10 @@ public class Post {
 
     private String content;
 
-    @Enumerated(EnumType.STRING)
-    private PostType type;
 
-    private String mediaUrl;
 
     /** PDF or CDN link; long URLs (e.g. signed FilePost links) exceed default VARCHAR(255). */
-    @Column(length = 2048)
-    private String fileUrl;
+
     private Long createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -61,8 +56,7 @@ public class Post {
     @Enumerated(EnumType.STRING)
     private PostStatus status;
 
-    private boolean isAiGenerated;
-    private boolean isValidated;
+
     private int reportCount;
 
     @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   Comment,
@@ -123,11 +123,20 @@ export class PostService {
   }
 
   vote(postId: number, type: VoteType, userId: number): Observable<Vote> {
-    const params = new HttpParams()
-      .set('postId', String(postId))
-      .set('type', type)
-      .set('userId', String(userId));
-    return this.http.post<Vote>(`${this.baseUrl}/votes`, null, { params });
+    return this.http
+      .post<Vote>(`${this.baseUrl}/votes/post/${postId}`, {
+        userId,
+        type
+      })
+      .pipe(
+        catchError(() => {
+          const params = new HttpParams()
+            .set('postId', String(postId))
+            .set('type', type)
+            .set('userId', String(userId));
+          return this.http.post<Vote>(`${this.baseUrl}/votes`, null, { params });
+        })
+      );
   }
 
   report(

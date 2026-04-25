@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tn.esprit.community.service.CommentService;
-import tn.esprit.community.dto.CommentDTO;
+import tn.esprit.community.dto.request.CommentRequest;
+import tn.esprit.community.dto.response.CommentResponse;
 
 @RestController
 @RequestMapping("/api/comments")
@@ -22,14 +23,28 @@ public class CommentController {
     }
 
     @PostMapping("/post/{postId}")
-    public ResponseEntity<CommentDTO> addComment(@PathVariable Long postId, @RequestBody CommentDTO commentDTO) {
-        CommentDTO addedComment = commentService.addComment(postId, commentDTO);
+    public ResponseEntity<CommentResponse> addComment(
+            @PathVariable Long postId, @RequestBody CommentRequest commentRequest) {
+        CommentResponse addedComment = commentService.addComment(postId, commentRequest);
         return new ResponseEntity<>(addedComment, HttpStatus.CREATED);
     }
 
     @GetMapping("/post/{postId}")
-    public ResponseEntity<List<CommentDTO>> listComments(@PathVariable Long postId) {
-        List<CommentDTO> comments = commentService.listComments(postId);
+    public ResponseEntity<List<CommentResponse>> listComments(@PathVariable Long postId) {
+        List<CommentResponse> comments = commentService.listComments(postId);
+        return new ResponseEntity<>(comments, HttpStatus.OK);
+    }
+
+    @PostMapping("/course/{courseId}")
+    public ResponseEntity<CommentResponse> addCommentToCourse(
+            @PathVariable Long courseId, @RequestBody CommentRequest commentRequest) {
+        CommentResponse addedComment = commentService.addCommentToCourse(courseId, commentRequest);
+        return new ResponseEntity<>(addedComment, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/course/{courseId}")
+    public ResponseEntity<List<CommentResponse>> listCommentsByCourse(@PathVariable Long courseId) {
+        List<CommentResponse> comments = commentService.listCommentsByCourse(courseId);
         return new ResponseEntity<>(comments, HttpStatus.OK);
     }
 }

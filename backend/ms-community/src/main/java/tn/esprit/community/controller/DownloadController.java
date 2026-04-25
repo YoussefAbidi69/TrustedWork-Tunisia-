@@ -4,9 +4,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+import tn.esprit.community.dto.response.CourseDownloadResponse;
 import tn.esprit.community.service.DownloadService;
 
 @RestController
@@ -18,9 +17,8 @@ public class DownloadController {
         this.downloadService = downloadService;
     }
 
-    @GetMapping("/{postId}")
-    public ResponseEntity<StreamingResponseBody> download(
-            @PathVariable Long postId, @RequestParam Long userId) {
-        return downloadService.downloadCourse(userId, postId);
+    @GetMapping("/{courseId}")
+    public ResponseEntity<CourseDownloadResponse> download(@PathVariable Long courseId) {
+        return ResponseEntity.ok(downloadService.downloadCourse(courseId));
     }
 }

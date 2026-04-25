@@ -4,6 +4,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Post, PostStatus, PostType, VoteType } from '../../../core/models/community.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { CourseService } from '../../../core/services/course.service';
+import { CommunityFeedPostItem } from '../models/community-feed-item.model';
+
+type PostCardItem = Post | CommunityFeedPostItem;
 
 @Component({
   selector: 'app-post-card',
@@ -11,7 +14,7 @@ import { CourseService } from '../../../core/services/course.service';
   styleUrls: ['./post-card.component.css']
 })
 export class PostCardComponent {
-  @Input() post!: Post;
+  @Input() post!: PostCardItem;
   @Input() communityName = '';
   @Input() commentCount = 0;
   /** Community shell `ActivatedRoute` (parent of feed) for relative `posts/:id` links. */
@@ -36,12 +39,15 @@ export class PostCardComponent {
   }
 
   get showCourseDownload(): boolean {
-    return this.post.type === PostType.COURSE && this.post.status === PostStatus.PUBLISHED;
+    return this.isCoursePost(this.post) && this.post.status === PostStatus.PUBLISHED;
   }
 
   onDownloadCourse(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
+    if (!this.isCoursePost(this.post)) {
+      return;
+    }
     const uid = this.authService.getCurrentAuthUser()?.userId;
     if (uid == null) {
       void this.router.navigate(['/auth/login'], { queryParams: { returnUrl: this.router.url } });
@@ -67,5 +73,9 @@ export class PostCardComponent {
     const up = this.post.upvoteCount ?? 0;
     const down = this.post.downvoteCount ?? 0;
     return up - down;
+  }
+
+  private isCoursePost(post: PostCardItem): post is Post {
+    return post.type === PostType.COURSE;
   }
 }

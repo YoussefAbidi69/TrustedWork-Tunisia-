@@ -1,60 +1,110 @@
 package tn.esprit.community.service.impl;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
-import tn.esprit.community.dto.ReportDTO;
+import org.springframework.transaction.annotation.Transactional;
+import tn.esprit.community.dto.request.ReportRequest;
+import tn.esprit.community.dto.response.ReportResponse;
+import tn.esprit.community.entity.Post;
 import tn.esprit.community.entity.Report;
-import tn.esprit.community.exception.PostNotFoundException;
-import tn.esprit.community.mapper.ReportMapper;
+import tn.esprit.community.entity.Enum.PostStatus;
 import tn.esprit.community.entity.Enum.ReportStatus;
+import tn.esprit.community.exception.PostNotFoundException;
 import tn.esprit.community.repository.PostRepository;
 import tn.esprit.community.repository.ReportRepository;
 import tn.esprit.community.service.ReportService;
+
+import tn.esprit.community.repository.CourseRepository;
+import tn.esprit.community.entity.Course;
+import tn.esprit.community.exception.LearningNotFoundException;
 
 @Service
 public class ReportServiceImpl implements ReportService {
     private final ReportRepository reportRepository;
     private final PostRepository postRepository;
-    private final ReportMapper reportMapper;
+    private final CourseRepository courseRepository;
 
-    public ReportServiceImpl(
-            ReportRepository reportRepository, PostRepository postRepository, ReportMapper reportMapper) {
+    public ReportServiceImpl(ReportRepository reportRepository, PostRepository postRepository, CourseRepository courseRepository) {
         this.reportRepository = reportRepository;
         this.postRepository = postRepository;
-        this.reportMapper = reportMapper;
+        this.courseRepository = courseRepository;
     }
 
     @Override
-    public ReportDTO reportPost(Long reportedBy, Long postId, String reason, String description) {
-        if (postId == null) {
-            throw new PostNotFoundException("Post ID cannot be null");
-        }
+    @Transactional
+    public ReportResponse reportPost(Long postId, ReportRequest reportRequest) {
+        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not found"));
+
         Report report = Report.builder()
-                .post(postRepository.getReferenceById(postId))
-                .reportedBy(reportedBy)
-                .reason(reason)
-                .description(description)
+                .post(post)
+                .reportedBy(reportRequest.getReportedBy())
+                .reason(reportRequest.getReason())
+                .description(reportRequest.getDescription())
                 .status(ReportStatus.PENDING)
                 .build();
-        return reportMapper.toDto(reportRepository.save(report));
+
+        post.setReportCount(post.getReportCount() + 1);
+        if (post.getReportCount() >= 3) {
+            post.setStatus(PostStatus.HIDDEN);
+        }
+        postRepository.save(post);
+
+        return toResponse(reportRepository.save(report));
     }
 
     @Override
-    public ReportDTO adminRestorePost(Long postId) {
-        if (postId == null) {
-            throw new PostNotFoundException("Post ID cannot be null");
-        }
-        Report report = reportRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Report not found"));
-        report.setStatus(ReportStatus.REVIEWED);
-        return reportMapper.toDto(reportRepository.save(report));
+    public List<ReportResponse> listReportsByPost(Long postId) {
+        return reportRepository.findByPost_IdOrderByIdDesc(postId).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public ReportDTO adminRejectPost(Long postId) {
-        if (postId == null) {
-            throw new PostNotFoundException("Post ID cannot be null");
-        }
-        Report report = reportRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Report not found"));
-        report.setStatus(ReportStatus.REVIEWED);
-        return reportMapper.toDto(reportRepository.save(report));
+    @Transactional
+    public ReportResponse reportCourse(Long courseId, ReportRequest reportRequest) {
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new LearningNotFoundException("Course not found"));
+
+        Report report = Report.builder()
+                .course(course)
+                .reportedBy(reportRequest.getReportedBy())
+                .reason(reportRequest.getReason())
+                .description(reportRequest.getDescription())
+                .status(ReportStatus.PENDING)
+                .build();
+
+        // Course doesn't auto-hide like posts yet, we just record the report for admins
+        return toResponse(reportRepository.save(report));
+    }
+
+    @Override
+    public List<ReportResponse> listReportsByCourse(Long courseId) {
+        // Since we don't have findByCourse_IdOrderByIdDesc yet, let's use findAll and filter, or just use it assuming we'll add it
+        return reportRepository.findAll().stream()
+                .filter(r -> r.getCourse() != null && r.getCourse().getId().equals(courseId))
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public ReportResponse updateStatus(Long reportId, ReportStatus status) {
+        Report report = reportRepository
+                .findById(reportId)
+                .orElseThrow(() -> new PostNotFoundException("Report not found"));
+        report.setStatus(status);
+        return toResponse(reportRepository.save(report));
+    }
+
+    private ReportResponse toResponse(Report report) {
+        return ReportResponse.builder()
+                .id(report.getId())
+                .postId(report.getPost() != null ? report.getPost().getId() : null)
+                .courseId(report.getCourse() != null ? report.getCourse().getId() : null)
+                .reportedBy(report.getReportedBy())
+                .reason(report.getReason())
+                .description(report.getDescription())
+                .status(report.getStatus())
+                .build();
     }
 }

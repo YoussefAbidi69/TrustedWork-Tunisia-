@@ -1,8 +1,8 @@
 package tn.esprit.community.service;
 
 import java.util.List;
+import tn.esprit.community.dto.lms.BlockDTO;
 import tn.esprit.community.dto.lms.CourseDTO;
-import tn.esprit.community.dto.lms.LessonDTO;
 import tn.esprit.community.dto.lms.SectionDTO;
 
 public interface LearningCourseService {
@@ -23,11 +23,11 @@ public interface LearningCourseService {
 
     void deleteSection(Long sectionId);
 
-    List<LessonDTO> listLessons(Long sectionId);
+    List<BlockDTO> listBlocks(Long sectionId);
 
-    LessonDTO createLesson(Long sectionId, LessonDTO dto);
+    BlockDTO createBlock(Long sectionId, BlockDTO dto);
 
-    LessonDTO updateLesson(Long lessonId, LessonDTO dto);
+    BlockDTO updateBlock(Long blockId, BlockDTO dto);
 
-    void deleteLesson(Long lessonId);
+    void deleteBlock(Long blockId);
 }

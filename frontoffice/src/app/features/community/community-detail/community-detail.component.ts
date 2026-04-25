@@ -151,7 +151,7 @@ export class CommunityDetailComponent implements OnInit {
   }
 
   createPostLink(): string[] {
-    return this.communityId != null ? ['../posts', 'new'] : ['../browse'];
+    return this.communityId != null ? ['../post', 'new'] : ['../browse'];
   }
 
   createPostQueryParams(): Record<string, string> | null {

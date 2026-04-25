@@ -1,12 +1,39 @@
-@import '../community-layout-system.css';
+@import '../community-shared.css';
 
 :host {
   display: block;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-card);
+  background-color: var(--comm-bg-base);
 }
 
-.cm-comment-form {
+.comm-comment-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-base);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-base);
+}
+
+.form-actions button {
+  min-height: 40px;
+}
+
+@media (max-width: 768px) {
+  :host {
+    margin-bottom: var(--space-base);
+  }
+}
+
+@media (max-width: 375px) {
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
 }
