@@ -23,6 +23,7 @@ import tn.esprit.community.exception.PlagiarismException;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.beans.factory.annotation.Value;
 import java.util.Map;
+import tn.esprit.community.service.DiscordNotificationService;
 
 @Service
 @Transactional(readOnly = true)
@@ -33,18 +34,21 @@ public class CourseServiceImpl implements CourseService {
     private final SectionRepository sectionRepository;
     private final BlockRepository blockRepository;
     private final WebClient aiClient;
+    private final DiscordNotificationService discordNotificationService;
 
     public CourseServiceImpl(
             CourseRepository courseRepository,
             CommunityRepository communityRepository,
             SectionRepository sectionRepository,
             BlockRepository blockRepository,
-            @Value("${app.course-quality.base-url:http://localhost:5000}") String aiBaseUrl) {
+            @Value("${app.course-quality.base-url:http://localhost:5000}") String aiBaseUrl,
+            DiscordNotificationService discordNotificationService) {
         this.courseRepository = courseRepository;
         this.communityRepository = communityRepository;
         this.sectionRepository = sectionRepository;
         this.blockRepository = blockRepository;
         this.aiClient = WebClient.builder().baseUrl(aiBaseUrl).build();
+        this.discordNotificationService = discordNotificationService;
     }
 
     @Override
@@ -66,7 +70,11 @@ public class CourseServiceImpl implements CourseService {
                 .community(community)
                 .build();
 
-        return toCourseResponse(courseRepository.save(course));
+        CourseResponse response = toCourseResponse(courseRepository.save(course));
+        if (Boolean.TRUE.equals(course.isPublished())) {
+            discordNotificationService.notifyCoursePublished(response);
+        }
+        return response;
     }
 
     @Override
@@ -108,9 +116,11 @@ public class CourseServiceImpl implements CourseService {
         if (courseRequest.getAuthorId() != null) {
             course.setAuthorId(courseRequest.getAuthorId());
         }
+        boolean justPublished = false;
         if (courseRequest.getPublished() != null) {
             // If the user wants to publish the course, run plagiarism check
             if (Boolean.TRUE.equals(courseRequest.getPublished()) && !course.isPublished()) {
+                justPublished = true;
                 CourseDownloadResponse fullCourseData = downloadCourse(id);
                 try {
                     Map<String, Object> response = aiClient.post()
@@ -156,7 +166,11 @@ public class CourseServiceImpl implements CourseService {
             course.setCommunity(community);
         }
 
-        return toCourseResponse(courseRepository.save(course));
+        CourseResponse response = toCourseResponse(courseRepository.save(course));
+        if (justPublished) {
+            discordNotificationService.notifyCoursePublished(response);
+        }
+        return response;
     }
 
     @Override

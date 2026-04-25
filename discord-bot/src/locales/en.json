@@ -1,0 +1,14 @@
+{
+  "welcome": {
+    "title": "👋 Welcome to TrustedWork Community!",
+    "desc": "Hi {{name}}, we're excited to have you here! This server is your hub for connecting with peers, sharing knowledge, and leveling up your skills.",
+    "tour": "🗺️ Take the Tour"
+  },
+  "buttons": {
+    "read_post": "👁 Read Post",
+    "discuss": "💬 Discuss",
+    "upvote": "▲ Upvote",
+    "view_course": "▶️ View Course",
+    "syllabus": "📋 Syllabus"
+  }
+}

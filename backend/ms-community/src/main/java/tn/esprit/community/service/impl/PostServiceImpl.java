@@ -19,6 +19,7 @@ import tn.esprit.community.exception.PostNotFoundException;
 import tn.esprit.community.repository.CommunityRepository;
 import tn.esprit.community.repository.PostRepository;
 import tn.esprit.community.repository.VoteRepository;
+import tn.esprit.community.service.DiscordNotificationService;
 import tn.esprit.community.service.PostService;
 
 @Service
@@ -26,14 +27,17 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final CommunityRepository communityRepository;
     private final VoteRepository voteRepository;
+    private final DiscordNotificationService discordNotificationService;
 
     public PostServiceImpl(
             PostRepository postRepository,
             CommunityRepository communityRepository,
-            VoteRepository voteRepository) {
+            VoteRepository voteRepository,
+            DiscordNotificationService discordNotificationService) {
         this.postRepository = postRepository;
         this.communityRepository = communityRepository;
         this.voteRepository = voteRepository;
+        this.discordNotificationService = discordNotificationService;
     }
 
     @Override
@@ -51,7 +55,11 @@ public class PostServiceImpl implements PostService {
                 .reportCount(0)
                 .build();
 
-        return toPostResponse(postRepository.save(post), null);
+        PostResponse response = toPostResponse(postRepository.save(post), null);
+        if (post.getStatus() == PostStatus.PUBLISHED) {
+            discordNotificationService.notifyPostPublished(response);
+        }
+        return response;
     }
 
     @Override
@@ -87,7 +95,9 @@ public class PostServiceImpl implements PostService {
     public PostResponse publishPost(Long postId) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not found"));
         post.setStatus(PostStatus.PUBLISHED);
-        return toPostResponse(postRepository.save(post), null);
+        PostResponse response = toPostResponse(postRepository.save(post), null);
+        discordNotificationService.notifyPostPublished(response);
+        return response;
     }
 
     @Override
