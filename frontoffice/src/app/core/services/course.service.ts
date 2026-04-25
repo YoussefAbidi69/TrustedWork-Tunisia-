@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map, tap, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   Certificate,
@@ -77,11 +77,15 @@ export class CourseService {
   }
 
   getSections(courseId: number): Observable<Section[]> {
-    return this.http.get<Section[]>(`${this.baseUrl}/courses/${courseId}/sections`);
+    return this.http.get<Section[]>(`${this.baseUrl}/sections/course/${courseId}`).pipe(
+      catchError(() => this.http.get<Section[]>(`${this.baseUrl}/courses/${courseId}/sections`))
+    );
   }
 
   getLessons(sectionId: number): Observable<Lesson[]> {
-    return this.http.get<Lesson[]>(`${this.baseUrl}/sections/${sectionId}/lessons`);
+    return this.http.get<Lesson[]>(`${this.baseUrl}/blocks/section/${sectionId}`).pipe(
+      catchError(() => this.http.get<Lesson[]>(`${this.baseUrl}/sections/${sectionId}/lessons`))
+    );
   }
 
   getProgress(userId: number, lessonId: number): Observable<Progress> {

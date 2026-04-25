@@ -16,6 +16,7 @@ import { MyCoursesComponent } from './my-courses/my-courses.component';
 
 const communityChildRoutes: Routes = [
   { path: '', component: PostFeedComponent },
+  { path: 'post/new', component: PostCreateComponent, canActivate: [authGuard] },
   { path: 'post/:id', component: PostDetailComponent },
   { path: 'course/new', component: CourseCreateComponent, canActivate: [authGuard] },
   { path: 'my-courses', component: MyCoursesComponent, canActivate: [authGuard] },
@@ -24,7 +25,6 @@ const communityChildRoutes: Routes = [
   { path: 'contributions', component: ContributionComponent, canActivate: [authGuard] },
   { path: 'browse', component: CommunityListComponent },
   { path: 'create', component: CommunityCreateComponent, canActivate: [authGuard] },
-  { path: 'post/new', component: PostCreateComponent, canActivate: [authGuard] },
   /** Legacy aliases */
   { path: 'posts/new', redirectTo: 'post/new', pathMatch: 'full' },
   { path: 'posts/:id', redirectTo: 'post/:id', pathMatch: 'full' },

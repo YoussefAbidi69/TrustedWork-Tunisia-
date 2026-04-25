@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
 import { switchMap, map, catchError } from 'rxjs/operators';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 import { Course, Section, Lesson, Comment, Vote, VoteType } from '../../../core/models/community.model';
 import { AuthService } from '../../../core/services/auth.service';
@@ -49,7 +50,8 @@ export class CourseDetailComponent implements OnInit {
     public route: ActivatedRoute,
     private router: Router,
     private authService: AuthService,
-    private courseService: CourseService
+    private courseService: CourseService,
+    private sanitizer: DomSanitizer
   ) {
     const routePath = this.route.snapshot.routeConfig?.path ?? '';
     this.autoDownload = routePath.endsWith('download');
@@ -78,7 +80,21 @@ export class CourseDetailComponent implements OnInit {
             // Fetch lessons for each section
             const lessonRequests = sections.map(sec => 
               this.courseService.getLessons(sec.id).pipe(
-                map(lessons => ({ section: sec, lessons: lessons, expanded: true } as CourseNode)),
+                map(lessons => {
+                  lessons.forEach(l => {
+                    if (l.type === 'QUIZ') {
+                      try {
+                        const parsed = JSON.parse(l.content);
+                        (l as any).parsedQuiz = parsed;
+                        (l as any).quizState = { selectedOptionIndex: -1, showAnswer: false };
+                      } catch {
+                        (l as any).parsedQuiz = { question: 'Invalid quiz format', options: [] };
+                        (l as any).quizState = { selectedOptionIndex: -1, showAnswer: false };
+                      }
+                    }
+                  });
+                  return { section: sec, lessons: lessons, expanded: true } as CourseNode;
+                }),
                 catchError(() => of({ section: sec, lessons: [], expanded: false } as CourseNode))
               )
             );
@@ -113,6 +129,11 @@ export class CourseDetailComponent implements OnInit {
     node.expanded = !node.expanded;
   }
 
+  getSafeUrl(url: string | undefined): SafeResourceUrl | null {
+    if (!url) return null;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+
   getLessonIcon(type: string): string {
     switch (type) {
         case 'VIDEO': return 'fa-video';
@@ -122,6 +143,18 @@ export class CourseDetailComponent implements OnInit {
         default: return 'fa-file-alt';
     }
   }
+
+  selectQuizOption(lesson: any, optIdx: number): void {
+    if (lesson.quizState.showAnswer) return;
+    lesson.quizState.selectedOptionIndex = optIdx;
+  }
+
+  checkQuizAnswer(lesson: any): void {
+    if (lesson.quizState.selectedOptionIndex >= 0) {
+      lesson.quizState.showAnswer = true;
+    }
+  }
+
 
   downloadCourse(): void {
     if (!this.course || this.downloadBusy) {

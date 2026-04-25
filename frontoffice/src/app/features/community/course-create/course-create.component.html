@@ -161,20 +161,30 @@
               <div *ngSwitchCase="'VIDEO'" class="cs-type-media floating-card">
                  <div class="media-input-row">
                    <div class="media-icon bg-red"><i class="fas fa-play"></i></div>
-                   <input type="text" [(ngModel)]="block.fileUrl" placeholder="Enter YouTube or Vimeo URL..." class="cs-borderless-input">
+                   <input type="file" #fileInput (change)="onBlockFileSelected($event, block)" accept="video/*" style="display: none;">
+                   <button class="cs-btn cs-btn-upload" (click)="fileInput.click()" [disabled]="block.uploadingFile">
+                     <i class="fas" [ngClass]="block.uploadingFile ? 'fa-spinner fa-spin' : 'fa-upload'"></i> 
+                     {{ block.uploadingFile ? 'Uploading...' : (block.fileUrl ? 'Replace Video' : 'Upload Video File') }}
+                   </button>
+                   <span class="cs-upload-error" *ngIf="block.uploadError">{{ block.uploadError }}</span>
                  </div>
-                 <div class="cs-media-preview video-gradient" *ngIf="block.fileUrl">
+                 <div class="cs-media-preview video-gradient" *ngIf="block.fileUrl && !block.uploadingFile">
                     <div class="play-btn-glow"><i class="fas fa-play"></i></div>
-                    <span>{{ block.fileUrl }}</span>
+                    <span>{{ block.fileUrl.split('/').pop() }}</span>
                  </div>
               </div>
 
               <div *ngSwitchCase="'IMAGE'" class="cs-type-media floating-card">
                  <div class="media-input-row">
                    <div class="media-icon bg-blue"><i class="fas fa-image"></i></div>
-                   <input type="text" [(ngModel)]="block.fileUrl" placeholder="Enter image URL..." class="cs-borderless-input">
+                   <input type="file" #fileInputImg (change)="onBlockFileSelected($event, block)" accept="image/*" style="display: none;">
+                   <button class="cs-btn cs-btn-upload" (click)="fileInputImg.click()" [disabled]="block.uploadingFile">
+                     <i class="fas" [ngClass]="block.uploadingFile ? 'fa-spinner fa-spin' : 'fa-upload'"></i> 
+                     {{ block.uploadingFile ? 'Uploading...' : (block.fileUrl ? 'Replace Image' : 'Upload Image File') }}
+                   </button>
+                   <span class="cs-upload-error" *ngIf="block.uploadError">{{ block.uploadError }}</span>
                  </div>
-                 <div class="cs-media-preview image-container" *ngIf="block.fileUrl">
+                 <div class="cs-media-preview image-container" *ngIf="block.fileUrl && !block.uploadingFile">
                     <img [src]="block.fileUrl" onerror="this.style.display='none'">
                  </div>
               </div>
@@ -182,9 +192,14 @@
               <div *ngSwitchCase="'PDF'" class="cs-type-media floating-card">
                  <div class="media-input-row">
                    <div class="media-icon bg-orange"><i class="fas fa-file-pdf"></i></div>
-                   <input type="text" [(ngModel)]="block.fileUrl" placeholder="Enter PDF document URL..." class="cs-borderless-input">
+                   <input type="file" #fileInputPdf (change)="onBlockFileSelected($event, block)" accept="application/pdf" style="display: none;">
+                   <button class="cs-btn cs-btn-upload" (click)="fileInputPdf.click()" [disabled]="block.uploadingFile">
+                     <i class="fas" [ngClass]="block.uploadingFile ? 'fa-spinner fa-spin' : 'fa-upload'"></i> 
+                     {{ block.uploadingFile ? 'Uploading...' : (block.fileUrl ? 'Replace PDF' : 'Upload PDF Document') }}
+                   </button>
+                   <span class="cs-upload-error" *ngIf="block.uploadError">{{ block.uploadError }}</span>
                  </div>
-                 <div class="cs-media-preview pdf-minimal" *ngIf="block.fileUrl">
+                 <div class="cs-media-preview pdf-minimal" *ngIf="block.fileUrl && !block.uploadingFile">
                     <i class="fas fa-file-pdf"></i> Document Attached: {{ block.fileUrl.split('/').pop() }}
                  </div>
               </div>

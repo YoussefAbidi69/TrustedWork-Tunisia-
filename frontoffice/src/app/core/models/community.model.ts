@@ -24,7 +24,9 @@ export enum LessonType {
   TEXT = 'TEXT',
   VIDEO = 'VIDEO',
   PDF = 'PDF',
-  QUIZ = 'QUIZ'
+  QUIZ = 'QUIZ',
+  CODE = 'CODE',
+  IMAGE = 'IMAGE'
 }
 
 export interface Community {
@@ -108,9 +110,10 @@ export interface Lesson {
   title: string;
   content: string;
   type: LessonType;
-  videoUrl: string;
-  pdfUrl: string;
+  fileUrl?: string;
   orderIndex: number;
+  parsedQuiz?: any;
+  quizState?: any;
 }
 
 export interface Progress {

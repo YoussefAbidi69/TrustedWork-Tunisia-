@@ -32,12 +32,17 @@ public class CourseFileStorageService {
         if (storedName.contains("..") || storedName.indexOf('/') >= 0 || storedName.indexOf('\\') >= 0) {
             return null;
         }
-        if (!storedName.toLowerCase().endsWith(".pdf")) {
+        
+        String lower = storedName.toLowerCase();
+        if (!lower.endsWith(".pdf") && !lower.endsWith(".png") && !lower.endsWith(".jpg") 
+            && !lower.endsWith(".jpeg") && !lower.endsWith(".gif") && !lower.endsWith(".mp4") 
+            && !lower.endsWith(".webm")) {
             return null;
         }
+        
         boolean uuidForm = storedName.matches(
-                "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}\\.pdf$");
-        boolean legacyBasename = storedName.matches("^[a-zA-Z0-9._-]{1,200}\\.pdf$");
+                "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}\\.[a-z0-9]+$");
+        boolean legacyBasename = storedName.matches("^[a-zA-Z0-9._-]{1,200}\\.[a-z0-9]+$");
         if (!uuidForm && !legacyBasename) {
             return null;
         }
@@ -49,43 +54,58 @@ public class CourseFileStorageService {
     }
 
     /**
-     * Validates PDF extension and magic bytes (shared with remote upload providers).
+     * Validates media extension and content (shared with remote upload providers).
      */
-    public void validatePdfForUpload(MultipartFile file) throws IOException {
+    public void validateMediaForUpload(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new ValidationException("File is required");
         }
-        validatePdfContent(
+        validateMediaContent(
                 file.getBytes(),
                 file.getOriginalFilename() != null ? file.getOriginalFilename() : "");
     }
 
-    public void validatePdfContent(byte[] content, String originalFilename) {
+    public void validateMediaContent(byte[] content, String originalFilename) {
         String original = originalFilename != null ? originalFilename : "";
         if (content == null || content.length == 0) {
             throw new ValidationException("File is required");
         }
-        if (!original.toLowerCase().endsWith(".pdf")) {
-            throw new ValidationException("Only PDF files are accepted");
+        
+        String lower = original.toLowerCase();
+        if (!lower.endsWith(".pdf") && !lower.endsWith(".png") && !lower.endsWith(".jpg") 
+            && !lower.endsWith(".jpeg") && !lower.endsWith(".gif") && !lower.endsWith(".mp4") 
+            && !lower.endsWith(".webm")) {
+            throw new ValidationException("Only PDF, images, and videos are accepted");
         }
-        if (content.length < 4
-                || content[0] != '%'
-                || content[1] != 'P'
-                || content[2] != 'D'
-                || content[3] != 'F') {
-            throw new ValidationException("File is not a valid PDF");
+        
+        if (lower.endsWith(".pdf")) {
+            if (content.length < 4
+                    || content[0] != '%'
+                    || content[1] != 'P'
+                    || content[2] != 'D'
+                    || content[3] != 'F') {
+                throw new ValidationException("File is not a valid PDF");
+            }
         }
     }
 
     /**
-     * Saves a PDF and returns the absolute HTTP URL to store in {@code Post.fileUrl}.
+     * Saves a file and returns the absolute HTTP URL to store in {@code Post.fileUrl}.
      */
-    public String storePdf(MultipartFile file) throws IOException {
+    public String storeFile(MultipartFile file) throws IOException {
         byte[] content = file.getBytes();
-        validatePdfContent(
-                content,
-                file.getOriginalFilename() != null ? file.getOriginalFilename() : "");
-        String stored = UUID.randomUUID() + ".pdf";
+        String originalName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "";
+        validateMediaContent(content, originalName);
+        
+        String ext = "";
+        int i = originalName.lastIndexOf('.');
+        if (i > 0) {
+            ext = originalName.substring(i);
+        } else {
+            ext = ".bin";
+        }
+        
+        String stored = UUID.randomUUID() + ext;
         Path target = uploadDirectory.resolve(stored);
         Files.write(target, content);
         return externalApiBaseUrl + "/api/course-files/" + stored;

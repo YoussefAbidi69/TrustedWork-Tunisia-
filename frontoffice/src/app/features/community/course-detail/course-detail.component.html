@@ -64,16 +64,79 @@
                 <li *ngIf="node.lessons.length === 0" class="cs-lesson-empty">No content in this section.</li>
                 
                 <li *ngFor="let lesson of node.lessons" class="cs-lesson-item">
-                  <div class="cs-lesson-icon">
-                     <i class="fas" [ngClass]="getLessonIcon(lesson.type)"></i>
+                  <div class="cs-lesson-row">
+                    <div class="cs-lesson-icon">
+                       <i class="fas" [ngClass]="getLessonIcon(lesson.type)"></i>
+                    </div>
+                    <div class="cs-lesson-details">
+                      <span class="cs-lesson-title">{{ lesson.title || 'Lesson Item' }}</span>
+                      <span class="cs-lesson-type">{{ lesson.type }}</span>
+                    </div>
                   </div>
-                  <div class="cs-lesson-details">
-                    <span class="cs-lesson-title">{{ lesson.title || 'Lesson Item' }}</span>
-                    <span class="cs-lesson-type">{{ lesson.type }}</span>
+                  <!-- Block Content -->
+                  <div class="cs-lesson-content" *ngIf="lesson.content || lesson.fileUrl">
+                    <!-- TEXT -->
+                    <div *ngIf="lesson.type === 'TEXT'" class="cs-content-text">{{ lesson.content }}</div>
+                    <!-- CODE -->
+                    <pre *ngIf="lesson.type === 'CODE'" class="cs-content-code"><code>{{ lesson.content }}</code></pre>
+                    <!-- VIDEO -->
+                    <div *ngIf="lesson.type === 'VIDEO'" class="cs-content-media">
+                      <video *ngIf="lesson.fileUrl" [src]="lesson.fileUrl" controls class="cs-media-player"></video>
+                      <p *ngIf="lesson.content" class="cs-content-text">{{ lesson.content }}</p>
+                    </div>
+                    <!-- IMAGE -->
+                    <div *ngIf="lesson.type === 'IMAGE'" class="cs-content-media">
+                      <img *ngIf="lesson.fileUrl" [src]="lesson.fileUrl" alt="Lesson image" class="cs-content-image" />
+                      <p *ngIf="lesson.content" class="cs-content-text">{{ lesson.content }}</p>
+                    </div>
+                    <!-- PDF -->
+                    <div *ngIf="lesson.type === 'PDF'" class="cs-content-media">
+                      <object *ngIf="lesson.fileUrl" [data]="getSafeUrl(lesson.fileUrl)" type="application/pdf" class="cs-pdf-viewer">
+                        <p>Your browser does not support PDFs. <a [href]="lesson.fileUrl" target="_blank" rel="noopener">Download the PDF</a>.</p>
+                      </object>
+                      <p *ngIf="lesson.content" class="cs-content-text mt-3">{{ lesson.content }}</p>
+                    </div>
+                    <!-- QUIZ -->
+                    <div *ngIf="lesson.type === 'QUIZ'" class="cs-content-quiz relative-overflow">
+                      <div class="quiz-decorator"></div>
+                      <div class="cs-quiz-question">
+                        <i class="fas fa-question-circle"></i> {{ lesson['parsedQuiz']?.question || 'Untitled Quiz' }}
+                      </div>
+                      <ul class="cs-quiz-options-list">
+                        <li *ngFor="let option of lesson['parsedQuiz']?.options; let optIdx = index" 
+                            class="cs-quiz-option-item"
+                            [ngClass]="{
+                              'selected': lesson['quizState'].selectedOptionIndex === optIdx,
+                              'correct': lesson['quizState'].showAnswer && option.correct,
+                              'incorrect': lesson['quizState'].showAnswer && lesson['quizState'].selectedOptionIndex === optIdx && !option.correct
+                            }"
+                            (click)="selectQuizOption(lesson, optIdx)">
+                          <label class="custom-radio">
+                            <input type="radio" name="quiz-{{lesson.id}}" 
+                                   [checked]="lesson['quizState'].selectedOptionIndex === optIdx"
+                                   [disabled]="lesson['quizState'].showAnswer">
+                            <span class="radio-mark">
+                              <i *ngIf="lesson['quizState'].showAnswer && option.correct" class="fas fa-check result-icon"></i>
+                              <i *ngIf="lesson['quizState'].showAnswer && lesson['quizState'].selectedOptionIndex === optIdx && !option.correct" class="fas fa-times result-icon"></i>
+                            </span>
+                            <span class="cs-option-text">{{ option.text }}</span>
+                          </label>
+                        </li>
+                      </ul>
+                      <div class="cs-quiz-actions">
+                        <button class="cs-btn cs-btn-gradient mt-3" 
+                                (click)="checkQuizAnswer(lesson)"
+                                [disabled]="lesson['quizState'].selectedOptionIndex < 0 || lesson['quizState'].showAnswer">
+                          Check Answer
+                        </button>
+                        <div *ngIf="lesson['quizState'].showAnswer" class="cs-quiz-feedback mt-3" 
+                             [ngClass]="{'success': lesson['parsedQuiz']?.options[lesson['quizState'].selectedOptionIndex]?.correct, 'error': !lesson['parsedQuiz']?.options[lesson['quizState'].selectedOptionIndex]?.correct}">
+                           <i class="fas" [ngClass]="lesson['parsedQuiz']?.options[lesson['quizState'].selectedOptionIndex]?.correct ? 'fa-check-circle' : 'fa-times-circle'"></i>
+                           {{ lesson['parsedQuiz']?.options[lesson['quizState'].selectedOptionIndex]?.correct ? 'Correct! Great job.' : 'Incorrect. The correct answer is highlighted above.' }}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <button class="cs-btn-icon-inline" title="Preview content" disabled>
-                    <i class="far fa-play-circle"></i>
-                  </button>
                 </li>
               </ul>
             </div>

@@ -59,13 +59,13 @@ public class FilePostUploadService {
     /**
      * POST {@code /v1/upload} with multipart {@code file}; returns public CDN URL for {@link tn.esprit.community.entity.Post#setFileUrl}.
      */
-    public String uploadPdf(MultipartFile file) throws IOException {
+    public String uploadFile(MultipartFile file) throws IOException {
         if (!enabled) {
             throw new IllegalStateException("FilePost is not configured (missing app.filepost.api-key)");
         }
         byte[] content = file.getBytes();
-        String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "document.pdf";
-        courseFileStorageService.validatePdfContent(content, filename);
+        String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "document.bin";
+        courseFileStorageService.validateMediaContent(content, filename);
         ByteArrayResource resource = new ByteArrayResource(content) {
             @Override
             public String getFilename() {
@@ -73,7 +73,24 @@ public class FilePostUploadService {
             }
         };
         HttpHeaders partHeaders = new HttpHeaders();
-        partHeaders.setContentType(MediaType.APPLICATION_PDF);
+        
+        String lower = filename.toLowerCase();
+        if (lower.endsWith(".png")) {
+            partHeaders.setContentType(MediaType.IMAGE_PNG);
+        } else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
+            partHeaders.setContentType(MediaType.IMAGE_JPEG);
+        } else if (lower.endsWith(".gif")) {
+            partHeaders.setContentType(MediaType.IMAGE_GIF);
+        } else if (lower.endsWith(".mp4")) {
+            partHeaders.setContentType(MediaType.parseMediaType("video/mp4"));
+        } else if (lower.endsWith(".webm")) {
+            partHeaders.setContentType(MediaType.parseMediaType("video/webm"));
+        } else if (lower.endsWith(".pdf")) {
+            partHeaders.setContentType(MediaType.APPLICATION_PDF);
+        } else {
+            partHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        }
+        
         partHeaders.setContentDispositionFormData("file", filename);
         MultiValueMap<String, HttpEntity<?>> multipart = new LinkedMultiValueMap<>();
         multipart.add("file", new HttpEntity<>(resource, partHeaders));

@@ -9,6 +9,7 @@ import { Community } from '../../../core/models/community.model';
 import { CommunityAiService } from '../services/community-ai.service';
 import { CourseQualityService, QualityPrediction } from '../../../core/services/course-quality.service';
 import { CourseBlockType, CourseBuilderService, CourseCreatePayload } from '../services/course-builder.service';
+import { PostService } from '../../../core/services/post.service';
 
 interface QuizOptionDraft {
   id: number;
@@ -26,6 +27,8 @@ interface CourseBlockDraft {
   /** Local-only quiz state, serialized into content for QUIZ blocks. */
   quizQuestion?: string;
   quizOptions?: QuizOptionDraft[];
+  uploadingFile?: boolean;
+  uploadError?: string;
 }
 
 interface CourseSectionDraft {
@@ -80,7 +83,8 @@ export class CourseCreateComponent implements OnInit {
     private communityService: CommunityService,
     private aiService: CommunityAiService,
     private courseQualityService: CourseQualityService,
-    private courseBuilderService: CourseBuilderService
+    private courseBuilderService: CourseBuilderService,
+    private postService: PostService
   ) {}
 
   ngOnInit(): void {
@@ -372,6 +376,32 @@ export class CourseCreateComponent implements OnInit {
     this.aiSuggestion = '';
     this.aiSuggestionType = null;
     this.aiError = '';
+  }
+
+  onBlockFileSelected(event: Event, block: CourseBlockDraft): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+    
+    block.uploadingFile = true;
+    block.uploadError = '';
+    
+    this.postService.uploadCoursePdf(file).subscribe({
+      next: ({ fileUrl }) => {
+        block.fileUrl = fileUrl;
+        block.uploadingFile = false;
+        input.value = '';
+      },
+      error: (err: any) => {
+        block.uploadingFile = false;
+        console.error('Upload error:', err);
+        const serverMsg = err.error?.message || err.error?.error || err.message || 'Unknown error';
+        block.uploadError = `Failed to upload: ${serverMsg}`;
+        input.value = '';
+      }
+    });
   }
 
   async saveCourse(isPublish: boolean): Promise<void> {
