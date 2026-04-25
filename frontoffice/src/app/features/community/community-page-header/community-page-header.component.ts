@@ -9,4 +9,5 @@ export class CommunityPageHeaderComponent {
   @Input() eyebrow = '';
   @Input() title = '';
   @Input() subtitle = '';
+  @Input() hasFooter = false;
 }

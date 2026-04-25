@@ -1,39 +1,17 @@
-@import '../community-shared.css';
-
-:host {
-  display: block;
-  margin-bottom: var(--space-card);
-  background-color: var(--comm-bg-base);
-}
-
-.comm-comment-form {
+.cm-comment-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-base);
+  background: var(--cm-bg-secondary);
+  border: 1px solid var(--cm-border);
+  border-radius: var(--cm-radius);
+  padding: 16px;
+  margin-bottom: 24px;
 }
 
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-base);
+.cm-comment-form .cm-field {
+  margin-bottom: 12px;
 }
 
-.form-actions button {
-  min-height: 40px;
-}
-
-@media (max-width: 768px) {
-  :host {
-    margin-bottom: var(--space-base);
-  }
-}
-
-@media (max-width: 375px) {
-  .form-actions {
-    flex-direction: column;
-  }
-
-  .form-actions button {
-    width: 100%;
-  }
+.cm-comment-form .cm-btn {
+  align-self: flex-end;
 }

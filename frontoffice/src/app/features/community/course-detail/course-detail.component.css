@@ -1,1124 +1,680 @@
-@import '../community-shared.css';
-
-:host {
-  --comm-bg-base: #080b12;
-  --comm-bg-surface: #0f1219;
-  --comm-bg-input: #1a1f2e;
-  --comm-border: rgba(255, 255, 255, 0.06);
-  --comm-border-strong: rgba(255, 255, 255, 0.11);
-  --comm-text-primary: #e8eaf0;
-  --comm-text-secondary: #a0a5b8;
-  --comm-text-muted: #8b90a7;
-  --comm-accent: #6c7fff;
-  --comm-accent-subtle: rgba(108, 127, 255, 0.1);
-  --comm-success: #34d399;
-  --comm-success-subtle: rgba(52, 211, 153, 0.1);
-  
-  display: block;
-  background-color: var(--comm-bg-base);
-  min-height: 100vh;
-}
-
-/* ============================================================================
-   PAGE WRAPPER & SHELL
-   ============================================================================ */
-
-:host ::ng-deep .cs-wrapper {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 32px 24px 80px;
-  background: transparent;
-}
-
-/* ============================================================================
-   TOP BAR (Back to feed + Published badge)
-   ============================================================================ */
-
-:host ::ng-deep .cs-nav-glass {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  gap: 16px;
-}
-
-/* Back to feed link */
-:host ::ng-deep .cs-btn-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #555c7a;
-  text-decoration: none;
-  padding: 6px 0;
-  transition: color 180ms cubic-bezier(0.4, 0, 0.2, 1);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-
-  &:hover {
-    color: #8b90a7;
-  }
-
-  i {
-    font-size: 12px;
-  }
-}
-
-/* Published badge */
-:host ::ng-deep .cs-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  border: 1px solid rgba(52, 211, 153, 0.2);
-
-  &.cs-status-live {
-    background: rgba(52, 211, 153, 0.1);
-    color: #34d399;
-
-    &::before {
-      content: '';
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #34d399;
-      flex-shrink: 0;
-    }
-  }
-
-  &.cs-status-draft {
-    background: rgba(108, 127, 255, 0.1);
-    color: #8b9fff;
-    border-color: rgba(108, 127, 255, 0.2);
-
-    &::before {
-      content: '';
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #8b9fff;
-      flex-shrink: 0;
-    }
-  }
-}
-
-/* ============================================================================
-   HERO CARD (Title, Description, Metadata, Actions)
-   ============================================================================ */
-
-:host ::ng-deep .cs-course-header {
-  background: #0f1219;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 20px;
+.cs-dashboard {
   position: relative;
-  overflow: hidden;
-
-  /* Subtle top accent line */
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(108, 127, 255, 0.4) 30%,
-      rgba(108, 127, 255, 0.4) 70%,
-      transparent 100%
-    );
-  }
-}
-
-/* Course title */
-:host ::ng-deep .cs-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: #f0f2f8;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  margin: 0 0 12px 0;
-}
-
-/* Course description */
-:host ::ng-deep .cs-subtitle {
-  font-size: 15px;
-  color: #8b90a7;
-  line-height: 1.65;
-  margin: 0;
-  max-width: 640px;
-}
-
-/* ============================================================================
-   TWO COLUMN LAYOUT (Curriculum + Info Sidebar)
-   ============================================================================ */
-
-:host ::ng-deep .cs-viewer-layout {
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 20px;
-  align-items: start;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Left column */
-:host ::ng-deep .cs-viewer-main {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* Right column - sticky sidebar */
-:host ::ng-deep .cs-viewer-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  height: fit-content;
-  position: sticky;
-  top: 80px;
-
-  @media (max-width: 768px) {
-    position: static;
-    top: auto;
-  }
-}
-
-/* ============================================================================
-   CURRICULUM CARD
-   ============================================================================ */
-
-:host ::ng-deep .cs-curriculum {
-  background: #0f1219;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
-  overflow: hidden;
-
-  &.glass-panel {
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    padding: 0;
-  }
-}
-
-:host ::ng-deep .cs-panel-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 15px;
-  font-weight: 600;
-  color: #e2e5f0;
-  margin: 0;
-
-  i {
-    font-size: 14px;
-    color: #6c7fff;
-  }
-}
-
-/* Curriculum body */
-:host ::ng-deep .cs-curriculum > div:not(.cs-panel-title) {
+  min-height: 100vh;
   padding: 24px;
 }
 
-/* Empty state */
-:host ::ng-deep .cs-empty-state {
-  text-align: center;
-  padding: 40px 24px;
-  color: #3d4460;
-  font-size: 14px;
-  line-height: 1.6;
+.cs-nav {
+  margin-bottom: 32px;
 }
 
-/* Accordion styling */
-:host ::ng-deep .cs-accordion {
-  background: #161b27;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  margin-bottom: 10px;
-  overflow: hidden;
+.cs-nav-glass {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: rgba(28, 35, 51, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--cm-border);
+  border-radius: var(--cm-radius);
+  box-shadow: var(--cm-shadow);
+}
 
-  &:last-child {
-    margin-bottom: 0;
+.cs-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cs-btn-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--cm-text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+  transition: var(--cm-transition);
+}
+
+.cs-btn-back:hover {
+  color: var(--cm-text-primary);
+  transform: translateX(-4px);
+}
+
+.cs-status {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cs-status-live {
+  color: var(--cm-success);
+}
+
+.cs-status-draft {
+  color: var(--cm-warning);
+}
+
+.cs-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cs-badge.cs-status-live {
+  background-color: rgba(34, 197, 94, 0.1);
+}
+
+.cs-badge.cs-status-draft {
+  background-color: rgba(249, 115, 22, 0.1);
+}
+
+.cs-alert-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--cm-danger);
+  padding: 16px;
+  border-radius: var(--cm-radius-sm);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cs-viewer-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 992px) {
+  .cs-viewer-layout {
+    grid-template-columns: 1fr 340px;
   }
 }
 
-:host ::ng-deep .cs-accordion-header {
+.cs-course-header {
+  margin-bottom: 32px;
+}
+
+.cs-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--cm-text-primary);
+  margin: 0 0 16px 0;
+  line-height: 1.2;
+}
+
+.cs-subtitle {
+  font-size: 16px;
+  color: var(--cm-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.cs-panel-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--cm-text-primary);
+  margin: 0 0 20px 0;
+  padding: 20px 24px 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
+}
+
+.cs-panel-title i {
+  color: var(--cm-accent-primary);
+}
+
+.cs-empty-state {
+  padding: 40px;
+  text-align: center;
+  color: var(--cm-text-secondary);
+}
+
+.cs-accordion {
+  border-bottom: 1px solid var(--cm-border);
+}
+
+.cs-accordion:last-child {
+  border-bottom: none;
+}
+
+.cs-accordion-header {
   width: 100%;
-  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
-  gap: 12px;
-
-  &:hover {
-    background: #1a2030;
-  }
+  transition: var(--cm-transition);
 }
 
-:host ::ng-deep .cs-sec-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
+.cs-accordion-header:hover {
+  background: rgba(255, 255, 255, 0.02);
 }
 
-:host ::ng-deep .cs-sec-number {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #3d4460;
-}
-
-:host ::ng-deep .cs-sec-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #e2e5f0;
-}
-
-:host ::ng-deep .cs-sec-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-:host ::ng-deep .cs-lesson-count {
-  font-size: 12px;
-  color: #3d4460;
-  font-weight: 500;
-}
-
-:host ::ng-deep .cs-chevron {
-  font-size: 12px;
-  color: #555c7a;
-  transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
-
-  &.rotated {
-    transform: rotate(180deg);
-  }
-}
-
-/* Accordion body */
-:host ::ng-deep .cs-accordion-body {
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
-  padding: 0;
-}
-
-:host ::ng-deep .cs-lesson-list {
+.cs-sec-meta {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  align-items: flex-start;
+  gap: 4px;
 }
 
-:host ::ng-deep .cs-lesson-empty {
-  padding: 16px 18px;
-  text-align: center;
-  color: #3d4460;
-  font-size: 13px;
+.cs-sec-number {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cm-accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-:host ::ng-deep .cs-lesson-item {
+.cs-sec-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--cm-text-primary);
+}
+
+.cs-sec-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  transition: background 150ms ease;
-
-  &:hover {
-    background: rgba(108, 127, 255, 0.05);
-  }
-
-  &:last-child {
-    border-bottom: none;
-  }
+  gap: 16px;
 }
 
-:host ::ng-deep .cs-lesson-icon {
+.cs-lesson-count {
+  font-size: 13px;
+  color: var(--cm-text-muted);
+}
+
+.cs-chevron {
+  color: var(--cm-text-muted);
+  transition: transform 0.3s ease;
+}
+
+.cs-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.cs-accordion-body {
+  padding: 0 24px 20px;
+}
+
+.cs-lesson-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cs-lesson-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--cm-border);
+  border-radius: var(--cm-radius-sm);
+  transition: var(--cm-transition);
+}
+
+.cs-lesson-item:hover {
+  border-color: rgba(232, 98, 42, 0.3);
+  transform: translateX(4px);
+}
+
+.cs-lesson-icon {
   width: 32px;
   height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 8px;
-  background: rgba(108, 127, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #8b9fff;
-  font-size: 13px;
-  flex-shrink: 0;
+  background: rgba(232, 98, 42, 0.1);
+  color: var(--cm-accent-primary);
 }
 
-:host ::ng-deep .cs-lesson-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.cs-lesson-details {
   flex: 1;
-}
-
-:host ::ng-deep .cs-lesson-title {
-  font-size: 13px;
-  font-weight: 500;
-  color: #e2e5f0;
-}
-
-:host ::ng-deep .cs-lesson-type {
-  font-size: 11px;
-  color: #3d4460;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-:host ::ng-deep .cs-btn-icon-inline {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #8b90a7;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 150ms ease;
-  font-size: 12px;
-  flex-shrink: 0;
-
-  &:hover:not(:disabled) {
-    background: rgba(108, 127, 255, 0.1);
-    border-color: rgba(108, 127, 255, 0.2);
-    color: #8b9fff;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-/* ============================================================================
-   INFO SIDEBAR CARD
-   ============================================================================ */
-
-:host ::ng-deep .cs-meta-card {
-  background: #0f1219;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
-  overflow: hidden;
-
-  &.glass-panel {
-    padding: 0;
-  }
-}
-
-:host ::ng-deep .cs-meta-visual {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: rgba(108, 127, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #8b9fff;
-  font-size: 18px;
-  margin-bottom: 16px;
-}
-
-:host ::ng-deep .cs-meta-card > h3.cs-meta-title {
-  padding: 20px 24px 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #e2e5f0;
-  margin: 0;
-}
-
-:host ::ng-deep .cs-meta-card > p.cs-meta-desc {
-  padding: 8px 24px 16px;
-  font-size: 13px;
-  color: #8b90a7;
-  line-height: 1.6;
-  margin: 0;
-}
-
-:host ::ng-deep .cs-meta-card > .cs-divider {
-  margin: 16px 0;
-  border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-/* Button wrapper inside meta card */
-:host ::ng-deep .cs-meta-card .cs-btn {
-  width: calc(100% - 48px);
-  margin: 0 24px;
-}
-
-:host ::ng-deep .cs-meta-list {
-  list-style: none;
-  margin: 0;
-  padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-
-  li {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
+  gap: 4px;
 }
 
-:host ::ng-deep .cs-meta-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #3d4460;
-}
-
-:host ::ng-deep .cs-meta-val {
+.cs-lesson-title {
   font-size: 14px;
   font-weight: 500;
-  color: #8b90a7;
+  color: var(--cm-text-primary);
 }
 
-:host ::ng-deep .cs-link {
-  color: #6c7fff;
-  text-decoration: none;
-  transition: color 150ms ease;
-
-  &:hover {
-    color: #7d8fff;
-    text-decoration: underline;
-  }
+.cs-lesson-type {
+  font-size: 12px;
+  color: var(--cm-text-muted);
+  text-transform: capitalize;
 }
 
-/* ============================================================================
-   BUTTON STYLES
-   ============================================================================ */
+.cs-btn-icon-inline {
+  background: transparent;
+  border: none;
+  color: var(--cm-text-muted);
+  font-size: 20px;
+  cursor: pointer;
+  transition: var(--cm-transition);
+}
 
-:host ::ng-deep .cs-btn {
+.cs-btn-icon-inline:not(:disabled):hover {
+  color: var(--cm-accent-primary);
+  transform: scale(1.1);
+}
+
+.cs-lesson-empty {
+  font-size: 13px;
+  color: var(--cm-text-muted);
+  padding: 12px 16px;
+}
+
+.cs-viewer-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cs-meta-card {
+  padding: 24px;
+}
+
+.cs-meta-visual {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--cm-accent-primary), var(--cm-accent-secondary));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #fff;
+  margin-bottom: 20px;
+}
+
+.cs-meta-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--cm-text-primary);
+  margin: 0 0 12px 0;
+}
+
+.cs-meta-desc {
+  font-size: 14px;
+  color: var(--cm-text-secondary);
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+}
+
+.cs-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 13px;
+  padding: 12px 24px;
+  border-radius: var(--cm-radius-sm);
+  font-size: 14px;
   font-weight: 600;
   border: none;
   cursor: pointer;
-  text-decoration: none;
-  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: var(--cm-transition);
   font-family: inherit;
-
-  i {
-    font-size: 13px;
-  }
 }
 
-/* Primary/Gradient button */
-:host ::ng-deep .cs-btn-gradient {
-  background: linear-gradient(135deg, #6c7fff 0%, #5a6fd6 100%);
-  color: #ffffff;
-  box-shadow: 0 0 20px rgba(108, 127, 255, 0.2);
-
-  &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #7d8fff 0%, #6c7fff 100%);
-    box-shadow: 0 0 28px rgba(108, 127, 255, 0.35);
-    transform: translateY(-1px);
-  }
-
-  &:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
+.cs-btn-gradient {
+  background: linear-gradient(to right, var(--cm-accent-primary), var(--cm-accent-secondary));
+  color: #fff;
 }
 
-/* Full width button */
-:host ::ng-deep .cs-btn-full {
+.cs-btn-gradient:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(232, 98, 42, 0.3);
+}
+
+.cs-btn-gradient:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.cs-btn-full {
   width: 100%;
 }
 
-/* Small button */
-:host ::ng-deep .cs-btn-sm {
-  padding: 8px 18px;
-  font-size: 13px;
+.cs-divider {
+  border: 0;
+  border-top: 1px solid var(--cm-border);
+  margin: 24px 0;
 }
 
-/* Secondary button */
-:host ::ng-deep .cs-btn-secondary {
-  background: rgba(255, 255, 255, 0.05);
-  color: #8b90a7;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-
-  &:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.12);
-  }
-}
-
-/* Danger button */
-:host ::ng-deep .cs-btn-danger {
-  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
-  color: #ffffff;
-
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-  }
-
-  &:disabled {
-    opacity: 0.55;
-  }
-}
-
-/* Danger outline button */
-:host ::ng-deep .cs-btn-danger-outline {
-  background: transparent;
-  color: #3d4460;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 8px 16px;
-  font-size: 12px;
-
-  &:hover {
-    color: #f87171;
-    background: rgba(248, 113, 113, 0.06);
-    border-color: rgba(248, 113, 113, 0.2);
-  }
-}
-
-/* ============================================================================
-   VOTE BUTTONS
-   ============================================================================ */
-
-:host ::ng-deep .cs-vote-buttons {
+.cs-meta-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 16px;
 }
 
-:host ::ng-deep .cs-btn-vote {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.04);
-  color: #8b90a7;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 9px 16px;
-  font-size: 13px;
+.cs-meta-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.cs-meta-label {
+  color: var(--cm-text-muted);
+}
+
+.cs-meta-val {
+  color: var(--cm-text-primary);
   font-weight: 500;
+}
+
+.cs-link {
+  color: var(--cm-accent-primary);
+  text-decoration: none;
+}
+
+.cs-link:hover {
+  text-decoration: underline;
+}
+
+.cs-engagement-card {
+  padding: 24px;
+}
+
+.cs-vote-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.cs-btn-vote {
+  background: var(--cm-bg-secondary);
+  border: 1px solid var(--cm-border);
+  color: var(--cm-text-secondary);
+  padding: 10px;
+  border-radius: var(--cm-radius-sm);
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
-
-  i {
-    font-size: 12px;
-  }
-}
-
-:host ::ng-deep .cs-btn-upvote {
-  &:hover {
-    background: rgba(52, 211, 153, 0.08);
-    border-color: rgba(52, 211, 153, 0.2);
-    color: #34d399;
-  }
-
-  &.active {
-    background: rgba(52, 211, 153, 0.1);
-    border-color: rgba(52, 211, 153, 0.25);
-    color: #34d399;
-  }
-}
-
-:host ::ng-deep .cs-btn-downvote {
-  &:hover {
-    background: rgba(248, 113, 113, 0.08);
-    border-color: rgba(248, 113, 113, 0.2);
-    color: #f87171;
-  }
-
-  &.active {
-    background: rgba(248, 113, 113, 0.1);
-    border-color: rgba(248, 113, 113, 0.25);
-    color: #f87171;
-  }
-}
-
-/* ============================================================================
-   ENGAGEMENT CARD (Comments Sidebar)
-   ============================================================================ */
-
-:host ::ng-deep .cs-engagement-card {
-  background: #0f1219;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
-  overflow: hidden;
-
-  &.glass-panel {
-    padding: 0;
-  }
-}
-
-:host ::ng-deep .cs-engagement-card > h3.cs-meta-title {
+  transition: var(--cm-transition);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 15px;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cs-btn-vote:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--cm-text-primary);
+}
+
+.cs-btn-vote.active,
+.cs-btn-vote:active {
+  border-color: var(--cm-accent-primary);
+  color: var(--cm-accent-primary);
+}
+
+.cs-comments-title {
+  font-size: 16px;
   font-weight: 600;
-  color: #e2e5f0;
-  margin: 0;
-
-  i {
-    font-size: 14px;
-    color: #6c7fff;
-  }
-}
-
-:host ::ng-deep .cs-engagement-card > .cs-divider {
-  margin: 0;
-  border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-:host ::ng-deep .cs-engagement-card > div.cs-vote-buttons {
-  padding: 20px 24px 0;
-  margin-bottom: 0;
-}
-
-/* ============================================================================
-   COMMENTS SECTION
-   ============================================================================ */
-
-:host ::ng-deep .cs-comments-section {
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-:host ::ng-deep .cs-comments-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #e2e5f0;
+  color: var(--cm-text-primary);
   margin: 0 0 16px 0;
   display: flex;
   align-items: center;
   gap: 8px;
-
-  i {
-    font-size: 12px;
-    color: #6c7fff;
-  }
 }
 
-/* Comment input area */
-:host ::ng-deep .cs-add-comment {
+.cs-add-comment {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
-:host ::ng-deep .cs-comment-input {
+.cs-comment-input {
   width: 100%;
-  background: #161b27;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 10px;
-  color: #e2e5f0;
-  font-size: 13px;
+  background: var(--cm-bg-secondary);
+  border: 1px solid var(--cm-border);
+  color: var(--cm-text-primary);
+  padding: 12px;
+  border-radius: var(--cm-radius-sm);
+  resize: vertical;
+  min-height: 80px;
   font-family: inherit;
-  padding: 10px 12px;
-  outline: none;
-  resize: none;
-  min-height: 44px;
-  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 14px;
+  transition: var(--cm-transition);
   box-sizing: border-box;
-
-  &::placeholder {
-    color: #2e3652;
-  }
-
-  &:focus {
-    border-color: #5c6bc0;
-    background: #1a2030;
-    box-shadow: 0 0 0 3px rgba(92, 107, 192, 0.12);
-    min-height: 80px;
-  }
 }
 
-:host ::ng-deep .cs-add-comment .cs-btn {
+.cs-comment-input:focus {
+  outline: none;
+  border-color: var(--cm-accent-primary);
+}
+
+.cs-btn-sm {
+  padding: 8px 16px;
+  font-size: 13px;
   align-self: flex-end;
-  padding: 8px 18px;
 }
 
-/* Comments list */
-:host ::ng-deep .cs-comments-list {
-  max-height: 320px;
-  overflow-y: auto;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 10px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.12);
-    }
-  }
-}
-
-:host ::ng-deep .cs-empty-comments {
-  text-align: center;
-  padding: 24px 0;
-  color: #3d4460;
-  font-size: 13px;
-}
-
-:host ::ng-deep .cs-loading-comments {
-  text-align: center;
-  padding: 24px 0;
-  color: #3d4460;
-  font-size: 13px;
-}
-
-:host ::ng-deep .cs-comment-item {
+.cs-comments-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-
-  &:last-child {
-    border-bottom: none;
-  }
+  gap: 16px;
 }
 
-:host ::ng-deep .cs-comment-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.cs-comment-item {
+  background: var(--cm-bg-secondary);
+  border-radius: var(--cm-radius-sm);
+  padding: 16px;
 }
 
-:host ::ng-deep .cs-comment-user {
-  font-size: 12px;
-  font-weight: 600;
-  color: #e2e5f0;
+.cs-comment-header {
+  margin-bottom: 8px;
 }
 
-:host ::ng-deep .cs-comment-text {
+.cs-comment-user {
   font-size: 13px;
-  color: #8b90a7;
-  line-height: 1.5;
+  font-weight: 600;
+  color: var(--cm-accent-primary);
 }
 
-/* ============================================================================
-   REPORT MODAL
-   ============================================================================ */
+.cs-comment-text {
+  font-size: 14px;
+  color: var(--cm-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  word-break: break-word;
+}
 
-:host ::ng-deep .cs-report-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+.cs-empty-comments,
+.cs-loading-comments {
+  font-size: 14px;
+  color: var(--cm-text-muted);
+  text-align: center;
+  padding: 24px 0;
+}
+
+.cs-btn-danger-outline {
+  width: 100%;
+  background: transparent;
+  color: var(--cm-text-muted);
+  border: 1px solid transparent;
+}
+
+.cs-btn-danger-outline:hover {
+  color: var(--cm-danger);
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+/* Report Modal (Absolute positioning over the card) */
+.cs-report-modal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(13, 17, 23, 0.95);
+  backdrop-filter: blur(5px);
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: 20px;
+  padding: 24px;
+  box-sizing: border-box;
+  border-radius: var(--cm-radius);
 }
 
-:host ::ng-deep .cs-report-content {
-  background: #0f1219;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
-  padding: 28px;
-  max-width: 500px;
+.cs-report-content {
   width: 100%;
-
-  h4 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #e8eaf0;
-    margin: 0 0 20px 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    i {
-      font-size: 14px;
-      color: #f87171;
-    }
-  }
+  background: var(--cm-bg-card);
+  border: 1px solid var(--cm-border);
+  border-radius: var(--cm-radius-sm);
+  padding: 24px;
 }
 
-:host ::ng-deep .cs-form-group {
+.cs-report-content h4 {
+  color: var(--cm-danger);
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cs-form-group {
+  margin-bottom: 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
-
-  label {
-    font-size: 12px;
-    font-weight: 600;
-    color: #e2e5f0;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
+  gap: 8px;
 }
 
-:host ::ng-deep .cs-form-input {
-  background: #161b27;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 8px;
-  color: #e2e5f0;
+.cs-form-group label {
   font-size: 13px;
-  padding: 10px 12px;
-  outline: none;
-  transition: all 150ms ease;
+  font-weight: 500;
+  color: var(--cm-text-primary);
+}
+
+.cs-form-input {
+  width: 100%;
+  background: var(--cm-bg-secondary);
+  border: 1px solid var(--cm-border);
+  color: var(--cm-text-primary);
+  padding: 10px;
+  border-radius: 6px;
   font-family: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+}
 
-  &::placeholder {
-    color: #2e3652;
-  }
-
-  &:focus {
-    border-color: #5c6bc0;
-    background: #1a2030;
-    box-shadow: 0 0 0 3px rgba(92, 107, 192, 0.12);
-  }
+.cs-form-input:focus {
+  outline: none;
+  border-color: var(--cm-danger);
 }
 
 textarea.cs-form-input {
   resize: vertical;
-  min-height: 100px;
+  min-height: 80px;
 }
 
-:host ::ng-deep .cs-report-actions {
+.cs-report-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 20px;
-
-  .cs-btn {
-    flex: 1;
-  }
+  gap: 12px;
+  margin-top: 24px;
 }
 
-:host ::ng-deep .cs-report-success {
-  text-align: center;
+.cs-btn-secondary {
+  background: var(--cm-bg-secondary);
+  border: 1px solid var(--cm-border);
+  color: var(--cm-text-primary);
+}
+
+.cs-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.cs-btn-danger {
+  background: var(--cm-danger);
+  color: #fff;
+}
+
+.cs-btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.cs-btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cs-report-success {
+  margin-top: 16px;
   padding: 12px;
-  background: rgba(52, 211, 153, 0.1);
-  border: 1px solid rgba(52, 211, 153, 0.2);
-  border-radius: 8px;
-  color: #34d399;
-  font-size: 13px;
-  margin-top: 12px;
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--cm-success);
+  border-radius: 6px;
+  font-size: 14px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-
-  i {
-    font-size: 12px;
-  }
+  gap: 8px;
 }
 
-/* ============================================================================
-   UTILITY/DIVIDER
-   ============================================================================ */
-
-:host ::ng-deep .cs-divider {
-  border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  margin: 16px 0;
-}
-
-/* ============================================================================
-   ALERT MESSAGES
-   ============================================================================ */
-
-:host ::ng-deep .cs-alert-error {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  background: rgba(248, 113, 113, 0.1);
-  border: 1px solid rgba(248, 113, 113, 0.2);
-  border-radius: 10px;
-  color: #f87171;
-  font-size: 13px;
-  margin-bottom: 20px;
-
-  i {
-    font-size: 13px;
-    flex-shrink: 0;
-  }
-}
-
-/* ============================================================================
-   LOADING STATE
-   ============================================================================ */
-
-:host ::ng-deep .cs-loading-screen {
+.cs-loading-screen {
+  min-height: 50vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
-  gap: 16px;
-  color: #8b90a7;
-  font-size: 14px;
+  gap: 24px;
+  color: var(--cm-text-secondary);
+  font-size: 16px;
 }
 
 .loading-bars {
   display: flex;
-  gap: 4px;
-
-  span {
-    width: 3px;
-    height: 20px;
-    background: #6c7fff;
-    border-radius: 3px;
-    animation: loading 1s ease-in-out infinite;
-
-    &:nth-child(2) {
-      animation-delay: 0.1s;
-    }
-
-    &:nth-child(3) {
-      animation-delay: 0.2s;
-    }
-  }
+  gap: 6px;
 }
 
-@keyframes loading {
-  0%,
-  100% {
-    opacity: 0.3;
-    transform: scaleY(0.6);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scaleY(1);
-  }
+.loading-bars span {
+  width: 4px;
+  height: 24px;
+  background: var(--cm-accent-primary);
+  border-radius: 2px;
+  animation: loading-bar 1s ease-in-out infinite;
 }
 
-/* ============================================================================
-   RESPONSIVE DESIGN
-   ============================================================================ */
+.loading-bars span:nth-child(2) { animation-delay: 0.1s; }
+.loading-bars span:nth-child(3) { animation-delay: 0.2s; }
 
-@media (max-width: 768px) {
-  :host ::ng-deep .cs-wrapper {
-    padding: 20px 16px 60px;
-  }
-
-  :host ::ng-deep .cs-course-header {
-    padding: 24px;
-  }
-
-  :host ::ng-deep .cs-title {
-    font-size: 24px;
-  }
-
-  :host ::ng-deep .cs-subtitle {
-    font-size: 14px;
-  }
-
-  :host ::ng-deep .cs-viewer-layout {
-    gap: 16px;
-  }
-
-  :host ::ng-deep .cs-meta-card,
-  :host ::ng-deep .cs-engagement-card {
-    order: -1;
-  }
+@keyframes loading-bar {
+  0%, 100% { transform: scaleY(0.5); opacity: 0.5; }
+  50% { transform: scaleY(1); opacity: 1; }
 }
 
-@media (max-width: 480px) {
-  :host ::ng-deep .cs-wrapper {
-    padding: 16px 12px 50px;
-  }
-
-  :host ::ng-deep .cs-nav-glass {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  :host ::ng-deep .cs-nav-left,
-  :host ::ng-deep .cs-nav-right {
-    width: 100%;
-  }
-
-  :host ::ng-deep .cs-course-header {
-    padding: 20px;
-    margin-bottom: 16px;
-  }
-
-  :host ::ng-deep .cs-title {
-    font-size: 20px;
-    margin-bottom: 8px;
-  }
-
-  :host ::ng-deep .cs-subtitle {
-    font-size: 13px;
-  }
-
-  :host ::ng-deep .cs-btn {
-    font-size: 12px;
-    padding: 8px 16px;
-  }
-
-  :host ::ng-deep .cs-vote-buttons {
-    flex-direction: column;
-  }
-
-  :host ::ng-deep .cs-btn-vote {
-    width: 100%;
-  }
-
-  :host ::ng-deep .cs-accordion-header {
-    padding: 12px;
-  }
-
-  :host ::ng-deep .cs-sec-meta {
-    gap: 6px;
-  }
-
-  :host ::ng-deep .cs-sec-title {
-    font-size: 12px;
-  }
-
-  :host ::ng-deep .cs-report-modal {
-    padding: 12px;
-  }
-
-  :host ::ng-deep .cs-report-content {
-    padding: 20px;
-  }
+.cs-empty-icon {
+  font-size: 48px;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(232, 98, 42, 0.1);
+  color: var(--cm-accent-primary);
 }

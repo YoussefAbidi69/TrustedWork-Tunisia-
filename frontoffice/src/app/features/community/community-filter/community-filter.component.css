@@ -1,45 +1,42 @@
-@import '../community-shared.css';
-
-:host {
-  display: block;
-  background-color: var(--comm-bg-base);
-}
-
-.comm-filter-list {
+.cm-filter__list {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-base);
+  flex-direction: column;
+  gap: 8px;
 }
 
-.filter-btn {
-  display: inline-flex;
+.cm-filter__btn {
+  display: flex;
   align-items: center;
-  gap: var(--space-inline);
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--comm-border);
-  background: var(--comm-bg-input);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
-  color: var(--comm-text-secondary);
+  gap: 12px;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--cm-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--cm-radius-sm);
   cursor: pointer;
-  font-family: inherit;
-  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+  transition: var(--cm-transition);
+  text-align: left;
 }
 
-.filter-btn:hover {
-  border-color: var(--comm-accent);
-  color: var(--comm-accent);
-  background: var(--comm-accent-subtle);
+.cm-filter__btn i {
+  font-size: 14px;
+  color: var(--cm-text-muted);
 }
 
-.filter-btn.active {
-  border-color: var(--comm-accent);
-  background: var(--comm-accent-subtle);
-  color: var(--comm-accent);
+.cm-filter__btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--cm-text-primary);
 }
 
-.filter-btn i {
-  font-size: var(--text-xs);
-  opacity: 0.85;
+.cm-filter__btn--active {
+  background-color: rgba(232, 98, 42, 0.1);
+  color: var(--cm-accent-primary);
+  border-color: rgba(232, 98, 42, 0.2);
+}
+
+.cm-filter__btn--active i {
+  color: var(--cm-accent-primary);
 }
