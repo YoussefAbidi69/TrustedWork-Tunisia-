@@ -45,6 +45,10 @@ export class CourseBuilderService {
     return this.http.post<CourseCreateResponse>(`${this.baseUrl}/courses`, payload);
   }
 
+  updateCourse(courseId: number, payload: Partial<CourseCreatePayload>): Observable<any> {
+    return this.http.put(`${this.baseUrl}/courses/${courseId}`, payload);
+  }
+
   createSection(courseId: number, payload: SectionCreatePayload): Observable<SectionCreateResponse> {
     return this.http
       .post<SectionCreateResponse>(`${this.baseUrl}/sections/course/${courseId}`, payload)

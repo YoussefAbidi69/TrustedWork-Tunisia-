@@ -1,5 +1,5 @@
 {
-  "trained_at": "2026-04-21T20:44:04.413778+00:00",
+  "trained_at": "2026-04-25T15:43:32.327030+00:00",
   "num_samples": 900,
   "used_seed_data": true,
   "classes": [
@@ -8,8 +8,8 @@
     "low_quality"
   ],
   "accuracy": 0.9222,
-  "cv_accuracy_mean": 0.8078,
-  "cv_accuracy_std": 0.2294,
+  "cv_accuracy_mean": 0.8122,
+  "cv_accuracy_std": 0.2326,
   "classification_report": {
     "average": {
       "precision": 0.8840579710144928,

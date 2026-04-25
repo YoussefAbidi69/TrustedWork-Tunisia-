@@ -16,9 +16,13 @@ import tn.esprit.community.entity.Section;
 import tn.esprit.community.exception.LearningNotFoundException;
 import tn.esprit.community.repository.BlockRepository;
 import tn.esprit.community.repository.CommunityRepository;
-import tn.esprit.community.repository.CourseRepository;
 import tn.esprit.community.repository.SectionRepository;
+import tn.esprit.community.repository.CourseRepository;
 import tn.esprit.community.service.CourseService;
+import tn.esprit.community.exception.PlagiarismException;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.beans.factory.annotation.Value;
+import java.util.Map;
 
 @Service
 @Transactional(readOnly = true)
@@ -28,16 +32,19 @@ public class CourseServiceImpl implements CourseService {
     private final CommunityRepository communityRepository;
     private final SectionRepository sectionRepository;
     private final BlockRepository blockRepository;
+    private final WebClient aiClient;
 
     public CourseServiceImpl(
             CourseRepository courseRepository,
             CommunityRepository communityRepository,
             SectionRepository sectionRepository,
-            BlockRepository blockRepository) {
+            BlockRepository blockRepository,
+            @Value("${app.course-quality.base-url:http://localhost:5000}") String aiBaseUrl) {
         this.courseRepository = courseRepository;
         this.communityRepository = communityRepository;
         this.sectionRepository = sectionRepository;
         this.blockRepository = blockRepository;
+        this.aiClient = WebClient.builder().baseUrl(aiBaseUrl).build();
     }
 
     @Override
@@ -102,7 +109,45 @@ public class CourseServiceImpl implements CourseService {
             course.setAuthorId(courseRequest.getAuthorId());
         }
         if (courseRequest.getPublished() != null) {
+            // If the user wants to publish the course, run plagiarism check
+            if (Boolean.TRUE.equals(courseRequest.getPublished()) && !course.isPublished()) {
+                CourseDownloadResponse fullCourseData = downloadCourse(id);
+                try {
+                    Map<String, Object> response = aiClient.post()
+                            .uri("/check_plagiarism")
+                            .bodyValue(fullCourseData)
+                            .retrieve()
+                            .bodyToMono(Map.class)
+                            .block();
+
+                    if (response != null && Boolean.TRUE.equals(response.get("is_plagiarized"))) {
+                        double similarity = (double) response.get("max_similarity");
+                        throw new PlagiarismException("Cannot publish: This course matches an existing course by " + similarity + "%.");
+                    }
+                } catch (PlagiarismException e) {
+                    throw e; // Rethrow custom exception
+                } catch (Exception e) {
+                    // If AI server is down, we allow publishing or we can block it. Let's block it for safety or log it.
+                    System.err.println("Failed to reach Plagiarism Checker API: " + e.getMessage());
+                }
+            }
             course.setPublished(courseRequest.getPublished());
+            
+            // Trigger an index update in the background if successfully published
+            if (Boolean.TRUE.equals(course.isPublished())) {
+                try {
+                    aiClient.post()
+                        .uri("/update_index")
+                        .retrieve()
+                        .bodyToMono(Void.class)
+                        .subscribe(
+                            v -> System.out.println("AI Plagiarism index updated."),
+                            err -> System.err.println("Failed to update AI index: " + err.getMessage())
+                        );
+                } catch (Exception e) {
+                    System.err.println("Error calling update_index: " + e.getMessage());
+                }
+            }
         }
         if (courseRequest.getCommunityId() != null) {
             Community community = communityRepository

@@ -16,6 +16,13 @@ export interface QualityPrediction {
   available?: boolean;
 }
 
+export interface PlagiarismResult {
+  is_plagiarized: boolean;
+  max_similarity: number;
+  matched_course_id: number | null;
+  error?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -27,5 +34,8 @@ export class CourseQualityService {
   predictCourseQuality(title: string, description: string): Observable<QualityPrediction> {
     return this.http.post<QualityPrediction>(`${this.baseUrl}/predict`, { title, description });
   }
-}
 
+  checkPlagiarism(courseData: any): Observable<PlagiarismResult> {
+    return this.http.post<PlagiarismResult>(`${this.baseUrl}/check-plagiarism`, courseData);
+  }
+}

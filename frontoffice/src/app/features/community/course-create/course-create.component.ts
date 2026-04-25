@@ -7,7 +7,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { CommunityService } from '../../../core/services/community.service';
 import { Community } from '../../../core/models/community.model';
 import { CommunityAiService } from '../services/community-ai.service';
-import { CourseQualityService, QualityPrediction } from '../../../core/services/course-quality.service';
+import { CourseQualityService, QualityPrediction, PlagiarismResult } from '../../../core/services/course-quality.service';
 import { CourseBlockType, CourseBuilderService, CourseCreatePayload } from '../services/course-builder.service';
 import { PostService } from '../../../core/services/post.service';
 
@@ -71,6 +71,10 @@ export class CourseCreateComponent implements OnInit {
   private qualityRequestVersion = 0;
   publishReviewVisible = false;
   publishReviewLoading = false;
+
+  plagiarismChecking = false;
+  plagiarismResult: PlagiarismResult | null = null;
+  plagiarismError = '';
 
   private idCounter = 0;
 
@@ -429,7 +433,7 @@ export class CourseCreateComponent implements OnInit {
         title: this.title.trim(),
         description: this.description.trim(),
         communityId: this.communityId,
-        published: isPublish,
+        published: false, // Create as draft initially to allow blocks to be added before plagiarism check
         authorId: uid
       };
 
@@ -456,9 +460,18 @@ export class CourseCreateComponent implements OnInit {
         }
       }
 
+      if (isPublish) {
+        await firstValueFrom(this.courseBuilderService.updateCourse(createdCourse.id, { published: true }));
+      }
+
       await this.router.navigate(['/community', 'course', String(createdCourse.id)]);
-    } catch {
-      this.saveError = 'Could not save the course structure. Please check backend endpoints.';
+    } catch (err: any) {
+      console.error(err);
+      if (err.error?.message && err.error.message.includes('Cannot publish')) {
+        this.saveError = err.error.message;
+      } else {
+        this.saveError = 'Could not save the course structure. Please check backend endpoints.';
+      }
     } finally {
       this.saving = false;
     }
@@ -537,11 +550,11 @@ export class CourseCreateComponent implements OnInit {
     const title = this.title.trim();
     const description = this.description.trim();
 
-    if (this.wordCount(title) < 3) {
+    if (!title) {
       this.qualityValidationMessage = 'Please enter a title first';
       return;
     }
-    if (this.wordCount(description) < 5) {
+    if (!description) {
       this.qualityValidationMessage = 'Please enter a description first';
       return;
     }
@@ -572,6 +585,41 @@ export class CourseCreateComponent implements OnInit {
         this.qualityLoading = false;
         this.qualityUnavailable = true;
         this.qualityPrediction = null;
+      }
+    });
+  }
+
+  onCheckPlagiarism(): void {
+    this.plagiarismError = '';
+    this.plagiarismResult = null;
+
+    if (!this.title.trim()) {
+      this.plagiarismError = 'Please enter a title first.';
+      return;
+    }
+
+    const courseData = {
+      title: this.title.trim(),
+      description: this.description.trim(),
+      sections: this.sections.map(s => ({
+        title: s.title,
+        blocks: s.blocks.map(b => ({
+          title: b.title,
+          content: b.content,
+          type: b.type
+        }))
+      }))
+    };
+
+    this.plagiarismChecking = true;
+    this.courseQualityService.checkPlagiarism(courseData).subscribe({
+      next: (result) => {
+        this.plagiarismChecking = false;
+        this.plagiarismResult = result;
+      },
+      error: () => {
+        this.plagiarismChecking = false;
+        this.plagiarismError = 'Plagiarism service is currently unavailable.';
       }
     });
   }

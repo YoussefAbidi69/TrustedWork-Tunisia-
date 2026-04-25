@@ -19,6 +19,8 @@ HOW TO USE:
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import TruncatedSVD
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 
@@ -36,15 +38,16 @@ class FeatureBuilder:
     """
 
     def __init__(self):
-        # TF-IDF: looks at up to 3000 of the most meaningful words/bigrams.
-        # max_features keeps the vector size manageable.
-        self.tfidf = TfidfVectorizer(
-            max_features=3000,
-            ngram_range=(1, 2),      # unigrams and bigrams (e.g. "step by step")
-            sublinear_tf=True,        # dampens very frequent terms
-            strip_accents="unicode",
-            analyzer="word",
-            min_df=1,                 # include a word even if it appears once
+        # Latent Semantic Analysis (LSA): TF-IDF + TruncatedSVD
+        # Captures semantic meaning and context without the heavy PyTorch dependency.
+        self.semantic_pipeline = make_pipeline(
+            TfidfVectorizer(
+                max_features=5000,
+                ngram_range=(1, 3),  # up to trigrams for better context
+                sublinear_tf=True,
+                stop_words="english",
+            ),
+            TruncatedSVD(n_components=100, random_state=42) # Dense semantic vectors
         )
         self.scaler = StandardScaler()
         self._fitted = False
@@ -71,15 +74,15 @@ class FeatureBuilder:
         return meta
 
     def fit(self, df: pd.DataFrame):
-        """Learn vocabulary and scaling from the training data."""
+        """Learn vocabulary, semantic projection, and scaling from the training data."""
         texts = self._build_texts(df)
         meta  = self._build_meta(df)
 
-        self.tfidf.fit(texts)
+        self.semantic_pipeline.fit(texts)
         self.scaler.fit(meta)
         self._fitted = True
 
-        print(f"[features] TF-IDF vocabulary size: {len(self.tfidf.vocabulary_)}")
+        print("[features] LSA Semantic Pipeline ready (100 dimensions)")
         return self
 
     def transform(self, df: pd.DataFrame) -> np.ndarray:
@@ -93,10 +96,11 @@ class FeatureBuilder:
         texts = self._build_texts(df)
         meta  = self._build_meta(df)
 
-        tfidf_matrix = self.tfidf.transform(texts).toarray()
+        # Encode texts into dense semantic embeddings using LSA
+        text_matrix = self.semantic_pipeline.transform(texts)
         meta_scaled  = self.scaler.transform(meta)
 
-        X = np.hstack([tfidf_matrix, meta_scaled])
+        X = np.hstack([text_matrix, meta_scaled])
         print(f"[features] Feature matrix shape: {X.shape}")
         return X
 

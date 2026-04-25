@@ -23,8 +23,10 @@ import pickle
 import numpy as np
 from flask import Flask, request, jsonify
 from datetime import datetime
+import plagiarism
 
 app = Flask(__name__)
+
 
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "model")
 
@@ -169,12 +171,25 @@ def predict():
         for i in range(len(label_encoder.classes_))
     }
 
-    # The displayed score (0–100) = probability of being high quality
-    # This feels natural: 82/100 means "82% chance this is high quality"
+    # Base score from probabilities
     hq_prob = prob_dict.get("high_quality", 0.0)
     lq_prob = prob_dict.get("low_quality",  0.0)
-    score   = int(round((hq_prob - lq_prob * 0.5 + 0.5) * 100))
-    score   = max(0, min(100, score))   # clamp to [0, 100]
+    base_score = (hq_prob - lq_prob * 0.5 + 0.5) * 100
+    
+    # Apply heuristic modifiers for stability and larger gaps
+    title_words = len(title.strip().split())
+    desc_words  = len(description.strip().split())
+    
+    score_modifier = 0
+    if title_words >= 5:   score_modifier += 15
+    elif title_words < 3:  score_modifier -= 20
+    
+    if desc_words >= 40:   score_modifier += 20
+    elif desc_words >= 15: score_modifier += 5
+    elif desc_words < 5:   score_modifier -= 25
+    
+    score = int(round(base_score + score_modifier))
+    score = max(0, min(100, score))   # clamp to [0, 100]
 
     label_display_map = {
         "high_quality": "High quality",
@@ -190,6 +205,34 @@ def predict():
         "feedback":        build_feedback(title, description, comment_count, report_count),
         "model_available": True,
     })
+
+# ── POST /check_plagiarism ────────────────────────────────────────────────────
+@app.route("/check_plagiarism", methods=["POST"])
+def check_plagiarism():
+    """
+    Checks if the given course content is too similar to any existing published course.
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
+        
+    try:
+        result = plagiarism.check_similarity(data)
+        return jsonify(result)
+    except Exception as e:
+        print(f"[api] ERROR checking plagiarism: {e}")
+        return jsonify({"error": str(e)}), 500
+
+# ── POST /update_index ────────────────────────────────────────────────────────
+@app.route("/update_index", methods=["POST"])
+def update_index():
+    """Rebuilds the plagiarism index from the database."""
+    try:
+        plagiarism.build_index()
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"[api] ERROR updating plagiarism index: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 # ── POST /retrain ─────────────────────────────────────────────────────────────
@@ -306,4 +349,10 @@ if __name__ == "__main__":
         print(f"[api] WARNING: {load_error}")
         print("[api] Run: python train.py --seed   to train on seed data")
         print("[api] The /predict endpoint will use a rule-based fallback until then")
+        
+    try:
+        plagiarism.build_index()
+    except Exception as e:
+        print(f"[api] WARNING: Failed to build plagiarism index: {e}")
+        
     app.run(host="0.0.0.0", port=5000, debug=False)

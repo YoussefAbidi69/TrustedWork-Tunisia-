@@ -50,4 +50,23 @@ public class CourseQualityController {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("available", false));
         }
     }
+
+    @PostMapping("/check-plagiarism")
+    public ResponseEntity<Map<String, Object>> checkPlagiarism(@RequestBody Map<String, Object> request) {
+        try {
+            Map<String, Object> response = qualityClient.post()
+                    .uri("/check_plagiarism")
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+            return ResponseEntity.ok(response == null ? Map.of("is_plagiarized", false) : response);
+        } catch (WebClientResponseException ex) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("is_plagiarized", false, "error", "Plagiarism service unavailable"));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("is_plagiarized", false, "error", "Plagiarism service unavailable"));
+        }
+    }
 }
