@@ -42,6 +42,8 @@ public class DisputeAiServiceImpl implements IDisputeAiService {
     private static final String GEMINI_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=";
 
+    private static final String DEFAULT_RISK_LEVEL = "MEDIUM";
+
     @PostConstruct
     public void init() {
         if (geminiApiKey == null || geminiApiKey.isBlank()) {
@@ -84,7 +86,7 @@ public class DisputeAiServiceImpl implements IDisputeAiService {
         }
 
         try {
-            return callGemini(prompt, dispute, contract, milestone, disputeId);
+            return callGemini(prompt, disputeId);
         } catch (Exception e) {
             log.error("[DisputeAI] ❌ Gemini call failed → falling back to rule-based analysis. Error: {}", e.getMessage());
             return buildFallback(dispute, contract, milestone, disputeId);
@@ -95,8 +97,10 @@ public class DisputeAiServiceImpl implements IDisputeAiService {
 
     private String buildPrompt(Dispute dispute, Contract contract, Milestone milestone) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Tu es un arbitre expert spécialisé dans la résolution de litiges contractuels pour une plateforme freelance B2B en Tunisie. " +
-                  "Analyse objectivement ce litige et fournis une recommandation structurée.\n\n");
+        sb.append("""
+                Tu es un arbitre expert spécialisé dans la résolution de litiges contractuels pour une plateforme freelance B2B en Tunisie. Analyse objectivement ce litige et fournis une recommandation structurée.
+
+                """);
 
         sb.append("=== CONTEXTE DU CONTRAT ===\n");
         sb.append("Référence contrat: ").append(contract.getReference() != null ? contract.getReference() : "#" + contract.getId()).append("\n");
@@ -155,8 +159,7 @@ public class DisputeAiServiceImpl implements IDisputeAiService {
 
     // ─── Gemini API Call ─────────────────────────────────────────────────────────
 
-    private DisputeAiRecommendation callGemini(String prompt, Dispute dispute, Contract contract,
-                                                Milestone milestone, Long disputeId) throws Exception {
+    private DisputeAiRecommendation callGemini(String prompt, Long disputeId) throws Exception {
         String url = GEMINI_URL + geminiApiKey;
         log.info("[DisputeAI] Calling Gemini API for dispute #{}", disputeId);
 
@@ -177,19 +180,18 @@ public class DisputeAiServiceImpl implements IDisputeAiService {
         try {
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                throw new RuntimeException("Gemini returned status: " + response.getStatusCode());
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Gemini returned status: " + response.getStatusCode());
             }
             log.info("[DisputeAI] ✅ Gemini responded successfully for dispute #{}", disputeId);
-            return parseGeminiResponse(response.getBody(), dispute, contract, milestone, disputeId);
+            return parseGeminiResponse(response.getBody(), disputeId);
         } catch (HttpClientErrorException ex) {
             log.error("[DisputeAI] ❌ Gemini HTTP {} error: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
-            throw new RuntimeException("Gemini API error " + ex.getStatusCode() + ": " + ex.getResponseBodyAsString());
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Gemini API error " + ex.getStatusCode() + ": " + ex.getResponseBodyAsString());
         }
     }
 
-    private DisputeAiRecommendation parseGeminiResponse(String responseBody, Dispute dispute,
-                                                          Contract contract, Milestone milestone,
-                                                          Long disputeId) throws Exception {
+    private DisputeAiRecommendation parseGeminiResponse(String responseBody, Long disputeId) throws Exception {
         JsonNode root = objectMapper.readTree(responseBody);
         String text = root.path("candidates").get(0)
                 .path("content").path("parts").get(0)
@@ -216,7 +218,7 @@ public class DisputeAiServiceImpl implements IDisputeAiService {
                 .disputeId(disputeId)
                 .suggestedDecision(json.path("suggestedDecision").asText("SPLIT"))
                 .confidenceScore(json.path("confidenceScore").asDouble(0.5))
-                .riskLevel(json.path("riskLevel").asText("MEDIUM"))
+                .riskLevel(json.path("riskLevel").asText(DEFAULT_RISK_LEVEL))
                 .summary(json.path("summary").asText(""))
                 .reasoning(json.path("reasoning").asText(""))
                 .suggestedMontantRembourse(refundAmount)
@@ -242,14 +244,17 @@ public class DisputeAiServiceImpl implements IDisputeAiService {
         BigDecimal release = BigDecimal.ZERO;
         List<String> factors = new ArrayList<>();
 
-        BigDecimal disputeAmount = milestone != null && milestone.getMontant() != null
-                ? milestone.getMontant()
-                : (contract.getMontantTotal() != null ? contract.getMontantTotal() : BigDecimal.ZERO);
+        BigDecimal disputeAmount = BigDecimal.ZERO;
+        if (milestone != null && milestone.getMontant() != null) {
+            disputeAmount = milestone.getMontant();
+        } else if (contract.getMontantTotal() != null) {
+            disputeAmount = contract.getMontantTotal();
+        }
 
         if (noResponse) {
             decision = "RESOLVED_CLIENT";
             confidence = 0.65;
-            riskLevel = "MEDIUM";
+            riskLevel = DEFAULT_RISK_LEVEL;
             refund = disputeAmount;
             factors.add("Le défendeur n'a pas fourni de réponse");
             factors.add("Absence de preuves de défense");
@@ -266,7 +271,7 @@ public class DisputeAiServiceImpl implements IDisputeAiService {
         } else {
             decision = "RESOLVED_FREELANCER";
             confidence = 0.55;
-            riskLevel = "MEDIUM";
+            riskLevel = DEFAULT_RISK_LEVEL;
             release = disputeAmount;
             factors.add("Le défendeur a répondu au litige");
             factors.add("Preuves de défense présentes");

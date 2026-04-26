@@ -65,7 +65,7 @@ public class SignatureRequest implements Serializable {
     @ToString.Exclude
     @Builder.Default
     @JsonIgnore
-    List<SignatureSigner> signers = new ArrayList<>();
+    private List<SignatureSigner> signers = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "contractId", insertable = false, updatable = false)
@@ -73,4 +73,3 @@ public class SignatureRequest implements Serializable {
     @JsonIgnore
     Contract contract;
 }
-

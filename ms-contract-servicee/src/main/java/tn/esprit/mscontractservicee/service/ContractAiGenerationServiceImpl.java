@@ -2,6 +2,7 @@ package tn.esprit.mscontractservicee.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.json.JsonReadFeature;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -163,9 +164,9 @@ public class ContractAiGenerationServiceImpl implements IContractAiGenerationSer
 
     // ObjectMapper relaxé pour lire le JSON de l'IA (qui contient souvent des sauts de ligne non echappés)
     private static final ObjectMapper AI_MAPPER = new ObjectMapper()
-            .configure(com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
+            .configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
 
-    private ContractAiResponse callGroqForContract(String prompt) throws Exception {
+    private ContractAiResponse callGroqForContract(String prompt) throws com.fasterxml.jackson.core.JsonProcessingException {
         String json = callGroq(prompt);
         JsonNode root = AI_MAPPER.readTree(json);
         
@@ -180,7 +181,7 @@ public class ContractAiGenerationServiceImpl implements IContractAiGenerationSer
                 .build();
     }
 
-    private MilestoneAiResponse callGroqForMilestone(String prompt) throws Exception {
+    private MilestoneAiResponse callGroqForMilestone(String prompt) throws com.fasterxml.jackson.core.JsonProcessingException {
         String json = callGroq(prompt);
         JsonNode root = AI_MAPPER.readTree(json);
 
@@ -194,29 +195,50 @@ public class ContractAiGenerationServiceImpl implements IContractAiGenerationSer
 
     private static final String GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-    private String callGroq(String prompt) throws Exception {
-        String model = (groqModel == null || groqModel.isBlank()) ? "llama-3.3-70b-versatile" : groqModel.trim();
+    private String callGroq(String prompt) throws com.fasterxml.jackson.core.JsonProcessingException {
+        HttpEntity<Map<String, Object>> entity = buildGroqEntity(resolveGroqModel(), prompt);
+        ensureGroqSemaphoreInitialized();
+        acquireGroqPermitOrThrow();
+        try {
+            return executeGroqWithRetry(entity);
+        } finally {
+            groqConcurrencySemaphore.release();
+        }
+    }
+
+    private String resolveGroqModel() {
+        String model = (groqModel == null || groqModel.isBlank())
+                ? "llama-3.3-70b-versatile"
+                : groqModel.trim();
         // Fallback to llama3 if user kept the old gemini model name
         if (model.contains("gemini")) {
-            model = "llama-3.3-70b-versatile";
+            return "llama-3.3-70b-versatile";
         }
+        return model;
+    }
 
+    private HttpEntity<Map<String, Object>> buildGroqEntity(String model, String prompt) {
         Map<String, Object> requestBody = Map.of(
                 "model", model,
-                "messages", List.of(Map.of(
-                        "role", "user",
-                        "content", prompt
-                )),
+                "messages", List.of(Map.of("role", "user", "content", prompt)),
                 "temperature", 0.7,
                 "max_tokens", 1024
         );
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(groqApiKey); // Used for Groq too
         headers.setBearerAuth(groqApiKey);
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+        return new HttpEntity<>(requestBody, headers);
+    }
 
+    private void ensureGroqSemaphoreInitialized() {
+        // Defensive: in unit tests or non-Spring usage, @PostConstruct may not run.
+        if (groqConcurrencySemaphore == null) {
+            this.groqConcurrencySemaphore = new Semaphore(Math.max(1, groqMaxConcurrent));
+        }
+    }
+
+    private void acquireGroqPermitOrThrow() {
         boolean acquired;
         try {
             acquired = groqConcurrencySemaphore.tryAcquire(1, 200, TimeUnit.MILLISECONDS);
@@ -228,86 +250,103 @@ public class ContractAiGenerationServiceImpl implements IContractAiGenerationSer
         if (!acquired) {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Trop de requetes IA en parallele. Reessayez.");
         }
+    }
 
-        try {
-            int maxAttempts = Math.max(1, groqRetryMaxAttempts);
+    private String executeGroqWithRetry(HttpEntity<Map<String, Object>> entity) throws com.fasterxml.jackson.core.JsonProcessingException {
+        int maxAttempts = Math.max(1, groqRetryMaxAttempts);
 
-            for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-                try {
-                    ResponseEntity<String> response = restTemplate.exchange(GROQ_URL, HttpMethod.POST, entity, String.class);
-                    if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Reponse IA invalide (status=" + response.getStatusCode() + ")");
-                    }
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                ResponseEntity<String> response = restTemplate.exchange(GROQ_URL, HttpMethod.POST, entity, String.class);
+                return extractTextFromGroqResponse(response);
+            } catch (HttpStatusCodeException ex) {
+                int status = ex.getStatusCode().value();
+                String body = ex.getResponseBodyAsString();
+                log.warn("[ContentAI] Groq HTTP {} attempt {}/{}: {}", status, attempt, maxAttempts, body);
 
-                    JsonNode root = objectMapper.readTree(response.getBody());
-                    JsonNode choices = root.path("choices");
-                    if (!choices.isArray() || choices.isEmpty()) {
-                        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Reponse IA invalide (choices manquants)");
-                    }
-
-                    String text = choices.get(0).path("message").path("content").asText("");
-
-                    // Nettoyage Markdown (Groq aime bien mettre des ```json ... ```)
-                    text = text.trim();
-                    if (text.startsWith("```")) {
-                        text = text.replaceAll("```json\\n?", "").replaceAll("```\\n?", "").trim();
-                    }
-                    if (text.isBlank()) {
-                        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Reponse IA vide");
-                    }
-
-                    return text;
-                } catch (HttpStatusCodeException ex) {
-                    int status = ex.getStatusCode().value();
-                    String body = ex.getResponseBodyAsString();
-                    log.warn("[ContentAI] Groq HTTP {} attempt {}/{}: {}", status, attempt, maxAttempts, body);
-
-                    if (isRetryableStatus(status) && attempt < maxAttempts) {
-                        long sleepMs = computeRetryDelayMs(attempt, ex.getResponseHeaders(), body);
-                        sleepQuietly(sleepMs);
-                        continue;
-                    }
-
-                    if (status == 429) {
-                        Long retryAfterMs = firstNonNull(
-                                parseRetryAfterMs(ex.getResponseHeaders()),
-                                parseRetryDelayMsFromBody(body)
-                        );
-
-                        boolean quotaExceeded = body != null && body.contains("Quota exceeded");
-                        boolean quotaDisabledOrZero = body != null && body.contains("limit: 0");
-
-                        String reason;
-                        if (quotaDisabledOrZero) {
-                            reason = "Quota Groq a 0 (plan non active ou quotas depasses pour ce projet/cle).";
-                        } else if (quotaExceeded) {
-                            reason = "Quota Groq depasse (verifiez plan et quotas).";
-                        } else {
-                            reason = "Service IA (Groq) temporairement surcharge.";
-                        }
-
-                        String msg = reason + " Reessayez"
-                                + (retryAfterMs != null && retryAfterMs > 0 ? " dans environ " + Math.max(1, retryAfterMs / 1000) + "s." : " plus tard.");
-                        throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, msg);
-                    }
-
-                    // Pour les autres 4xx/5xx en provenance du provider, remonter une 502 cote client.
-                    throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Erreur IA (Groq) HTTP " + status);
-                } catch (ResourceAccessException ex) {
-                    log.warn("[ContentAI] Groq network error attempt {}/{}: {}", attempt, maxAttempts, ex.getMessage());
-                    if (attempt < maxAttempts) {
-                        long sleepMs = computeRetryDelayMs(attempt, null, null);
-                        sleepQuietly(sleepMs);
-                        continue;
-                    }
+                if (attempt < maxAttempts && isRetryableStatus(status)) {
+                    long sleepMs = computeRetryDelayMs(attempt, ex.getResponseHeaders(), body);
+                    sleepQuietly(sleepMs);
+                } else {
+                    throw translateGroqHttpException(status, ex.getResponseHeaders(), body);
+                }
+            } catch (ResourceAccessException ex) {
+                log.warn("[ContentAI] Groq network error attempt {}/{}: {}", attempt, maxAttempts, ex.getMessage());
+                if (attempt < maxAttempts) {
+                    long sleepMs = computeRetryDelayMs(attempt, null, null);
+                    sleepQuietly(sleepMs);
+                } else {
                     throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Erreur reseau lors de l'appel IA (Groq)");
                 }
             }
-
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Service IA indisponible");
-        } finally {
-            groqConcurrencySemaphore.release();
         }
+
+        throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Service IA indisponible");
+    }
+
+    private String extractTextFromGroqResponse(ResponseEntity<String> response) throws com.fasterxml.jackson.core.JsonProcessingException {
+        if (response == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Reponse IA invalide (aucune reponse)");
+        }
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Reponse IA invalide (status=" + response.getStatusCode() + ")");
+        }
+
+        JsonNode root = objectMapper.readTree(response.getBody());
+        JsonNode choices = root.path("choices");
+        if (!choices.isArray() || choices.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Reponse IA invalide (choices manquants)");
+        }
+
+        String text = choices.get(0).path("message").path("content").asText("");
+        text = stripMarkdownCodeFence(text);
+        if (text.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Reponse IA vide");
+        }
+        return text;
+    }
+
+    private String stripMarkdownCodeFence(String text) {
+        if (text == null) {
+            return "";
+        }
+        String trimmed = text.trim();
+        if (trimmed.startsWith("```")) {
+            return trimmed.replaceAll("```json\\n?", "")
+                    .replaceAll("```\\n?", "")
+                    .trim();
+        }
+        return trimmed;
+    }
+
+    private ResponseStatusException translateGroqHttpException(int status, HttpHeaders headers, String body) {
+        if (status == 429) {
+            Long retryAfterMs = firstNonNull(parseRetryAfterMs(headers), parseRetryDelayMsFromBody(body));
+            String msg = buildGroqTooManyRequestsMessage(body, retryAfterMs);
+            return new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, msg);
+        }
+        // Pour les autres 4xx/5xx en provenance du provider, remonter une 502 cote client.
+        return new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Erreur IA (Groq) HTTP " + status);
+    }
+
+    private String buildGroqTooManyRequestsMessage(String body, Long retryAfterMs) {
+        boolean quotaExceeded = body != null && body.contains("Quota exceeded");
+        boolean quotaDisabledOrZero = body != null && body.contains("limit: 0");
+
+        String reason;
+        if (quotaDisabledOrZero) {
+            reason = "Quota Groq a 0 (plan non active ou quotas depasses pour ce projet/cle).";
+        } else if (quotaExceeded) {
+            reason = "Quota Groq depasse (verifiez plan et quotas).";
+        } else {
+            reason = "Service IA (Groq) temporairement surcharge.";
+        }
+
+        return reason + " Reessayez"
+                + (retryAfterMs != null && retryAfterMs > 0
+                ? " dans environ " + Math.max(1, retryAfterMs / 1000) + "s."
+                : " plus tard.");
     }
 
     private boolean isRetryableStatus(int status) {

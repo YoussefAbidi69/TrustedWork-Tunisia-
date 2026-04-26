@@ -7,6 +7,7 @@ import tn.esprit.mscontractservicee.enums.PaymentMethod;
 import tn.esprit.mscontractservicee.enums.TransactionStatus;
 import tn.esprit.mscontractservicee.enums.TransactionType;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -19,7 +20,7 @@ import java.time.LocalDateTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "transactions")
-public class Transaction {
+public class Transaction implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

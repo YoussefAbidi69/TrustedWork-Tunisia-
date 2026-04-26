@@ -50,42 +50,47 @@ public class SlaSchedulerService {
         List<Milestone> inProgressMilestones = milestoneRepository.findByStatus(MilestoneStatus.IN_PROGRESS);
 
         for (Milestone milestone : inProgressMilestones) {
-            Contract contract = milestone.getContract();
+            processFreelancerMilestone(milestone);
+        }
+    }
 
-            // Vérifier si le contrat est bloqué par un litige (Escrow DISPUTED)
-            EscrowAccount escrow = escrowAccountRepository.findByContractId(contract.getId()).orElse(null);
-            if (escrow != null && escrow.getStatus() == EscrowStatus.DISPUTED) {
-                log.info("SLA ignoré pour le jalon {} : Le contrat est en litige (Escrow bloqué).", milestone.getId());
-                continue; // On passe au jalon suivant
-            }
+    private void processFreelancerMilestone(Milestone milestone) {
+        Contract contract = milestone.getContract();
 
-            // Délai de grâce : par défaut 48h si non spécifié
-            int slaHeures = (contract.getSlaFreelancerHeures() != null && contract.getSlaFreelancerHeures() > 0)
-                    ? contract.getSlaFreelancerHeures()
-                    : 48;
+        // Vérifier si le contrat est bloqué par un litige (Escrow DISPUTED)
+        EscrowAccount escrow = escrowAccountRepository.findByContractId(contract.getId()).orElse(null);
+        if (escrow != null && escrow.getStatus() == EscrowStatus.DISPUTED) {
+            log.info("SLA ignoré pour le jalon {} : Le contrat est en litige (Escrow bloqué).", milestone.getId());
+            return;
+        }
 
-            if (milestone.getDeadline() != null) {
-                // On calcule la limite absolue : (Deadline à 23h59:59) + slaHeures
-                LocalDateTime absoluteLimit = milestone.getDeadline()
-                        .atTime(LocalTime.MAX)
-                        .plusHours(slaHeures);
+        // Délai de grâce : par défaut 48h si non spécifié
+        int slaHeures = (contract.getSlaFreelancerHeures() != null && contract.getSlaFreelancerHeures() > 0)
+                ? contract.getSlaFreelancerHeures()
+                : 48;
 
-                if (LocalDateTime.now().isAfter(absoluteLimit)) {
-                    log.warn("SLA dépassé pour le jalon ID {}. Annulation et remboursement.", milestone.getId());
+        if (milestone.getDeadline() != null) {
+            // On calcule la limite absolue : (Deadline à 23h59:59) + slaHeures
+            LocalDateTime absoluteLimit = milestone.getDeadline()
+                    .atTime(LocalTime.MAX)
+                    .plusHours(slaHeures);
 
-                    try {
-                        // 2. Annulation
-                        milestone.setStatus(MilestoneStatus.CANCELLED);
-                        milestone.setRejectionReason(
-                                "SLA dépassé : Non soumis dans les temps (" + slaHeures + "h après deadline).");
-                        milestoneRepository.save(milestone);
 
-                        // 3. Remboursement du client depuis l'Escrow
-                        paymentService.refundMilestoneToClient(milestone.getId());
+            if (LocalDateTime.now().isAfter(absoluteLimit)) {
+                log.warn("SLA dépassé pour le jalon ID {}. Annulation et remboursement.", milestone.getId());
 
-                    } catch (Exception e) {
-                        log.error("Erreur lors de l'annulation du jalon " + milestone.getId(), e);
-                    }
+                try {
+                    // 2. Annulation
+                    milestone.setStatus(MilestoneStatus.CANCELLED);
+                    milestone.setRejectionReason(
+                            "SLA dépassé : Non soumis dans les temps (" + slaHeures + "h après deadline).");
+                    milestoneRepository.save(milestone);
+
+                    // 3. Remboursement du client depuis l'Escrow
+                    paymentService.refundMilestoneToClient(milestone.getId());
+
+                } catch (Exception e) {
+                    log.error("Erreur lors de l'annulation du jalon " + milestone.getId(), e);
                 }
             }
         }
@@ -106,62 +111,88 @@ public class SlaSchedulerService {
         List<Milestone> submittedMilestones = milestoneRepository.findByStatus(MilestoneStatus.SUBMITTED);
 
         for (Milestone milestone : submittedMilestones) {
-            Contract contract = milestone.getContract();
+            processClientMilestone(milestone);
+        }
+    }
 
-            // Vérifier si le contrat est bloqué par un litige (Escrow DISPUTED)
-            EscrowAccount escrow = escrowAccountRepository.findByContractId(contract.getId()).orElse(null);
-            if (escrow != null && escrow.getStatus() == EscrowStatus.DISPUTED) {
-                log.info("SLA ignoré pour le jalon {} : Le contrat est en litige (Escrow bloqué).", milestone.getId());
-                continue; // On passe au jalon suivant
+    private void processClientMilestone(Milestone milestone) {
+        Contract contract = milestone.getContract();
+
+        // Vérifier si le contrat est bloqué par un litige (Escrow DISPUTED)
+        EscrowAccount escrow = escrowAccountRepository.findByContractId(contract.getId()).orElse(null);
+        if (escrow != null && escrow.getStatus() == EscrowStatus.DISPUTED) {
+            log.info("SLA ignoré pour le jalon {} : Le contrat est en litige (Escrow bloqué).", milestone.getId());
+            return;
+        }
+
+        if (milestone.getSubmittedAt() == null) {
+            return;
+        }
+
+        // Délai d'inspection : par défaut 7 jours si non spécifié
+        int slaJours = (contract.getSlaClientJours() != null && contract.getSlaClientJours() > 0)
+                ? contract.getSlaClientJours()
+                : 7;
+
+        LocalDateTime approvalLimit = milestone.getSubmittedAt().plusDays(slaJours);
+        LocalDateTime now = LocalDateTime.now();
+
+        if (now.isAfter(approvalLimit)) {
+            log.warn("SLA Client dépassé pour le jalon ID {}. Auto-approbation.", milestone.getId());
+            autoApproveMilestoneSafely(milestone.getId());
+            return;
+        }
+
+        long hoursLeft = ChronoUnit.HOURS.between(now, approvalLimit);
+        if (hoursLeft > 0 && hoursLeft <= 24) {
+            log.info("Envoi d'un email d'avertissement au client pour le jalon ID {}", milestone.getId());
+            sendClientWarningEmailSafely(contract, milestone, slaJours);
+        /* 👇 TEST : limite = submittedAt + 4 minutes
+        LocalDateTime approvalLimit = milestone.getSubmittedAt().plusMinutes(5);
+        LocalDateTime now = LocalDateTime.now();
+
+        if (now.isAfter(approvalLimit)) {
+            log.warn("SLA Client dépassé pour le jalon ID {}. Auto-approbation.", milestone.getId());
+            autoApproveMilestoneSafely(milestone.getId());
+            return;
+        }
+
+        // 👇 TEST : envoie l'email si moins de 2 minutes restantes
+        long secondsLeft = ChronoUnit.SECONDS.between(now, approvalLimit);
+        if (secondsLeft > 0 && secondsLeft <= 120) { // 2 minutes = fenêtre d'avertissement
+            log.info("Envoi d'un email d'avertissement au client pour le jalon ID {}", milestone.getId());
+            sendClientWarningEmailSafely(contract, milestone, slaJours);*/
+
+        }
+    }
+
+    private void autoApproveMilestoneSafely(Long milestoneId) {
+        try {
+            // L'ID 0L (ou autre convention) indique que c'est le système qui approuve.
+            milestoneService.autoApproveMilestone(milestoneId, 0L);
+        } catch (Exception e) {
+            log.error("Erreur lors de l'auto-approbation du jalon " + milestoneId, e);
+        }
+    }
+
+    private void sendClientWarningEmailSafely(Contract contract, Milestone milestone, int slaJours) {
+        try {
+            UserDTO client = userServiceClient.getPublicUserByCin(contract.getClientCin());
+            if (client == null || client.getEmail() == null) {
+                return;
             }
 
-            // Délai d'inspection : par défaut 7 jours si non spécifié
-            int slaJours = (contract.getSlaClientJours() != null && contract.getSlaClientJours() > 0)
-                    ? contract.getSlaClientJours()
-                    : 7;
-
-            if (milestone.getSubmittedAt() != null) {
-                // Limite absolue pour que le client approuve
-                LocalDateTime approvalLimit = milestone.getSubmittedAt().plusDays(slaJours);
-              // LocalDateTime approvalLimit = milestone.getSubmittedAt().plusMinutes(2);
-
-                if (LocalDateTime.now().isAfter(approvalLimit)) {
-                    log.warn("SLA Client dépassé pour le jalon ID {}. Auto-approbation.", milestone.getId());
-
-                    try {
-                        // 2. Auto-Approbation (Passe le statut et transfère l'argent au freelancer)
-                        // L'ID 0L (ou autre convention) indique que c'est le système qui approuve.
-                        milestoneService.autoApproveMilestone(milestone.getId(), 0L);
-                    } catch (Exception e) {
-                        log.error("Erreur lors de l'auto-approbation du jalon " + milestone.getId(), e);
-                    }
-                } else {
-                    // Vérifier si c'est exactement le jour précédent (24h avant) pour envoyer l'email
-                    long hoursLeft = ChronoUnit.HOURS.between(LocalDateTime.now(), approvalLimit);
-                    if (hoursLeft > 0 && hoursLeft <= 24) {
-                  /*  long minutesLeft = ChronoUnit.MINUTES.between(LocalDateTime.now(), approvalLimit);
-                    if (minutesLeft > 0 && minutesLeft <= 1) {*/
-                        log.info("Envoi d'un email d'avertissement au client pour le jalon ID {}", milestone.getId());
-                        try {
-                            UserDTO client = userServiceClient.getPublicUserByCin(contract.getClientCin());
-                            if (client != null && client.getEmail() != null) {
-                                String subject = "URGENT : Approbation automatique demain";
-                                String body = "Bonjour,\n\n" +
-                                        "Le freelancer a soumis le jalon '" + milestone.getTitre() + "' depuis "
-                                        + (slaJours - 1) + " jours.\n" +
-                                        "Si vous ne validez pas ce travail ou ne demandez pas de révision aujourd'hui, les fonds seront automatiquement transférés au freelancer demain.\n\n"
-                                        +
-                                        "Merci de vous connecter pour valider le travail.\n\n" +
-                                        "L'équipe TrustedWork.";
-                                emailService.sendSimpleEmail(client.getEmail(), subject, body);
-                            }
-                        } catch (Exception e) {
-                            log.error("Impossible d'envoyer l'email d'avertissement pour le jalon " + milestone.getId(),
-                                    e);
-                        }
-                    }
-                }
-            }
+            String subject = "URGENT : Approbation automatique demain";
+            String body = "Bonjour,\n\n" +
+                    "Le freelancer a soumis le jalon '" + milestone.getTitre() + "' depuis "
+                    + (slaJours - 1) + " jours.\n" +
+                    "Si vous ne validez pas ce travail ou ne demandez pas de révision aujourd'hui, les fonds seront automatiquement transférés au freelancer demain.\n\n"
+                    +
+                    "Merci de vous connecter pour valider le travail.\n\n" +
+                    "L'équipe TrustedWork.";
+            emailService.sendSimpleEmail(client.getEmail(), subject, body);
+        } catch (Exception e) {
+            log.error("Impossible d'envoyer l'email d'avertissement pour le jalon " + milestone.getId(), e);
         }
     }
 }

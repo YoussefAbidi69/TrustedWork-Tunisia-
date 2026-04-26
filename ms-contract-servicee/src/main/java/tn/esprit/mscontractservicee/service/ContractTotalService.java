@@ -67,17 +67,17 @@ public class ContractTotalService {
      */
     public void assertStoredTotalMatchesMilestones(Contract contract) {
         if (contract == null || contract.getId() == null) {
-            throw new RuntimeException("Contract is required");
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Contract is required");
         }
         if (contract.getMontantTotal() == null || contract.getMontantTotal().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Contract montantTotal (budget) must be set and > 0 before payment. contractId="
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Contract montantTotal (budget) must be set and > 0 before payment. contractId="
                     + contract.getId());
         }
         BigDecimal computed = computeMilestonesTotal(contract.getId());
         BigDecimal stored = contract.getMontantTotal();
         if (!ContractAmountCalculator.amountsMatch(stored, computed)) {
             BigDecimal storedNormalized = stored != null ? stored : BigDecimal.ZERO;
-            throw new RuntimeException("Contract budget not fully allocated. storedBudget=" + storedNormalized
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Contract budget not fully allocated. storedBudget=" + storedNormalized
                     + " milestonesTotal=" + computed + " (sum of milestones). Add/update milestones to match the contract budget.");
         }
     }

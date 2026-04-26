@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,7 @@ import tn.esprit.mscontractservicee.service.email.AppEmailService;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
@@ -63,11 +65,12 @@ public class SignatureRequestServiceImpl implements ISignatureRequestService {
     @Value("${app.signature.token-ttl-minutes:2880}")
     private long tokenTtlMinutes;
 
-    private final ObjectMapper snapshotMapper = new ObjectMapper()
-            .findAndRegisterModules()
-            .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
+    private final ObjectMapper snapshotMapper = JsonMapper.builder()
+            .findAndAddModules()
+            .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
             .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .build();
 
     private record SignerWithToken(SignatureSigner signer, String token) {
     }
@@ -137,13 +140,13 @@ public class SignatureRequestServiceImpl implements ISignatureRequestService {
         boolean freelancerMailSent = true;
         try {
             sendEmail(clientEmail, subject, signerLink(req.getId(), clientSigner.token()), contract);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             clientMailSent = false;
             log.error("Failed to send signature email to client={} contractId={}: {}", clientEmail, contractId, e.getMessage(), e);
         }
         try {
             sendEmail(freelancerEmail, subject, signerLink(req.getId(), freelancerSigner.token()), contract);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             freelancerMailSent = false;
             log.error("Failed to send signature email to freelancer={} contractId={}: {}", freelancerEmail, contractId, e.getMessage(), e);
         }
@@ -381,8 +384,8 @@ public class SignatureRequestServiceImpl implements ISignatureRequestService {
                 sb.append(Character.forDigit(b & 0xF, 16));
             }
             return sb.toString();
-        } catch (Exception e) {
-            throw new RuntimeException("SHA-256 not available", e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
         }
     }
 }

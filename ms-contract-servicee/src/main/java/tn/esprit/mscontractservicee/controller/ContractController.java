@@ -24,6 +24,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import tn.esprit.mscontractservicee.dto.contract.ContractCreateRequest;
+import tn.esprit.mscontractservicee.dto.contract.ContractResponse;
+import tn.esprit.mscontractservicee.dto.contract.ContractUpdateRequest;
 import tn.esprit.mscontractservicee.entity.Contract;
 import tn.esprit.mscontractservicee.entity.SignatureRequest;
 import tn.esprit.mscontractservicee.entity.SignatureSigner;
@@ -54,6 +57,8 @@ public class ContractController {
     private static final SimpleGrantedAuthority ROLE_ADMIN = new SimpleGrantedAuthority("ROLE_ADMIN");
     private static final SimpleGrantedAuthority ROLE_CLIENT = new SimpleGrantedAuthority("ROLE_CLIENT");
     private static final SimpleGrantedAuthority ROLE_FREELANCER = new SimpleGrantedAuthority("ROLE_FREELANCER");
+
+    private static final String CONTRACT_NOT_FOUND_MSG = "Contract not found with id: ";
 
     private final IContractService contractService;
     private final ISignatureRequestService signatureRequestService;
@@ -116,10 +121,10 @@ public class ContractController {
     @PostMapping
     @Operation(summary = "Créer un contrat")
     @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
-    public ResponseEntity<Contract> createContract(Authentication authentication,
-                                                   @RequestBody Contract contract) {
-        Contract saved = contractService.createContract(contract, currentCin(authentication));
-        return new ResponseEntity<>(saved, HttpStatus.CREATED);
+    public ResponseEntity<ContractResponse> createContract(Authentication authentication,
+                                                           @RequestBody ContractCreateRequest contract) {
+        Contract saved = contractService.createContract(toEntity(contract), currentCin(authentication));
+        return new ResponseEntity<>(toResponse(saved), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
@@ -132,7 +137,7 @@ public class ContractController {
 
         Contract contract = contractService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Contract not found with id: " + id));
+                        CONTRACT_NOT_FOUND_MSG + id));
 
         if (!isContractParticipant(contract, cin, admin)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
@@ -154,14 +159,14 @@ public class ContractController {
     @GetMapping("/{id}/wallet-ids")
     @Operation(summary = "Récupérer les wallet IDs liés au contrat")
     @PreAuthorize("hasAnyRole('CLIENT','FREELANCER','ADMIN')")
-    public ResponseEntity<?> getContractWalletIds(Authentication authentication,
+    public ResponseEntity<tn.esprit.mscontractservicee.dto.ContractWalletIdsResponse> getContractWalletIds(Authentication authentication,
                                                   @PathVariable Long id) {
         Long cin = currentCin(authentication);
         boolean admin = isAdmin(authentication);
 
         Contract contract = contractService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Contract not found with id: " + id));
+                        CONTRACT_NOT_FOUND_MSG + id));
 
         if (!isContractParticipant(contract, cin, admin)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
@@ -190,7 +195,7 @@ public class ContractController {
 
         Contract contract = contractService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Contract not found with id: " + id));
+                        CONTRACT_NOT_FOUND_MSG + id));
 
         if (!isContractParticipant(contract, cin, admin)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
@@ -280,19 +285,19 @@ public class ContractController {
     @PutMapping("/{id}")
     @Operation(summary = "Modifier un contrat")
     @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
-    public ResponseEntity<Contract> updateContract(Authentication authentication,
-                                                   @PathVariable Long id,
-                                                   @RequestBody Contract contract) {
+    public ResponseEntity<ContractResponse> updateContract(Authentication authentication,
+                                                           @PathVariable Long id,
+                                                           @RequestBody ContractUpdateRequest contract) {
         Long cin = currentCin(authentication);
         Contract existing = contractService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Contract not found with id: " + id));
+                        CONTRACT_NOT_FOUND_MSG + id));
         if (!isAdmin(authentication)
                 && (existing.getClientCin() == null || !existing.getClientCin().equals(cin))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "You are not allowed to update this contract");
         }
-        return ResponseEntity.ok(contractService.updateContract(id, contract));
+        return ResponseEntity.ok(toResponse(contractService.updateContract(id, toEntity(contract))));
     }
 
     @PatchMapping("/{id}/status")
@@ -304,7 +309,7 @@ public class ContractController {
         Long cin = currentCin(authentication);
         Contract existing = contractService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Contract not found with id: " + id));
+                        CONTRACT_NOT_FOUND_MSG + id));
         if (!isAdmin(authentication)
                 && (existing.getClientCin() == null || !existing.getClientCin().equals(cin))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
@@ -321,7 +326,7 @@ public class ContractController {
         Long cin = currentCin(authentication);
         Contract existing = contractService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Contract not found with id: " + id));
+                        CONTRACT_NOT_FOUND_MSG + id));
         if (!isAdmin(authentication)
                 && (existing.getClientCin() == null || !existing.getClientCin().equals(cin))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
@@ -341,7 +346,7 @@ public class ContractController {
 
         Contract existing = contractService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Contract not found with id: " + id));
+                        CONTRACT_NOT_FOUND_MSG + id));
         if (!admin && (existing.getClientCin() == null || !existing.getClientCin().equals(cin))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "You are not allowed to finalize this contract");
@@ -360,7 +365,7 @@ public class ContractController {
 
         Contract existing = contractService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Contract not found with id: " + id));
+                        CONTRACT_NOT_FOUND_MSG + id));
         if (!admin && (existing.getClientCin() == null || !existing.getClientCin().equals(cin))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "You are not allowed to request signatures for this contract");
@@ -379,7 +384,7 @@ public class ContractController {
 
         Contract contract = contractService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Contract not found with id: " + id));
+                        CONTRACT_NOT_FOUND_MSG + id));
         if (!isContractParticipant(contract, cin, admin)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "You are not allowed to access this contract document");
@@ -410,7 +415,7 @@ public class ContractController {
 
         Contract contract = contractService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Contract not found with id: " + id));
+                        CONTRACT_NOT_FOUND_MSG + id));
         if (!isContractParticipant(contract, cin, admin)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "You are not allowed to access this contract signature status");
@@ -446,5 +451,70 @@ public class ContractController {
                 .build();
 
         return ResponseEntity.ok(res);
+    }
+
+    private static ContractResponse toResponse(Contract contract) {
+        if (contract == null) {
+            return null;
+        }
+        return ContractResponse.builder()
+                .id(contract.getId())
+                .reference(contract.getReference())
+                .clientCin(contract.getClientCin())
+                .freelancerCin(contract.getFreelancerCin())
+                .clientWalletCin(contract.getClientWalletCin())
+                .freelancerWalletCin(contract.getFreelancerWalletCin())
+                .projectId(contract.getProjectId())
+                .projectTitle(contract.getProjectTitle())
+                .description(contract.getDescription())
+                .montantTotal(contract.getMontantTotal())
+                .slaFreelancerHeures(contract.getSlaFreelancerHeures())
+                .slaClientJours(contract.getSlaClientJours())
+                .dateSignature(contract.getDateSignature())
+                .version(contract.getVersion())
+                .finalizedAt(contract.getFinalizedAt())
+                .dateDebut(contract.getDateDebut())
+                .dateFin(contract.getDateFin())
+                .commissionRate(contract.getCommissionRate())
+                .status(contract.getStatus())
+                .cancelledAt(contract.getCancelledAt())
+                .cancellationReason(contract.getCancellationReason())
+                .createdAt(contract.getCreatedAt())
+                .updatedAt(contract.getUpdatedAt())
+                .build();
+    }
+
+    private static Contract toEntity(ContractCreateRequest req) {
+        if (req == null) {
+            return null;
+        }
+        Contract c = new Contract();
+        c.setFreelancerCin(req.getFreelancerCin());
+        c.setProjectId(req.getProjectId());
+        c.setProjectTitle(req.getProjectTitle());
+        c.setDescription(req.getDescription());
+        c.setMontantTotal(req.getMontantTotal());
+        c.setSlaFreelancerHeures(req.getSlaFreelancerHeures());
+        c.setSlaClientJours(req.getSlaClientJours());
+        c.setDateDebut(req.getDateDebut());
+        c.setDateFin(req.getDateFin());
+        c.setCommissionRate(req.getCommissionRate());
+        return c;
+    }
+
+    private static Contract toEntity(ContractUpdateRequest req) {
+        if (req == null) {
+            return null;
+        }
+        Contract c = new Contract();
+        c.setProjectTitle(req.getProjectTitle());
+        c.setDescription(req.getDescription());
+        c.setMontantTotal(req.getMontantTotal());
+        c.setSlaFreelancerHeures(req.getSlaFreelancerHeures());
+        c.setSlaClientJours(req.getSlaClientJours());
+        c.setDateDebut(req.getDateDebut());
+        c.setDateFin(req.getDateFin());
+        c.setCommissionRate(req.getCommissionRate());
+        return c;
     }
 }

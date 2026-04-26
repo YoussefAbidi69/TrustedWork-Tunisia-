@@ -16,17 +16,19 @@ public class StripeServiceImpl implements IStripeService {
     @Value("${payment.simulation.enabled:false}")
     private boolean simulationEnabled;
 
+    private static final String SIMULATION_BANNER = "========================================";
+
     @Override
-    public PaymentIntent createPaymentIntent(Long contractId, BigDecimal amount, String currency, String email) throws Exception {
+    public PaymentIntent createPaymentIntent(Long contractId, BigDecimal amount, String currency, String email) throws com.stripe.exception.StripeException {
 
         if (simulationEnabled) {
-            log.info("========================================");
+            log.info(SIMULATION_BANNER);
             log.info(" SIMULATION MODE ENABLED ");
-            log.info("========================================");
+            log.info(SIMULATION_BANNER);
             log.info("Creating SIMULATED payment intent for contract: {}", contractId);
             log.info("Amount: {} {}", amount, currency);
             log.info("Email: {}", email);
-            log.info("========================================");
+            log.info(SIMULATION_BANNER);
 
             // Créer un PaymentIntent simulé
             PaymentIntent mockIntent = new PaymentIntent();
@@ -41,7 +43,7 @@ public class StripeServiceImpl implements IStripeService {
             log.info("   ID: {}", mockIntent.getId());
             log.info("   Client Secret: {}", mockIntent.getClientSecret());
             log.info("   Status: {}", mockIntent.getStatus());
-            log.info("========================================");
+            log.info(SIMULATION_BANNER);
 
             return mockIntent;
         }
@@ -51,7 +53,7 @@ public class StripeServiceImpl implements IStripeService {
     }
 
     @Override
-    public PaymentIntent getPaymentIntent(String paymentIntentId) throws Exception {
+    public PaymentIntent getPaymentIntent(String paymentIntentId) throws com.stripe.exception.StripeException {
 
         if (simulationEnabled) {
             log.info(" SIMULATION: Getting payment intent: {}", paymentIntentId);

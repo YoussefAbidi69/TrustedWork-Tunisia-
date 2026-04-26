@@ -63,25 +63,19 @@ public class DisputeServiceImpl implements IDisputeService {
     private final TransactionRepository transactionRepository;
     private final WalletRepository walletRepository;
     private final IWalletService walletService;
+    private final INotificationService notificationService;
 
     // Wallet de la plateforme (commission). Par défaut: wallet.id=1
     @Value("${platform.wallet.id:1}")
     private Long platformWalletId;
 
+    // Frontend deep-link for disputes (override via config if routes change)
+    @Value("${app.frontend.paths.disputeActivity:/app/activity/disputes}")
+    private String disputeActivityPath;
+
     @Override
     public Dispute openDispute(Long authenticatedCin, DisputeCreateRequest request) {
-        if (authenticatedCin == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
-        }
-        if (request == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
-        }
-        if (request.getContractId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "contractId is required");
-        }
-        if (request.getMotif() == null || request.getMotif().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "motif is required");
-        }
+        validateOpenDisputeRequest(authenticatedCin, request);
 
         Contract contract = requireContract(request.getContractId());
         requireParticipant(contract, authenticatedCin);
@@ -91,33 +85,7 @@ public class DisputeServiceImpl implements IDisputeService {
                     "Dispute can only be opened for ACTIVE contracts. Status: " + contract.getStatus());
         }
 
-        boolean contractLevel = request.getMilestoneId() == null;
-
-        // Since escrow is contract-level, allow only one open dispute per contract at a time.
-        if (disputeRepository.existsByContractIdAndStatusIn(contract.getId(), OPEN_STATUSES)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "There is already an open dispute for this contract");
-        }
-
-        Milestone milestone = null;
-        if (!contractLevel) {
-            milestone = requireMilestone(request.getMilestoneId());
-            if (!milestone.getContractId().equals(contract.getId())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Milestone does not belong to this contract");
-            }
-            if (milestone.getStatus() != MilestoneStatus.SUBMITTED && milestone.getStatus() != MilestoneStatus.REJECTED) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Dispute can only be opened for SUBMITTED/REJECTED milestones. Status: " + milestone.getStatus());
-            }
-
-            if (disputeRepository.existsByMilestoneIdAndStatusIn(milestone.getId(), OPEN_STATUSES)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "There is already an open dispute for this milestone");
-            }
-        } else {
-            // Defensive: keep the more specific check available for contract-level disputes.
-            if (disputeRepository.existsByContractIdAndMilestoneIdIsNullAndStatusIn(contract.getId(), OPEN_STATUSES)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "There is already an open contract-level dispute for this contract");
-            }
-        }
+        Milestone milestone = validateDisputeUniquenessAndMilestone(contract, request);
 
         EscrowAccount escrow = escrowAccountRepository.findByContractId(contract.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -143,7 +111,27 @@ public class DisputeServiceImpl implements IDisputeService {
                 .status(DisputeStatus.OPEN)
                 .build();
 
-        return disputeRepository.save(dispute);
+        Dispute saved = disputeRepository.save(dispute);
+        
+        // Notification au défendeur
+        notificationService.createNotification(
+            defendantCin,
+            "Litige ouvert",
+            "Un litige a été ouvert sur le contrat #" + contract.getId() + ". Veuillez y répondre.",
+            tn.esprit.mscontractservicee.enums.NotificationType.URGENT,
+            disputeActivityPath
+        );
+        
+        // Notification aux administrateurs (identifié par 0)
+        notificationService.createNotification(
+            0L,
+            "Nouveau litige détecté",
+            "Le contrat #" + contract.getId() + " a un nouveau litige ouvert.",
+            tn.esprit.mscontractservicee.enums.NotificationType.WARNING,
+            "/admin/activity/disputes"
+        );
+
+        return saved;
     }
 
     @Override
@@ -173,7 +161,19 @@ public class DisputeServiceImpl implements IDisputeService {
         dispute.setPreuvesDefense(request.getPreuvesDefense().trim());
         // Mark that the defendant answered (helps frontend follow workflow before admin assignment).
         dispute.setStatus(DisputeStatus.RESPONDED);
-        return disputeRepository.save(dispute);
+        
+        Dispute saved = disputeRepository.save(dispute);
+        
+        // Notification au plaignant
+        notificationService.createNotification(
+            dispute.getPlaignantId(),
+            "Réponse au litige",
+            "L'autre partie a répondu au litige sur le contrat #" + contract.getId() + ".",
+            tn.esprit.mscontractservicee.enums.NotificationType.INFO,
+            disputeActivityPath
+        );
+        
+        return saved;
     }
 
     @Override
@@ -199,99 +199,109 @@ public class DisputeServiceImpl implements IDisputeService {
 
     @Override
     public Dispute resolve(Long disputeId, Long adminCin, DisputeResolveRequest request) {
-        if (adminCin == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
-        }
-        if (request == null || request.getStatus() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "status is required");
-        }
+        requireAdmin(adminCin);
+        requireResolveRequest(request);
 
-        Dispute dispute = requireDispute(disputeId);
-        if (FINAL_STATUSES.contains(dispute.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dispute is already closed");
-        }
-        if (dispute.getStatus() != DisputeStatus.UNDER_REVIEW) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dispute must be UNDER_REVIEW to resolve. Status: " + dispute.getStatus());
-        }
-
+        Dispute dispute = requireDisputeForResolution(disputeId);
         Contract contract = requireContract(dispute.getContractId());
-        EscrowAccount escrow = escrowAccountRepository.findByContractId(contract.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escrow not found"));
+        EscrowAccount escrow = requireEscrow(contract.getId());
         Milestone milestone = dispute.getMilestoneId() != null ? requireMilestone(dispute.getMilestoneId()) : null;
 
-        DisputeStatus target = request.getStatus();
-        if (target == DisputeStatus.OPEN || target == DisputeStatus.UNDER_REVIEW) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid resolution status: " + target);
-        }
-
+        DisputeStatus target = requireValidResolutionStatus(request.getStatus());
         BigDecimal refund = nvl(request.getMontantRembourse());
         BigDecimal release = nvl(request.getMontantLibere());
         BigDecimal sum = refund.add(release);
 
         if (target == DisputeStatus.DISMISSED) {
-            if (request.getDecision() == null || request.getDecision().isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "decision is required when dismissing a dispute");
-            }
-            // Unfreeze escrow; no money movement.
-            restoreEscrowStatusAfterResolution(escrow);
-            escrow.setUpdatedAt(LocalDateTime.now());
-            escrowAccountRepository.save(escrow);
-
-            dispute.setDecision(request.getDecision().trim());
-            dispute.setResolvedAt(LocalDateTime.now());
-            dispute.setStatus(DisputeStatus.DISMISSED);
-            return disputeRepository.save(dispute);
+            return dismissDispute(dispute, escrow, request);
         }
 
-        // Validate amount rules
-        if (refund.compareTo(BigDecimal.ZERO) < 0 || release.compareTo(BigDecimal.ZERO) < 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amounts must be >= 0");
+        validateDisputeAmounts(refund, release, sum, milestone, escrow, target);
+        applyMoneyMovements(contract, dispute.getMilestoneId(), escrow, refund, release);
+        updateMilestoneAfterResolution(milestone, release);
+        restoreEscrowAndUpdateContract(contract, escrow);
+
+        Dispute saved = persistResolution(dispute, request, refund, release, target);
+        notifyPartiesAfterResolution(contract, target);
+        return saved;
+    }
+
+    private static void requireAdmin(Long adminCin) {
+        if (adminCin == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
         }
-        if (sum.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one amount must be > 0");
+    }
+
+    private static void requireResolveRequest(DisputeResolveRequest request) {
+        if (request == null || request.getStatus() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "status is required");
         }
-        if (milestone != null && milestone.getMontant() != null && sum.compareTo(milestone.getMontant()) > 0) {
+    }
+
+    private Dispute requireDisputeForResolution(Long disputeId) {
+        Dispute dispute = requireDispute(disputeId);
+        if (FINAL_STATUSES.contains(dispute.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dispute is already closed");
+        }
+        if (dispute.getStatus() != DisputeStatus.UNDER_REVIEW) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "refund+release exceeds milestone amount. milestone=" + milestone.getMontant() + " provided=" + sum);
+                    "Dispute must be UNDER_REVIEW to resolve. Status: " + dispute.getStatus());
         }
-        if (escrow.getMontantBloque() == null || escrow.getMontantBloque().compareTo(sum) < 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Insufficient escrow balance. balance=" + escrow.getMontantBloque() + " required=" + sum);
+        return dispute;
+    }
+
+    private EscrowAccount requireEscrow(Long contractId) {
+        return escrowAccountRepository.findByContractId(contractId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escrow not found"));
+    }
+
+    private static DisputeStatus requireValidResolutionStatus(DisputeStatus target) {
+        if (target == DisputeStatus.OPEN || target == DisputeStatus.UNDER_REVIEW) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid resolution status: " + target);
+        }
+        return target;
+    }
+
+    private Dispute dismissDispute(Dispute dispute, EscrowAccount escrow, DisputeResolveRequest request) {
+        if (request.getDecision() == null || request.getDecision().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "decision is required when dismissing a dispute");
         }
 
-        if (target == DisputeStatus.RESOLVED_CLIENT) {
-            if (release.compareTo(BigDecimal.ZERO) != 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "montantLibere must be 0 for RESOLVED_CLIENT");
-            }
-        } else if (target == DisputeStatus.RESOLVED_FREELANCER) {
-            if (refund.compareTo(BigDecimal.ZERO) != 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "montantRembourse must be 0 for RESOLVED_FREELANCER");
-            }
-        } else if (target == DisputeStatus.SPLIT) {
-            if (refund.compareTo(BigDecimal.ZERO) == 0 || release.compareTo(BigDecimal.ZERO) == 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Both amounts must be > 0 for SPLIT");
-            }
-        }
+        // Unfreeze escrow; no money movement.
+        restoreEscrowStatusAfterResolution(escrow);
+        escrow.setUpdatedAt(LocalDateTime.now());
+        escrowAccountRepository.save(escrow);
 
+        dispute.setDecision(request.getDecision().trim());
+        dispute.setResolvedAt(LocalDateTime.now());
+        dispute.setStatus(DisputeStatus.DISMISSED);
+        return disputeRepository.save(dispute);
+    }
+
+    private void applyMoneyMovements(Contract contract, Long milestoneId, EscrowAccount escrow, BigDecimal refund, BigDecimal release) {
         if (refund.compareTo(BigDecimal.ZERO) > 0) {
-            doRefund(contract, dispute.getMilestoneId(), escrow, refund);
+            doRefund(contract, milestoneId, escrow, refund);
         }
         if (release.compareTo(BigDecimal.ZERO) > 0) {
-            doRelease(contract, dispute.getMilestoneId(), escrow, release);
+            doRelease(contract, milestoneId, escrow, release);
         }
+    }
 
-        if (milestone != null) {
-            // Update milestone decision state (best-effort; can be refined later).
-            milestone.setValidatedAt(LocalDateTime.now());
-            if (release.compareTo(BigDecimal.ZERO) > 0) {
-                milestone.setStatus(MilestoneStatus.APPROVED);
-            } else {
-                milestone.setStatus(MilestoneStatus.REJECTED);
-                milestone.setRejectionReason("Dispute resolved in favor of client");
-            }
-            milestoneRepository.save(milestone);
+    private void updateMilestoneAfterResolution(Milestone milestone, BigDecimal release) {
+        if (milestone == null) {
+            return;
         }
+        milestone.setValidatedAt(LocalDateTime.now());
+        if (release.compareTo(BigDecimal.ZERO) > 0) {
+            milestone.setStatus(MilestoneStatus.APPROVED);
+        } else {
+            milestone.setStatus(MilestoneStatus.REJECTED);
+            milestone.setRejectionReason("Dispute resolved in favor of client");
+        }
+        milestoneRepository.save(milestone);
+    }
 
+    private void restoreEscrowAndUpdateContract(Contract contract, EscrowAccount escrow) {
         // Unfreeze escrow and potentially close contract.
         restoreEscrowStatusAfterResolution(escrow);
         escrow.setUpdatedAt(LocalDateTime.now());
@@ -301,19 +311,32 @@ public class DisputeServiceImpl implements IDisputeService {
             contract.setStatus(ContractStatus.COMPLETED);
             contract.setUpdatedAt(LocalDateTime.now());
             contractRepository.save(contract);
-        }
-        if (escrow.getStatus() == EscrowStatus.REFUNDED) {
+        } else if (escrow.getStatus() == EscrowStatus.REFUNDED) {
             contract.setStatus(ContractStatus.TERMINATED);
             contract.setUpdatedAt(LocalDateTime.now());
             contractRepository.save(contract);
         }
+    }
 
-        dispute.setDecision(request.getDecision());
+    private Dispute persistResolution(Dispute dispute, DisputeResolveRequest request, BigDecimal refund, BigDecimal release, DisputeStatus target) {
+        dispute.setDecision(request.getDecision() != null ? request.getDecision().trim() : null);
         dispute.setMontantRembourse(refund.compareTo(BigDecimal.ZERO) > 0 ? refund : null);
         dispute.setMontantLibere(release.compareTo(BigDecimal.ZERO) > 0 ? release : null);
         dispute.setResolvedAt(LocalDateTime.now());
         dispute.setStatus(target);
         return disputeRepository.save(dispute);
+    }
+
+    private void notifyPartiesAfterResolution(Contract contract, DisputeStatus target) {
+        String notifMsg = "Le litige sur le contrat #" + contract.getId() + " a été résolu. Statut: " + target;
+        notificationService.createNotification(
+                contract.getClientCin(), "Litige résolu", notifMsg,
+                tn.esprit.mscontractservicee.enums.NotificationType.INFO, disputeActivityPath
+        );
+        notificationService.createNotification(
+                contract.getFreelancerCin(), "Litige résolu", notifMsg,
+                tn.esprit.mscontractservicee.enums.NotificationType.INFO, disputeActivityPath
+        );
     }
 
     @Override
@@ -537,5 +560,103 @@ public class DisputeServiceImpl implements IDisputeService {
             return contract.getClientCin();
         }
         return null;
+    }
+
+    private void validateOpenDisputeRequest(Long authenticatedCin, DisputeCreateRequest request) {
+        if (authenticatedCin == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
+        }
+        if (request.getContractId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "contractId is required");
+        }
+        if (request.getMotif() == null || request.getMotif().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "motif is required");
+        }
+    }
+
+    private Milestone validateDisputeUniquenessAndMilestone(Contract contract, DisputeCreateRequest request) {
+        boolean contractLevel = request.getMilestoneId() == null;
+
+        // Since escrow is contract-level, allow only one open dispute per contract at a time.
+        if (disputeRepository.existsByContractIdAndStatusIn(contract.getId(), OPEN_STATUSES)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "There is already an open dispute for this contract");
+        }
+
+        Milestone milestone = null;
+        if (!contractLevel) {
+            milestone = requireMilestone(request.getMilestoneId());
+            if (!milestone.getContractId().equals(contract.getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Milestone does not belong to this contract");
+            }
+            if (milestone.getStatus() != MilestoneStatus.SUBMITTED && milestone.getStatus() != MilestoneStatus.REJECTED) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Dispute can only be opened for SUBMITTED/REJECTED milestones. Status: " + milestone.getStatus());
+            }
+
+            if (disputeRepository.existsByMilestoneIdAndStatusIn(milestone.getId(), OPEN_STATUSES)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "There is already an open dispute for this milestone");
+            }
+        } else {
+            // Defensive: keep the more specific check available for contract-level disputes.
+            if (disputeRepository.existsByContractIdAndMilestoneIdIsNullAndStatusIn(contract.getId(), OPEN_STATUSES)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "There is already an open contract-level dispute for this contract");
+            }
+        }
+        return milestone;
+    }
+
+    private void validateDisputeAmounts(BigDecimal refund, BigDecimal release, BigDecimal sum, Milestone milestone, EscrowAccount escrow, DisputeStatus target) {
+        validateNonNegativeAndSum(refund, release, sum);
+        validateAgainstMilestoneAndEscrow(sum, milestone, escrow);
+        validateAmountsForTarget(refund, release, target);
+    }
+
+    private static void validateNonNegativeAndSum(BigDecimal refund, BigDecimal release, BigDecimal sum) {
+        if (refund.compareTo(BigDecimal.ZERO) < 0 || release.compareTo(BigDecimal.ZERO) < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amounts must be >= 0");
+        }
+        if (sum.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one amount must be > 0");
+        }
+    }
+
+    private static void validateAgainstMilestoneAndEscrow(BigDecimal sum, Milestone milestone, EscrowAccount escrow) {
+        if (milestone != null && milestone.getMontant() != null && sum.compareTo(milestone.getMontant()) > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "refund+release exceeds milestone amount. milestone=" + milestone.getMontant() + " provided=" + sum);
+        }
+        if (escrow.getMontantBloque() == null || escrow.getMontantBloque().compareTo(sum) < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Insufficient escrow balance. balance=" + escrow.getMontantBloque() + " required=" + sum);
+        }
+    }
+
+    private static void validateAmountsForTarget(BigDecimal refund, BigDecimal release, DisputeStatus target) {
+        if (target == null) {
+            return;
+        }
+        switch (target) {
+            case RESOLVED_CLIENT -> {
+                if (release.compareTo(BigDecimal.ZERO) != 0) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "montantLibere must be 0 for RESOLVED_CLIENT");
+                }
+            }
+            case RESOLVED_FREELANCER -> {
+                if (refund.compareTo(BigDecimal.ZERO) != 0) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "montantRembourse must be 0 for RESOLVED_FREELANCER");
+                }
+            }
+            case SPLIT -> {
+                if (refund.compareTo(BigDecimal.ZERO) == 0 || release.compareTo(BigDecimal.ZERO) == 0) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Both amounts must be > 0 for SPLIT");
+                }
+            }
+            default -> {
+                // no-op
+            }
+        }
     }
 }

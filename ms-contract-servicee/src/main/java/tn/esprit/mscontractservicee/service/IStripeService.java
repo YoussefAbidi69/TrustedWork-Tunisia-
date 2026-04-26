@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 
 public interface IStripeService {
 
-    PaymentIntent createPaymentIntent(Long contractId, BigDecimal amount, String currency, String email) throws Exception;
+    PaymentIntent createPaymentIntent(Long contractId, BigDecimal amount, String currency, String email) throws com.stripe.exception.StripeException;
 
-    PaymentIntent getPaymentIntent(String paymentIntentId) throws Exception;
+    PaymentIntent getPaymentIntent(String paymentIntentId) throws com.stripe.exception.StripeException;
 }

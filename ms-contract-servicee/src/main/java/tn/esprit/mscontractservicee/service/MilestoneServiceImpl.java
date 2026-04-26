@@ -36,11 +36,18 @@ public class MilestoneServiceImpl implements IMilestoneService {
     private final DeliveryProofRepository deliveryProofRepository;
     private final IPaymentService paymentService;
     private final ContractRepository contractRepository;
+    private final INotificationService notificationService;
+
+    private static final String CONTRACT_NOT_FOUND_MSG = "Contract not found with id: ";
+    private static final String MILESTONE_NOT_FOUND_MSG = "Milestone not found with id: ";
+
+    @org.springframework.beans.factory.annotation.Value("${app.frontend.contract-activity-prefix:/app/activity/contracts/}")
+    private String contractActivityPathPrefix;
 
     private Contract requireDraftContractWithBudget(Long contractId) {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Contract not found with id: " + contractId));
+                        CONTRACT_NOT_FOUND_MSG + contractId));
         if (contract.getStatus() != ContractStatus.DRAFT) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Milestones can only be modified while contract is DRAFT. Current status: " + contract.getStatus());
@@ -91,7 +98,7 @@ public class MilestoneServiceImpl implements IMilestoneService {
         log.info("Updating milestone with id: {}", id);
         Milestone existing = milestoneRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
 
         if (existing.getStatus() != MilestoneStatus.PENDING) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -141,7 +148,7 @@ public class MilestoneServiceImpl implements IMilestoneService {
         log.info("Updating milestone {} status to: {}", id, status);
         Milestone milestone = milestoneRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
 
         milestone.setStatus(status);
         return milestoneRepository.save(milestone);
@@ -152,7 +159,7 @@ public class MilestoneServiceImpl implements IMilestoneService {
         log.info("Starting milestone: {}", id);
         Milestone milestone = milestoneRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
 
         if (milestone.getStatus() != MilestoneStatus.PENDING && milestone.getStatus() != MilestoneStatus.REJECTED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -170,7 +177,7 @@ public class MilestoneServiceImpl implements IMilestoneService {
         log.info("Submitting milestone: {}", id);
         Milestone milestone = milestoneRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
 
         if (milestone.getStatus() != MilestoneStatus.IN_PROGRESS && milestone.getStatus() != MilestoneStatus.REJECTED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -183,7 +190,18 @@ public class MilestoneServiceImpl implements IMilestoneService {
         milestone.setValidatedAt(null);
         milestone.setRejectionReason(null);
 
-        return milestoneRepository.save(milestone);
+        Milestone saved = milestoneRepository.save(milestone);
+        
+        // Notification au client
+        contractRepository.findById(saved.getContractId()).ifPresent(contract -> notificationService.createNotification(
+                contract.getClientCin(),
+                "Jalon soumis",
+                "Le freelancer a soumis le jalon : " + saved.getTitre(),
+                tn.esprit.mscontractservicee.enums.NotificationType.INFO,
+                contractActivityPathPrefix + contract.getId()
+        ));
+
+        return saved;
     }
 
     @Override
@@ -195,7 +213,7 @@ public class MilestoneServiceImpl implements IMilestoneService {
         log.info("Submitting milestone with delivery proof: {}", id);
         Milestone milestone = milestoneRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
 
         if (milestone.getStatus() != MilestoneStatus.IN_PROGRESS && milestone.getStatus() != MilestoneStatus.REJECTED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -222,7 +240,18 @@ public class MilestoneServiceImpl implements IMilestoneService {
         milestone.setValidatedAt(null);
         milestone.setRejectionReason(null);
 
-        return milestoneRepository.save(milestone);
+        Milestone saved = milestoneRepository.save(milestone);
+        
+        // Notification au client
+        contractRepository.findById(saved.getContractId()).ifPresent(contract -> notificationService.createNotification(
+                contract.getClientCin(),
+                "Preuve de livraison soumise",
+                "Le freelancer a soumis le jalon avec des preuves pour : " + saved.getTitre(),
+                tn.esprit.mscontractservicee.enums.NotificationType.INFO,
+                contractActivityPathPrefix + contract.getId()
+        ));
+
+        return saved;
     }
 
     @Override
@@ -230,7 +259,7 @@ public class MilestoneServiceImpl implements IMilestoneService {
         log.info("Approving milestone: {}", id);
         Milestone milestone = milestoneRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
 
         if (milestone.getStatus() != MilestoneStatus.SUBMITTED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -250,6 +279,16 @@ public class MilestoneServiceImpl implements IMilestoneService {
         Milestone saved = milestoneRepository.save(milestone);
         try {
             paymentService.releaseApprovedMilestone(saved.getId());
+            
+            // Notification au freelancer
+            contractRepository.findById(saved.getContractId()).ifPresent(contract -> notificationService.createNotification(
+                    contract.getFreelancerCin(),
+                    "Jalon approuvé !",
+                    "Le client a approuvé le jalon : " + saved.getTitre() + ". Les fonds sont débloqués.",
+                    tn.esprit.mscontractservicee.enums.NotificationType.SUCCESS,
+                    contractActivityPathPrefix + contract.getId()
+            ));
+            
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Payment release failed: " + e.getMessage(), e);
         }
@@ -261,7 +300,7 @@ public class MilestoneServiceImpl implements IMilestoneService {
         log.info("Auto-approving milestone: {}", id);
         Milestone milestone = milestoneRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
 
         if (milestone.getStatus() != MilestoneStatus.SUBMITTED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -306,7 +345,7 @@ public class MilestoneServiceImpl implements IMilestoneService {
 
         Milestone milestone = milestoneRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
 
         if (milestone.getStatus() != MilestoneStatus.SUBMITTED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -327,7 +366,20 @@ public class MilestoneServiceImpl implements IMilestoneService {
             deliveryProofRepository.save(proof);
         });
 
-        return milestoneRepository.save(milestone);
+        Milestone saved = milestoneRepository.save(milestone);
+        
+        // Notification au freelancer
+        contractRepository.findById(saved.getContractId()).ifPresent(contract -> 
+            notificationService.createNotification(
+                contract.getFreelancerCin(),
+                "Jalon rejeté / Révision demandée",
+                "Le client a demandé des modifications sur le jalon : " + saved.getTitre() + ". Motif: " + rejectionReason,
+                tn.esprit.mscontractservicee.enums.NotificationType.WARNING,
+                contractActivityPathPrefix + contract.getId()
+            )
+        );
+
+        return saved;
     }
 
     @Override
@@ -343,7 +395,7 @@ public class MilestoneServiceImpl implements IMilestoneService {
 
         Milestone milestone = milestoneRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
 
         if (milestone.getStatus() != MilestoneStatus.REJECTED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,

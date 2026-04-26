@@ -40,32 +40,21 @@ public class PaymentServiceImpl implements IPaymentService {
     @Value("${platform.wallet.id:1}")
     private Long platformWalletId;
 
+    private static final String CONTRACT_NOT_FOUND_MSG = "Contract not found";
+    private static final String MILESTONE_NOT_FOUND_MSG = "Milestone not found";
+    private static final String SIMULATION_PREFIX = "🔧 SIMULATION: ";
+
     @Override
-    public PaymentIntentResponse createPaymentIntent(Long contractId, String email) throws Exception {
+    public PaymentIntentResponse createPaymentIntent(Long contractId, String email) {
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Contract not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, CONTRACT_NOT_FOUND_MSG));
 
         // Safety: prevent charging a contract whose stored total differs from milestones sum.
         contractTotalService.assertStoredTotalMatchesMilestones(contract);
-
-        if (signatureRequired) {
-            if (contract.getStatus() != ContractStatus.PENDING_PAYMENT) {
-                throw new RuntimeException("Contract cannot be paid until it is signed. Status: " + contract.getStatus());
-            }
-        } else {
-            if (signatureRequired) {
-                if (contract.getStatus() != ContractStatus.PENDING_PAYMENT) {
-                    throw new RuntimeException("Contract cannot be paid until it is signed. Status: " + contract.getStatus());
-                }
-            } else {
-                if (contract.getStatus() != ContractStatus.DRAFT && contract.getStatus() != ContractStatus.PENDING_PAYMENT) {
-                    throw new RuntimeException("Contract cannot be paid. Status: " + contract.getStatus());
-                }
-            }
-        }
+        assertContractPayable(contract);
 
         if (simulationEnabled) {
-            log.info("🔧 SIMULATION: Creating simulated payment intent for contract: {}", contractId);
+            log.info("{}Creating simulated payment intent for contract: {}", SIMULATION_PREFIX, contractId);
 
             // En simulation, on crée un ID simulé
             String simulatedPaymentId = "sim_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -77,112 +66,71 @@ public class PaymentServiceImpl implements IPaymentService {
                     .build();
         }
 
-        var paymentIntent = stripeService.createPaymentIntent(
-                contractId,
-                contract.getMontantTotal(),
-                "usd",
-                email
-        );
+        try {
+            var paymentIntent = stripeService.createPaymentIntent(
+                    contractId,
+                    contract.getMontantTotal(),
+                    "usd",
+                    email
+            );
 
-        return PaymentIntentResponse.builder()
-                .clientSecret(paymentIntent.getClientSecret())
-                .paymentIntentId(paymentIntent.getId())
-                .build();
+            return PaymentIntentResponse.builder()
+                    .clientSecret(paymentIntent.getClientSecret())
+                    .paymentIntentId(paymentIntent.getId())
+                    .build();
+        } catch (com.stripe.exception.StripeException e) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Stripe error: " + e.getMessage());
+        }
     }
 
-    @Override
-    public void confirmPayment(String paymentIntentId, Long contractId) throws Exception {
-
-        if (simulationEnabled) {
-            log.info("🔧 SIMULATION: Confirming payment for contract: {}", contractId);
-            log.info("   Payment Intent ID: {}", paymentIntentId);
-
-            // En simulation, on valide directement sans appeler Stripe
-            Contract contract = contractRepository.findById(contractId)
-                    .orElseThrow(() -> new RuntimeException("Contract not found"));
-
-            contractTotalService.assertStoredTotalMatchesMilestones(contract);
-
-            if (contract.getStatus() != ContractStatus.DRAFT && contract.getStatus() != ContractStatus.PENDING_PAYMENT) {
-                throw new RuntimeException("Contract cannot be paid. Status: " + contract.getStatus());
+    private void assertContractPayable(Contract contract) {
+        if (signatureRequired) {
+            if (contract.getStatus() != ContractStatus.PENDING_PAYMENT) {
+                throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                        "Contract cannot be paid until it is signed. Status: " + contract.getStatus());
             }
-            if (escrowAccountRepository.findByContractId(contractId).isPresent()) {
-                throw new RuntimeException("Escrow already exists for contract: " + contractId);
-            }
-
-            // Débiter le client
-            walletService.debit(contract.getClientCin(), contract.getMontantTotal(),
-                    "SIMULATION: Paiement contrat #" + contractId);
-
-            // Créer l'escrow
-            EscrowAccount escrow = EscrowAccount.builder()
-                    .contractId(contract.getId())
-                    .montantBloque(contract.getMontantTotal())
-                    .montantLibere(BigDecimal.ZERO)
-                    .montantTotal(contract.getMontantTotal())
-                    .status(EscrowStatus.LOCKED)
-                    .lockedAt(LocalDateTime.now())
-                    .updatedAt(LocalDateTime.now())
-                    .build();
-            escrowAccountRepository.save(escrow);
-
-            // Mettre à jour le contrat
-            contract.setStatus(ContractStatus.ACTIVE);
-            if (contract.getDateSignature() == null) {
-                contract.setDateSignature(LocalDateTime.now());
-            }
-            contract.setUpdatedAt(LocalDateTime.now());
-            contractRepository.save(contract);
-
-            // Créer la transaction
-            Wallet clientWallet = walletService.getOrCreateWallet(contract.getClientCin());
-
-            Transaction transaction = Transaction.builder()
-                    .reference("TRX-SIM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
-                    .contractId(contract.getId())
-                    .escrowId(escrow.getId())
-                    .walletId(clientWallet.getId())
-                    .type(TransactionType.DEPOSIT)
-                    .montant(contract.getMontantTotal())
-                    .methodePaiement(PaymentMethod.WALLET)
-                    .stripePaymentIntentId(paymentIntentId)
-                    .status(TransactionStatus.PROCESSED)
-                    .createdAt(LocalDateTime.now())
-                    .processedAt(LocalDateTime.now())
-                    .build();
-            transactionRepository.save(transaction);
-
-            log.info(" SIMULATION: Payment confirmed for contract: {}", contractId);
             return;
         }
 
-        // Code réel Stripe
-        var paymentIntent = stripeService.getPaymentIntent(paymentIntentId);
-
-        if (!"succeeded".equals(paymentIntent.getStatus())) {
-            throw new RuntimeException("Payment not succeeded: " + paymentIntent.getStatus());
+        if (contract.getStatus() != ContractStatus.DRAFT && contract.getStatus() != ContractStatus.PENDING_PAYMENT) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Contract cannot be paid. Status: " + contract.getStatus());
         }
+    }
 
+    private void verifyStripePaymentSucceeded(String paymentIntentId) {
+        try {
+            var paymentIntent = stripeService.getPaymentIntent(paymentIntentId);
+            if (!"succeeded".equals(paymentIntent.getStatus())) {
+                throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                        "Payment not succeeded: " + paymentIntent.getStatus());
+            }
+        } catch (com.stripe.exception.StripeException e) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Stripe error: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void confirmPayment(String paymentIntentId, Long contractId) {
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Contract not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, CONTRACT_NOT_FOUND_MSG));
+
+        if (simulationEnabled) {
+            log.info("{}Confirming payment for contract: {}", SIMULATION_PREFIX, contractId);
+            log.info("   Payment Intent ID: {}", paymentIntentId);
+        } else {
+            verifyStripePaymentSucceeded(paymentIntentId);
+        }
 
         contractTotalService.assertStoredTotalMatchesMilestones(contract);
+        assertContractPayable(contract);
 
-        if (signatureRequired) {
-            if (contract.getStatus() != ContractStatus.PENDING_PAYMENT) {
-                throw new RuntimeException("Contract cannot be paid until it is signed. Status: " + contract.getStatus());
-            }
-        } else {
-            if (contract.getStatus() != ContractStatus.DRAFT && contract.getStatus() != ContractStatus.PENDING_PAYMENT) {
-                throw new RuntimeException("Contract cannot be paid. Status: " + contract.getStatus());
-            }
-        }
         if (escrowAccountRepository.findByContractId(contractId).isPresent()) {
-            throw new RuntimeException("Escrow already exists for contract: " + contractId);
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Escrow already exists for contract: " + contractId);
         }
 
         walletService.debit(contract.getClientCin(), contract.getMontantTotal(),
-                "Paiement contrat #" + contractId);
+                (simulationEnabled ? SIMULATION_PREFIX : "") + "Paiement contrat #" + contractId);
 
         EscrowAccount escrow = EscrowAccount.builder()
                 .contractId(contract.getId())
@@ -205,13 +153,13 @@ public class PaymentServiceImpl implements IPaymentService {
         Wallet clientWallet = walletService.getOrCreateWallet(contract.getClientCin());
 
         Transaction transaction = Transaction.builder()
-                .reference("TRX-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                .reference((simulationEnabled ? "TRX-SIM-" : "TRX-") + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .contractId(contract.getId())
                 .escrowId(escrow.getId())
                 .walletId(clientWallet.getId())
                 .type(TransactionType.DEPOSIT)
                 .montant(contract.getMontantTotal())
-                .methodePaiement(PaymentMethod.STRIPE)
+                .methodePaiement(simulationEnabled ? PaymentMethod.WALLET : PaymentMethod.STRIPE)
                 .stripePaymentIntentId(paymentIntentId)
                 .status(TransactionStatus.PROCESSED)
                 .createdAt(LocalDateTime.now())
@@ -219,36 +167,35 @@ public class PaymentServiceImpl implements IPaymentService {
                 .build();
         transactionRepository.save(transaction);
 
-        log.info("Payment confirmed for contract: {}", contractId);
+        log.info("{}Payment confirmed for contract: {}", simulationEnabled ? " SIMULATION: " : "", contractId);
     }
 
     @Override
-    public void releaseApprovedMilestone(Long milestoneId) throws Exception {
+    public void releaseApprovedMilestone(Long milestoneId) {
         Milestone milestone = milestoneRepository.findById(milestoneId)
-                .orElseThrow(() -> new RuntimeException("Milestone not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, MILESTONE_NOT_FOUND_MSG));
 
         Long contractId = milestone.getContractId();
         if (contractId == null) {
-            throw new RuntimeException("Milestone has no contractId: " + milestoneId);
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Milestone has no contractId: " + milestoneId);
         }
 
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Contract not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, CONTRACT_NOT_FOUND_MSG));
 
         BigDecimal amount = requireMilestoneAmount(milestone, null);
         doRelease(contract, milestone, amount);
     }
 
-    @Override
-    public void releasePaymentToFreelancer(Long contractId, Long milestoneId, BigDecimal amount) throws Exception {
+    public void releasePaymentToFreelancer(Long contractId, Long milestoneId, BigDecimal amount) {
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Contract not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, CONTRACT_NOT_FOUND_MSG));
 
         Milestone milestone = milestoneRepository.findById(milestoneId)
-                .orElseThrow(() -> new RuntimeException("Milestone not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, MILESTONE_NOT_FOUND_MSG));
 
         if (milestone.getContractId() == null || !milestone.getContractId().equals(contractId)) {
-            throw new RuntimeException("Milestone does not belong to contract. milestoneId="
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Milestone does not belong to contract. milestoneId="
                     + milestoneId + " contractId=" + contractId + " milestone.contractId=" + milestone.getContractId());
         }
 
@@ -258,61 +205,97 @@ public class PaymentServiceImpl implements IPaymentService {
 
     private static BigDecimal requireMilestoneAmount(Milestone milestone, BigDecimal explicitAmount) {
         if (milestone.getMontant() == null) {
-            throw new RuntimeException("Milestone amount (montant) is required. milestoneId=" + milestone.getId());
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Milestone amount (montant) is required. milestoneId=" + milestone.getId());
         }
         if (milestone.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Milestone amount must be > 0. milestoneId=" + milestone.getId());
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Milestone amount must be > 0. milestoneId=" + milestone.getId());
         }
 
         if (explicitAmount == null) {
             return milestone.getMontant();
         }
         if (explicitAmount.compareTo(milestone.getMontant()) != 0) {
-            throw new RuntimeException("Amount must equal milestone amount. milestoneId=" + milestone.getId()
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Amount must equal milestone amount. milestoneId=" + milestone.getId()
                     + " expected=" + milestone.getMontant() + " provided=" + explicitAmount);
         }
         return explicitAmount;
     }
 
     private void doRelease(Contract contract, Milestone milestone, BigDecimal amount) {
+        assertReleasePreconditions(contract, milestone);
+        assertNotAlreadyReleased(milestone.getId());
+
+        EscrowAccount escrow = requireEscrowForRelease(contract.getId());
+        assertEscrowCanRelease(escrow, amount);
+
+        ReleaseAmounts amounts = computeReleaseAmounts(contract, amount);
+        logReleaseSimulation(contract, milestone, amount, amounts);
+
+        updateEscrowForRelease(escrow, amount);
+        creditFreelancerAndPlatform(contract, milestone, escrow, amounts);
+        createReleaseTransaction(contract, milestone, escrow, amount, amounts);
+        completeContractIfEscrowReleased(contract, escrow);
+
+        log.info("{} Released {} DT to freelancer {} (gross: {}, commission: {})",
+                simulationEnabled ? "🔧 SIMULATION:" : "", amounts.netAmount(), contract.getFreelancerCin(), amount, amounts.commission());
+    }
+
+    private record ReleaseAmounts(BigDecimal commissionRate, BigDecimal commission, BigDecimal netAmount) {
+    }
+
+    private void assertReleasePreconditions(Contract contract, Milestone milestone) {
         if (contract.getStatus() != ContractStatus.ACTIVE) {
-            throw new RuntimeException("Contract is not active. contractId=" + contract.getId()
-                    + " status=" + contract.getStatus());
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Contract is not active. contractId=" + contract.getId() + " status=" + contract.getStatus());
         }
         if (milestone.getStatus() != MilestoneStatus.APPROVED && milestone.getStatus() != MilestoneStatus.AUTO_APPROVED) {
-            throw new RuntimeException("Milestone is not approved. milestoneId=" + milestone.getId()
-                    + " status=" + milestone.getStatus());
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Milestone is not approved. milestoneId=" + milestone.getId() + " status=" + milestone.getStatus());
         }
-        if (transactionRepository.existsByMilestoneIdAndType(milestone.getId(), TransactionType.RELEASE)) {
-            throw new RuntimeException("Milestone already released. milestoneId=" + milestone.getId());
+    }
+
+    private void assertNotAlreadyReleased(Long milestoneId) {
+        if (transactionRepository.existsByMilestoneIdAndType(milestoneId, TransactionType.RELEASE)) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Milestone already released. milestoneId=" + milestoneId);
         }
+    }
 
-        EscrowAccount escrow = escrowAccountRepository.findByContractId(contract.getId())
-                .orElseThrow(() -> new RuntimeException("Escrow not found"));
+    private EscrowAccount requireEscrowForRelease(Long contractId) {
+        return escrowAccountRepository.findByContractId(contractId)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Escrow not found"));
+    }
 
+    private static void assertEscrowCanRelease(EscrowAccount escrow, BigDecimal amount) {
         if (escrow.getStatus() == EscrowStatus.DISPUTED) {
-            throw new RuntimeException("Escrow is disputed. Payments are frozen until the dispute is resolved.");
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Escrow is disputed. Payments are frozen until the dispute is resolved.");
         }
-
         if (escrow.getMontantBloque() == null || escrow.getMontantBloque().compareTo(amount) < 0) {
-            throw new RuntimeException("Insufficient escrow balance");
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Insufficient escrow balance");
         }
+    }
 
+    private static ReleaseAmounts computeReleaseAmounts(Contract contract, BigDecimal amount) {
         BigDecimal commissionRate = contract.getCommissionRate() != null ? contract.getCommissionRate() : BigDecimal.valueOf(10);
         BigDecimal commission = amount.multiply(commissionRate).divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
         BigDecimal netAmount = amount.subtract(commission);
-
         if (netAmount.compareTo(BigDecimal.ZERO) < 0) {
-            throw new RuntimeException("Net amount cannot be negative. amount=" + amount + " commission=" + commission);
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Net amount cannot be negative. amount=" + amount + " commission=" + commission);
         }
+        return new ReleaseAmounts(commissionRate, commission, netAmount);
+    }
 
-        if (simulationEnabled) {
-            log.info(" SIMULATION: Releasing payment to freelancer - Contract: {}, Milestone: {}",
-                    contract.getId(), milestone.getId());
-            log.info("   Amount: {} (Commission: {}, Net: {})", amount, commission, netAmount);
+    private void logReleaseSimulation(Contract contract, Milestone milestone, BigDecimal amount, ReleaseAmounts amounts) {
+        if (!simulationEnabled) {
+            return;
         }
+        log.info(" SIMULATION: Releasing payment to freelancer - Contract: {}, Milestone: {}", contract.getId(), milestone.getId());
+        log.info("   Amount: {} (Commission: {}, Net: {})", amount, amounts.commission(), amounts.netAmount());
+    }
 
-        // Mettre à jour l'escrow
+    private void updateEscrowForRelease(EscrowAccount escrow, BigDecimal amount) {
         escrow.setMontantBloque(escrow.getMontantBloque().subtract(amount));
         escrow.setMontantLibere(escrow.getMontantLibere().add(amount));
         if (escrow.getMontantBloque().compareTo(BigDecimal.ZERO) == 0) {
@@ -323,42 +306,30 @@ public class PaymentServiceImpl implements IPaymentService {
         }
         escrow.setUpdatedAt(LocalDateTime.now());
         escrowAccountRepository.save(escrow);
+    }
 
+    private void creditFreelancerAndPlatform(Contract contract, Milestone milestone, EscrowAccount escrow, ReleaseAmounts amounts) {
         // Créditer le freelancer (net)
-        walletService.credit(contract.getFreelancerCin(), netAmount,
+        walletService.credit(contract.getFreelancerCin(), amounts.netAmount(),
                 (simulationEnabled ? "SIMULATION: " : "") + "Paiement contrat #" + contract.getId() + " - Jalon: " + milestone.getTitre());
 
         // Créditer la plateforme (commission) - wallet configurable, par défaut id=1
-        if (commission.compareTo(BigDecimal.ZERO) > 0) {
-            Wallet platformWallet = walletRepository.findById(platformWalletId)
-                    .orElseThrow(() -> new RuntimeException("Platform wallet not found. walletId=" + platformWalletId));
-
-            walletService.credit(platformWallet.getUserCin(), commission,
-                    (simulationEnabled ? "SIMULATION: " : "") + "Commission contrat #" + contract.getId() + " - Jalon: " + milestone.getTitre());
-
-            Transaction commissionTx = Transaction.builder()
-                    .reference((simulationEnabled ? "TRX-SIM-COM-" : "TRX-COM-") + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
-                    .contractId(contract.getId())
-                    .milestoneId(milestone.getId())
-                    .escrowId(escrow.getId())
-                    .walletId(platformWallet.getId())
-                    .type(TransactionType.COMMISSION)
-                    .montant(commission)
-                    .commissionDynamique(commissionRate)
-                    .montantCommission(commission)
-                    .montantNet(commission)
-                    .methodePaiement(simulationEnabled ? PaymentMethod.WALLET : PaymentMethod.STRIPE)
-                    .description("Commission plateforme")
-                    .status(TransactionStatus.PROCESSED)
-                    .createdAt(LocalDateTime.now())
-                    .processedAt(LocalDateTime.now())
-                    .build();
-            transactionRepository.save(commissionTx);
+        if (amounts.commission().compareTo(BigDecimal.ZERO) <= 0) {
+            return;
         }
 
-        // Créer la transaction de libération (gross + commission + net)
-        Wallet freelancerWallet = walletService.getOrCreateWallet(contract.getFreelancerCin());
+        Wallet platformWallet = walletRepository.findById(platformWalletId)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND,
+                        "Platform wallet not found. walletId=" + platformWalletId));
 
+        walletService.credit(platformWallet.getUserCin(), amounts.commission(),
+                (simulationEnabled ? SIMULATION_PREFIX : "") + "Commission contrat #" + contract.getId() + " - Jalon: " + milestone.getTitre());
+
+        processCommission(contract, milestone, escrow, amounts.commission(), amounts.commissionRate());
+    }
+
+    private void createReleaseTransaction(Contract contract, Milestone milestone, EscrowAccount escrow, BigDecimal amount, ReleaseAmounts amounts) {
+        Wallet freelancerWallet = walletService.getOrCreateWallet(contract.getFreelancerCin());
         Transaction transaction = Transaction.builder()
                 .reference((simulationEnabled ? "TRX-SIM-" : "TRX-") + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .contractId(contract.getId())
@@ -367,9 +338,9 @@ public class PaymentServiceImpl implements IPaymentService {
                 .walletId(freelancerWallet.getId())
                 .type(TransactionType.RELEASE)
                 .montant(amount)
-                .commissionDynamique(commissionRate)
-                .montantCommission(commission)
-                .montantNet(netAmount)
+                .commissionDynamique(amounts.commissionRate())
+                .montantCommission(amounts.commission())
+                .montantNet(amounts.netAmount())
                 .methodePaiement(simulationEnabled ? PaymentMethod.WALLET : PaymentMethod.STRIPE)
                 .description("Release to freelancer (net)")
                 .status(TransactionStatus.PROCESSED)
@@ -377,21 +348,21 @@ public class PaymentServiceImpl implements IPaymentService {
                 .processedAt(LocalDateTime.now())
                 .build();
         transactionRepository.save(transaction);
+    }
 
-        if (escrow.getStatus() == EscrowStatus.RELEASED) {
-            contract.setStatus(ContractStatus.COMPLETED);
-            contract.setUpdatedAt(LocalDateTime.now());
-            contractRepository.save(contract);
+    private void completeContractIfEscrowReleased(Contract contract, EscrowAccount escrow) {
+        if (escrow.getStatus() != EscrowStatus.RELEASED) {
+            return;
         }
-
-        log.info("{} Released {} DT to freelancer {} (gross: {}, commission: {})",
-                simulationEnabled ? "🔧 SIMULATION:" : "", netAmount, contract.getFreelancerCin(), amount, commission);
+        contract.setStatus(ContractStatus.COMPLETED);
+        contract.setUpdatedAt(LocalDateTime.now());
+        contractRepository.save(contract);
     }
 
     @Override
-    public String getPaymentStatus(String paymentIntentId) throws Exception {
+    public String getPaymentStatus(String paymentIntentId) {
         if (simulationEnabled) {
-            log.info(" SIMULATION: Getting payment status for: {}", paymentIntentId);
+            log.info(" {}Getting payment status for: {}", SIMULATION_PREFIX, paymentIntentId);
 
             if (paymentIntentId.startsWith("sim_")) {
                 return "succeeded";
@@ -399,33 +370,37 @@ public class PaymentServiceImpl implements IPaymentService {
             return "pending";
         }
 
-        var paymentIntent = stripeService.getPaymentIntent(paymentIntentId);
-        return paymentIntent.getStatus();
+        try {
+            var paymentIntent = stripeService.getPaymentIntent(paymentIntentId);
+            return paymentIntent.getStatus();
+        } catch (com.stripe.exception.StripeException e) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Stripe error: " + e.getMessage());
+        }
     }
 
     @Override
-    public void refundMilestoneToClient(Long milestoneId) throws Exception {
+    public void refundMilestoneToClient(Long milestoneId) {
         Milestone milestone = milestoneRepository.findById(milestoneId)
-                .orElseThrow(() -> new RuntimeException("Milestone not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, MILESTONE_NOT_FOUND_MSG));
 
         Long contractId = milestone.getContractId();
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Contract not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, CONTRACT_NOT_FOUND_MSG));
 
         BigDecimal amount = requireMilestoneAmount(milestone, null);
 
         if (contract.getStatus() != ContractStatus.ACTIVE) {
-            throw new RuntimeException("Contract is not active. contractId=" + contract.getId());
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Contract is not active. contractId=" + contract.getId());
         }
         if (milestone.getStatus() != MilestoneStatus.CANCELLED) {
-            throw new RuntimeException("Milestone is not cancelled. milestoneId=" + milestone.getId());
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Milestone is not cancelled. milestoneId=" + milestone.getId());
         }
 
         EscrowAccount escrow = escrowAccountRepository.findByContractId(contract.getId())
-                .orElseThrow(() -> new RuntimeException("Escrow not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Escrow not found"));
 
         if (escrow.getMontantBloque() == null || escrow.getMontantBloque().compareTo(amount) < 0) {
-            throw new RuntimeException("Insufficient escrow balance for refund");
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Insufficient escrow balance for refund");
         }
 
         // Mettre à jour l'escrow
@@ -439,7 +414,7 @@ public class PaymentServiceImpl implements IPaymentService {
 
         // Rembourser le client
         walletService.credit(contract.getClientCin(), amount,
-                (simulationEnabled ? "SIMULATION: " : "") + "Remboursement contrat #" + contract.getId() + " - Jalon annulé: " + milestone.getTitre());
+                (simulationEnabled ? SIMULATION_PREFIX : "") + "Remboursement contrat #" + contract.getId() + " - Jalon annulé: " + milestone.getTitre());
 
         // Créer la transaction de remboursement
         Wallet clientWallet = walletService.getOrCreateWallet(contract.getClientCin());
@@ -461,6 +436,29 @@ public class PaymentServiceImpl implements IPaymentService {
         transactionRepository.save(transaction);
 
         log.info("{} Refunded {} DT to client {} for cancelled milestone {}",
-                simulationEnabled ? "🔧 SIMULATION:" : "", amount, contract.getClientCin(), milestone.getId());
+                simulationEnabled ? SIMULATION_PREFIX : "", amount, contract.getClientCin(), milestone.getId());
+    }
+
+    private void processCommission(Contract contract, Milestone milestone, EscrowAccount escrow, BigDecimal commission, BigDecimal commissionRate) {
+        Wallet platformWallet = walletRepository.findById(platformWalletId)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Platform wallet not found. walletId=" + platformWalletId));
+        Transaction commissionTx = Transaction.builder()
+                .reference((simulationEnabled ? "TRX-SIM-COM-" : "TRX-COM-") + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                .contractId(contract.getId())
+                .milestoneId(milestone.getId())
+                .escrowId(escrow.getId())
+                .walletId(platformWallet.getId())
+                .type(TransactionType.COMMISSION)
+                .montant(commission)
+                .commissionDynamique(commissionRate)
+                .montantCommission(commission)
+                .montantNet(commission)
+                .methodePaiement(simulationEnabled ? PaymentMethod.WALLET : PaymentMethod.STRIPE)
+                .description("Commission plateforme")
+                .status(TransactionStatus.PROCESSED)
+                .createdAt(LocalDateTime.now())
+                .processedAt(LocalDateTime.now())
+                .build();
+        transactionRepository.save(commissionTx);
     }
 }

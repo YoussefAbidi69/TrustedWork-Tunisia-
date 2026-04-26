@@ -57,7 +57,7 @@ public class WalletServiceImpl implements IWalletService {
     public Wallet debit(Long userCin, BigDecimal amount, String description) {
         Wallet wallet = getOrCreateWallet(userCin);
         if (wallet.getBalance().compareTo(amount) < 0) {
-            throw new RuntimeException("Insufficient balance. Balance: " + wallet.getBalance());
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Insufficient balance. Balance: " + wallet.getBalance());
         }
         wallet.setBalance(wallet.getBalance().subtract(amount));
         wallet.setTotalSpent(wallet.getTotalSpent().add(amount));
@@ -69,7 +69,7 @@ public class WalletServiceImpl implements IWalletService {
     // ==================== STRIPE CONNECT (SIMULATION MODE) ====================
 
     @Override
-    public String createStripeAccount(Long userCin, String email, String country) throws Exception {
+    public String createStripeAccount(Long userCin, String email, String country) throws com.stripe.exception.StripeException {
         if (simulationEnabled) {
             log.info("SIMULATION: Creating simulated Stripe account for userCin: {}", userCin);
 
@@ -90,7 +90,7 @@ public class WalletServiceImpl implements IWalletService {
     }
 
     @Override
-    public String getStripeAccountStatus(Long userCin) throws Exception {
+    public String getStripeAccountStatus(Long userCin) throws com.stripe.exception.StripeException {
         if (simulationEnabled) {
             Wallet wallet = getOrCreateWallet(userCin);
             if (wallet.getStripeAccountId() == null) {
@@ -104,7 +104,7 @@ public class WalletServiceImpl implements IWalletService {
     }
 
     @Override
-    public String getOnboardingLink(Long userCin) throws Exception {
+    public String getOnboardingLink(Long userCin) throws com.stripe.exception.StripeException {
         if (simulationEnabled) {
             log.info("SIMULATION: Generating onboarding link for userCin: {}", userCin);
             return "http://localhost:4200/wallet/simulation-success";

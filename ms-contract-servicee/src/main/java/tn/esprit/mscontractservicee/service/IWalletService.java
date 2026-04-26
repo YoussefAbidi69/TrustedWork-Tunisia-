@@ -13,9 +13,9 @@ public interface IWalletService {
 
     Wallet debit(Long userCin, BigDecimal amount, String description);
 
-    String createStripeAccount(Long userCin, String email, String country) throws Exception;
+    String createStripeAccount(Long userCin, String email, String country) throws com.stripe.exception.StripeException;
 
-    String getStripeAccountStatus(Long userCin) throws Exception;
+    String getStripeAccountStatus(Long userCin) throws com.stripe.exception.StripeException;
 
-    String getOnboardingLink(Long userCin) throws Exception;
+    String getOnboardingLink(Long userCin) throws com.stripe.exception.StripeException;
 }

@@ -24,50 +24,46 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
 
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BEARER_PREFIX = "Bearer ";
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        String authHeader = request.getHeader(AUTHORIZATION_HEADER);
+        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authHeader.substring(7);
+        String token = authHeader.substring(BEARER_PREFIX.length());
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         try {
-            if (jwtService.isTokenValid(token)
-                    && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (!jwtService.isTokenValid(token)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
 
-                Long cin = jwtService.extractCinAsLong(token);
-                String roles = jwtService.extractRoles(token);
+            Long cin = jwtService.extractCinAsLong(token);
+            List<SimpleGrantedAuthority> authorities = parseAuthorities(jwtService.extractRoles(token));
 
-                List<SimpleGrantedAuthority> authorities;
-                if (roles != null && !roles.isBlank()) {
-                    authorities = Arrays.stream(roles.split(","))
-                            .map(String::trim)
-                            .filter(role -> !role.isEmpty())
-                            .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
-                            .map(SimpleGrantedAuthority::new)
-                            .toList();
-                } else {
-                    authorities = Collections.emptyList();
-                }
+            // Requirement: use CIN as the authenticated principal (instead of DB id).
+            String principal = cin != null ? cin.toString() : "";
 
-                // Requirement: use CIN as the authenticated principal (instead of DB id).
-                String principal = cin != null ? cin.toString() : "";
+            UsernamePasswordAuthenticationToken authToken =
+                    new UsernamePasswordAuthenticationToken(principal, null, authorities);
 
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(principal, null, authorities);
+            SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-
-                if (log.isDebugEnabled()) {
-                    String email = jwtService.extractEmail(token);
-                    log.debug("Authenticated user email={} cin={} authorities={}", email, cin, authorities);
-                }
+            if (log.isDebugEnabled()) {
+                String email = jwtService.extractEmail(token);
+                log.debug("Authenticated user email={} cin={} authorities={}", email, cin, authorities);
             }
         } catch (Exception e) {
             log.error("JWT authentication error: {}", e.getMessage());
@@ -76,5 +72,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
-}
 
+    private static List<SimpleGrantedAuthority> parseAuthorities(String roles) {
+        if (roles == null || roles.isBlank()) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(roles.split(","))
+                .map(String::trim)
+                .filter(role -> !role.isEmpty())
+                .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
+                .map(SimpleGrantedAuthority::new)
+                .toList();
+    }
+}

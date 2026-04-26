@@ -36,8 +36,11 @@ public class ContractServiceImpl implements IContractService {
     private final ContractRepository contractRepository;
     private final MilestoneRepository milestoneRepository;
     private final UserServiceClient userServiceClient;
+
+    private static final String CONTRACT_NOT_FOUND_MSG = "Contract not found with id: ";
     private final IWalletService walletService;
     private final ContractTotalService contractTotalService;
+    private final INotificationService notificationService;
 
     @Override
     public Contract createContract(Contract contract, Long authenticatedCin) {
@@ -86,6 +89,15 @@ public class ContractServiceImpl implements IContractService {
 
         Contract savedContract = contractRepository.save(contract);
         log.info("Contract created successfully with reference: {}", savedContract.getReference());
+        
+        // Notification au Freelancer
+        notificationService.createNotification(
+            freelancerCin,
+            "Nouveau Contrat !",
+            "Un client vient de créer le contrat #" + savedContract.getId() + " pour vous.",
+            tn.esprit.mscontractservicee.enums.NotificationType.INFO,
+            "/app/activity/contracts/" + savedContract.getId()
+        );
 
         return savedContract;
     }
@@ -94,7 +106,7 @@ public class ContractServiceImpl implements IContractService {
     public Contract updateContract(Long id, Contract contract) {
         log.info("Updating contract with id: {}", id);
         Contract existing = contractRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Contract not found with id: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, CONTRACT_NOT_FOUND_MSG + id));
 
         if (existing.getStatus() != ContractStatus.DRAFT) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -156,7 +168,7 @@ public class ContractServiceImpl implements IContractService {
     public Contract updateStatus(Long id, ContractStatus status) {
         log.info("Updating contract {} status to: {}", id, status);
         Contract contract = contractRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Contract not found with id: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, CONTRACT_NOT_FOUND_MSG + id));
 
         contract.setStatus(status);
         contract.setUpdatedAt(LocalDateTime.now());
@@ -172,7 +184,7 @@ public class ContractServiceImpl implements IContractService {
     public void deleteContract(Long id) {
         log.info("Deleting contract with id: {}", id);
         Contract existing = contractRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Contract not found with id: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, CONTRACT_NOT_FOUND_MSG + id));
         if (existing.getStatus() != ContractStatus.DRAFT) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Only DRAFT contracts can be deleted. Current status: " + existing.getStatus());
@@ -194,7 +206,7 @@ public class ContractServiceImpl implements IContractService {
         // Verify that the contract exists
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Contract not found with id: " + contractId));
+                        CONTRACT_NOT_FOUND_MSG + contractId));
 
         return fetchUserByCin(contract.getClientCin());
     }
@@ -206,7 +218,7 @@ public class ContractServiceImpl implements IContractService {
         // Verify that the contract exists
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Contract not found with id: " + contractId));
+                        CONTRACT_NOT_FOUND_MSG + contractId));
 
         return fetchUserByCin(contract.getFreelancerCin());
     }
@@ -214,7 +226,7 @@ public class ContractServiceImpl implements IContractService {
     @Override
     public ContractWalletIdsResponse getWalletIds(Long contractId) {
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Contract not found with id: " + contractId));
+                .orElseThrow(() -> new RuntimeException(CONTRACT_NOT_FOUND_MSG + contractId));
 
         if (contract.getClientWalletCin() == null || contract.getFreelancerWalletCin() == null) {
             linkWallets(contract);
@@ -235,7 +247,7 @@ public class ContractServiceImpl implements IContractService {
     public Contract finalizeForSignature(Long contractId) {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Contract not found with id: " + contractId));
+                        CONTRACT_NOT_FOUND_MSG + contractId));
 
         if (contract.getStatus() != ContractStatus.DRAFT) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -293,41 +305,50 @@ public class ContractServiceImpl implements IContractService {
             // Prefer the direct user lookup when available.
             return userServiceClient.getUserByCin(cin);
         } catch (FeignException e) {
-            log.warn("User lookup failed (primary) cin={}, status={}, method={}, url={}, msg={}, body={}",
-                    cin,
-                    e.status(),
-                    (e.request() != null ? e.request().httpMethod() : null),
-                    (e.request() != null ? e.request().url() : null),
-                    e.getMessage(),
-                    safeFeignBody(e));
-            // Newer ms-user versions do not expose GET /users/{cin}. Fallback to /kyc/status/{cin}.
-            // Note: when ms-user has PUT /users/{cin} but no GET /users/{cin}, calling GET can return 405.
-            // Some versions can also return 5xx for /users/{cin} due to internal errors; try the KYC endpoint anyway.
-            if (e.status() == 404 || e.status() == 405 || e.status() >= 500) {
-                try {
-                    return userServiceClient.getUserByCinFromKycStatus(cin);
-                } catch (FeignException e2) {
-                    log.warn("User lookup failed (fallback kyc/status) cin={}, status={}, method={}, url={}, msg={}, body={}",
-                            cin,
-                            e2.status(),
-                            (e2.request() != null ? e2.request().httpMethod() : null),
-                            (e2.request() != null ? e2.request().url() : null),
-                            e2.getMessage(),
-                            safeFeignBody(e2));
-                    if (e2.status() == 404) {
-                        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with cin: " + cin, e2);
-                    }
-                    if (e2.status() == 401 || e2.status() == 403) {
-                        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token", e2);
-                    }
-                    throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "User service error", e2);
-                }
-            }
-            if (e.status() == 401 || e.status() == 403) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token", e);
-            }
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "User service error", e);
+            logUserLookupFailure("primary", cin, e);
+            return handlePrimaryUserLookupFailure(cin, e);
         }
+    }
+
+    private UserDTO handlePrimaryUserLookupFailure(Long cin, FeignException primary) {
+        // Newer ms-user versions do not expose GET /users/{cin}. Fallback to /kyc/status/{cin}.
+        // Note: when ms-user has PUT /users/{cin} but no GET /users/{cin}, calling GET can return 405.
+        // Some versions can also return 5xx for /users/{cin} due to internal errors; try the KYC endpoint anyway.
+        if (shouldTryKycStatusFallback(primary)) {
+            try {
+                return userServiceClient.getUserByCinFromKycStatus(cin);
+            } catch (FeignException fallback) {
+                logUserLookupFailure("fallback kyc/status", cin, fallback);
+                throw translateUserLookupException(cin, fallback);
+            }
+        }
+        throw translateUserLookupException(cin, primary);
+    }
+
+    private boolean shouldTryKycStatusFallback(FeignException e) {
+        int status = e.status();
+        return status == 404 || status == 405 || status >= 500;
+    }
+
+    private void logUserLookupFailure(String phase, Long cin, FeignException e) {
+        log.warn("User lookup failed ({}) cin={}, status={}, method={}, url={}, msg={}, body={}",
+                phase,
+                cin,
+                e.status(),
+                (e.request() != null ? e.request().httpMethod() : null),
+                (e.request() != null ? e.request().url() : null),
+                e.getMessage(),
+                safeFeignBody(e));
+    }
+
+    private ResponseStatusException translateUserLookupException(Long cin, FeignException e) {
+        if (e.status() == 404) {
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with cin: " + cin, e);
+        }
+        if (e.status() == 401 || e.status() == 403) {
+            return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token", e);
+        }
+        return new ResponseStatusException(HttpStatus.BAD_GATEWAY, "User service error", e);
     }
 
     private static String safeFeignBody(FeignException e) {

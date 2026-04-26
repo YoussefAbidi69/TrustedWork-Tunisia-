@@ -15,10 +15,51 @@
       <span>{{ currentDate | date:'MMM d, yyyy' }}</span>
     </div>
 
-    <button class="topbar-icon-btn">
-      <i class="fas fa-bell"></i>
-      <span class="notif-dot"></span>
-    </button>
+    <div class="notification-wrapper">
+      <button class="topbar-icon-btn" (click)="toggleDropdown($event)">
+        <i class="fas fa-bell"></i>
+        <span *ngIf="unreadCount > 0" class="notif-count">{{ displayCount }}</span>
+        <span *ngIf="hasPulse && unreadCount > 0" class="notif-dot"></span>
+      </button>
+
+      <!-- Dropdown -->
+      <div class="notification-dropdown" *ngIf="isOpen" (click)="$event.stopPropagation()">
+        <div class="dropdown-header">
+          <h4>Notifications</h4>
+          <button class="mark-all-btn" *ngIf="unreadCount > 0" (click)="markAllAsRead($event)">
+            Tout marquer comme lu
+          </button>
+        </div>
+
+        <div class="dropdown-body">
+          <div class="empty-state" *ngIf="notifications.length === 0">
+            <i class="fas fa-check-circle"></i>
+            <p>Aucune notification</p>
+          </div>
+
+          <div class="notification-item" 
+               *ngFor="let notif of notifications"
+               [ngClass]="'type-' + notif.type.toLowerCase()"
+               (click)="onNotificationClick(notif, $event)">
+            <div class="notif-icon">
+              <i class="fas" 
+                 [ngClass]="{
+                   'fa-info-circle': notif.type === 'INFO',
+                   'fa-check-circle': notif.type === 'SUCCESS',
+                   'fa-exclamation-triangle': notif.type === 'WARNING',
+                   'fa-fire': notif.type === 'URGENT',
+                   'fa-times-circle': notif.type === 'ERROR'
+                 }"></i>
+            </div>
+            <div class="notif-content">
+              <strong>{{ notif.title }}</strong>
+              <p>{{ notif.message }}</p>
+              <small>{{ notif.createdAt | date:'dd MMM, HH:mm' }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="topbar-admin">
       <div class="avatar avatar-sm avatar-accent">AD</div>

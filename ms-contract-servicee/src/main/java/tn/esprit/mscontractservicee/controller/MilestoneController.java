@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import tn.esprit.mscontractservicee.dto.DeliveryProofResponse;
 import tn.esprit.mscontractservicee.dto.DeliveryProofSubmitRequest;
+import tn.esprit.mscontractservicee.dto.milestone.MilestoneCreateRequest;
+import tn.esprit.mscontractservicee.dto.milestone.MilestoneResponse;
+import tn.esprit.mscontractservicee.dto.milestone.MilestoneUpdateRequest;
 import tn.esprit.mscontractservicee.entity.Contract;
 import tn.esprit.mscontractservicee.entity.Milestone;
 import tn.esprit.mscontractservicee.enums.ContractStatus;
@@ -46,6 +49,8 @@ public class MilestoneController {
 
     @Value("${milestone.approval.requireDeliveryProof:false}")
     private boolean requireDeliveryProofOnApprove;
+
+    private static final String MILESTONE_NOT_FOUND_MSG = "Milestone not found with id: ";
 
     private static final SimpleGrantedAuthority ROLE_ADMIN = new SimpleGrantedAuthority("ROLE_ADMIN");
     private static final SimpleGrantedAuthority ROLE_CLIENT = new SimpleGrantedAuthority("ROLE_CLIENT");
@@ -118,9 +123,9 @@ public class MilestoneController {
     @PostMapping
     @Operation(summary = "Creer un jalon")
     @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
-    public ResponseEntity<Milestone> createMilestone(
+    public ResponseEntity<MilestoneResponse> createMilestone(
             Authentication authentication,
-            @RequestBody Milestone milestone) {
+            @RequestBody MilestoneCreateRequest milestone) {
         Long cin = currentCin(authentication);
         boolean admin = isAdmin(authentication);
 
@@ -134,8 +139,8 @@ public class MilestoneController {
                     "Milestones can only be created while contract is DRAFT. Current status: " + contract.getStatus());
         }
 
-        Milestone saved = milestoneService.createMilestone(milestone);
-        return new ResponseEntity<>(saved, HttpStatus.CREATED);
+        Milestone saved = milestoneService.createMilestone(toEntity(milestone));
+        return new ResponseEntity<>(toResponse(saved), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
@@ -148,7 +153,7 @@ public class MilestoneController {
         boolean admin = isAdmin(authentication);
         Milestone milestone = milestoneService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
 
         Contract contract = requireContract(milestone.getContractId());
         if (!isContractParticipant(contract, cin, admin)) {
@@ -168,7 +173,7 @@ public class MilestoneController {
         boolean admin = isAdmin(authentication);
         Milestone milestone = milestoneService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
 
         Contract contract = requireContract(milestone.getContractId());
         if (!isContractParticipant(contract, cin, admin)) {
@@ -210,16 +215,16 @@ public class MilestoneController {
     @PutMapping("/{id}")
     @Operation(summary = "Modifier un jalon")
     @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
-    public ResponseEntity<Milestone> updateMilestone(
+    public ResponseEntity<MilestoneResponse> updateMilestone(
             Authentication authentication,
             @PathVariable Long id,
-            @RequestBody Milestone milestone) {
+            @RequestBody MilestoneUpdateRequest milestone) {
         Long cin = currentCin(authentication);
         boolean admin = isAdmin(authentication);
 
         Milestone existing = milestoneService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
         Contract contract = requireContract(existing.getContractId());
 
         if (!admin && (contract.getClientCin() == null || !contract.getClientCin().equals(cin))) {
@@ -230,7 +235,7 @@ public class MilestoneController {
                     "Milestones can only be updated while contract is DRAFT. Current status: " + contract.getStatus());
         }
 
-        return ResponseEntity.ok(milestoneService.updateMilestone(id, milestone));
+        return ResponseEntity.ok(toResponse(milestoneService.updateMilestone(id, toEntity(milestone, existing.getContractId()))));
     }
 
     @PatchMapping("/{id}/status")
@@ -254,7 +259,7 @@ public class MilestoneController {
 
         Milestone milestone = milestoneService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
         Contract contract = requireContract(milestone.getContractId());
         requireSignedContract(contract);
 
@@ -278,7 +283,7 @@ public class MilestoneController {
 
         Milestone milestone = milestoneService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
         Contract contract = requireContract(milestone.getContractId());
         requireSignedContract(contract);
 
@@ -308,7 +313,7 @@ public class MilestoneController {
 
         Milestone milestone = milestoneService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
         Contract contract = requireContract(milestone.getContractId());
         requireSignedContract(contract);
 
@@ -338,7 +343,7 @@ public class MilestoneController {
 
         Milestone milestone = milestoneService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
         Contract contract = requireContract(milestone.getContractId());
         requireSignedContract(contract);
 
@@ -364,7 +369,7 @@ public class MilestoneController {
 
         Milestone milestone = milestoneService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
         Contract contract = requireContract(milestone.getContractId());
         requireSignedContract(contract);
 
@@ -398,7 +403,7 @@ public class MilestoneController {
         boolean admin = isAdmin(authentication);
         Milestone milestone = milestoneService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Milestone not found with id: " + id));
+                        MILESTONE_NOT_FOUND_MSG + id));
         Contract contract = requireContract(milestone.getContractId());
 
         if (contract.getStatus() != ContractStatus.DRAFT) {
@@ -435,5 +440,52 @@ public class MilestoneController {
 
         List<Milestone> milestones = milestoneService.findByContractId(contractId);
         return ResponseEntity.ok(milestones);
+    }
+
+    private static MilestoneResponse toResponse(Milestone milestone) {
+        if (milestone == null) {
+            return null;
+        }
+        return MilestoneResponse.builder()
+                .id(milestone.getId())
+                .contractId(milestone.getContractId())
+                .ordre(milestone.getOrdre())
+                .titre(milestone.getTitre())
+                .description(milestone.getDescription())
+                .montant(milestone.getMontant())
+                .deadline(milestone.getDeadline())
+                .startedAt(milestone.getStartedAt())
+                .submittedAt(milestone.getSubmittedAt())
+                .validatedAt(milestone.getValidatedAt())
+                .status(milestone.getStatus())
+                .rejectionReason(milestone.getRejectionReason())
+                .build();
+    }
+
+    private static Milestone toEntity(MilestoneCreateRequest req) {
+        if (req == null) {
+            return null;
+        }
+        Milestone m = new Milestone();
+        m.setContractId(req.getContractId());
+        m.setOrdre(req.getOrdre());
+        m.setTitre(req.getTitre());
+        m.setDescription(req.getDescription());
+        m.setMontant(req.getMontant());
+        m.setDeadline(req.getDeadline());
+        return m;
+    }
+
+    private static Milestone toEntity(MilestoneUpdateRequest req, Long contractId) {
+        if (req == null) {
+            return null;
+        }
+        Milestone m = new Milestone();
+        m.setContractId(contractId);
+        m.setTitre(req.getTitre());
+        m.setDescription(req.getDescription());
+        m.setMontant(req.getMontant());
+        m.setDeadline(req.getDeadline());
+        return m;
     }
 }

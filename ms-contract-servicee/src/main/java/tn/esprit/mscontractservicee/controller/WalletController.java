@@ -38,17 +38,17 @@ public class WalletController {
     }
 
     @GetMapping("/user/{userCin}")
-    public ResponseEntity<?> getWallet(@PathVariable Long userCin) {
+    public ResponseEntity<WalletResponse> getWallet(@PathVariable Long userCin) {
         return ResponseEntity.ok(toResponse(walletService.getOrCreateWallet(userCin)));
     }
 
     @PostMapping("/user/{userCin}/credit")
-    public ResponseEntity<?> credit(@PathVariable Long userCin, @RequestParam BigDecimal amount) {
+    public ResponseEntity<WalletResponse> credit(@PathVariable Long userCin, @RequestParam BigDecimal amount) {
         return ResponseEntity.ok(toResponse(walletService.credit(userCin, amount, "Manual credit")));
     }
 
     @GetMapping("/user/{userCin}/transactions")
-    public ResponseEntity<?> getWalletTransactions(@PathVariable Long userCin) {
+    public ResponseEntity<List<WalletTransactionResponse>> getWalletTransactions(@PathVariable Long userCin) {
         var wallet = walletService.getOrCreateWallet(userCin);
         List<Transaction> txs = transactionRepository.findByWalletIdOrderByCreatedAtDesc(wallet.getId());
         List<WalletTransactionResponse> res = txs.stream()
@@ -66,7 +66,7 @@ public class WalletController {
     }
 
     @PostMapping("/stripe/connect/{userCin}")
-    public ResponseEntity<?> createStripeAccount(
+    public ResponseEntity<Object> createStripeAccount(
             @PathVariable Long userCin,
             @RequestParam String email,
             @RequestParam(defaultValue = "TN") String country) {
@@ -83,7 +83,7 @@ public class WalletController {
     }
 
     @GetMapping("/stripe/status/{userCin}")
-    public ResponseEntity<?> getStripeStatus(@PathVariable Long userCin) {
+    public ResponseEntity<Object> getStripeStatus(@PathVariable Long userCin) {
         try {
             String status = walletService.getStripeAccountStatus(userCin);
             return ResponseEntity.ok(Map.of("status", status));

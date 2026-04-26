@@ -26,16 +26,16 @@ class ContractAmountCalculatorTest {
     @Test
     void computeMilestonesTotal_nullAmount_throws() {
         Milestone m1 = Milestone.builder().id(1L).montant(null).build();
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> ContractAmountCalculator.computeMilestonesTotal(List.of(m1)));
+        List<Milestone> milestones = List.of(m1);
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> ContractAmountCalculator.computeMilestonesTotal(milestones));
         assertTrue(ex.getMessage().contains("Milestone montant is required"));
     }
 
     @Test
     void computeMilestonesTotal_nonPositive_throws() {
         Milestone m1 = Milestone.builder().id(1L).montant(BigDecimal.ZERO).build();
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> ContractAmountCalculator.computeMilestonesTotal(List.of(m1)));
+        List<Milestone> milestones = List.of(m1);
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> ContractAmountCalculator.computeMilestonesTotal(milestones));
         assertTrue(ex.getMessage().contains("must be > 0"));
     }
 
@@ -47,4 +47,3 @@ class ContractAmountCalculatorTest {
         assertFalse(ContractAmountCalculator.amountsMatch(null, new BigDecimal("1.00")));
     }
 }
-

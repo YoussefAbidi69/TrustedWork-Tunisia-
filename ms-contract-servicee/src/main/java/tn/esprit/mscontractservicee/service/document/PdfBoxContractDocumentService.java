@@ -19,7 +19,9 @@ import tn.esprit.mscontractservicee.enums.SignatureType;
 import tn.esprit.mscontractservicee.feign.UserServiceClient;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.awt.Color;
 import java.time.format.DateTimeFormatter;
 import java.time.ZoneId;
@@ -43,6 +45,17 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
     private static final Color LIGHT_GRAY = new Color(240, 240, 240);
     private static final Color BORDER_COLOR = new Color(200, 200, 200);
 
+    private static final String LABEL_NAME = "Nom : ";
+
+    private record ParticipantsData(Contract contract, List<SignatureSigner> signers, UserDTO clientDto, UserDTO freelancerDto) {
+    }
+
+    private record Rect(float x, float topY, float width, float height) {
+    }
+
+    private record SignerBlockData(String label, SignatureSigner signer, UserDTO dto) {
+    }
+
     @Override
     public byte[] generateContractPdf(Contract contract, List<Milestone> milestones, List<SignatureSigner> signers) {
         if (contract == null) throw new IllegalArgumentException("contract is required");
@@ -56,49 +69,45 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
 
             PDPage page = new PDPage(box);
             doc.addPage(page);
-            PDPageContentStream cs = new PDPageContentStream(doc, page);
-            float y = box.getHeight() - margin;
 
-            try {
-                UserDTO clientDto = fetchUserByCin(contract.getClientCin());
-                UserDTO freelancerDto = fetchUserByCin(contract.getFreelancerCin());
+            UserDTO clientDto = fetchUserByCin(contract.getClientCin());
+            UserDTO freelancerDto = fetchUserByCin(contract.getFreelancerCin());
+            ParticipantsData participants = new ParticipantsData(contract, safeSigners, clientDto, freelancerDto);
+
+            try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
+                float y = box.getHeight() - margin;
 
                 // Header
                 y = drawHeader(doc, cs, box, margin, y, contract);
 
                 // Info Section
-                y = drawContractInfo(cs, margin, width, y, contract);
+                y = drawContractInfo(cs, margin, y, contract);
 
                 // Participants
-                y = drawParticipants(cs, margin, width, y, contract, safeSigners, clientDto, freelancerDto);
+                y = drawParticipants(cs, margin, width, y, participants);
 
                 // Project Details
-                y = drawProjectDetails(cs, margin, width, y, contract);
+                y = drawProjectDetails(cs, margin, y, contract);
 
                 // Milestones
                 if (!safeMilestones.isEmpty()) {
-                    y = drawMilestonesTable(cs, margin, width, y, safeMilestones, doc, box);
+                    y = drawMilestonesTable(cs, margin, width, y, safeMilestones);
                 }
 
                 // Total
-                y = drawTotalBlock(cs, margin, width, y, contract);
-
-                // Signatures
-                addSignaturesPage(doc, contract, safeSigners, clientDto, freelancerDto);
-
-            } finally {
-                if (cs != null) {
-                    try { cs.close(); } catch (Exception ignore) {}
-                }
+                drawTotalBlock(cs, margin, width, y, contract);
             }
+
+            // Signatures
+            addSignaturesPage(doc, contract, safeSigners, clientDto, freelancerDto);
             return toBytes(doc);
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.error("Failed to generate PDF", e);
-            throw new RuntimeException("Failed to generate PDF", e);
+            throw new UncheckedIOException("Failed to generate PDF", e);
         }
     }
 
-    private float drawHeader(PDDocument doc, PDPageContentStream cs, PDRectangle box, float margin, float y, Contract contract) throws Exception {
+    private float drawHeader(PDDocument doc, PDPageContentStream cs, PDRectangle box, float margin, float y, Contract contract) throws IOException {
         // Try to load logo
         try {
             ClassPathResource logoResource = new ClassPathResource("logo.png"); // TWT Logo
@@ -125,7 +134,7 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
                 cs.showText("TrustedWork Tunisia");
                 cs.endText();
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.warn("Could not load logo", e);
         }
 
@@ -160,7 +169,7 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
         return y - 30;
     }
 
-    private float drawContractInfo(PDPageContentStream cs, float x, float width, float y, Contract contract) throws Exception {
+    private float drawContractInfo(PDPageContentStream cs, float x, float y, Contract contract) throws IOException {
         cs.setNonStrokingColor(TWT_SECONDARY);
         cs.setFont(PDType1Font.HELVETICA_BOLD, 12);
         cs.beginText();
@@ -187,7 +196,12 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
         return y - 45;
     }
 
-    private float drawParticipants(PDPageContentStream cs, float margin, float width, float y, Contract contract, List<SignatureSigner> signers, UserDTO clientDto, UserDTO freelancerDto) throws Exception {
+    private float drawParticipants(PDPageContentStream cs, float margin, float width, float y, ParticipantsData data) throws IOException {
+        Contract contract = data.contract();
+        List<SignatureSigner> signers = data.signers();
+        UserDTO clientDto = data.clientDto();
+        UserDTO freelancerDto = data.freelancerDto();
+
         cs.setNonStrokingColor(TWT_SECONDARY);
         cs.setFont(PDType1Font.HELVETICA_BOLD, 12);
         cs.beginText();
@@ -210,7 +224,7 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
         cs.setFont(PDType1Font.HELVETICA, 10);
         cs.newLineAtOffset(0, -18);
         if (clientDto != null && clientDto.getFirstName() != null) {
-            cs.showText("Nom : " + clientDto.getFirstName() + " " + nvl(clientDto.getLastName()));
+            cs.showText(LABEL_NAME + clientDto.getFirstName() + " " + nvl(clientDto.getLastName()));
             cs.newLineAtOffset(0, -15);
         }
         cs.showText("CIN: " + nvl(contract.getClientCin()));
@@ -231,7 +245,7 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
         cs.setFont(PDType1Font.HELVETICA, 10);
         cs.newLineAtOffset(0, -18);
         if (freelancerDto != null && freelancerDto.getFirstName() != null) {
-            cs.showText("Nom : " + freelancerDto.getFirstName() + " " + nvl(freelancerDto.getLastName()));
+            cs.showText(LABEL_NAME + freelancerDto.getFirstName() + " " + nvl(freelancerDto.getLastName()));
             cs.newLineAtOffset(0, -15);
         }
         cs.showText("CIN: " + nvl(contract.getFreelancerCin()));
@@ -245,7 +259,7 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
         return y - 100;
     }
 
-    private float drawProjectDetails(PDPageContentStream cs, float margin, float width, float y, Contract contract) throws Exception {
+    private float drawProjectDetails(PDPageContentStream cs, float margin, float y, Contract contract) throws IOException {
         cs.setNonStrokingColor(TWT_SECONDARY);
         cs.setFont(PDType1Font.HELVETICA_BOLD, 12);
         cs.beginText();
@@ -276,7 +290,7 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
         return y - 20;
     }
 
-    private float drawMilestonesTable(PDPageContentStream cs, float margin, float width, float y, List<Milestone> milestones, PDDocument doc, PDRectangle box) throws Exception {
+    private float drawMilestonesTable(PDPageContentStream cs, float margin, float width, float y, List<Milestone> milestones) throws IOException {
         cs.setNonStrokingColor(TWT_SECONDARY);
         cs.setFont(PDType1Font.HELVETICA_BOLD, 12);
         cs.beginText();
@@ -333,7 +347,7 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
         return y - 10;
     }
 
-    private float drawTotalBlock(PDPageContentStream cs, float margin, float width, float y, Contract contract) throws Exception {
+    private float drawTotalBlock(PDPageContentStream cs, float margin, float width, float y, Contract contract) throws IOException {
         float boxWidth = 220f;
         float x = margin + width - boxWidth;
         
@@ -354,13 +368,13 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
         return y - 60;
     }
 
-    private void drawBoxFill(PDPageContentStream cs, float x, float y, float width, float height, Color color) throws Exception {
+    private void drawBoxFill(PDPageContentStream cs, float x, float y, float width, float height, Color color) throws IOException {
         cs.setNonStrokingColor(color);
         cs.addRect(x, y, width, height);
         cs.fill();
     }
 
-    private static void addSignaturesPage(PDDocument doc, Contract contract, List<SignatureSigner> signers, UserDTO clientDto, UserDTO freelancerDto) throws Exception {
+    private static void addSignaturesPage(PDDocument doc, Contract contract, List<SignatureSigner> signers, UserDTO clientDto, UserDTO freelancerDto) throws IOException {
         PDPage page = new PDPage(PDRectangle.A4);
         doc.addPage(page);
 
@@ -398,8 +412,10 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
             float colWidth = (page.getMediaBox().getWidth() - (margin * 3)) / 2;
             float blockHeight = 180f;
 
-            renderSignerBlock(doc, cs, margin, y, "LE CLIENT", client, colWidth, blockHeight, clientDto);
-            renderSignerBlock(doc, cs, margin * 2 + colWidth, y, "LE PRESTATAIRE", freelancer, colWidth, blockHeight, freelancerDto);
+            Rect left = new Rect(margin, y, colWidth, blockHeight);
+            Rect right = new Rect(margin * 2 + colWidth, y, colWidth, blockHeight);
+            renderSignerBlock(doc, cs, left, new SignerBlockData("LE CLIENT", client, clientDto));
+            renderSignerBlock(doc, cs, right, new SignerBlockData("LE PRESTATAIRE", freelancer, freelancerDto));
 
             // Audit text at the bottom
             cs.setNonStrokingColor(TWT_SECONDARY);
@@ -422,7 +438,15 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
                 .orElse(null);
     }
 
-    private static void renderSignerBlock(PDDocument doc, PDPageContentStream cs, float x, float topY, String label, SignatureSigner signer, float width, float height, UserDTO dto) throws Exception {
+    private static void renderSignerBlock(PDDocument doc, PDPageContentStream cs, Rect rect, SignerBlockData block) throws IOException {
+        float x = rect.x();
+        float topY = rect.topY();
+        float width = rect.width();
+        float height = rect.height();
+        String label = block.label();
+        SignatureSigner signer = block.signer();
+        UserDTO dto = block.dto();
+
         // Draw Border
         cs.setStrokingColor(BORDER_COLOR);
         cs.setLineWidth(1f);
@@ -460,7 +484,7 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
             cs.setNonStrokingColor(TWT_SECONDARY);
             cs.beginText();
             cs.newLineAtOffset(x + 10, y);
-            cs.showText("Nom : ");
+            cs.showText(LABEL_NAME);
             cs.setFont(PDType1Font.HELVETICA, 9);
             cs.setNonStrokingColor(Color.BLACK);
             cs.showText(dto.getFirstName() + " " + nvl(dto.getLastName()));
@@ -515,14 +539,12 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
             cs.endText();
         }
 
-        y -= 10;
-
         SignatureType type = signer.getSignatureType();
         String payload = signer.getSignaturePayload();
         
         if (type == SignatureType.DRAWN && payload != null && !payload.isBlank()) {
             byte[] png = tryDecodePng(payload);
-            if (png != null) {
+            if (png.length > 0) {
                 try {
                     PDImageXObject img = PDImageXObject.createFromByteArray(doc, png, "signature");
                     float maxW = width - 20;
@@ -534,7 +556,7 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
                     float h = ih * scale;
                     cs.drawImage(img, x + 10, topY - height + 10, w, h);
                     return;
-                } catch (Exception e) {
+                } catch (IOException e) {
                     log.warn("Failed to draw signature image", e);
                 }
             }
@@ -553,10 +575,10 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
         if (cin == null) return null;
         try {
             return userServiceClient.getUserByCin(cin);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             try {
                 return userServiceClient.getUserByCinFromKycStatus(cin);
-            } catch (Exception e2) {
+            } catch (RuntimeException e2) {
                 log.warn("Failed to fetch user info for PDF (CIN: " + cin + ")", e2);
                 return null;
             }
@@ -565,14 +587,17 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
 
     private static byte[] tryDecodePng(String payload) {
         try {
+            if (payload == null || payload.isBlank()) {
+                return new byte[0];
+            }
             String b64 = payload.trim();
             int comma = b64.indexOf(',');
             if (b64.startsWith("data:image") && comma >= 0) {
                 b64 = b64.substring(comma + 1);
             }
             return Base64.getDecoder().decode(b64);
-        } catch (Exception e) {
-            return null;
+        } catch (IllegalArgumentException e) {
+            return new byte[0];
         }
     }
 
@@ -583,7 +608,7 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
         return oneLine.substring(0, Math.max(0, maxLen)) + "...";
     }
 
-    private static byte[] toBytes(PDDocument doc) throws Exception {
+    private static byte[] toBytes(PDDocument doc) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         doc.save(out);
         return out.toByteArray();
@@ -606,4 +631,3 @@ public class PdfBoxContractDocumentService implements ContractDocumentService {
         return out;
     }
 }
-
