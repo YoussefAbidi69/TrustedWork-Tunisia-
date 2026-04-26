@@ -1,0 +1,199 @@
+<div class="animated-bg"></div>
+<div class="particles" id="particles"></div>
+
+<div class="skills-page">
+
+  <!-- Toast messages -->
+  <div *ngIf="successMessage" class="toast-stack">
+    <div class="alert-banner alert-banner--success">
+      <span class="alert-icon">✅</span>
+      <span>{{ successMessage }}</span>
+      <button class="alert-close" (click)="clearMessages()">✕</button>
+    </div>
+  </div>
+  <div *ngIf="errorMessage" class="toast-stack">
+    <div class="alert-banner alert-banner--error">
+      <span class="alert-icon">⚠️</span>
+      <span>{{ errorMessage }}</span>
+      <button class="alert-close" (click)="clearMessages()">✕</button>
+    </div>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="skills-hero">
+    <div class="hero-glow hero-glow--one"></div>
+    <div class="hero-glow hero-glow--two"></div>
+
+    <div class="section-header">
+      <div class="header-left">
+        <div class="section-icon">&lt;/&gt;</div>
+        <div class="header-copy">
+          <div class="header-topline">
+            <h2>Mes Compétences</h2>
+            <span class="badge-count">{{ skills.length }} compétences</span>
+          </div>
+          <p class="subtitle">
+            Valorisez votre expertise avec des scores d'authenticité,
+            des endorsements et une présentation premium de votre stack technique.
+          </p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary" (click)="openForm()">
+          + Ajouter une compétence
+        </button>
+      </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="hero-stats">
+      <div class="stat-card">
+        <span class="stat-label">Compétences totales</span>
+        <strong class="stat-value">{{ skills.length }}</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Authenticité moyenne</span>
+        <strong class="stat-value">{{ averageAuthenticity | number:'1.0-0' }}%</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Endorsements</span>
+        <strong class="stat-value">{{ totalEndorsements }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- Add Skill Form -->
+  <section class="form-card" *ngIf="showForm">
+    <div class="form-card__header">
+      <span class="section-chip">Nouvelle compétence</span>
+      <h3>Ajouter un skill</h3>
+      <p>Ajoutez une compétence métier ou technique avec sa catégorie et son score d'évaluation initial.</p>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nom du skill *</label>
+        <input type="text" class="form-control"
+               placeholder="Ex: Spring Boot, Angular, Docker..."
+               [(ngModel)]="newSkill.name">
+      </div>
+      <div class="form-group">
+        <label>Catégorie *</label>
+        <select class="form-control" [(ngModel)]="newSkill.category">
+          <option value="">Sélectionner...</option>
+          <option *ngFor="let opt of categoryOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Score d'examen (0–100)</label>
+        <input type="number" class="form-control"
+               placeholder="85" min="0" max="100"
+               [(ngModel)]="newSkill.examScore">
+        <small>Correspond à votre score obtenu sur le module d'évaluation.</small>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-primary" (click)="addSkill()" [disabled]="!canSave || isSaving">
+        {{ isSaving ? 'Enregistrement...' : 'Enregistrer la compétence' }}
+      </button>
+      <button class="btn-ghost" (click)="closeForm()">Annuler</button>
+    </div>
+  </section>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-state">
+    <span>Chargement des compétences...</span>
+  </div>
+
+  <!-- Skills Grid -->
+  <section class="skills-grid-section" *ngIf="!isLoading">
+    <div class="section-head">
+      <span class="section-chip">Inventaire</span>
+      <h3>Compétences déclarées</h3>
+    </div>
+
+    <div *ngIf="skills.length === 0" class="empty-state">
+      <p>Aucune compétence déclarée. Ajoutez votre première compétence !</p>
+    </div>
+
+    <div class="skills-grid">
+      <article class="skill-card"
+               *ngFor="let skill of skills; trackBy: trackBySkill">
+
+        <div class="skill-header">
+          <div class="skill-header__main">
+            <span class="skill-name">{{ skill.name }}</span>
+            <span class="skill-category" [ngClass]="getCategoryClass(skill.category)">
+              {{ getCategoryLabel(skill.category) }}
+            </span>
+            <span class="skill-level" [ngClass]="getLevelClass(skill.level)">
+              {{ getLevelLabel(skill.level) }}
+            </span>
+          </div>
+          <span class="top-skill-badge" *ngIf="topSkill?.id === skill.id">⭐ Top Skill</span>
+        </div>
+
+        <div class="skill-scores">
+
+          <!-- Authenticité -->
+          <div class="score-row">
+            <span class="score-label">Authenticité</span>
+            <div class="score-bar-wrapper">
+              <div class="score-bar"
+                   [ngClass]="getAuthenticityClass(skill.authenticityScore || 0)"
+                   [style.width.%]="skill.authenticityScore || 0">
+              </div>
+            </div>
+            <span class="score-value">{{ skill.authenticityScore || 0 }}%</span>
+          </div>
+
+          <!-- Score examen — mode lecture -->
+          <div class="score-row" *ngIf="editingExamSkillId !== skill.id">
+            <span class="score-label">Score examen</span>
+            <span class="score-pill">{{ skill.examScore || 0 }}%</span>
+            <button class="btn-edit-glass" type="button" (click)="startEditExam(skill)">
+              <i class="fas fa-pen-to-square"></i>
+              <span>Modifier</span>
+            </button>
+          </div>
+
+          <!-- Score examen — mode édition inline -->
+          <div class="score-row edit-row" *ngIf="editingExamSkillId === skill.id">
+            <span class="score-label">Score examen</span>
+            <input type="number" class="form-control score-input"
+                   min="0" max="100"
+                   [(ngModel)]="editingExamScore">
+            <button class="btn-primary btn-sm" (click)="saveExamScore(skill.id)"
+                    [disabled]="isSavingExam">
+              {{ isSavingExam ? '...' : '✔' }}
+            </button>
+            <button class="btn-ghost btn-sm" (click)="cancelEditExam()">✕</button>
+          </div>
+
+          <!-- Endorsements -->
+          <div class="score-row">
+            <span class="score-label">Endorsements</span>
+            <span class="score-pill">{{ skill.endorsementCount || 0 }}</span>
+          </div>
+
+        </div>
+
+        <div class="skill-actions">
+          <button class="btn-secondary"
+                  (click)="refreshAuthenticity(skill.id)"
+                  [disabled]="refreshingSkillId === skill.id">
+            {{ refreshingSkillId === skill.id ? 'Calcul...' : 'Recalculer' }}
+          </button>
+          <button class="btn-danger"
+                  (click)="deleteSkill(skill.id)"
+                  [disabled]="deletingSkillId === skill.id">
+            {{ deletingSkillId === skill.id ? 'Suppression...' : 'Supprimer' }}
+          </button>
+        </div>
+
+      </article>
+    </div>
+  </section>
+
+</div>

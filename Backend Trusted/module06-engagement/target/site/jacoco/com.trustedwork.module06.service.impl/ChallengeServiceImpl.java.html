@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChallengeServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">module06-engagement</a> &gt; <a href="index.source.html" class="el_package">com.trustedwork.module06.service.impl</a> &gt; <span class="el_source">ChallengeServiceImpl.java</span></div><h1>ChallengeServiceImpl.java</h1><pre class="source lang-java linenums">package com.trustedwork.module06.service.impl;
+
+import com.trustedwork.module06.dto.ChallengeDTO;
+import com.trustedwork.module06.entity.Challenge;
+import com.trustedwork.module06.entity.ChallengeParticipation;
+import com.trustedwork.module06.enums.ChallengeStatus;
+import com.trustedwork.module06.enums.ParticipationStatus;
+import com.trustedwork.module06.mapper.ChallengeMapper;
+import com.trustedwork.module06.repository.ChallengeParticipationRepository;
+import com.trustedwork.module06.repository.ChallengeRepository;
+import com.trustedwork.module06.repository.EventRegistrationRepository;
+import com.trustedwork.module06.repository.UserBadgeRepository;
+import com.trustedwork.module06.service.ChallengeService;
+import com.trustedwork.module06.service.GamificationService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+public class ChallengeServiceImpl implements ChallengeService {
+
+    private final ChallengeRepository challengeRepository;
+    private final ChallengeParticipationRepository participationRepository;
+    private final EventRegistrationRepository eventRegistrationRepository;
+    private final UserBadgeRepository userBadgeRepository;
+    private final GamificationService gamificationService;
+
+    @Override
+    public List&lt;ChallengeDTO&gt; getAllChallenges() {
+<span class="nc" id="L34">        return challengeRepository.findAll().stream()</span>
+<span class="nc" id="L35">                .map(ChallengeMapper::toDTO)</span>
+<span class="nc" id="L36">                .toList();</span>
+    }
+
+    @Override
+    public List&lt;ChallengeDTO&gt; getActiveChallenges(Long userId) {
+<span class="nc" id="L41">        List&lt;Challenge&gt; challenges = challengeRepository.findByStatus(ChallengeStatus.ACTIVE);</span>
+<span class="nc" id="L42">        List&lt;ChallengeParticipation&gt; participations = participationRepository.findByUserId(userId);</span>
+
+<span class="nc" id="L44">        return challenges.stream().map(c -&gt; {</span>
+<span class="nc" id="L45">            ChallengeDTO dto = ChallengeMapper.toDTO(c);</span>
+<span class="nc" id="L46">            Optional&lt;ChallengeParticipation&gt; p = participations.stream()</span>
+<span class="nc" id="L47">                    .filter(part -&gt; part.getChallenge().getId().equals(c.getId()))</span>
+<span class="nc" id="L48">                    .findFirst();</span>
+<span class="nc" id="L49">            dto.setCurrentParticipation(p.map(ChallengeMapper::toParticipationDTO).orElse(null));</span>
+<span class="nc" id="L50">            return dto;</span>
+<span class="nc" id="L51">        }).toList();</span>
+    }
+
+    @Override
+    public ChallengeDTO createChallenge(ChallengeDTO challengeDTO) {
+<span class="nc" id="L56">        Challenge challenge = ChallengeMapper.toEntity(challengeDTO);</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        if (challenge.getStatus() == null) challenge.setStatus(ChallengeStatus.ACTIVE);</span>
+<span class="nc" id="L58">        return ChallengeMapper.toDTO(challengeRepository.save(challenge));</span>
+    }
+
+    @Override
+    @Transactional
+    public ChallengeDTO updateChallenge(Long id, ChallengeDTO challengeDTO) {
+<span class="nc" id="L64">        Challenge existing = challengeRepository.findById(id)</span>
+<span class="nc" id="L65">                .orElseThrow(() -&gt; new IllegalStateException(&quot;Challenge not found&quot;));</span>
+        
+<span class="nc" id="L67">        Challenge updated = ChallengeMapper.toEntity(challengeDTO);</span>
+<span class="nc" id="L68">        existing.setTitle(updated.getTitle());</span>
+<span class="nc" id="L69">        existing.setDescription(updated.getDescription());</span>
+<span class="nc" id="L70">        existing.setXpReward(updated.getXpReward());</span>
+<span class="nc" id="L71">        existing.setDeadline(updated.getDeadline());</span>
+<span class="nc" id="L72">        existing.setStatus(updated.getStatus());</span>
+<span class="nc" id="L73">        existing.setChallengeTypeCode(updated.getChallengeTypeCode());</span>
+
+<span class="nc" id="L75">        return ChallengeMapper.toDTO(challengeRepository.save(existing));</span>
+    }
+
+    @Override
+    public void deleteChallenge(Long id) {
+<span class="nc" id="L80">        challengeRepository.deleteById(id);</span>
+<span class="nc" id="L81">    }</span>
+
+    @Override
+    @Transactional
+    public void joinChallenge(Long userId, Long challengeId) {
+<span class="fc" id="L86">        Challenge challenge = challengeRepository.findById(challengeId)</span>
+<span class="pc" id="L87">                .orElseThrow(() -&gt; new IllegalStateException(&quot;Challenge not found&quot;));</span>
+        
+<span class="fc" id="L89">        participationRepository.findByUserIdAndChallengeId(userId, challengeId).ifPresent(p -&gt; {</span>
+<span class="nc" id="L90">            throw new IllegalStateException(&quot;Vous avez déjà rejoint cette mission&quot;);</span>
+        });
+
+<span class="fc" id="L93">        ChallengeParticipation p = ChallengeParticipation.builder()</span>
+<span class="fc" id="L94">                .userId(userId)</span>
+<span class="fc" id="L95">                .challenge(challenge)</span>
+<span class="fc" id="L96">                .status(ParticipationStatus.JOINED)</span>
+<span class="fc" id="L97">                .build();</span>
+<span class="fc" id="L98">        participationRepository.save(p);</span>
+<span class="fc" id="L99">    }</span>
+
+    @Override
+    @Transactional
+    public void succeedChallenge(Long userId, Long challengeId) {
+<span class="fc" id="L104">        ChallengeParticipation p = participationRepository.findByUserIdAndChallengeId(userId, challengeId)</span>
+<span class="pc" id="L105">                .orElseThrow(() -&gt; new IllegalStateException(&quot;Participation non trouvée&quot;));</span>
+        
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">        if (p.getStatus() != ParticipationStatus.JOINED) {</span>
+<span class="nc" id="L108">            throw new IllegalStateException(&quot;Cette mission n'est pas en cours&quot;);</span>
+        }
+
+<span class="fc" id="L111">        Challenge c = p.getChallenge();</span>
+<span class="fc" id="L112">        String typeCode = c.getChallengeTypeCode();</span>
+
+        // --- REAL VERIFICATION ENGINE ---
+<span class="pc bpc" id="L115" title="3 of 4 branches missed.">        if (&quot;REG_EVENT&quot;.equals(typeCode) &amp;&amp; eventRegistrationRepository.findByUserId(userId).isEmpty()) {</span>
+<span class="nc" id="L116">            throw new IllegalStateException(&quot;Action requise : Vous devez vous inscrire à au moins un événement !&quot;);</span>
+        } 
+        
+<span class="pc bpc" id="L119" title="3 of 4 branches missed.">        if (&quot;FIRST_BADGE&quot;.equals(typeCode) &amp;&amp; userBadgeRepository.findByUserId(userId).isEmpty()) {</span>
+<span class="nc" id="L120">            throw new IllegalStateException(&quot;Action requise : Vous devez gagner au moins un badge d'abord !&quot;);</span>
+        }
+
+<span class="fc" id="L123">        p.setStatus(ParticipationStatus.SUCCESS);</span>
+<span class="fc" id="L124">        p.setCompletedAt(java.time.LocalDateTime.now());</span>
+<span class="fc" id="L125">        participationRepository.save(p);</span>
+<span class="fc" id="L126">    }</span>
+
+    @Override
+    @Transactional
+    public void claimReward(Long userId, Long challengeId) {
+<span class="nc" id="L131">        ChallengeParticipation p = participationRepository.findByUserIdAndChallengeId(userId, challengeId)</span>
+<span class="nc" id="L132">                .orElseThrow(() -&gt; new IllegalStateException(&quot;Participation non trouvée&quot;));</span>
+        
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        if (p.getStatus() != ParticipationStatus.SUCCESS) {</span>
+<span class="nc" id="L135">            throw new IllegalStateException(&quot;La mission n'est pas encore réussie&quot;);</span>
+        }
+
+<span class="nc" id="L138">        Challenge c = p.getChallenge();</span>
+<span class="nc" id="L139">        gamificationService.addXp(userId, c.getXpReward(), &quot;Récompense Mission : &quot; + c.getTitle());</span>
+        
+<span class="nc" id="L141">        p.setStatus(ParticipationStatus.CLAIMED);</span>
+<span class="nc" id="L142">        participationRepository.save(p);</span>
+<span class="nc" id="L143">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

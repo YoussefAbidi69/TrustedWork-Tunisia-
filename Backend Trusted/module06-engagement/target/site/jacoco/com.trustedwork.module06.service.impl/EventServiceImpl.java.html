@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">module06-engagement</a> &gt; <a href="index.source.html" class="el_package">com.trustedwork.module06.service.impl</a> &gt; <span class="el_source">EventServiceImpl.java</span></div><h1>EventServiceImpl.java</h1><pre class="source lang-java linenums">package com.trustedwork.module06.service.impl;
+
+import com.trustedwork.module06.dto.EventDTO;
+import com.trustedwork.module06.entity.*;
+import com.trustedwork.module06.enums.*;
+import com.trustedwork.module06.exception.*;
+import com.trustedwork.module06.mapper.EventMapper;
+import com.trustedwork.module06.repository.*;
+import com.trustedwork.module06.service.EventService;
+import com.trustedwork.module06.service.GamificationService;
+import com.trustedwork.module06.util.XPConstants;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import java.util.List;
+import java.time.LocalDateTime;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class EventServiceImpl implements EventService {
+
+    private static final String EVENT_NOT_FOUND_MSG = &quot;Event not found&quot;;
+    private final EventRepository eventRepository;
+    private final EventRegistrationRepository registrationRepository;
+    private final GamificationService gamificationService;
+
+    @Override
+    public EventDTO createEvent(EventDTO dto) {
+<span class="fc" id="L30">        Event event = EventMapper.toEntity(dto);</span>
+<span class="fc" id="L31">        event.setRegisteredCount(0);</span>
+<span class="fc" id="L32">        determineEventStatus(event);</span>
+<span class="fc" id="L33">        return toDtoWithUsers(eventRepository.save(event));</span>
+    }
+
+    @Override
+    public List&lt;EventDTO&gt; getAllEvents() {
+<span class="nc" id="L38">        return eventRepository.findAll()</span>
+<span class="nc" id="L39">                .stream().map(this::toDtoWithUsers).toList();</span>
+    }
+
+    @Override
+    public List&lt;EventDTO&gt; getEventsByGovernorate(String governorate) {
+<span class="nc" id="L44">        return eventRepository.findByGovernorate(governorate)</span>
+<span class="nc" id="L45">                .stream().map(this::toDtoWithUsers).toList();</span>
+    }
+
+    @Override
+    public EventRegistration registerToEvent(Long eventId, Long userId) {
+<span class="fc" id="L50">        Event event = eventRepository.findById(eventId)</span>
+<span class="pc" id="L51">                .orElseThrow(() -&gt; new ResourceNotFoundException(EVENT_NOT_FOUND_MSG + &quot;: &quot; + eventId));</span>
+
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">        if (registrationRepository.existsByEventIdAndUserId(eventId, userId))</span>
+<span class="nc" id="L54">            throw new AlreadyRegisteredException(&quot;User already registered to this event&quot;);</span>
+
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">        if (event.getRegisteredCount() &gt;= event.getCapacity())</span>
+<span class="nc" id="L57">            throw new IllegalStateException(&quot;Event is full&quot;);</span>
+
+<span class="fc" id="L59">        event.setRegisteredCount(event.getRegisteredCount() + 1);</span>
+<span class="fc" id="L60">        eventRepository.save(event);</span>
+
+<span class="fc" id="L62">        EventRegistration reg = EventRegistration.builder()</span>
+<span class="fc" id="L63">                .event(event).userId(userId)</span>
+<span class="fc" id="L64">                .status(RegistrationStatus.REGISTERED).build();</span>
+
+<span class="fc" id="L66">        EventRegistration saved = registrationRepository.save(reg);</span>
+<span class="fc" id="L67">        gamificationService.addXp(userId, XPConstants.EVENT_REGISTRATION_XP, &quot;EVENT_REGISTRATION&quot;);</span>
+<span class="fc" id="L68">        return saved;</span>
+    }
+
+    @Override
+    public void markAttended(Long registrationId, Long userId) {
+<span class="nc" id="L73">        EventRegistration reg = registrationRepository.findById(registrationId)</span>
+<span class="nc" id="L74">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Registration not found&quot;));</span>
+<span class="nc" id="L75">        reg.setStatus(RegistrationStatus.ATTENDED);</span>
+<span class="nc" id="L76">        registrationRepository.save(reg);</span>
+<span class="nc" id="L77">        gamificationService.addXp(userId, XPConstants.EVENT_ATTENDED_XP, &quot;EVENT_ATTENDED&quot;);</span>
+<span class="nc" id="L78">    }</span>
+
+    @Override
+    public EventDTO updateEvent(Long id, EventDTO dto) {
+<span class="nc" id="L82">        Event event = eventRepository.findById(id)</span>
+<span class="nc" id="L83">                .orElseThrow(() -&gt; new ResourceNotFoundException(EVENT_NOT_FOUND_MSG));</span>
+        
+<span class="nc" id="L85">        event.setTitle(dto.getTitle());</span>
+<span class="nc" id="L86">        event.setDescription(dto.getDescription());</span>
+<span class="nc" id="L87">        event.setType(dto.getType());</span>
+<span class="nc" id="L88">        event.setCity(dto.getCity());</span>
+<span class="nc" id="L89">        event.setGovernorate(dto.getGovernorate());</span>
+<span class="nc" id="L90">        event.setOnline(dto.isOnline());</span>
+<span class="nc" id="L91">        event.setCapacity(dto.getCapacity());</span>
+<span class="nc" id="L92">        event.setStartDate(dto.getStartDate());</span>
+<span class="nc" id="L93">        event.setEndDate(dto.getEndDate());</span>
+        
+<span class="nc" id="L95">        determineEventStatus(event);</span>
+        
+<span class="nc" id="L97">        return toDtoWithUsers(eventRepository.save(event));</span>
+    }
+
+    @Override
+    public void deleteEvent(Long id) {
+<span class="nc" id="L102">        Event event = eventRepository.findById(id)</span>
+<span class="nc" id="L103">                .orElseThrow(() -&gt; new ResourceNotFoundException(EVENT_NOT_FOUND_MSG));</span>
+<span class="nc" id="L104">        eventRepository.delete(event);</span>
+<span class="nc" id="L105">    }</span>
+
+    private void determineEventStatus(Event event) {
+<span class="pc bpc" id="L108" title="2 of 4 branches missed.">        if (event.getStartDate() == null || event.getEndDate() == null) return;</span>
+<span class="fc" id="L109">        LocalDateTime now = LocalDateTime.now();</span>
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">        if (now.isBefore(event.getStartDate())) {</span>
+<span class="fc" id="L111">            event.setStatus(EventStatus.UPCOMING);</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">        } else if (now.isAfter(event.getEndDate())) {</span>
+<span class="nc" id="L113">            event.setStatus(EventStatus.COMPLETED);</span>
+        } else {
+<span class="nc" id="L115">            event.setStatus(EventStatus.ONGOING);</span>
+        }
+<span class="fc" id="L117">    }</span>
+
+    @Override
+    public List&lt;Long&gt; getMyRegisteredEventIds(Long userId) {
+<span class="nc" id="L121">        return registrationRepository.findByUserId(userId)</span>
+<span class="nc" id="L122">                .stream()</span>
+<span class="nc" id="L123">                .map(reg -&gt; reg.getEvent().getId())</span>
+<span class="nc" id="L124">                .toList();</span>
+    }
+
+    @Override
+    public void cancelRegistration(Long eventId, Long userId) {
+<span class="nc" id="L129">        Event event = eventRepository.findById(eventId)</span>
+<span class="nc" id="L130">                .orElseThrow(() -&gt; new ResourceNotFoundException(EVENT_NOT_FOUND_MSG));</span>
+        
+        // Find registration
+<span class="nc" id="L133">        List&lt;EventRegistration&gt; regs = registrationRepository.findByUserId(userId);</span>
+<span class="nc" id="L134">        regs.stream()</span>
+<span class="nc" id="L135">            .filter(r -&gt; r.getEvent().getId().equals(eventId))</span>
+<span class="nc" id="L136">            .findFirst()</span>
+<span class="nc" id="L137">            .ifPresent(reg -&gt; {</span>
+                // Delete registration
+<span class="nc" id="L139">                registrationRepository.delete(reg);</span>
+                
+                // Update event count
+<span class="nc" id="L142">                event.setRegisteredCount(Math.max(0, event.getRegisteredCount() - 1));</span>
+<span class="nc" id="L143">                eventRepository.save(event);</span>
+                
+                // Deduct XP
+<span class="nc" id="L146">                gamificationService.addXp(userId, -XPConstants.EVENT_REGISTRATION_XP, &quot;EVENT_CANCELLED&quot;);</span>
+<span class="nc" id="L147">            });</span>
+<span class="nc" id="L148">    }</span>
+
+    private EventDTO toDtoWithUsers(Event event) {
+<span class="fc" id="L151">        List&lt;Long&gt; userIds = registrationRepository.findByEventId(event.getId())</span>
+<span class="fc" id="L152">                .stream()</span>
+<span class="fc" id="L153">                .map(EventRegistration::getUserId)</span>
+<span class="fc" id="L154">                .toList();</span>
+<span class="fc" id="L155">        return EventMapper.toDto(event, userIds);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

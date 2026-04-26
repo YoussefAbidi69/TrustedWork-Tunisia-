@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AiRecommendationServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">module06-engagement</a> &gt; <a href="index.source.html" class="el_package">com.trustedwork.module06.service.impl</a> &gt; <span class="el_source">AiRecommendationServiceImpl.java</span></div><h1>AiRecommendationServiceImpl.java</h1><pre class="source lang-java linenums">package com.trustedwork.module06.service.impl;
+
+import com.trustedwork.module06.entity.Challenge;
+import com.trustedwork.module06.entity.Event;
+import com.trustedwork.module06.repository.ChallengeRepository;
+import com.trustedwork.module06.repository.EventRepository;
+import com.trustedwork.module06.service.AiRecommendationService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
+
+import java.net.ProxySelector;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+<span class="fc" id="L27">@Slf4j</span>
+public class AiRecommendationServiceImpl implements AiRecommendationService {
+
+    private final EventRepository eventRepo;
+    private final ChallengeRepository challengeRepo;
+    private final RestTemplate externalRestTemplate;
+
+    @Value(&quot;${groq.api.key}&quot;)
+    private String apiKey;
+
+    @Value(&quot;${groq.api.url}&quot;)
+    private String apiUrl;
+
+    private static final String USER_SERVICE_URL = &quot;http://localhost:8081/api/identity/users/&quot;;
+    private static final String EVENTS_KEY = &quot;events&quot;;
+    private static final String CHALLENGES_KEY = &quot;challenges&quot;;
+    private static final String REASON_KEY = &quot;reason&quot;;
+    private static final String TITLE_KEY = &quot;title&quot;;
+    private static final String CONTENT_KEY = &quot;content&quot;;
+    private static final String MESSAGE_KEY = &quot;message&quot;;
+
+    @Override
+    public Map&lt;String, Object&gt; getSmartRecommendations(Long userId) {
+<span class="fc" id="L50">        log.info(&quot;--- [SMART] Début pour User {} ---&quot;, userId);</span>
+<span class="fc" id="L51">        Map&lt;String, Object&gt; profile = fetchUserProfile(userId);</span>
+<span class="fc" id="L52">        List&lt;Event&gt; events = eventRepo.findAll();</span>
+<span class="fc" id="L53">        List&lt;Challenge&gt; challenges = challengeRepo.findAll();</span>
+
+<span class="pc bpc" id="L55" title="1 of 4 branches missed.">        if (events.isEmpty() &amp;&amp; challenges.isEmpty()) {</span>
+<span class="fc" id="L56">            return Map.of(EVENTS_KEY, List.of(), CHALLENGES_KEY, List.of());</span>
+        }
+
+<span class="fc" id="L59">        String prompt = buildPrompt(profile, events, challenges);</span>
+<span class="fc" id="L60">        String aiJson = callGroqAPI(prompt);</span>
+<span class="fc" id="L61">        Map&lt;String, Object&gt; result = parseAiResponse(aiJson, events, challenges);</span>
+
+        // Mode Secours si IA vide
+<span class="fc" id="L64">        List&lt;?&gt; evList = (List&lt;?&gt;) result.get(EVENTS_KEY);</span>
+<span class="pc bpc" id="L65" title="2 of 4 branches missed.">        if (evList == null || evList.isEmpty()) {</span>
+<span class="fc" id="L66">            log.warn(&quot;&gt;&gt;&gt; IA Vide. Mode Secours activé.&quot;);</span>
+<span class="fc" id="L67">            List&lt;Map&lt;String, Object&gt;&gt; fallback = events.stream()</span>
+<span class="fc" id="L68">                    .sorted(Comparator.comparing(Event::getRegisteredCount).reversed())</span>
+<span class="fc" id="L69">                    .limit(3)</span>
+<span class="fc" id="L70">                    .map(e -&gt; {</span>
+<span class="fc" id="L71">                        Map&lt;String, Object&gt; m = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L72">                        m.put(&quot;id&quot;, e.getId());</span>
+<span class="fc" id="L73">                        m.put(TITLE_KEY, e.getTitle());</span>
+<span class="fc" id="L74">                        m.put(REASON_KEY, &quot;Incontournable en ce moment (Recommandé)&quot;);</span>
+<span class="fc" id="L75">                        return m;</span>
+                    })
+<span class="fc" id="L77">                    .toList();</span>
+<span class="fc" id="L78">            result.put(EVENTS_KEY, fallback);</span>
+        }
+<span class="fc" id="L80">        return result;</span>
+    }
+
+    private Map&lt;String, Object&gt; fetchUserProfile(Long userId) {
+        try {
+<span class="fc" id="L85">            return externalRestTemplate.getForObject(USER_SERVICE_URL + userId, Map.class);</span>
+<span class="fc" id="L86">        } catch (Exception e) {</span>
+<span class="fc" id="L87">            log.error(&quot;&gt;&gt;&gt; [API USER] Erreur: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L88">            return Map.of(&quot;firstName&quot;, &quot;Utilisateur&quot;, &quot;location&quot;, &quot;Tunisie&quot;);</span>
+        }
+    }
+
+    private String buildPrompt(Map&lt;String, Object&gt; profile, List&lt;Event&gt; events, List&lt;Challenge&gt; challenges) {
+<span class="fc" id="L93">        StringBuilder sb = new StringBuilder();</span>
+<span class="fc" id="L94">        sb.append(&quot;[INST] Tu es une IA experte en recommandation. Analyse le profil utilisateur et suggère exactement 2 événements et 2 challenges parmi la liste fournie.\n\n&quot;);</span>
+
+<span class="fc" id="L96">        sb.append(&quot;Profil utilisateur:\n&quot;);</span>
+<span class="fc" id="L97">        sb.append(&quot;- Titre: &quot;).append(profile.getOrDefault(&quot;headline&quot;, &quot;Non spécifié&quot;)).append(&quot;\n&quot;);</span>
+<span class="fc" id="L98">        sb.append(&quot;- Bio: &quot;).append(profile.getOrDefault(&quot;bio&quot;, &quot;Non spécifiée&quot;)).append(&quot;\n&quot;);</span>
+<span class="fc" id="L99">        sb.append(&quot;- Localisation: &quot;).append(profile.get(&quot;location&quot;)).append(&quot;\n\n&quot;);</span>
+
+<span class="fc" id="L101">        sb.append(&quot;Liste des événements disponibles:\n&quot;);</span>
+<span class="fc" id="L102">        events.forEach(e -&gt; sb.append(&quot;- ID &quot;).append(e.getId()).append(&quot;: &quot;).append(e.getTitle()).append(&quot;\n&quot;));</span>
+
+<span class="fc" id="L104">        sb.append(&quot;\nListe des challenges disponibles:\n&quot;);</span>
+<span class="fc" id="L105">        challenges.forEach(c -&gt; sb.append(&quot;- ID &quot;).append(c.getId()).append(&quot;: &quot;).append(c.getTitle()).append(&quot;\n&quot;));</span>
+
+<span class="fc" id="L107">        sb.append(&quot;\nIMPORTANT: Réponds uniquement avec un objet JSON valide suivant ce format strict, sans texte avant ou après:\n&quot;);</span>
+<span class="fc" id="L108">        sb.append(&quot;{\n&quot;);</span>
+<span class="fc" id="L109">        sb.append(&quot;  \&quot;eventRecommendations\&quot;: [{\&quot;id\&quot;: ID_ICI, \&quot;reason\&quot;: \&quot;Pourquoi cet event?\&quot;}],\n&quot;);</span>
+<span class="fc" id="L110">        sb.append(&quot;  \&quot;challengeRecommendations\&quot;: [{\&quot;id\&quot;: ID_ICI, \&quot;reason\&quot;: \&quot;Pourquoi ce challenge?\&quot;}]\n&quot;);</span>
+<span class="fc" id="L111">        sb.append(&quot;}\n&quot;);</span>
+<span class="fc" id="L112">        sb.append(&quot;[/INST]&quot;);</span>
+
+<span class="fc" id="L114">        return sb.toString();</span>
+    }
+
+    private String callGroqAPI(String prompt) {
+<span class="pc bpc" id="L118" title="3 of 4 branches missed.">        if (apiKey == null || apiKey.length() &lt; 5) return &quot;&quot;;</span>
+
+<span class="nc" id="L120">        log.info(&quot;&gt;&gt;&gt; [GROQ] Calling API: {}&quot;, apiUrl);</span>
+
+        try {
+<span class="nc" id="L123">            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();</span>
+            
+<span class="nc" id="L125">            Map&lt;String, Object&gt; bodyMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L126">            bodyMap.put(&quot;model&quot;, &quot;llama-3.3-70b-versatile&quot;); // Modèle gratuit ultra-rapide</span>
+            
+<span class="nc" id="L128">            List&lt;Map&lt;String, String&gt;&gt; messages = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L129">            messages.add(Map.of(&quot;role&quot;, &quot;user&quot;, CONTENT_KEY, prompt));</span>
+<span class="nc" id="L130">            bodyMap.put(&quot;messages&quot;, messages);</span>
+<span class="nc" id="L131">            bodyMap.put(&quot;max_tokens&quot;, 800);</span>
+<span class="nc" id="L132">            bodyMap.put(&quot;temperature&quot;, 0.1);</span>
+            
+<span class="nc" id="L134">            String jsonRequest = mapper.writeValueAsString(bodyMap);</span>
+
+<span class="nc" id="L136">            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();</span>
+<span class="nc" id="L137">            headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);</span>
+<span class="nc" id="L138">            headers.setAccept(java.util.Collections.singletonList(org.springframework.http.MediaType.APPLICATION_JSON));</span>
+<span class="nc" id="L139">            headers.setBearerAuth(apiKey.trim());</span>
+<span class="nc" id="L140">            headers.set(&quot;User-Agent&quot;, &quot;TrustedWork-API-Client&quot;);</span>
+
+<span class="nc" id="L142">            org.springframework.http.HttpEntity&lt;String&gt; entity = new org.springframework.http.HttpEntity&lt;&gt;(jsonRequest, headers);</span>
+
+<span class="nc" id="L144">            return executeGroqCall(apiUrl, entity, mapper);</span>
+<span class="nc" id="L145">        } catch (Exception e) {</span>
+<span class="nc" id="L146">            log.error(&quot;&gt;&gt;&gt; [GROQ] Fatal Error: {}&quot;, e.getMessage(), e);</span>
+        }
+<span class="nc" id="L148">        return &quot;&quot;;</span>
+    }
+
+    private String executeGroqCall(String url, HttpEntity&lt;String&gt; entity, com.fasterxml.jackson.databind.ObjectMapper mapper) {
+        try {
+<span class="nc" id="L153">            ResponseEntity&lt;String&gt; response = externalRestTemplate.exchange(</span>
+                    url, HttpMethod.POST, entity, String.class
+            );
+<span class="nc bnc" id="L156" title="All 4 branches missed.">            if (response.getStatusCode().is2xxSuccessful() &amp;&amp; response.getBody() != null) {</span>
+<span class="nc" id="L157">                Map&lt;String, Object&gt; resMap = mapper.readValue(response.getBody(), Map.class);</span>
+<span class="nc" id="L158">                List&lt;Map&lt;String, Object&gt;&gt; choices = (List&lt;Map&lt;String, Object&gt;&gt;) resMap.get(&quot;choices&quot;);</span>
+<span class="nc bnc" id="L159" title="All 4 branches missed.">                if (choices != null &amp;&amp; !choices.isEmpty()) {</span>
+<span class="nc" id="L160">                    Map&lt;String, Object&gt; message = (Map&lt;String, Object&gt;) choices.get(0).get(MESSAGE_KEY);</span>
+<span class="nc bnc" id="L161" title="All 4 branches missed.">                    if (message != null &amp;&amp; message.get(CONTENT_KEY) != null) {</span>
+<span class="nc" id="L162">                        return cleanJson((String) message.get(CONTENT_KEY));</span>
+                    }
+                }
+            }
+<span class="nc" id="L166">        } catch (HttpClientErrorException | org.springframework.web.client.HttpServerErrorException e) {</span>
+<span class="nc" id="L167">            log.error(&quot;&gt;&gt;&gt; [GROQ] API Error {}: {}&quot;, e.getStatusCode(), e.getResponseBodyAsString());</span>
+<span class="nc" id="L168">        } catch (Exception e) {</span>
+<span class="nc" id="L169">            log.error(&quot;&gt;&gt;&gt; [GROQ] Processing Error: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L170">        }</span>
+<span class="nc" id="L171">        return &quot;&quot;;</span>
+    }
+
+    private String cleanJson(String text) {
+<span class="nc bnc" id="L175" title="All 2 branches missed.">        if (text == null) return &quot;&quot;;</span>
+<span class="nc" id="L176">        String cleaned = text.trim();</span>
+<span class="nc" id="L177">        int start = cleaned.indexOf(&quot;{&quot;);</span>
+<span class="nc" id="L178">        int end = cleaned.lastIndexOf(&quot;}&quot;);</span>
+<span class="nc bnc" id="L179" title="All 6 branches missed.">        if (start != -1 &amp;&amp; end != -1 &amp;&amp; end &gt; start) {</span>
+<span class="nc" id="L180">            return cleaned.substring(start, end + 1);</span>
+        }
+<span class="nc" id="L182">        return &quot;&quot;;</span>
+    }
+
+    private Map&lt;String, Object&gt; parseAiResponse(String json, List&lt;Event&gt; events, List&lt;Challenge&gt; challenges) {
+<span class="fc" id="L186">        Map&lt;String, Object&gt; result = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L187">        result.put(EVENTS_KEY, new ArrayList&lt;&gt;());</span>
+<span class="fc" id="L188">        result.put(CHALLENGES_KEY, new ArrayList&lt;&gt;());</span>
+<span class="pc bpc" id="L189" title="2 of 4 branches missed.">        if (json == null || json.isEmpty()) return result;</span>
+
+        try {
+<span class="nc" id="L192">            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();</span>
+<span class="nc" id="L193">            Map&lt;String, Object&gt; aiMap = mapper.readValue(json, Map.class);</span>
+
+<span class="nc" id="L195">            List&lt;Map&lt;String, Object&gt;&gt; evRecs = (List&lt;Map&lt;String, Object&gt;&gt;) aiMap.get(&quot;eventRecommendations&quot;);</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">            if (evRecs != null) {</span>
+<span class="nc" id="L197">                result.put(EVENTS_KEY, evRecs.stream().map(rec -&gt; {</span>
+<span class="nc" id="L198">                    Long id = Long.valueOf(rec.get(&quot;id&quot;).toString());</span>
+<span class="nc" id="L199">                    Event e = events.stream().filter(ev -&gt; ev.getId().equals(id)).findFirst().orElse(null);</span>
+<span class="nc bnc" id="L200" title="All 2 branches missed.">                    return e != null ? Map.of(&quot;id&quot;, e.getId(), TITLE_KEY, e.getTitle(), REASON_KEY, rec.get(REASON_KEY)) : null;</span>
+<span class="nc" id="L201">                }).filter(Objects::nonNull).toList());</span>
+            }
+
+<span class="nc" id="L204">            List&lt;Map&lt;String, Object&gt;&gt; chRecs = (List&lt;Map&lt;String, Object&gt;&gt;) aiMap.get(&quot;challengeRecommendations&quot;);</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">            if (chRecs != null) {</span>
+<span class="nc" id="L206">                result.put(CHALLENGES_KEY, chRecs.stream().map(rec -&gt; {</span>
+<span class="nc" id="L207">                    Long id = Long.valueOf(rec.get(&quot;id&quot;).toString());</span>
+<span class="nc" id="L208">                    Challenge c = challenges.stream().filter(ch -&gt; ch.getId().equals(id)).findFirst().orElse(null);</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">                    return c != null ? Map.of(&quot;id&quot;, c.getId(), TITLE_KEY, c.getTitle(), REASON_KEY, rec.get(REASON_KEY)) : null;</span>
+<span class="nc" id="L210">                }).filter(Objects::nonNull).toList());</span>
+            }
+<span class="nc" id="L212">        } catch (Exception e) {</span>
+<span class="nc" id="L213">            log.error(&quot;Parsing Error: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L214">        }</span>
+<span class="nc" id="L215">        return result;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

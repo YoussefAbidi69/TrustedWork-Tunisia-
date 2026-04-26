@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChallengeController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">module06-engagement</a> &gt; <a href="index.source.html" class="el_package">com.trustedwork.module06.controller</a> &gt; <span class="el_source">ChallengeController.java</span></div><h1>ChallengeController.java</h1><pre class="source lang-java linenums">package com.trustedwork.module06.controller;
+
+import com.trustedwork.module06.dto.ChallengeDTO;
+import com.trustedwork.module06.security.JwtUtil;
+import com.trustedwork.module06.service.ChallengeService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/challenges&quot;)
+@RequiredArgsConstructor
+@CrossOrigin(&quot;*&quot;)
+@Tag(name = &quot;Challenges&quot;, description = &quot;Community missions and rewards&quot;)
+public class ChallengeController {
+
+    private final ChallengeService challengeService;
+    private final JwtUtil jwtUtil;
+    private static final String MESSAGE_KEY = &quot;message&quot;;
+
+    // ==================== USER ENDPOINTS ====================
+
+    @GetMapping
+    public ResponseEntity&lt;List&lt;ChallengeDTO&gt;&gt; getActiveChallenges(
+            @RequestHeader(value = &quot;Authorization&quot;, required = false) String token) {
+<span class="fc" id="L30">        Long userId = getUserId(token);</span>
+        // If no user, return general list (or null status)
+<span class="pc bpc" id="L32" title="1 of 2 branches missed.">        return ResponseEntity.ok(challengeService.getActiveChallenges(userId != null ? userId : -1L));</span>
+    }
+
+    @PostMapping(&quot;/{id}/join&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; joinChallenge(
+            @PathVariable Long id,
+            @RequestHeader(value = &quot;Authorization&quot;, required = false) String token) {
+<span class="fc" id="L39">        Long userId = getUserId(token);</span>
+<span class="pc bpc" id="L40" title="1 of 2 branches missed.">        if (userId == null) return ResponseEntity.status(401).build();</span>
+        try {
+<span class="fc" id="L42">            challengeService.joinChallenge(userId, id);</span>
+<span class="fc" id="L43">            return ResponseEntity.ok(Map.of(MESSAGE_KEY, &quot;Mission joined! Time to complete your tasks.&quot;));</span>
+<span class="nc" id="L44">        } catch (Exception e) {</span>
+<span class="nc" id="L45">            return ResponseEntity.badRequest().body(Map.of(MESSAGE_KEY, e.getMessage()));</span>
+        }
+    }
+
+    @PostMapping(&quot;/{id}/succeed&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; succeedChallenge(
+            @PathVariable Long id,
+            @RequestHeader(value = &quot;Authorization&quot;, required = false) String token) {
+<span class="fc" id="L53">        Long userId = getUserId(token);</span>
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">        if (userId == null) return ResponseEntity.status(401).build();</span>
+        try {
+<span class="fc" id="L56">            challengeService.succeedChallenge(userId, id);</span>
+<span class="fc" id="L57">            return ResponseEntity.ok(Map.of(MESSAGE_KEY, &quot;Mission successful! You can now claim your reward.&quot;));</span>
+<span class="nc" id="L58">        } catch (Exception e) {</span>
+<span class="nc" id="L59">            return ResponseEntity.badRequest().body(Map.of(MESSAGE_KEY, e.getMessage()));</span>
+        }
+    }
+
+    @PostMapping(&quot;/{id}/claim&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; claimReward(
+            @PathVariable Long id,
+            @RequestHeader(value = &quot;Authorization&quot;, required = false) String token) {
+<span class="fc" id="L67">        Long userId = getUserId(token);</span>
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        if (userId == null) return ResponseEntity.status(401).build();</span>
+        try {
+<span class="fc" id="L70">            challengeService.claimReward(userId, id);</span>
+<span class="fc" id="L71">            return ResponseEntity.ok(Map.of(MESSAGE_KEY, &quot;Reward claimed! XP points added to your profile.&quot;));</span>
+<span class="nc" id="L72">        } catch (Exception e) {</span>
+<span class="nc" id="L73">            return ResponseEntity.badRequest().body(Map.of(MESSAGE_KEY, e.getMessage()));</span>
+        }
+    }
+
+    // ==================== ADMIN ENDPOINTS ====================
+
+    @GetMapping(&quot;/admin&quot;)
+    public ResponseEntity&lt;List&lt;ChallengeDTO&gt;&gt; getAllChallenges() {
+<span class="fc" id="L81">        return ResponseEntity.ok(challengeService.getAllChallenges());</span>
+    }
+
+    @PostMapping(&quot;/admin&quot;)
+    public ResponseEntity&lt;ChallengeDTO&gt; createChallenge(@RequestBody ChallengeDTO challengeDTO) {
+<span class="fc" id="L86">        return ResponseEntity.ok(challengeService.createChallenge(challengeDTO));</span>
+    }
+
+    @PutMapping(&quot;/admin/{id}&quot;)
+    public ResponseEntity&lt;ChallengeDTO&gt; updateChallenge(
+            @PathVariable Long id, 
+            @RequestBody ChallengeDTO challengeDTO) {
+<span class="nc" id="L93">        return ResponseEntity.ok(challengeService.updateChallenge(id, challengeDTO));</span>
+    }
+
+    @DeleteMapping(&quot;/admin/{id}&quot;)
+    public ResponseEntity&lt;Void&gt; deleteChallenge(@PathVariable Long id) {
+<span class="nc" id="L98">        challengeService.deleteChallenge(id);</span>
+<span class="nc" id="L99">        return ResponseEntity.ok().build();</span>
+    }
+
+    private Long getUserId(String token) {
+<span class="pc bpc" id="L103" title="2 of 4 branches missed.">        if (token == null || !token.startsWith(&quot;Bearer &quot;)) return null;</span>
+<span class="fc" id="L104">        return jwtUtil.extractUserId(token.substring(7));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

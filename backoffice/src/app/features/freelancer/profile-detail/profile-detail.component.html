@@ -1,0 +1,187 @@
+<!-- Loading -->
+<div *ngIf="loading" class="card">
+  <div class="empty-state">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Chargement du profil...</p>
+  </div>
+</div>
+
+<!-- Erreur -->
+<div *ngIf="errorMsg && !loading" class="card">
+  <div class="empty-state">
+    <i class="fas fa-exclamation-triangle text-danger"></i>
+    <p class="text-danger">{{ errorMsg }}</p>
+  </div>
+</div>
+
+<!-- Message succès -->
+<div *ngIf="successMsg" class="alert-success">
+  <i class="fas fa-check-circle"></i> {{ successMsg }}
+</div>
+
+<ng-container *ngIf="profile && !loading">
+
+  <!-- Barre d'actions admin -->
+  <div class="admin-toolbar">
+    <a routerLink="/admin/freelancers" class="btn btn-ghost btn-sm">
+      <i class="fas fa-arrow-left"></i> Retour
+    </a>
+
+    <div class="toolbar-actions">
+      <div class="dropdown-group">
+        <span class="text-muted" style="font-size: 11px; margin-right: 6px;">
+          Disponibilité :
+        </span>
+
+        <button
+          class="btn btn-success btn-sm"
+          (click)="changeAvailability('AVAILABLE')"
+          [disabled]="profile.availabilityStatus === 'AVAILABLE'">
+          Disponible
+        </button>
+
+        <button
+          class="btn btn-ghost btn-sm"
+          (click)="changeAvailability('BUSY')"
+          [disabled]="profile.availabilityStatus === 'BUSY'"
+          style="color: var(--warning); border-color: var(--warning-soft);">
+          Occupé
+        </button>
+
+        <button
+          class="btn btn-ghost btn-sm"
+          (click)="changeAvailability('ON_VACATION')"
+          [disabled]="profile.availabilityStatus === 'ON_VACATION'"
+          style="color: var(--danger); border-color: var(--danger-soft);">
+          En vacances
+        </button>
+      </div>
+
+      <button
+        *ngIf="!showDeleteConfirm"
+        class="btn btn-danger btn-sm"
+        (click)="showDeleteConfirm = true">
+        <i class="fas fa-trash"></i> Supprimer le profil
+      </button>
+
+      <div *ngIf="showDeleteConfirm" class="confirm-delete">
+        <span class="text-danger" style="font-size: 12px;">Confirmer ?</span>
+
+        <button class="btn btn-danger btn-sm" (click)="confirmDeleteProfile()">
+          <i class="fas fa-check"></i> Oui, supprimer
+        </button>
+
+        <button class="btn btn-ghost btn-sm" (click)="showDeleteConfirm = false">
+          Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="profile-tabs">
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'overview'"
+      (click)="setTab('overview')">
+      Overview
+    </button>
+
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'skills'"
+      (click)="setTab('skills')">
+      Skills
+    </button>
+
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'experience'"
+      (click)="setTab('experience')">
+      Experience
+    </button>
+
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'portfolio'"
+      (click)="setTab('portfolio')">
+      Portfolio
+    </button>
+
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'reputation'"
+      (click)="setTab('reputation')">
+      Reviews
+    </button>
+
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'insights'"
+      (click)="setTab('insights')">
+      Insights
+    </button>
+  </div>
+
+  <!-- Overview -->
+  <app-profile-overview-tab
+    *ngIf="activeTab === 'overview'"
+    [profile]="profile"
+    [profileOwnerName]="profileOwnerName"
+    [averageRating]="averageRating"
+    [reviewsCount]="reviews.length"
+    [skillsCount]="skills.length"
+    [certificationsCount]="certifications.length"
+    [completeness]="completeness">
+  </app-profile-overview-tab>
+
+  <!-- Skills -->
+  <app-profile-skills-tab
+    *ngIf="activeTab === 'skills'"
+    [skills]="skills"
+    [selectedSkill]="selectedSkill"
+    [endorsements]="endorsements"
+    [endorsementsLoading]="endorsementsLoading"
+    [endorsementsError]="endorsementsError"
+    (skillSelected)="openEndorsements($event)"
+    (endorsementsClosed)="closeEndorsements()"
+    (skillDeleted)="deleteSkill($event)">
+  </app-profile-skills-tab>
+
+  <!-- Experience -->
+  <app-profile-experience-tab
+    *ngIf="activeTab === 'experience'"
+    [certifications]="certifications"
+    [workExperiences]="workExperiences"
+    [educations]="educations">
+  </app-profile-experience-tab>
+
+  <!-- Portfolio -->
+  <app-profile-portfolio-tab
+    *ngIf="activeTab === 'portfolio'"
+    [portfolio]="portfolio"
+    [pinnedPortfolio]="pinnedPortfolio"
+    [regularPortfolio]="regularPortfolio"
+    [pinnedPortfolioCount]="pinnedPortfolioCount"
+    (pin)="pinPortfolioItem($event)"
+    (unpin)="unpinPortfolioItem($event)"
+    (delete)="deletePortfolioItem($event)">
+  </app-profile-portfolio-tab>
+
+  <!-- Reputation -->
+  <app-profile-reputation-tab
+    *ngIf="activeTab === 'reputation'"
+    [reviews]="reviews"
+    [averageRating]="averageRating">
+  </app-profile-reputation-tab>
+
+  <!-- Insights -->
+  <app-profile-insights-tab
+    *ngIf="activeTab === 'insights'"
+    [skillGapDiagnostic]="skillGapDiagnostic"
+    [skillGapRecommendations]="skillGapRecommendations"
+    [completeness]="completeness"
+    [careerPath]="careerPath">
+  </app-profile-insights-tab>
+
+</ng-container>

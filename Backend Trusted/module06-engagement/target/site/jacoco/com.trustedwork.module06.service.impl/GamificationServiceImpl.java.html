@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GamificationServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">module06-engagement</a> &gt; <a href="index.source.html" class="el_package">com.trustedwork.module06.service.impl</a> &gt; <span class="el_source">GamificationServiceImpl.java</span></div><h1>GamificationServiceImpl.java</h1><pre class="source lang-java linenums">package com.trustedwork.module06.service.impl;
+
+import com.trustedwork.module06.dto.BadgeDTO;
+import com.trustedwork.module06.dto.GrowthProfileDTO;
+import com.trustedwork.module06.entity.*;
+import com.trustedwork.module06.mapper.BadgeMapper;
+import com.trustedwork.module06.mapper.GrowthProfileMapper;
+import com.trustedwork.module06.repository.*;
+import com.trustedwork.module06.service.GamificationService;
+import com.trustedwork.module06.util.BadgeRules;
+import com.trustedwork.module06.util.XPConstants;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDate;
+import java.util.List;
+
+<span class="fc" id="L19">@Slf4j</span>
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class GamificationServiceImpl implements GamificationService {
+
+    private final GrowthProfileRepository growthRepo;
+    private final BadgeRepository badgeRepo;
+    private final UserBadgeRepository userBadgeRepo;
+    private final StreakRepository streakRepo;
+    private final EventRegistrationRepository registrationRepository;
+
+    @Override
+    public GrowthProfileDTO addXp(Long userId, int xpAmount, String reason) {
+<span class="fc" id="L33">        GrowthProfile profile = growthRepo.findByUserId(userId)</span>
+<span class="fc" id="L34">                .orElseGet(() -&gt; GrowthProfile.builder()</span>
+<span class="fc" id="L35">                        .userId(userId).xpPoints(0).level(1).engagementScore(0.0).build());</span>
+
+<span class="fc" id="L37">        profile.setXpPoints(profile.getXpPoints() + xpAmount);</span>
+<span class="fc" id="L38">        profile.setLevel(computeLevel(profile.getXpPoints()));</span>
+        
+        // Intelligence: Calculate engagement score
+<span class="fc" id="L41">        updateEngagementScore(profile);</span>
+        
+<span class="fc" id="L43">        growthRepo.save(profile);</span>
+
+<span class="fc" id="L45">        updateStreak(userId);</span>
+<span class="fc" id="L46">        checkAndAwardBadges(userId, profile);</span>
+
+<span class="fc" id="L48">        GrowthProfileDTO dto = GrowthProfileMapper.toDto(profile);</span>
+<span class="fc" id="L49">        streakRepo.findByUserId(userId).ifPresent(s -&gt; dto.setCurrentStreak(s.getCurrentStreak()));</span>
+<span class="fc" id="L50">        return dto;</span>
+    }
+
+    private void updateEngagementScore(GrowthProfile profile) {
+        // Nouvelle Logique : L'Engagement Score est la somme de l'XP et d'un gros bonus par Niveau
+        // Ex: 3245 XP (Niveau 7) = 3245 + (7 * 250) = 4995 PTS d'engagement.
+<span class="fc" id="L56">        double score = profile.getXpPoints() + (profile.getLevel() * 250.0);</span>
+<span class="fc" id="L57">        profile.setEngagementScore(score);</span>
+<span class="fc" id="L58">    }</span>
+
+    private int computeLevel(int xp) {
+<span class="fc" id="L61">        return Math.max(1, xp / XPConstants.XP_PER_LEVEL + 1);</span>
+    }
+
+    private void updateStreak(Long userId) {
+<span class="fc" id="L65">        Streak streak = streakRepo.findByUserId(userId)</span>
+<span class="fc" id="L66">                .orElseGet(() -&gt; Streak.builder()</span>
+<span class="fc" id="L67">                        .userId(userId).currentStreak(0).longestStreak(0).build());</span>
+
+<span class="fc" id="L69">        LocalDate today = LocalDate.now();</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        if (streak.getLastActivityDate() == null ||</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">            streak.getLastActivityDate().isBefore(today.minusDays(1))) {</span>
+<span class="fc" id="L72">            streak.setCurrentStreak(1);</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        } else if (streak.getLastActivityDate().isBefore(today)) {</span>
+<span class="fc" id="L74">            streak.setCurrentStreak(streak.getCurrentStreak() + 1);</span>
+        }
+
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">        if (streak.getCurrentStreak() &gt; streak.getLongestStreak())</span>
+<span class="fc" id="L78">            streak.setLongestStreak(streak.getCurrentStreak());</span>
+
+<span class="fc" id="L80">        streak.setLastActivityDate(today);</span>
+<span class="fc" id="L81">        streakRepo.save(streak);</span>
+<span class="fc" id="L82">    }</span>
+
+    private void checkAndAwardBadges(Long userId, GrowthProfile profile) {
+<span class="fc" id="L85">        log.info(&quot;Checking badges for user {} (Level: {})&quot;, userId, profile.getLevel());</span>
+        
+        // 1. Dynamic Level Badges (Automatic check for LEVEL_2, LEVEL_3, etc.)
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">        for (int i = 2; i &lt;= profile.getLevel(); i++) {</span>
+<span class="nc" id="L89">            awardBadgeIfNew(userId, &quot;LEVEL_&quot; + i);</span>
+        }
+
+        // 2. First Actions
+<span class="fc" id="L93">        long regCount = registrationRepository.countByUserId(userId);</span>
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">        if (regCount &gt;= 1) awardBadgeIfNew(userId, BadgeRules.FIRST_EVENT);</span>
+
+        // 3. Activity Streaks
+<span class="fc" id="L97">        streakRepo.findByUserId(userId).ifPresent(s -&gt; {</span>
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">            if (s.getCurrentStreak() &gt;= 7)  awardBadgeIfNew(userId, BadgeRules.STREAK_7);</span>
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">            if (s.getCurrentStreak() &gt;= 30) awardBadgeIfNew(userId, BadgeRules.STREAK_30);</span>
+<span class="fc" id="L100">        });</span>
+<span class="fc" id="L101">    }</span>
+
+    @Override
+    public void awardBadgeIfNew(Long userId, String badgeCode) {
+<span class="fc" id="L105">        String cleanCode = badgeCode.trim();</span>
+<span class="fc" id="L106">        badgeRepo.findByCode(cleanCode).ifPresentOrElse(badge -&gt; {</span>
+<span class="fc" id="L107">            boolean exists = userBadgeRepo.existsByUserIdAndBadgeId(userId, badge.getId());</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">            if (!exists) {</span>
+<span class="fc" id="L109">                log.info(&quot;&gt;&gt;&gt; [GAMIFICATION] Awarding Badge: {} to User: {}&quot;, cleanCode, userId);</span>
+<span class="fc" id="L110">                UserBadge ub = UserBadge.builder().userId(userId).badge(badge).build();</span>
+<span class="fc" id="L111">                userBadgeRepo.saveAndFlush(ub);</span>
+                
+                // Direct XP update without full re-check to avoid recursion
+<span class="fc" id="L114">                growthRepo.findByUserId(userId).ifPresent(p -&gt; {</span>
+<span class="fc" id="L115">                    p.setXpPoints(p.getXpPoints() + badge.getXpReward());</span>
+<span class="fc" id="L116">                    p.setLevel(computeLevel(p.getXpPoints()));</span>
+<span class="fc" id="L117">                    growthRepo.save(p);</span>
+<span class="fc" id="L118">                });</span>
+<span class="fc" id="L119">            } else {</span>
+<span class="fc" id="L120">                log.info(&quot;&gt;&gt;&gt; [GAMIFICATION] User {} already has {}&quot;, userId, cleanCode);</span>
+            }
+<span class="fc" id="L122">        }, () -&gt; log.warn(&quot;&gt;&gt;&gt; [GAMIFICATION] WARNING: Badge with code '{}' not found in database.&quot;, cleanCode));</span>
+<span class="fc" id="L123">    }</span>
+
+    @Override
+    public List&lt;BadgeDTO&gt; getUserBadges(Long userId) {
+<span class="fc" id="L127">        List&lt;UserBadge&gt; ubs = userBadgeRepo.findByUserId(userId);</span>
+<span class="fc" id="L128">        log.info(&quot;&gt;&gt;&gt; [API] Found {} badges in DB for user {}&quot;, ubs.size(), userId);</span>
+<span class="fc" id="L129">        return ubs.stream()</span>
+<span class="fc" id="L130">                .map(ub -&gt; BadgeMapper.toDto(ub.getBadge()))</span>
+<span class="fc" id="L131">                .toList();</span>
+    }
+
+    @Override
+    public GrowthProfileDTO getProfile(Long userId) {
+<span class="nc" id="L136">        GrowthProfileDTO dto = GrowthProfileMapper.toDto(</span>
+<span class="nc" id="L137">                growthRepo.findByUserId(userId)</span>
+<span class="nc" id="L138">                        .orElseGet(() -&gt; GrowthProfile.builder()</span>
+<span class="nc" id="L139">                                .userId(userId).xpPoints(0).level(1).build()));</span>
+<span class="nc" id="L140">        streakRepo.findByUserId(userId).ifPresent(s -&gt; dto.setCurrentStreak(s.getCurrentStreak()));</span>
+<span class="nc" id="L141">        return dto;</span>
+    }
+
+    @Override
+    public List&lt;GrowthProfileDTO&gt; getAllProfiles() {
+<span class="fc" id="L146">        return growthRepo.findAll().stream()</span>
+<span class="fc" id="L147">                .map(p -&gt; {</span>
+<span class="fc" id="L148">                    GrowthProfileDTO dto = GrowthProfileMapper.toDto(p);</span>
+<span class="pc" id="L149">                    streakRepo.findByUserId(p.getUserId()).ifPresent(s -&gt; dto.setCurrentStreak(s.getCurrentStreak()));</span>
+<span class="fc" id="L150">                    return dto;</span>
+                })
+<span class="fc" id="L152">                .toList();</span>
+    }
+
+    @Override
+    @Transactional
+    public void removeBadge(Long userId, Long badgeId) {
+<span class="fc" id="L158">        log.info(&quot;&gt;&gt;&gt; [GAMIFICATION] Attempting to remove badge {} from user {}&quot;, badgeId, userId);</span>
+        
+<span class="fc" id="L160">        Badge badge = badgeRepo.findById(badgeId)</span>
+<span class="fc" id="L161">                .orElseThrow(() -&gt; new IllegalStateException(&quot;Badge not found&quot;));</span>
+
+        // 1. Deduct XP from user profile
+<span class="fc" id="L164">        growthRepo.findByUserId(userId).ifPresent(p -&gt; {</span>
+<span class="fc" id="L165">            p.setXpPoints(Math.max(0, p.getXpPoints() - badge.getXpReward()));</span>
+<span class="fc" id="L166">            p.setLevel(computeLevel(p.getXpPoints()));</span>
+<span class="fc" id="L167">            updateEngagementScore(p);</span>
+<span class="fc" id="L168">            growthRepo.saveAndFlush(p);</span>
+<span class="fc" id="L169">            log.info(&quot;&gt;&gt;&gt; [GAMIFICATION] Deducted {} XP. New Total: {}&quot;, badge.getXpReward(), p.getXpPoints());</span>
+<span class="fc" id="L170">        });</span>
+
+        // 2. Remove the badge assignment (finding the specific record first)
+<span class="fc" id="L173">        List&lt;UserBadge&gt; ubs = userBadgeRepo.findByUserId(userId);</span>
+<span class="fc" id="L174">        ubs.stream()</span>
+<span class="fc" id="L175">           .filter(ub -&gt; ub.getBadge().getId().equals(badgeId))</span>
+<span class="fc" id="L176">           .findFirst()</span>
+<span class="fc" id="L177">           .ifPresentOrElse(ub -&gt; {</span>
+<span class="fc" id="L178">               userBadgeRepo.delete(ub);</span>
+<span class="fc" id="L179">               userBadgeRepo.flush();</span>
+<span class="fc" id="L180">               log.info(&quot;&gt;&gt;&gt; [GAMIFICATION] Successfully deleted UserBadge record.&quot;);</span>
+<span class="fc" id="L181">           }, () -&gt; log.warn(&quot;&gt;&gt;&gt; [GAMIFICATION] WARNING: No UserBadge found for this user/badge combination.&quot;));</span>
+<span class="fc" id="L182">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

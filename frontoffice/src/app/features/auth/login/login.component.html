@@ -1,0 +1,91 @@
+<div class="auth-card">
+  <div class="auth-card__header">
+    <span class="auth-chip">Connexion</span>
+    <h2>Bon retour sur TrustedWork</h2>
+    <p>
+      Connectez-vous pour accéder à vos missions, votre Trust Score
+      et votre espace sécurisé.
+    </p>
+  </div>
+
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate class="auth-form">
+    <div class="form-group">
+      <label for="email">Adresse email</label>
+      <div class="input-shell" [class.input-shell--error]="submitted && f['email'].invalid">
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="vous@trustedwork.tn"
+        />
+      </div>
+      <small class="field-error" *ngIf="submitted && f['email'].errors?.['required']">
+        L'adresse email est obligatoire.
+      </small>
+      <small class="field-error" *ngIf="submitted && f['email'].errors?.['email']">
+        Format email invalide.
+      </small>
+    </div>
+
+    <div class="form-group">
+      <div class="row-between">
+        <label for="password">Mot de passe</label>
+        <a routerLink="/auth/forgot-password" class="text-link">Mot de passe oublié ?</a>
+      </div>
+
+      <div class="input-shell" [class.input-shell--error]="submitted && f['password'].invalid">
+        <input
+          id="password"
+          [type]="hidePassword ? 'password' : 'text'"
+          formControlName="password"
+          placeholder="Minimum 8 caractères"
+        />
+        <button type="button" class="ghost-btn" (click)="hidePassword = !hidePassword">
+          {{ hidePassword ? 'Afficher' : 'Masquer' }}
+        </button>
+      </div>
+
+      <small class="field-error" *ngIf="submitted && f['password'].errors?.['required']">
+        Le mot de passe est obligatoire.
+      </small>
+      <small class="field-error" *ngIf="submitted && f['password'].errors?.['minlength']">
+        Le mot de passe doit contenir au moins 8 caractères.
+      </small>
+    </div>
+
+    <div class="form-options">
+      <label class="checkbox">
+        <input type="checkbox" formControlName="rememberMe" />
+        <span>Se souvenir de moi</span>
+      </label>
+    </div>
+
+    <div class="form-feedback form-feedback--success" *ngIf="successMessage">
+      {{ successMessage }}
+    </div>
+
+    <div class="form-feedback form-feedback--error" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+
+    <button type="submit" class="submit-btn" [disabled]="loading || loginForm.invalid">
+      <span *ngIf="!loading">Se connecter</span>
+      <span *ngIf="loading">Connexion en cours...</span>
+    </button>
+  </form>
+
+  <!-- ── Séparateur ── -->
+  <div class="divider">
+    <span>ou</span>
+  </div>
+
+  <!-- ── Bouton Sign in with Google (rendu par Google Identity Services) ── -->
+  <div class="google-signin-wrapper">
+    <div id="google-signin-btn"></div>
+  </div>
+
+  <div class="auth-card__footer">
+    <span>Vous n'avez pas encore de compte ?</span>
+    <a routerLink="/auth/register">Créer un compte</a>
+  </div>
+</div>

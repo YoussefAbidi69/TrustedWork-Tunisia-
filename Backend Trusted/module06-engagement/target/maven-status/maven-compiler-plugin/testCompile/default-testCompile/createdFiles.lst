@@ -1,0 +1,15 @@
+com\trustedwork\module06\controller\LeaderboardControllerTest.class
+com\trustedwork\module06\controller\GamificationControllerTest.class
+com\trustedwork\module06\service\impl\LeaderboardServiceImplTest.class
+com\trustedwork\module06\controller\EventControllerTest.class
+com\trustedwork\module06\service\impl\EngagementScoreServiceImplTest.class
+com\trustedwork\module06\service\impl\EventServiceImplTest.class
+com\trustedwork\module06\service\impl\BadgeServiceImplTest.class
+com\trustedwork\module06\service\MlPredictionServiceImplTest.class
+com\trustedwork\module06\controller\AnalyticsControllerTest.class
+com\trustedwork\module06\service\impl\GamificationServiceImplTest.class
+com\trustedwork\module06\controller\ChallengeControllerTest.class
+com\trustedwork\module06\service\impl\ChallengeServiceImplTest.class
+com\trustedwork\module06\service\impl\AdvancedAnalyticsServiceImplTest.class
+com\trustedwork\module06\service\impl\AiRecommendationServiceImplTest.class
+com\trustedwork\module06\controller\BadgeControllerTest.class
