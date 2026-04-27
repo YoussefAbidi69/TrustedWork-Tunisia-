@@ -1,0 +1,214 @@
+<div class="auth-card">
+  <div class="auth-card__header">
+    <span class="auth-chip">Création de compte</span>
+    <h2>Créer votre espace TrustedWork</h2>
+    <p>
+      Démarrez avec un profil moderne, crédible et prêt pour la vérification,
+      les missions et les collaborations de confiance.
+    </p>
+  </div>
+
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate class="auth-form">
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="cin">CIN</label>
+        <div class="input-shell" [class.input-shell--error]="submitted && f['cin'].invalid">
+          <input id="cin" type="text" formControlName="cin" placeholder="12345678" />
+        </div>
+        <small class="field-error" *ngIf="submitted && f['cin'].invalid">
+          CIN invalide (8 chiffres).
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="phoneNumber">Téléphone</label>
+        <div class="input-shell" [class.input-shell--error]="submitted && f['phoneNumber'].invalid">
+          <input id="phoneNumber" type="text" formControlName="phoneNumber" placeholder="55123456" />
+        </div>
+        <small class="field-error" *ngIf="submitted && f['phoneNumber'].invalid">
+          Numéro invalide.
+        </small>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="firstName">Prénom</label>
+        <div class="input-shell" [class.input-shell--error]="submitted && f['firstName'].invalid">
+          <input id="firstName" type="text" formControlName="firstName" placeholder="Oussama" />
+        </div>
+        <small class="field-error" *ngIf="submitted && f['firstName'].invalid">
+          Le prénom est obligatoire.
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="lastName">Nom</label>
+        <div class="input-shell" [class.input-shell--error]="submitted && f['lastName'].invalid">
+          <input id="lastName" type="text" formControlName="lastName" placeholder="Msehli" />
+        </div>
+        <small class="field-error" *ngIf="submitted && f['lastName'].invalid">
+          Le nom est obligatoire.
+        </small>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Adresse email</label>
+      <div class="input-shell" [class.input-shell--error]="submitted && f['email'].invalid">
+        <input id="email" type="email" formControlName="email" placeholder="vous@trustedwork.tn" />
+      </div>
+      <small class="field-error" *ngIf="submitted && f['email'].errors?.['required']">
+        L'adresse email est obligatoire.
+      </small>
+      <small class="field-error" *ngIf="submitted && f['email'].errors?.['email']">
+        Format email invalide.
+      </small>
+    </div>
+
+    <div class="form-group">
+      <label for="role">Je m'inscris en tant que</label>
+      <div class="input-shell" [class.input-shell--error]="submitted && f['role'].invalid">
+        <select id="role" formControlName="role">
+          <option value="FREELANCER">Freelancer</option>
+          <option value="CLIENT">Client</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-grid form-grid--password">
+      <div class="form-group form-group--password">
+        <label for="password">Mot de passe</label>
+        <div class="input-shell" [class.input-shell--error]="submitted && f['password'].invalid">
+          <input
+            id="password"
+            [type]="hidePassword ? 'password' : 'text'"
+            formControlName="password"
+            placeholder="Ex: Oussama@2026!"
+          />
+          <button type="button" class="ghost-btn" (click)="hidePassword = !hidePassword">
+            {{ hidePassword ? 'Afficher' : 'Masquer' }}
+          </button>
+        </div>
+
+        <div class="field-meta">
+          <small class="password-helper" *ngIf="!passwordValue">
+            Utilisez un mot de passe unique, difficile à deviner.
+          </small>
+          <small class="field-error" *ngIf="submitted && f['password'].errors?.['required']">
+            Le mot de passe est obligatoire.
+          </small>
+          <small class="field-error" *ngIf="submitted && f['password'].errors?.['minlength']">
+            Le mot de passe doit contenir au moins 8 caractères.
+          </small>
+        </div>
+
+        <div class="password-strength" *ngIf="passwordValue">
+          <div class="password-strength__top">
+            <span>Force du mot de passe</span>
+            <strong [ngClass]="passwordStrengthClass">{{ passwordStrengthLabel }}</strong>
+          </div>
+          <div class="password-strength__bar">
+            <div
+              class="password-strength__fill"
+              [ngClass]="passwordStrengthClass"
+              [style.width]="passwordStrengthWidth">
+            </div>
+          </div>
+          <div class="password-rules">
+            <div class="password-rule" [class.valid]="hasMinLength">
+              <span>{{ hasMinLength ? '✓' : '•' }}</span>
+              <small>Au moins 8 caractères</small>
+            </div>
+            <div class="password-rule" [class.valid]="hasUppercase">
+              <span>{{ hasUppercase ? '✓' : '•' }}</span>
+              <small>Une majuscule</small>
+            </div>
+            <div class="password-rule" [class.valid]="hasLowercase">
+              <span>{{ hasLowercase ? '✓' : '•' }}</span>
+              <small>Une minuscule</small>
+            </div>
+            <div class="password-rule" [class.valid]="hasNumber">
+              <span>{{ hasNumber ? '✓' : '•' }}</span>
+              <small>Un chiffre</small>
+            </div>
+            <div class="password-rule" [class.valid]="hasSpecialChar">
+              <span>{{ hasSpecialChar ? '✓' : '•' }}</span>
+              <small>Un caractère spécial</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group form-group--confirm">
+        <label for="confirmPassword">Confirmer</label>
+        <div
+          class="input-shell"
+          [class.input-shell--error]="
+            (submitted && f['confirmPassword'].invalid) ||
+            (submitted && registerForm.errors?.['passwordMismatch'])
+          "
+        >
+          <input
+            id="confirmPassword"
+            [type]="hideConfirmPassword ? 'password' : 'text'"
+            formControlName="confirmPassword"
+            placeholder="Confirmez votre mot de passe"
+          />
+          <button type="button" class="ghost-btn" (click)="hideConfirmPassword = !hideConfirmPassword">
+            {{ hideConfirmPassword ? 'Afficher' : 'Masquer' }}
+          </button>
+        </div>
+        <div class="field-meta field-meta--confirm">
+          <small class="password-helper password-helper--placeholder">
+            Vérifiez que le mot de passe est identique.
+          </small>
+          <small class="field-error" *ngIf="submitted && f['confirmPassword'].errors?.['required']">
+            La confirmation est obligatoire.
+          </small>
+          <small class="field-error" *ngIf="submitted && registerForm.errors?.['passwordMismatch']">
+            Les mots de passe ne correspondent pas.
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <label class="checkbox">
+      <input type="checkbox" formControlName="agreeTerms" />
+      <span>J'accepte les conditions</span>
+    </label>
+
+    <small class="field-error" *ngIf="submitted && f['agreeTerms'].invalid">
+      Vous devez accepter les conditions.
+    </small>
+
+    <!-- reCAPTCHA v2 -->
+    <!-- reCAPTCHA v2 -->
+<div class="captcha-wrapper">
+  <div id="recaptcha-container"></div>
+  <small class="field-error" *ngIf="captchaError">
+    Veuillez confirmer que vous n'êtes pas un robot.
+  </small>
+</div>
+
+    <div class="form-feedback form-feedback--success" *ngIf="successMessage">
+      {{ successMessage }}
+    </div>
+
+    <div class="form-feedback form-feedback--error" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+
+    <button type="submit" class="submit-btn" [disabled]="loading">
+      <span *ngIf="!loading">Créer mon compte</span>
+      <span *ngIf="loading">Création...</span>
+    </button>
+
+  </form>
+
+  <div class="auth-card__footer">
+    <span>Vous avez déjà un compte ?</span>
+    <a routerLink="/auth/login">Se connecter</a>
+  </div>
+</div>

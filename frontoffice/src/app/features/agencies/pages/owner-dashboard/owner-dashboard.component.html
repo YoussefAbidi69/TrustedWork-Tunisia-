@@ -1,0 +1,134 @@
+<div class="owner-dashboard-container" *ngIf="!loading && agency">
+  
+  <div class="toast-container" *ngIf="toastMessage">
+    <div class="toast animate-in">
+      <span>{{ toastMessage }}</span>
+    </div>
+  </div>
+
+  <header class="agency-header">
+    <div class="header-main">
+      <div class="agency-visual">
+        <div class="visual-box" [style.background-image]="agency.logoUrl ? 'url(' + agency.logoUrl + ')' : ''">
+          <i *ngIf="!agency.logoUrl" class="fas fa-building-user"></i>
+        </div>
+      </div>
+      <div class="header-info">
+        <div class="title-row">
+          <h1 *ngIf="allOwnedAgencies.length <= 1">{{ agency.name }}</h1>
+          
+          <div class="agency-selector-wrapper" *ngIf="allOwnedAgencies.length > 1">
+            <select class="agency-select" [ngModel]="agency" (ngModelChange)="selectAgency($event)">
+              <option *ngFor="let a of allOwnedAgencies" [ngValue]="a">
+                {{ a.name }}
+              </option>
+            </select>
+          </div>
+
+          <span class="badge badge--lead">PROPRIÉTAIRE</span>
+        </div>
+        <p class="agency-location">
+          <i class="fas fa-location-dot"></i> {{ agency.city }}, {{ agency.country }}
+        </p>
+      </div>
+    </div>
+  </header>
+
+  <nav class="agency-tabs">
+    <button class="tab-link" [class.active]="activeTab === 'overview'" (click)="setActiveTab('overview')">
+      <i class="fas fa-layer-group"></i> Aperçu
+    </button>
+    <button class="tab-link" [class.active]="activeTab === 'requests'" (click)="setActiveTab('requests')">
+      <i class="fas fa-user-plus"></i> Demandes d'adhésion
+      <span class="badge-count" *ngIf="requests.length > 0">{{ requests.length }}</span>
+    </button>
+    <button class="tab-link" [class.active]="activeTab === 'members'" (click)="setActiveTab('members')">
+      <i class="fas fa-users"></i> Membres
+    </button>
+  </nav>
+
+  <section class="tab-content">
+    
+    <!-- APERÇU -->
+    <div *ngIf="activeTab === 'overview'" class="overview-grid">
+      <div class="info-card fade-in">
+        <div class="card-head">
+          <h3>Informations de l'agence</h3>
+          <a [routerLink]="['/app/agencies', agency.id, 'edit']" class="btn btn--outline btn--sm">
+            <i class="fas fa-edit"></i> Modifier
+          </a>
+        </div>
+        
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">Secteur:</span>
+            <span class="info-val">{{ agency.sector || 'Non spécifié' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Localisation:</span>
+            <span class="info-val">{{ agency.city }}, {{ agency.country }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Site Web:</span>
+            <span class="info-val">
+              <a *ngIf="agency.website" [href]="agency.website" target="_blank">{{ agency.website }}</a>
+              <span *ngIf="!agency.website">Non renseigné</span>
+            </span>
+          </div>
+        </div>
+        
+        <hr>
+        <h4>Description</h4>
+        <p class="description-text">{{ agency.description || 'Acune description fournie.' }}</p>
+      </div>
+    </div>
+
+    <!-- DEMANDES D'ADHÉSION -->
+    <div *ngIf="activeTab === 'requests'" class="requests-grid">
+      <div *ngIf="requests.length === 0" class="empty-state">
+        <i class="fas fa-inbox empty-icon"></i>
+        <p>Aucune demande d'adhésion en attente.</p>
+      </div>
+
+      <div class="request-card fade-in" *ngFor="let req of requests">
+        <div class="req-user">
+          <div class="req-avatar">{{ req.userFullName ? req.userFullName.charAt(0) : 'U' }}</div>
+          <div class="req-info">
+            <h4>{{ req.userFullName || 'Utilisateur' }}</h4>
+            <span>Souhaite rejoindre votre agence</span>
+          </div>
+        </div>
+        <div class="req-actions">
+          <button class="btn btn--primary btn--sm" (click)="handleRequest(req.id, 'ACCEPTED')">Accepter</button>
+          <button class="btn btn--outline btn--sm btn--danger" (click)="handleRequest(req.id, 'DECLINED')">Décliner</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMBRES -->
+    <div *ngIf="activeTab === 'members'" class="members-grid">
+      <div *ngIf="members.length === 0" class="empty-state">
+        <i class="fas fa-users-slash empty-icon"></i>
+        <p>Aucun membre trouvé.</p>
+      </div>
+
+      <div class="member-row fade-in" *ngFor="let member of members">
+        <div class="member-info">
+          <div class="req-avatar">{{ member.userId ? 'U' : '?' }}</div>
+          <div>
+            <h4>Membre ID: {{ member.userId }}</h4>
+            <span class="date">Rejoint le {{ member.joinedAt | date:'shortDate' }}</span>
+          </div>
+        </div>
+        <div class="member-role">
+          <span class="badge" [class.badge--lead]="member.role === 'LEAD'">{{ member.role }}</span>
+        </div>
+      </div>
+    </div>
+
+  </section>
+</div>
+
+<div *ngIf="loading" class="loading-full">
+  <app-loading-spinner></app-loading-spinner>
+</div>

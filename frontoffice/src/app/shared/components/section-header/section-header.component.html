@@ -1,0 +1,11 @@
+<div class="section-header">
+  <div class="section-header__content">
+    <span class="section-header__eyebrow">{{ eyebrow }}</span>
+    <h2 class="section-header__title">{{ title }}</h2>
+    <p *ngIf="subtitle" class="section-header__subtitle">{{ subtitle }}</p>
+  </div>
+
+  <button *ngIf="actionLabel" type="button" class="section-header__action">
+    {{ actionLabel }}
+  </button>
+</div>

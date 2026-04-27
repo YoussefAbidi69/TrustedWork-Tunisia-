@@ -1,0 +1,250 @@
+<div class="kanban-section">
+  <!-- Top Header & Actions -->
+  <div class="kanban-header">
+    <div class="kanban-title">
+      <h3>Suivi des Tâches</h3>
+      <span class="task-count" *ngIf="!loading">{{ allTasks.length }} tâches</span>
+    </div>
+    <div class="kanban-actions" *ngIf="isLead">
+      <button class="btn btn--primary btn--sm" (click)="openCreateModal()">
+        <i class="fas fa-plus"></i> Nouvelle Tâche
+      </button>
+    </div>
+  </div>
+
+  <!-- Horizontal Filter Toolbar -->
+  <div class="filters-toolbar">
+    <div class="search-wrapper">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" class="search-input" placeholder="Rechercher une tâche..." [(ngModel)]="searchQuery" (input)="onFilterChange()">
+    </div>
+    
+    <div class="filter-controls">
+      <div class="filter-dropdown" [class.active]="filterProjectId">
+        <i class="fas fa-folder dropdown-icon"></i>
+        <select [(ngModel)]="filterProjectId" (change)="onFilterChange()">
+          <option value="">Projet</option>
+          <option *ngFor="let p of projects" [value]="p.id">{{ p.name }}</option>
+        </select>
+      </div>
+
+      <div class="filter-dropdown" [class.active]="filterPriority">
+        <i class="fas fa-bolt dropdown-icon"></i>
+        <select [(ngModel)]="filterPriority" (change)="onFilterChange()">
+          <option value="">Priorité</option>
+          <option value="URGENTE">Urgente</option>
+          <option value="HAUTE">Haute</option>
+          <option value="MOYENNE">Moyenne</option>
+          <option value="FAIBLE">Faible</option>
+        </select>
+      </div>
+
+      <div class="filter-dropdown" [class.active]="filterMemberId">
+        <i class="fas fa-user-circle dropdown-icon"></i>
+        <select [(ngModel)]="filterMemberId" (change)="onFilterChange()">
+          <option value="">Membre</option>
+          <option *ngFor="let m of members" [value]="m.id">{{ m.firstName }} {{ m.lastName }}</option>
+        </select>
+      </div>
+
+      <button class="btn-reset-filters" (click)="resetFilters()" *ngIf="filterProjectId || filterPriority || filterMemberId || searchQuery">
+        <i class="fas fa-rotate-left"></i> Réinitialiser
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <app-loading-spinner></app-loading-spinner>
+  </div>
+
+  <!-- Modern Kanban Board -->
+  <div class="kanban-board" *ngIf="!loading" cdkDropListGroup>
+    <div class="k-column" *ngFor="let col of columns" [attr.data-status]="col.id">
+      <div class="k-col-header">
+        <div class="col-title-group">
+          <span class="status-dot"></span>
+          <h4>{{ col.title }}</h4>
+          <span class="task-badge">{{ col.tasks.length }}</span>
+        </div>
+        <button class="btn-col-action" *ngIf="isLead" (click)="openCreateModal(col.id)">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
+
+      <div class="k-task-list"
+           cdkDropList
+           [id]="col.id"
+           [cdkDropListData]="col.tasks"
+           (cdkDropListDropped)="drop($event)">
+           
+        <div class="k-task-card" 
+             *ngFor="let task of col.tasks" 
+             cdkDrag 
+             [cdkDragData]="task"
+             [cdkDragDisabled]="!canMoveTask(task)">
+          
+          <div class="k-card-top">
+            <span class="project-tag">{{ getProjectName(task.projectId) }}</span>
+            <div class="k-card-actions" *ngIf="isLead">
+              <button class="k-action-btn" (click)="openEditModal(task)"><i class="fas fa-pen"></i></button>
+              <button class="k-action-btn delete" (click)="confirmDelete(task)"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+
+          <h5 class="k-task-title" (click)="isLead && openEditModal(task)">
+            {{ task.title }}
+          </h5>
+
+          <div class="k-card-bottom">
+            <div class="k-priority" [ngClass]="getPriorityClass(task.priority)">
+              <i class="fas fa-signal"></i>
+              <span>{{ task.priority | titlecase }}</span>
+            </div>
+            
+            <div class="k-assignee" *ngIf="task.assignedMember" [title]="task.assignedMember.firstName + ' ' + task.assignedMember.lastName">
+              <img [src]="task.assignedMember.photo || 'assets/images/default-avatar.png'" alt="Avatar">
+            </div>
+            <div class="k-assignee unassigned" *ngIf="!task.assignedMember" title="Non assigné">
+              <i class="fas fa-user"></i>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Empty State Placeholder inside list -->
+        <div class="k-empty-state" *ngIf="col.tasks.length === 0">
+          Aucune tâche
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODALS ================= -->
+
+<!-- CREATE / EDIT MODAL (LEAD ONLY) -->
+<div class="modal-backdrop" *ngIf="showModal && isLead" (click)="closeModal()">
+  <div class="modal-window" (click)="$event.stopPropagation()">
+    <div class="modal-top">
+      <div class="modal-title-box">
+        <div class="modal-icon">
+          <i class="fas" [ngClass]="isEditing ? 'fa-pen-to-square' : 'fa-plus'"></i>
+        </div>
+        <h3>{{ isEditing ? 'Modifier la tâche' : 'Nouvelle Tâche' }}</h3>
+      </div>
+      <button class="btn-close-modal" (click)="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    
+    <div class="modal-content-scroll">
+      
+      <!-- Section 1: Infos principales -->
+      <div class="form-section">
+        <h4 class="section-title">Informations principales</h4>
+        
+        <div class="form-group">
+          <label>Titre de la tâche <span class="text-danger">*</span></label>
+          <div class="input-with-icon">
+            <i class="fas fa-heading icon-left"></i>
+            <input type="text" class="custom-input" [(ngModel)]="currentTask.title" placeholder="Ex: Intégrer l'API de paiement" autofocus>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Description</label>
+          <div class="input-with-icon align-top">
+            <i class="fas fa-align-left icon-left mt-2"></i>
+            <textarea class="custom-input textarea-resize" [(ngModel)]="currentTask.description" rows="3" placeholder="Détaillez les objectifs de cette tâche..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Organisation -->
+      <div class="form-section">
+        <h4 class="section-title">Organisation</h4>
+        
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>Projet <span class="text-danger">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-folder icon-left"></i>
+              <select class="custom-select" [(ngModel)]="currentTask.projectId">
+                <option [ngValue]="undefined" disabled>Sélectionner un projet</option>
+                <option *ngFor="let p of projects" [ngValue]="p.id">{{ p.name }}</option>
+              </select>
+              <i class="fas fa-chevron-down icon-right"></i>
+            </div>
+          </div>
+          
+          <div class="form-group flex-1">
+            <label>Statut <span class="text-danger">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-bars-progress icon-left"></i>
+              <select class="custom-select" [(ngModel)]="currentTask.status">
+                <option *ngFor="let col of columns" [value]="col.id">{{ col.title }}</option>
+              </select>
+              <i class="fas fa-chevron-down icon-right"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Assignation -->
+      <div class="form-section">
+        <h4 class="section-title">Assignation & Priorité</h4>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>Priorité <span class="text-danger">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-bolt icon-left" [ngClass]="currentTask.priority"></i>
+              <select class="custom-select" [(ngModel)]="currentTask.priority">
+                <option [value]="TaskPriority.FAIBLE">Faible</option>
+                <option [value]="TaskPriority.MOYENNE">Moyenne</option>
+                <option [value]="TaskPriority.HAUTE">Haute</option>
+                <option [value]="TaskPriority.URGENTE">Urgente</option>
+              </select>
+              <i class="fas fa-chevron-down icon-right"></i>
+            </div>
+          </div>
+          
+          <div class="form-group flex-1">
+            <label>Assigné à</label>
+            <div class="input-with-icon">
+              <i class="fas fa-user-circle icon-left"></i>
+              <select class="custom-select" [(ngModel)]="currentTask.assignedMemberId">
+                <option [ngValue]="undefined">Personne (non assigné)</option>
+                <option *ngFor="let m of members" [ngValue]="m.id">
+                  {{ m.firstName }} {{ m.lastName }}
+                </option>
+              </select>
+              <i class="fas fa-chevron-down icon-right"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    
+    <div class="modal-bottom">
+      <button class="btn-modal-cancel" (click)="closeModal()">Annuler</button>
+      <button class="btn-modal-submit" 
+              [disabled]="!currentTask.title || !currentTask.projectId || !currentTask.priority || !currentTask.status || submitting" 
+              (click)="saveTask()">
+        <i class="fas fa-spinner fa-spin" *ngIf="submitting"></i> 
+        <i class="fas" [ngClass]="isEditing ? 'fa-check' : 'fa-plus'" *ngIf="!submitting"></i>
+        {{ isEditing ? 'Enregistrer les modifications' : 'Créer la tâche' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRMATION -->
+<div class="modal-overlay" *ngIf="showDeleteConfirm && taskToDelete && isLead">
+  <div class="modal-content sm text-center">
+    <h3>Supprimer la tâche ?</h3>
+    <p class="mb-4">Êtes-vous sûr de vouloir supprimer <strong>{{ taskToDelete.title }}</strong> ? Cette action est irréversible.</p>
+    <div style="display:flex; justify-content:center; gap:10px;">
+      <button class="btn btn--outline" (click)="showDeleteConfirm = false">Annuler</button>
+      <button class="btn btn--danger" (click)="deleteTask()">Supprimer</button>
+    </div>
+  </div>
+</div>

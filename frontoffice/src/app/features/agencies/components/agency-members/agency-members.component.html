@@ -1,0 +1,153 @@
+<div class="members-section">
+  <!-- Toast overlay just for the invite success context -->
+  <div class="toast-container" *ngIf="inviteSuccess">
+    <div class="toast animate-in">
+      <i class="fas fa-check-circle"></i> <span>{{ inviteSuccess }}</span>
+    </div>
+  </div>
+
+  <div class="section-top">
+    <h3>Membres de l'équipe</h3>
+    <div class="top-actions">
+      <button *ngIf="isLead" class="btn btn--outline btn--sm" (click)="openInviteModal()">
+        <i class="fas fa-user-plus"></i> Inviter un collaborateur
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-box">
+    <app-loading-spinner></app-loading-spinner>
+  </div>
+
+  <div *ngIf="!loading && members.length === 0" class="empty-box">
+    <app-empty-state 
+      title="Aucun membre" 
+      description="Invitez des collaborateurs pour commencer à travailler."
+      icon="fa-users-slash">
+    </app-empty-state>
+  </div>
+
+  <div class="table-container" *ngIf="!loading && members.length > 0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Membre</th>
+          <th>Rôle</th>
+          <th>Statut</th>
+          <th>Workload</th>
+          <th>Date d'arrivée</th>
+          <th *ngIf="isLead">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let member of members">
+          <td>
+            <div class="member-link">
+              <div class="mini-avatar">{{ member.firstName?.charAt(0) || 'M' }}</div>
+              <div class="member-text">
+                <strong>{{ member.firstName }} {{ member.lastName }}</strong>
+                <small>{{ member.userSkills || member.email }}</small>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="role-wrapper" [class.editable]="isLead && member.role !== 'LEAD'">
+              <span class="badge" [ngClass]="getRoleBadgeClass(member.role)">{{ member.role }}</span>
+              <!-- Role Select Dropdown if LEAD -->
+              <select 
+                class="role-select" 
+                *ngIf="isLead && member.role !== 'LEAD'" 
+                [value]="member.role"
+                (change)="updateRole(member.userId, $any($event.target).value)">
+                <option value="MEMBER">MEMBER</option>
+                <option value="CO-LEAD">CO-LEAD</option>
+              </select>
+            </div>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getStatusBadgeClass(member.status)">{{ member.status }}</span>
+          </td>
+          <td>
+            <div class="workload-info">
+              <div class="workload-track">
+                <div class="workload-fill" [style.width.%]="member.workloadScore"></div>
+              </div>
+              <span class="workload-val">{{ member.workloadScore }}%</span>
+            </div>
+          </td>
+          <td>
+            <span class="date-text">{{ member.joinedAt | date:'mediumDate' }}</span>
+          </td>
+          <td class="td-actions" *ngIf="isLead">
+            <button *ngIf="member.role !== 'LEAD'" class="btn-icon" (click)="removeMember(member.id)" title="Retirer">
+              <i class="fas fa-trash-can"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- INVITATION MODAL -->
+<div class="modal-overlay" *ngIf="showInviteModal" (click)="closeInviteModal()">
+  <div class="modal-content fade-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Inviter un collaborateur</h2>
+      <button class="close-btn" (click)="closeInviteModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Error Message -->
+      <div class="alert alert--danger" *ngIf="inviteError">
+        <i class="fas fa-exclamation-circle"></i> {{ inviteError }}
+      </div>
+
+      <div class="form-group" *ngIf="!selectedUser">
+        <label>Chercher un utilisateur</label>
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="email" placeholder="Adresse email..." 
+                 [(ngModel)]="searchQuery" (keyup)="searchUsers()" />
+        </div>
+        
+        <!-- Search Results Dropdown -->
+        <ul class="search-results" *ngIf="searchResults.length > 0">
+          <li *ngFor="let res of searchResults" (click)="selectUser(res)">
+            <div class="res-avatar">{{ res.fullName.charAt(0) }}</div>
+            <div class="res-info">
+              <strong>{{ res.fullName }}</strong>
+              <span>{{ res.email }}</span>
+            </div>
+          </li>
+        </ul>
+        <div class="inline-msg" *ngIf="searchQuery && searchQuery.length >= 3 && searchResults.length === 0">
+          <small class="text-neutral">Aucun utilisateur trouvé</small>
+        </div>
+      </div>
+
+      <div class="selected-user" *ngIf="selectedUser">
+        <div class="user-chip">
+          <div class="res-avatar">{{ selectedUser.fullName.charAt(0) }}</div>
+          <div class="res-info">
+            <strong>{{ selectedUser.fullName }}</strong>
+            <small>{{ selectedUser.email }}</small>
+          </div>
+          <button class="clear-btn" (click)="selectedUser = null"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Message personnel (Optionnel)</label>
+        <textarea rows="3" placeholder="Ajoutez un message pour la personne invitée..." [(ngModel)]="inviteMessage"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn--outline" (click)="closeInviteModal()">Annuler</button>
+      <button class="btn btn--primary" [disabled]="!selectedUser || inviteLoading" (click)="sendInvitation()">
+        <i class="fas" [ngClass]="inviteLoading ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i> Envoyer l'invitation
+      </button>
+    </div>
+  </div>
+</div>

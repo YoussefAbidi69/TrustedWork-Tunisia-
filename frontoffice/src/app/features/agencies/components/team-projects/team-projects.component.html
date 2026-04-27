@@ -1,0 +1,341 @@
+<div class="projects-section">
+  <div class="section-top">
+    <h3>Projets de l'équipe</h3>
+    <div class="top-actions" *ngIf="isLead">
+      <button class="btn btn--primary btn--sm" (click)="openCreateModal()">
+        <i class="fas fa-folder-plus"></i> Nouveau Projet
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-box">
+    <app-loading-spinner></app-loading-spinner>
+  </div>
+
+  <div *ngIf="!loading && projects.length === 0" class="empty-box">
+    <app-empty-state 
+      title="Aucun projet" 
+      description="Créez votre premier projet d'équipe pour commencer à collaborer et suivre vos objectifs."
+      icon="fa-diagram-project">
+    </app-empty-state>
+  </div>
+
+  <!-- GRID VIEW -->
+  <div class="projects-grid" *ngIf="!loading && projects.length > 0">
+    <div *ngFor="let project of projects" class="p-card" (click)="openDetail(project)">
+      
+      <div class="p-card-header">
+        <div class="p-badges">
+          <span class="p-badge status" [ngClass]="getStatusClass(project.status)">
+            <span class="status-dot"></span>
+            {{ getStatusLabel(project.status) }}
+          </span>
+          <span class="p-badge priority" [ngClass]="getPriorityClass(project.priority)">
+            <i class="fas fa-bolt"></i>
+            {{ getPriorityLabel(project.priority) }}
+          </span>
+        </div>
+        
+        <div class="p-actions" *ngIf="isLead">
+          <button class="p-btn-action" (click)="openEditModal(project); $event.stopPropagation()" title="Modifier">
+            <i class="fas fa-pen"></i>
+          </button>
+          <button class="p-btn-action delete" (click)="confirmDelete(project); $event.stopPropagation()" title="Supprimer">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-card-body">
+        <h4 class="p-title">{{ project.name }}</h4>
+        <p class="p-desc">{{ project.description || 'Aucune description fournie.' }}</p>
+      </div>
+
+      <div class="p-card-progress" [title]="projectStats[project.id] ? projectStats[project.id].completed + ' / ' + projectStats[project.id].total + ' tâches terminées' : '0 tâches'">
+        <div class="prog-header">
+          <span class="prog-label">
+            Progression
+            <span class="prog-count" *ngIf="projectStats[project.id] && projectStats[project.id].total > 0">
+              ({{ projectStats[project.id].completed }}/{{ projectStats[project.id].total }})
+            </span>
+          </span>
+          <span class="prog-percent">{{ project.progress || 0 }}%</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill" 
+               [style.width.%]="project.progress || 0" 
+               [ngClass]="getProgressBarColorClass(project.progress || 0)">
+          </div>
+        </div>
+      </div>
+
+      <div class="p-card-footer">
+        <div class="p-team">
+          <ng-container *ngIf="project.assignedMembers && project.assignedMembers.length > 0; else noTeam">
+            <div class="avatar-stack">
+              <img *ngFor="let m of project.assignedMembers | slice:0:3" 
+                   [src]="m.photo || 'assets/images/default-avatar.png'" 
+                   [alt]="m.firstName" 
+                   class="p-avatar"
+                   [title]="m.firstName + ' ' + m.lastName">
+              <div class="p-avatar-more" *ngIf="project.assignedMembers.length > 3">
+                +{{ project.assignedMembers.length - 3 }}
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #noTeam>
+            <span class="no-team"><i class="fas fa-user-slash"></i> Non assigné</span>
+          </ng-template>
+        </div>
+
+        <div class="p-dates">
+          <i class="fas fa-calendar-day"></i>
+          <span>{{ project.startDate | date:'dd MMM yyyy' }}</span>
+          <ng-container *ngIf="project.endDate">
+             <i class="fas fa-arrow-right mx-1 arrow-icon"></i> <span>{{ project.endDate | date:'dd MMM yyyy' }}</span>
+          </ng-container>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODALS ================= -->
+
+<!-- CREATE / EDIT MODAL (LEAD ONLY) -->
+<div class="modal-backdrop" *ngIf="showModal && isLead" (click)="closeModal()">
+  <div class="modal-window" (click)="$event.stopPropagation()">
+    
+    <div class="modal-top">
+      <div class="modal-title-box">
+        <div class="modal-icon">
+          <i class="fas" [ngClass]="isEditing ? 'fa-pen-to-square' : 'fa-folder-plus'"></i>
+        </div>
+        <h3>{{ isEditing ? 'Modifier le projet' : 'Nouveau Projet' }}</h3>
+      </div>
+      <button class="btn-close-modal" (click)="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    
+    <div class="modal-content-scroll">
+      
+      <!-- Section 1: Informations principales -->
+      <div class="form-section">
+        <h4 class="section-title">Informations principales</h4>
+        
+        <div class="form-group">
+          <label>Nom du projet <span class="text-danger">*</span></label>
+          <div class="input-with-icon">
+            <i class="fas fa-heading icon-left"></i>
+            <input type="text" class="custom-input" [(ngModel)]="currentProject.name" placeholder="Ex: Refonte de la plateforme interne" autofocus>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Description</label>
+          <div class="input-with-icon align-top">
+            <i class="fas fa-align-left icon-left mt-2"></i>
+            <textarea class="custom-input textarea-resize" [(ngModel)]="currentProject.description" rows="3" placeholder="Description détaillée des objectifs du projet..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Configuration -->
+      <div class="form-section">
+        <h4 class="section-title">Configuration</h4>
+        
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>Statut <span class="text-danger">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-bars-progress icon-left"></i>
+              <select class="custom-select" [(ngModel)]="currentProject.status">
+                <option [value]="ProjectStatus.EN_COURS">En cours</option>
+                <option [value]="ProjectStatus.EN_ATTENTE">En attente</option>
+                <option [value]="ProjectStatus.TERMINE">Terminé</option>
+                <option [value]="ProjectStatus.ANNULE">Annulé</option>
+              </select>
+              <i class="fas fa-chevron-down icon-right"></i>
+            </div>
+          </div>
+          
+          <div class="form-group flex-1">
+            <label>Priorité <span class="text-danger">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-bolt icon-left" [ngClass]="currentProject.priority"></i>
+              <select class="custom-select" [(ngModel)]="currentProject.priority">
+                <option [value]="ProjectPriority.FAIBLE">Faible</option>
+                <option [value]="ProjectPriority.MOYENNE">Moyenne</option>
+                <option [value]="ProjectPriority.HAUTE">Haute</option>
+              </select>
+              <i class="fas fa-chevron-down icon-right"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Planning -->
+      <div class="form-section">
+        <h4 class="section-title">Planning</h4>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>Date de début <span class="text-danger">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-calendar-alt icon-left"></i>
+              <input type="date" class="custom-input date-input" [(ngModel)]="currentProject.startDate">
+            </div>
+          </div>
+          
+          <div class="form-group flex-1">
+            <label>Date de fin</label>
+            <div class="input-with-icon">
+              <i class="fas fa-calendar-check icon-left"></i>
+              <input type="date" class="custom-input date-input" [(ngModel)]="currentProject.endDate">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Équipe -->
+      <div class="form-section" *ngIf="!isEditing && assignableMembers.length > 0">
+        <h4 class="section-title">Équipe assignée</h4>
+        
+        <div class="form-group">
+          <label>Sélectionnez les membres qui participeront à ce projet</label>
+          <div class="member-selection-list">
+            <label class="member-item" *ngFor="let member of assignableMembers" [class.selected]="isMemberSelected(member.id)">
+              <div class="member-item-info">
+                <img [src]="member.photo || 'assets/images/default-avatar.png'" class="member-avatar" alt="Avatar">
+                <div class="member-details">
+                  <span class="member-name">{{ member.firstName || 'User' }} {{ member.lastName }}</span>
+                  <span class="member-role">{{ member.role }}</span>
+                </div>
+              </div>
+              <div class="custom-checkbox-wrapper">
+                <input type="checkbox" 
+                       [id]="'member-' + member.id" 
+                       [checked]="isMemberSelected(member.id)"
+                       (change)="toggleMemberSelection(member.id)">
+                <span class="checkbox-box">
+                  <i class="fas fa-check" *ngIf="isMemberSelected(member.id)"></i>
+                </span>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    
+    <div class="modal-bottom">
+      <button class="btn-modal-cancel" (click)="closeModal()">Annuler</button>
+      <button class="btn-modal-submit" 
+              [disabled]="!currentProject.name || !currentProject.status || !currentProject.priority || !currentProject.startDate || submitting" 
+              (click)="saveProject()">
+        <i class="fas fa-spinner fa-spin" *ngIf="submitting"></i> 
+        <i class="fas" [ngClass]="isEditing ? 'fa-check' : 'fa-plus'" *ngIf="!submitting"></i>
+        {{ isEditing ? 'Enregistrer les modifications' : 'Créer le projet' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" *ngIf="showDetailModal && selectedProject">
+  <div class="modal-content lg">
+    <div class="modal-header d-flex justify-content-between align-items-center">
+      <h2 style="margin:0;">{{ selectedProject.name }}</h2>
+      <button class="btn-close" (click)="closeDetail()"><i class="fas fa-times"></i></button>
+    </div>
+    
+    <div class="modal-body p-4">
+      <div class="d-flex mb-3" style="gap: 10px;">
+        <span class="badge" [ngClass]="getStatusClass(selectedProject.status)">{{ getStatusLabel(selectedProject.status) }}</span>
+        <span class="badge" [ngClass]="getPriorityClass(selectedProject.priority)"><i class="fas fa-flag"></i> {{ getPriorityLabel(selectedProject.priority) }}</span>
+        <span class="text-muted" style="margin-left: auto;">
+          <i class="fas fa-calendar-alt"></i> {{ selectedProject.startDate | date:'dd MMM yyyy' }} - {{ selectedProject.endDate ? (selectedProject.endDate | date:'dd MMM yyyy') : 'Indéfini' }}
+        </span>
+      </div>
+
+      <div class="project-description bg-light p-3 border-radius mb-4">
+        <p style="white-space: pre-line; margin: 0;">{{ selectedProject.description || 'Aucune description.' }}</p>
+      </div>
+
+      <div class="row">
+        <!-- Membres Assignés -->
+        <div class="col-md-6 mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="m-0">Membres assignés</h4>
+          </div>
+          
+          <ul class="list-group">
+            <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let m of selectedProject.assignedMembers">
+              <div class="d-flex align-items-center">
+                <img [src]="m.photo || 'assets/images/default-avatar.png'" class="avatar-sm me-2">
+                <span>{{ m.firstName }} {{ m.lastName }}</span>
+              </div>
+              <button class="btn btn-sm text-danger btn-icon" *ngIf="isLead" (click)="removeAssignedMember(selectedProject.id, m.memberId)" title="Retirer">
+                <i class="fas fa-times"></i>
+              </button>
+            </li>
+            <li class="list-group-item text-muted text-center" *ngIf="!selectedProject.assignedMembers?.length">
+              Aucun membre assigné.
+            </li>
+          </ul>
+
+          <div class="mt-2" *ngIf="isLead">
+            <select class="form-control form-control-sm" (change)="onMemberAssigned($event, selectedProject.id)">
+              <option value="">+ Assigner un membre...</option>
+              <ng-container *ngFor="let am of assignableMembers">
+                <option *ngIf="!isMemberAssigned(am.id)" [value]="am.id">
+                  {{ am.firstName }} {{ am.lastName }}
+                </option>
+              </ng-container>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tâches Réelles -->
+        <div class="col-md-6 mb-4">
+          <h4 class="mb-2">Tâches associées</h4>
+          <div *ngIf="loadingTasks" class="text-center p-3">
+            <i class="fas fa-spinner fa-spin text-muted"></i>
+          </div>
+          
+          <div *ngIf="!loadingTasks && projectTasks.length === 0" class="empty-state-sm p-4 text-center border-radius bg-light">
+             <i class="fas fa-tasks text-muted fa-2x mb-2"></i>
+             <p class="text-muted m-0">Aucune tâche pour ce projet.</p>
+          </div>
+
+          <ul class="list-group list-group-flush" *ngIf="!loadingTasks && projectTasks.length > 0" style="max-height: 250px; overflow-y: auto;">
+            <li class="list-group-item px-0 d-flex justify-content-between align-items-center" *ngFor="let task of projectTasks">
+              <div class="d-flex flex-column">
+                <span class="fw-bold" style="font-size: 0.9rem;">{{ task.title }}</span>
+                <small class="text-muted">{{ task.status }}</small>
+              </div>
+              <span class="badge badge-light">{{ task.priority }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer" *ngIf="isLead" style="justify-content: flex-end; display: flex; gap: 10px;">
+      <button class="btn btn--primary" (click)="openEditModal(selectedProject)"><i class="fas fa-pen"></i> Modifier le projet</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRMATION -->
+<div class="modal-overlay" *ngIf="showDeleteConfirm && projectToDelete && isLead">
+  <div class="modal-content sm text-center">
+    <h3>Supprimer le projet ?</h3>
+    <p class="mb-4">Êtes-vous sûr de vouloir supprimer le projet <strong>{{ projectToDelete.name }}</strong> ? Cette action est irréversible.</p>
+    <div style="display:flex; justify-content:center; gap:10px;">
+      <button class="btn btn--outline" (click)="showDeleteConfirm = false">Annuler</button>
+      <button class="btn btn--danger" (click)="deleteProject()">Supprimer</button>
+    </div>
+  </div>
+</div>

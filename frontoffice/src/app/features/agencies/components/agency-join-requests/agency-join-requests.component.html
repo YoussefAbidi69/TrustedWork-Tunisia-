@@ -1,0 +1,116 @@
+<div class="join-requests-section">
+
+  <!-- Header + Refresh -->
+  <div class="section-top">
+    <div>
+      <h3>Demandes d'adhésion</h3>
+      <p class="text-sm" style="color: var(--stone); margin-top: 0.25rem;">
+        Gérez les demandes reçues de freelancers souhaitant rejoindre votre agence.
+      </p>
+    </div>
+    <button class="btn btn--outline btn--sm" (click)="loadRequests()" title="Actualiser">
+      <i class="fas fa-rotate-right"></i> Actualiser
+    </button>
+  </div>
+
+  <!-- Filter Tabs -->
+  <div class="filter-tabs">
+    <button [class.active]="filterStatus === 'PENDING'"   (click)="setFilter('PENDING')">En attente</button>
+    <button [class.active]="filterStatus === 'ACCEPTED'"  (click)="setFilter('ACCEPTED')">Acceptées</button>
+    <button [class.active]="filterStatus === 'DECLINED'"  (click)="setFilter('DECLINED')">Refusées</button>
+    <button [class.active]="filterStatus === ''"          (click)="setFilter('')">Toutes</button>
+  </div>
+
+  <!-- Global Feedback -->
+  <div class="alert alert--success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i> {{ successMessage }}
+  </div>
+  <div class="alert alert--danger" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-box">
+    <app-loading-spinner></app-loading-spinner>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && requests.length === 0" class="empty-box">
+    <i class="fas fa-inbox" style="font-size: 2rem; color: var(--stone); margin-bottom: 1rem; display: block;"></i>
+    <p>Aucune demande {{ filterStatus === 'PENDING' ? 'en attente' : '' }}.</p>
+  </div>
+
+  <!-- Requests Table -->
+  <div class="table-container" *ngIf="!loading && requests.length > 0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Candidat</th>
+          <th>Compétences</th>
+          <th>Message</th>
+          <th>Date</th>
+          <th>Statut</th>
+          <th *ngIf="filterStatus === 'PENDING'">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let req of requests">
+          <!-- Requester Info -->
+          <td>
+            <div class="member-link">
+              <div class="req-avatar">{{ getInitials(req) }}</div>
+              <div class="member-text">
+                <strong>{{ getFullName(req) }}</strong>
+                <small>{{ req.requesterEmail }}</small>
+              </div>
+            </div>
+          </td>
+
+          <!-- Skills / Headline -->
+          <td>
+            <span class="skills-text">{{ req.requesterSkills || req.requesterHeadline || '—' }}</span>
+          </td>
+
+          <!-- Message -->
+          <td class="msg-col" [title]="req.message || ''">
+            {{ (req.message && req.message.length > 40) ? (req.message | slice:0:40) + '…' : (req.message || '—') }}
+          </td>
+
+          <!-- Date -->
+          <td>
+            <span class="date-text">{{ req.requestedAt | date:'mediumDate' }}</span>
+          </td>
+
+          <!-- Status Badge -->
+          <td>
+            <span class="badge"
+              [class.badge--pending]="req.status === 'PENDING'"
+              [class.badge--accepted]="req.status === 'ACCEPTED'"
+              [class.badge--declined]="req.status === 'DECLINED'">
+              {{ req.status === 'PENDING' ? 'En attente' : (req.status === 'ACCEPTED' ? 'Acceptée' : 'Refusée') }}
+            </span>
+          </td>
+
+          <!-- Action Buttons (only for PENDING) -->
+          <td class="td-actions" *ngIf="filterStatus === 'PENDING'">
+            <div class="action-btns" *ngIf="req.status === 'PENDING'">
+              <button class="btn btn--sm btn--primary"
+                      [disabled]="actionLoadingId === req.id"
+                      (click)="respond(req.id, req.agencyId, 'ACCEPTED')">
+                <i class="fas" [ngClass]="actionLoadingId === req.id ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+                Accepter
+              </button>
+              <button class="btn btn--sm btn--outline btn--danger"
+                      [disabled]="actionLoadingId === req.id"
+                      (click)="respond(req.id, req.agencyId, 'DECLINED')">
+                <i class="fas fa-times"></i>
+                Refuser
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>

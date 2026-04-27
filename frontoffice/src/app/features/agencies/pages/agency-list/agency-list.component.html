@@ -1,0 +1,117 @@
+<div class="agencies-container">
+  <app-section-header
+    title="Découvrir les Agences"
+    subtitle="Trouvez l'agence qui correspond à vos aspirations et commencez à collaborer.">
+    <div class="header-actions">
+      <a routerLink="new" class="btn btn--primary">
+        <i class="fas fa-plus"></i> Créer une Agence
+      </a>
+    </div>
+  </app-section-header>
+
+  <div class="content-section">
+    <div *ngIf="loading" class="loading-container">
+      <app-loading-spinner></app-loading-spinner>
+    </div>
+
+    <div *ngIf="!loading && agencies.length === 0" class="empty-container">
+      <app-empty-state
+        title="Aucune agence trouvée"
+        description="Il n'y a actuellement aucune agence enregistrée sur la plateforme."
+        icon="fa-building-circle-exclamation">
+      </app-empty-state>
+    </div>
+
+    <div *ngIf="!loading && agencies.length > 0" class="agencies-grid">
+      <div *ngFor="let agency of agencies" class="agency-card fade-in">
+        <div class="agency-card__header">
+          <div class="agency-logo" [style.background-image]="agency.logoUrl ? 'url(' + agency.logoUrl + ')' : ''">
+            <i *ngIf="!agency.logoUrl" class="fas fa-building"></i>
+          </div>
+          <div class="header-badges" style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="badge badge-status" [class.badge-active]="agency.active" [class.badge-inactive]="!agency.active">
+              {{ agency.active ? 'ACTIVE' : 'INACTIVE' }}
+            </span>
+            <span *ngIf="getUserRole(agency.id) as role" class="badge" [class.badge--lead]="role === 'LEAD'" [class.badge--member]="role === 'MEMBER'">
+              {{ role }}
+            </span>
+            
+            <!-- Actions Menu -->
+            <div class="agency-actions-menu" *ngIf="getUserRole(agency.id)">
+              <button class="btn-action-trigger">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+              <div class="dropdown-menu">
+                <button class="dropdown-item text-danger" 
+                        *ngIf="getUserRole(agency.id) === 'MEMBER'"
+                        [disabled]="agencyStats[agency.id]?.hasUnfinishedTasksForUser"
+                        [title]="agencyStats[agency.id]?.hasUnfinishedTasksForUser ? 'Vous devez terminer toutes vos tâches avant de quitter l\'agence.' : ''"
+                        (click)="$event.stopPropagation(); quitAgency(agency)">
+                  <i class="fas fa-right-from-bracket"></i> Quitter l'agence
+                </button>
+                <button class="dropdown-item text-danger" 
+                        *ngIf="getUserRole(agency.id) === 'LEAD'"
+                        [disabled]="agencyStats[agency.id]?.hasUnfinishedProjects"
+                        [title]="agencyStats[agency.id]?.hasUnfinishedProjects ? 'Tous les projets doivent être terminés avant de supprimer l\'agence.' : ''"
+                        (click)="$event.stopPropagation(); confirmDeleteAgency(agency)">
+                  <i class="fas fa-trash"></i> Supprimer l'agence
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="agency-card__body">
+          <h3 class="agency-name">{{ agency.name }}</h3>
+          
+          <div class="agency-meta">
+            <div class="meta-item">
+              <i class="fas fa-bullseye"></i>
+              <span>{{ agency.sector || 'Secteur non défini' }}</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-location-dot"></i>
+              <span>{{ agency.city }}, {{ agency.country }}</span>
+            </div>
+            
+            <!-- Show when user is a member -->
+            <div class="meta-item" *ngIf="getMembershipDate(agency.id) as joinedAt">
+              <i class="fas fa-calendar-check"></i>
+              <span>Membre depuis {{ joinedAt | date:'MMM yyyy' }}</span>
+            </div>
+            <!-- Show when user is NOT a member -->
+            <div class="meta-item" *ngIf="!getMembershipDate(agency.id)">
+              <i class="fas fa-clock"></i>
+              <span>Créée en {{ agency.createdAt | date:'MMM yyyy' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="agency-card__footer">
+          <a [routerLink]="['/app/agencies', agency.id]" class="btn btn--outline btn--sm btn--block">
+            Accéder à l'espace
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div class="modal-overlay" *ngIf="showDeleteConfirm && agencyToDelete" (click)="showDeleteConfirm = false">
+  <div class="modal-content sm text-center" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Supprimer l'agence ?</h3>
+    </div>
+    <div class="modal-body mb-4">
+      <p>Êtes-vous sûr de vouloir supprimer définitivement l'agence <strong>{{ agencyToDelete.name }}</strong> ?</p>
+      <p class="text-danger mt-2"><small>Cette action est irréversible et supprimera toutes les données associées.</small></p>
+    </div>
+    <div style="display:flex; justify-content:center; gap:10px;">
+      <button class="btn btn--outline" (click)="showDeleteConfirm = false">Annuler</button>
+      <button class="btn btn--danger" (click)="deleteAgency()" [disabled]="deleting">
+        <i class="fas fa-spinner fa-spin" *ngIf="deleting"></i> Supprimer
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,66 @@
+<div class="container py-xl">
+  <div class="header mb-lg">
+    <div class="header-content">
+      <h1 class="page-title">Mes Agences — Invitations</h1>
+      <p>Consultez et répondez aux invitations d'agences.</p>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-box">
+    <app-loading-spinner></app-loading-spinner>
+  </div>
+
+  <div *ngIf="!loading && invitations.length === 0" class="empty-box">
+    <app-empty-state 
+      title="Aucune invitation en attente" 
+      description="Vous n'avez actuellement aucune invitation pour rejoindre une agence."
+      icon="fa-envelope-open-text">
+    </app-empty-state>
+  </div>
+
+  <div class="invitations-grid" *ngIf="!loading && invitations.length > 0">
+    <div class="invitation-card shadow-sm rounded-lg border bg-white p-4 mb-4" *ngFor="let inv of invitations">
+      <div class="card-header flex items-center mb-3">
+        <div class="agency-icon mr-3 text-primary text-xl"><i class="fas fa-building"></i></div>
+        <div class="agency-info">
+          <h3 class="m-0 text-lg">{{ inv.agencyName || 'Agence #' + inv.agencyId }}</h3>
+          <span class="date text-sm text-neutral"><i class="far fa-calendar-alt"></i> Reçue le {{ inv.sentAt | date:'longDate' }}</span>
+        </div>
+      </div>
+      
+      <div class="card-body mb-4">
+        <p class="sender text-sm mb-2">
+          <i class="fas fa-user-tie"></i> Envoyée par <strong>{{ inv.senderName || 'LEAD (ID: ' + inv.senderId + ')' }}</strong>
+        </p>
+        <p class="role-prop text-sm mb-3">
+          <strong>Rôle proposé:</strong> <span class="badge badge--azure ml-2">{{ inv.proposedRole }}</span>
+        </p>
+        
+        <div class="msg-box bg-neutral-light p-3 rounded text-sm text-gray-700" *ngIf="inv.message">
+          <strong>Message personnel:</strong>
+          <p class="mt-1 mb-0 italic text-neutral">« {{ inv.message }} »</p>
+        </div>
+      </div>
+
+      <div class="card-footer border-t pt-3 flex flex-wrap items-center justify-between">
+        <div class="w-full mb-3">
+          <div class="alert alert--danger shadow-none p-2 mb-0" *ngIf="errorMessage && actionLoadingId === inv.id">{{ errorMessage }}</div>
+          <div class="alert alert--success shadow-none p-2 mb-0" *ngIf="successMessage && actionLoadingId === inv.id">{{ successMessage }}</div>
+        </div>
+        
+        <div class="actions flex gap-2 ml-auto">
+          <button class="btn btn--outline" 
+                  [disabled]="actionLoadingId === inv.id"
+                  (click)="decline(inv.id)">
+            Décliner
+          </button>
+          <button class="btn btn--primary" 
+                  [disabled]="actionLoadingId === inv.id"
+                  (click)="accept(inv.id)">
+            <i class="fas" [ngClass]="actionLoadingId === inv.id ? 'fa-spinner fa-spin' : 'fa-check'"></i> Accepter
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

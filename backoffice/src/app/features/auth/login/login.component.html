@@ -1,0 +1,84 @@
+<div class="login-box">
+
+  <div class="login-header">
+    <div class="login-icon">
+      <i class="fas fa-shield-halved"></i>
+    </div>
+    <h2 class="login-title">Admin Access</h2>
+    <p class="login-subtitle">TrustedWork Control Panel</p>
+  </div>
+
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <div class="input-wrapper">
+        <i class="fas fa-envelope input-icon"></i>
+        <input
+          type="email"
+          class="form-control"
+          formControlName="email"
+          placeholder="admin@trustedwork.tn"
+          autocomplete="email">
+      </div>
+      <span class="field-error"
+        *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+        Email invalide
+      </span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <div class="input-wrapper">
+        <i class="fas fa-lock input-icon"></i>
+        <input
+          [type]="showPassword ? 'text' : 'password'"
+          class="form-control"
+          formControlName="password"
+          placeholder="••••••••"
+          autocomplete="current-password">
+        <button type="button" class="toggle-pwd" (click)="togglePassword()">
+          <i class="fas" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+        </button>
+      </div>
+      <span class="field-error"
+        *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+        Minimum 6 caractères
+      </span>
+    </div>
+
+    <div class="login-options">
+      <label class="remember-check">
+        <input type="checkbox" formControlName="remember">
+        <span>Remember me</span>
+      </label>
+      <a href="#" class="forgot-link">Forgot password?</a>
+    </div>
+
+    <div class="error-banner" *ngIf="errorMsg">
+      <i class="fas fa-circle-exclamation"></i>
+      {{ errorMsg }}
+    </div>
+
+    <button
+      type="submit"
+      class="btn-login"
+      [class.loading]="loading"
+      [disabled]="loading">
+      <span *ngIf="!loading">
+        <i class="fas fa-right-to-bracket"></i>
+        Sign in to Console
+      </span>
+      <span *ngIf="loading" class="loader-dots">
+        <span></span><span></span><span></span>
+      </span>
+    </button>
+
+  </form>
+
+  <div class="login-footer">
+    <i class="fas fa-lock-keyhole"></i>
+    Secured admin access — TrustedWork Tunisia
+  </div>
+
+</div>

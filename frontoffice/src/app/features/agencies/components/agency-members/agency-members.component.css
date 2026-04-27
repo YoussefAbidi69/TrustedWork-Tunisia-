@@ -1,0 +1,213 @@
+/* Role Wrapper for Dropdown interaction */
+.role-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.role-wrapper.editable:hover .badge {
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+.role-select {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* User Links in Tables */
+.member-link {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mini-avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--azure-light);
+  color: var(--azure);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.member-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.member-text strong {
+  font-size: 0.95rem;
+  color: var(--midnight);
+}
+
+.member-text small {
+  font-size: 0.8rem;
+  color: var(--stone);
+}
+
+/* Workload Bar */
+.workload-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.workload-track {
+  width: 80px;
+  height: 6px;
+  background: #E2E8F0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.workload-fill {
+  height: 100%;
+  background: var(--azure);
+  border-radius: 10px;
+}
+
+.workload-val {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--slate);
+}
+
+/* Modal Search Specifics */
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-box i {
+  position: absolute;
+  left: 1rem;
+  color: var(--stone);
+}
+
+.search-box input {
+  padding-left: 2.5rem;
+}
+
+.search-results {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  border: 1px solid #E2E8F0;
+  border-radius: var(--radius-md);
+  max-height: 250px;
+  overflow-y: auto;
+  background: var(--white);
+  box-shadow: var(--shadow-md);
+  position: absolute;
+  width: 100%;
+  z-index: 10;
+}
+
+.search-results li {
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.search-results li:hover {
+  background: var(--cream);
+}
+
+.res-avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--terracotta-light);
+  color: var(--terracotta);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.res-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.res-info strong {
+  font-size: 0.9rem;
+}
+
+.res-info span, .res-info small {
+  font-size: 0.8rem;
+  color: var(--stone);
+}
+
+.selected-user .user-chip {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--cream);
+  border-radius: var(--radius-md);
+  border: 1px solid #E2E8F0;
+}
+
+.clear-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--stone);
+  cursor: pointer;
+}
+
+.clear-btn:hover {
+  color: var(--danger);
+}
+
+/* Toasts - kept unique here */
+.toast-container {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  z-index: 10000;
+}
+
+.toast {
+  background: var(--olive);
+  color: white;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.animate-in {
+  animation: slideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}

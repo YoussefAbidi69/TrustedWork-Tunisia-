@@ -1,0 +1,141 @@
+<div class="users-page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">User Management</h1>
+      <p class="page-subtitle">{{ filteredUsers.length }} users found</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" (click)="loadUsers()">
+        <i class="fas fa-rotate-right"></i>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Search by name or email..."
+        [(ngModel)]="searchQuery"
+        (input)="onSearch()">
+    </div>
+
+    <div class="filter-chips">
+      <button
+        *ngFor="let role of roles"
+        class="chip"
+        [class.active]="selectedRole === role"
+        (click)="onRoleFilter(role)">
+        {{ role }}
+      </button>
+    </div>
+
+    <div class="filter-chips">
+      <button
+        *ngFor="let status of statuses"
+        class="chip"
+        [class.active]="selectedStatus === status"
+        (click)="onStatusFilter(status)">
+        {{ status }}
+      </button>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Loading users...</p>
+  </div>
+
+  <div class="card" *ngIf="!loading">
+    <div class="table-wrap">
+      <table class="tw-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>CIN</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>KYC</th>
+            <th>2FA</th>
+            <th>Trust</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of filteredUsers">
+            <td>
+              <div class="user-cell">
+                <div class="avatar avatar-sm" [ngClass]="'avatar-' + getAvatarClass(user.role)">
+                  {{ getInitials(user) }}
+                </div>
+                <div class="user-info">
+                  <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+                  <span>{{ user.email }}</span>
+                </div>
+              </div>
+            </td>
+            <td>{{ user.cin }}</td>
+            <td>
+              <span class="badge" [ngClass]="getRoleBadge(user.role)">
+                {{ user.role }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getStatusBadge(user.accountStatus)">
+                {{ user.accountStatus }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getKycBadge(user.kycStatus)">
+                {{ user.kycStatus }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="user.twoFactorEnabled ? 'badge-success' : 'badge-muted'">
+                {{ user.twoFactorEnabled ? 'ON' : 'OFF' }}
+              </span>
+            </td>
+            <td>
+              <span class="badge badge-accent">
+                {{ user.trustLevel ?? '—' }}
+              </span>
+            </td>
+            <td>{{ user.createdAt | date:'MMM d, yyyy' }}</td>
+            <td>
+              <div class="action-btns">
+                <button
+                  *ngIf="user.accountStatus === 'ACTIVE'"
+                  class="btn btn-sm btn-danger"
+                  (click)="suspendUser(user)"
+                  [disabled]="actionLoading === user.id">
+                  <i class="fas fa-ban"></i>
+                  Suspend
+                </button>
+
+                <button
+                  *ngIf="user.accountStatus === 'SUSPENDED'"
+                  class="btn btn-sm btn-success"
+                  (click)="activateUser(user)"
+                  [disabled]="actionLoading === user.id">
+                  <i class="fas fa-check"></i>
+                  Activate
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" *ngIf="filteredUsers.length === 0">
+        <i class="fas fa-users-slash"></i>
+        <p>No users found</p>
+      </div>
+    </div>
+  </div>
+
+</div>

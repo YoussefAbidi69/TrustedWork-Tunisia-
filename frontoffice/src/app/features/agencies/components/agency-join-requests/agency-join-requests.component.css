@@ -1,0 +1,128 @@
+.join-requests-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.section-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.section-top h3 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  color: var(--midnight);
+  margin: 0;
+}
+
+/* Filter Tabs */
+.filter-tabs {
+  display: flex;
+  gap: 0.5rem;
+  background: #E2E8F0;
+  padding: 5px;
+  border-radius: var(--radius-md);
+  width: fit-content;
+}
+
+.filter-tabs button {
+  padding: 0.45rem 1.1rem;
+  border: none;
+  background: transparent;
+  color: var(--slate);
+  font-weight: 500;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+}
+
+.filter-tabs button:hover {
+  background: rgba(255,255,255,0.5);
+  color: var(--midnight);
+}
+
+.filter-tabs button.active {
+  background: var(--white);
+  color: var(--terracotta);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Requester Avatar */
+.req-avatar {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, var(--terracotta-light), var(--azure-light));
+  color: var(--charcoal);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.skills-text {
+  font-size: 0.85rem;
+  color: var(--slate);
+  max-width: 160px;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.msg-col {
+  color: var(--slate);
+  font-size: 0.875rem;
+  font-style: italic;
+  max-width: 180px;
+}
+
+.action-btns {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.date-text {
+  font-size: 0.85rem;
+  color: var(--stone);
+}
+
+/* Alerts */
+.alert--success {
+  background: var(--olive-light);
+  color: var(--olive);
+  padding: 0.9rem 1.2rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+}
+
+.alert--danger {
+  background: var(--danger-light);
+  color: var(--danger);
+  padding: 0.9rem 1.2rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+}
+
+.loading-box, .empty-box {
+  padding: 4rem;
+  text-align: center;
+  color: var(--stone);
+  background: var(--cream);
+  border-radius: var(--radius-lg);
+  border: 1px dashed #E2E8F0;
+}

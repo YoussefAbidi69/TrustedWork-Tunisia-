@@ -1,0 +1,105 @@
+.invitations-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.invite-panel {
+  background: var(--white);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.invite-panel h3 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  margin: 0;
+  color: var(--midnight);
+}
+
+.invite-panel p {
+  color: var(--stone);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.invite-form {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.form-group-flex {
+  flex: 1;
+}
+
+/* User Display in List Table */
+.member-link {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mini-avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--azure-light);
+  color: var(--azure);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.member-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.member-text strong {
+  font-size: 0.95rem;
+  color: var(--midnight);
+}
+
+.member-text small {
+  font-size: 0.8rem;
+  color: var(--stone);
+}
+
+/* Specific Badge statuses - integrated with global .badge */
+.status--pending { background: var(--azure-light); color: var(--azure); }
+.status--accepted { background: var(--olive-light); color: var(--olive); }
+.status--declined { background: var(--danger-light); color: var(--danger); }
+.status--cancelled { background: var(--stone); color: var(--white); }
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.6rem;
+  color: var(--stone);
+  transition: var(--transition);
+  border-radius: var(--radius-sm);
+}
+
+.btn-icon:hover {
+  background: var(--danger-light);
+  color: var(--danger);
+  transform: translateY(-1px);
+}
+
+.loading-box, .empty-box {
+  padding: 4rem;
+  text-align: center;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  color: var(--stone);
+  border: 1px dashed #E2E8F0;
+}

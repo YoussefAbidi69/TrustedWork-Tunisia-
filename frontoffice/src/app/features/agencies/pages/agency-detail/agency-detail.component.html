@@ -1,0 +1,107 @@
+<div class="agency-detail-container" *ngIf="!loading && agency">
+  
+  <header class="agency-header">
+    <div class="header-main">
+      <div class="agency-visual">
+        <div class="visual-box" [style.background-image]="agency.logoUrl ? 'url(' + agency.logoUrl + ')' : ''">
+          <i *ngIf="!agency.logoUrl" class="fas fa-building"></i>
+        </div>
+      </div>
+      <div class="header-info">
+        <div class="title-row">
+          <h1>{{ agency.name }}</h1>
+          <span class="badge badge--{{ agency.tier.toLowerCase() }}">{{ agency.tier }}</span>
+        </div>
+        <p class="agency-location">
+          <i class="fas fa-location-dot"></i> {{ agency.city }}, {{ agency.country }}
+        </p>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <button class="btn btn--outline btn--sm" routerLink="/app/agencies">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+
+      <!-- 
+        "Quitter l'agence" — visible only for REGULAR members (not LEAD).
+        LEAD must delete the agency instead.
+      -->
+      <button 
+        *ngIf="isMemberOrOwner && !isLeadOfThisAgency" 
+        class="btn btn--outline btn--sm" 
+        style="border-color: var(--danger); color: var(--danger);"
+        (click)="quitAgency()"
+        [disabled]="quitting">
+        <i class="fas" [ngClass]="quitting ? 'fa-spinner fa-spin' : 'fa-right-from-bracket'"></i> 
+        Quitter l'agence
+      </button>
+
+      <!-- "Rejoindre cette agence" — visible only for non-members -->
+      <button 
+        *ngIf="!isMemberOrOwner"
+        class="btn btn--primary btn--sm" 
+        (click)="requestJoin()"
+        [disabled]="joining || joinRequestSent"
+        [style.opacity]="joinRequestSent ? 0.7 : 1">
+        <i class="fas" [ngClass]="joining ? 'fa-spinner fa-spin' : (joinRequestSent ? 'fa-check' : 'fa-hand-paper')"></i> 
+        {{ joinRequestSent ? 'Demande envoyée' : 'Rejoindre cette agence' }}
+      </button>
+    </div>
+  </header>
+
+  <nav class="agency-tabs">
+    <button *ngFor="let tab of visibleTabs" 
+            class="tab-link" 
+            [class.active]="activeTab === tab.id"
+            (click)="setActiveTab(tab.id)">
+      <i class="fas" [ngClass]="tab.icon"></i>
+      {{ tab.label }}
+    </button>
+  </nav>
+
+  <section class="tab-content">
+    <!-- Vue d'ensemble -->
+    <div *ngIf="activeTab === 'overview'" class="overview-grid">
+      <div class="info-card">
+        <h3>À propos</h3>
+        <p>{{ agency.description || 'Acune description fournie.' }}</p>
+        <hr>
+        <div class="info-meta">
+          <div class="meta-row">
+            <strong>Secteur :</strong>
+            <span>{{ agency.sector || 'Non spécifié' }}</span>
+          </div>
+          <div class="meta-row" *ngIf="agency.website">
+            <strong>Site Web :</strong>
+            <a [href]="agency.website" target="_blank">{{ agency.website }}</a>
+          </div>
+          <div class="meta-row">
+            <strong>Créé le :</strong>
+            <span>{{ agency.createdAt | date:'longDate' }}</span>
+          </div>
+          <div class="meta-row">
+            <strong>Statut :</strong>
+            <span [class.text-success]="agency.active" [class.text-danger]="!agency.active">
+              {{ agency.active ? 'Actif' : 'Inactif' }}
+            </span>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+
+    <!-- Sub-components based on activeTab -->
+    <app-agency-members       *ngIf="activeTab === 'members'"     [agencyId]="agency.id"></app-agency-members>
+    <app-team-projects        *ngIf="activeTab === 'projects'"    [agencyId]="agency.id" [isLead]="isLeadOfThisAgency" [userId]="userId"></app-team-projects>
+    <app-task-kanban          *ngIf="activeTab === 'kanban' && isMemberOrOwner"      [agencyId]="agency.id"></app-task-kanban>
+    <app-agency-invitations   *ngIf="activeTab === 'invitations'" [agencyId]="agency.id"></app-agency-invitations>
+    <app-performance-dashboard *ngIf="activeTab === 'analytics' && isLeadOfThisAgency"  [agencyId]="agency.id"></app-performance-dashboard>
+    <app-agency-join-requests *ngIf="activeTab === 'requests'"    [agencyId]="agency.id"></app-agency-join-requests>
+  </section>
+
+</div>
+
+<div *ngIf="loading" class="loading-full">
+  <app-loading-spinner></app-loading-spinner>
+</div>

@@ -1,0 +1,66 @@
+<div class="invitations-section">
+  <div class="section-top">
+    <h3>Invitations sortantes</h3>
+    <p class="text-sm">Gérez les demandes d'adhésion envoyées depuis votre agence.</p>
+  </div>
+
+  <div *ngIf="loading" class="loading-box">
+    <app-loading-spinner></app-loading-spinner>
+  </div>
+
+  <div *ngIf="!loading && invitations.length === 0" class="empty-box">
+    <app-empty-state 
+      title="Aucune invitation" 
+      description="Vous n'avez envoyé aucune invitation."
+      icon="fa-paper-plane">
+    </app-empty-state>
+  </div>
+
+  <div class="table-container" *ngIf="!loading && invitations.length > 0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Invité</th>
+          <th>Message</th>
+          <th>Rôle Proposé</th>
+          <th>Statut</th>
+          <th>Date d'envoi</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let inv of invitations">
+          <td>
+            <div class="member-link">
+              <div class="mini-avatar">{{ inv.receiverName?.charAt(0) || '?' }}</div>
+              <div class="member-text">
+                <strong>{{ inv.receiverName || 'Utilisateur #' + inv.receiverId }}</strong>
+                <small *ngIf="inv.receiverEmail">{{ inv.receiverEmail }}</small>
+              </div>
+            </div>
+          </td>
+          <td class="msg-col" title="{{ inv.message }}">
+            {{ (inv.message && inv.message.length > 30) ? (inv.message | slice:0:30) + '...' : (inv.message || '-') }}
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getStatusBadgeClass(inv.status)">{{ inv.proposedRole || 'MEMBER' }}</span>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getStatusBadgeClass(inv.status)">{{ inv.status === 'PENDING' ? 'EN ATTENTE' : (inv.status === 'ACCEPTED' ? 'ACCEPTÉE' : (inv.status === 'DECLINED' ? 'DÉCLINÉE' : 'ANNULÉE')) }}</span>
+          </td>
+          <td>
+            <span class="date-text">{{ inv.sentAt | date:'mediumDate' }}</span>
+          </td>
+          <td class="td-actions">
+            <button 
+              *ngIf="inv.status.toString() === 'PENDING'" 
+              class="btn btn--outline btn--sm btn--danger" 
+              (click)="cancelInvitation(inv.id)">
+              Annuler
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
