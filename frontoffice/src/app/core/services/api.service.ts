@@ -10,19 +10,23 @@ const API_URL = '/api';
 export class ApiService {
   constructor(private readonly http: HttpClient) {}
 
-  get<T>(url: string): Observable<T> {
-    return this.http.get<T>(`${API_URL}${url}`);
+  get<T>(url: string, options?: any): Observable<T> {
+    return this.http.get<T>(`${API_URL}${url}`, options) as Observable<T>;
   }
 
-  post<T>(url: string, body: unknown): Observable<T> {
-    return this.http.post<T>(`${API_URL}${url}`, body);
+  post<T>(url: string, body: unknown, options?: any): Observable<T> {
+    return this.http.post<T>(`${API_URL}${url}`, body, options) as Observable<T>;
   }
 
-  put<T>(url: string, body: unknown): Observable<T> {
-    return this.http.put<T>(`${API_URL}${url}`, body);
+  put<T>(url: string, body: unknown, options?: any): Observable<T> {
+    return this.http.put<T>(`${API_URL}${url}`, body, options) as Observable<T>;
   }
 
-  delete<T>(url: string): Observable<T> {
-    return this.http.delete<T>(`${API_URL}${url}`);
+  patch<T>(url: string, body: unknown, options?: any): Observable<T> {
+    return this.http.patch<T>(`${API_URL}${url}`, body, options) as Observable<T>;
+  }
+
+  delete<T>(url: string, options?: any): Observable<T> {
+    return this.http.delete<T>(`${API_URL}${url}`, options) as Observable<T>;
   }
 }

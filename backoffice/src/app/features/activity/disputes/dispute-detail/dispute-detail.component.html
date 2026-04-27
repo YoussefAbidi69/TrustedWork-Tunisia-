@@ -1,0 +1,412 @@
+<div class="container mt-4 animate-fade-in">
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-terracotta" role="status"></div>
+    <p class="mt-3 text-stone">Chargement du litige...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="alert alert-danger rounded-4 border-0">
+    <i class="bi bi-exclamation-triangle me-2"></i> {{ error }}
+  </div>
+
+  <div *ngIf="!loading && dispute">
+
+    <!-- Page Header -->
+    <div class="page-header shadow-lg mb-4">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+        <div>
+          <span class="badge-kicker">
+            <i class="bi bi-shield-exclamation me-1"></i>
+            Litige {{ dispute.reference || '#' + dispute.id }}
+          </span>
+          <h2 class="display-6 text-white mb-1">Détail du Litige</h2>
+          <div class="d-flex align-items-center gap-3 mt-2">
+            <span class="status-pill" [ngClass]="getStatusClass(dispute.status)">
+              {{ getStatusLabel(dispute.status) }}
+            </span>
+            <span class="text-white opacity-75 small">
+              <i class="bi bi-calendar3 me-1"></i> {{ dispute.openedAt | date:'dd/MM/yyyy HH:mm' }}
+            </span>
+          </div>
+        </div>
+        <div class="header-actions mt-3 mt-md-0 d-flex gap-3">
+          <button class="btn-header-ghost" (click)="goBack()">
+            <i class="bi bi-arrow-left me-2"></i> Retour
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="row g-4">
+
+      <!-- Left Column: Details -->
+      <div class="col-lg-7">
+
+        <!-- Info Card -->
+        <div class="detail-card shadow-sm mb-4">
+          <div class="card-section-title">
+            <i class="bi bi-info-circle-fill text-terracotta me-2"></i>
+            Informations
+          </div>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Contrat</span>
+              <span class="info-value">#{{ dispute.contractId }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Jalon</span>
+              <span class="info-value">{{ dispute.milestoneId ? '#' + dispute.milestoneId : 'Niveau Contrat' }}</span>
+            </div>
+            <div class="info-item" *ngIf="dispute.arbitreId">
+              <span class="info-label">Arbitre</span>
+              <span class="info-value">{{ dispute.arbitreId }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Motif Card -->
+        <div class="detail-card shadow-sm mb-4">
+          <div class="card-section-title">
+            <i class="bi bi-chat-left-text text-terracotta me-2"></i>
+            Motif du Litige
+          </div>
+          <p class="motif-text">{{ dispute.motif }}</p>
+        </div>
+
+        <!-- Preuves Plaignant -->
+        <div class="detail-card shadow-sm mb-4" *ngIf="dispute.preuvesPlaignant">
+          <div class="card-section-title">
+            <i class="bi bi-person-exclamation text-terracotta me-2"></i>
+            Preuves du Plaignant
+          </div>
+          <p class="motif-text">{{ dispute.preuvesPlaignant }}</p>
+        </div>
+
+        <!-- Preuves Defense -->
+        <div class="detail-card shadow-sm mb-4" *ngIf="dispute.preuvesDefense">
+          <div class="card-section-title">
+            <i class="bi bi-person-check text-olive me-2"></i>
+            Réponse du Défendeur
+          </div>
+          <p class="motif-text">{{ dispute.preuvesDefense }}</p>
+        </div>
+
+        <!-- Decision (si résolu) -->
+        <div class="detail-card shadow-sm mb-4 resolved-card" *ngIf="isResolved && dispute.decision">
+          <div class="card-section-title">
+            <i class="bi bi-gavel text-olive me-2"></i>
+            Décision Finale
+          </div>
+          <p class="motif-text fw-bold">{{ dispute.decision }}</p>
+          <div class="d-flex gap-4 mt-3" *ngIf="dispute.montantRembourse || dispute.montantLibere">
+            <div class="financial-badge">
+              <span class="financial-label">Remboursé</span>
+              <span class="financial-amount danger">{{ dispute.montantRembourse | number:'1.2-2' }} DT</span>
+            </div>
+            <div class="financial-badge">
+              <span class="financial-label">Libéré</span>
+              <span class="financial-amount success">{{ dispute.montantLibere | number:'1.2-2' }} DT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Actions & Evidence -->
+      <div class="col-lg-5">
+
+        <!-- Actions Card -->
+        <div class="detail-card shadow-sm mb-4" *ngIf="!isResolved">
+          <div class="card-section-title">
+            <i class="bi bi-lightning-fill text-terracotta me-2"></i>
+            Actions
+          </div>
+          <div class="actions-stack">
+            <!-- Respond -->
+            <button class="action-btn" (click)="openRespondModal()" *ngIf="dispute.status === 'OPEN'">
+              <i class="bi bi-reply-fill"></i>
+              <div>
+                <strong>Répondre au litige</strong>
+                <small>Fournir votre version des faits</small>
+              </div>
+            </button>
+
+            <!-- Assign (Admin) -->
+            <button class="action-btn" (click)="assignToMe()" *ngIf="canAssign && !dispute.arbitreId" [disabled]="assigning">
+              <i class="bi bi-person-check-fill" *ngIf="!assigning"></i>
+              <div class="spinner-border spinner-border-sm me-2" *ngIf="assigning"></div>
+              <div>
+                <strong>M'assigner ce litige</strong>
+                <small>Devenir l'arbitre de ce dossier (Automatique)</small>
+              </div>
+            </button>
+
+            <!-- Resolve (Admin) -->
+            <button class="action-btn resolve" (click)="openResolveModal()" *ngIf="isAdmin && isResolvable">
+              <i class="bi bi-check-circle-fill"></i>
+              <div>
+                <strong>Résoudre le litige</strong>
+                <small>Prendre une décision finale</small>
+              </div>
+            </button>
+
+            <!-- Warning if not assigned (Admin) -->
+            <div class="alert alert-warning small border-0 rounded-3 mt-2" *ngIf="isAdmin && !isResolved && !dispute.arbitreId">
+              <i class="bi bi-info-circle me-2"></i>
+              Vous devez <strong>assigner un arbitre</strong> avant de pouvoir résoudre ce litige.
+            </div>
+          </div>
+        </div>
+
+        <!-- Resolved Badge -->
+        <div class="detail-card shadow-sm mb-4 text-center" *ngIf="isResolved">
+          <i class="bi bi-patch-check-fill display-4 text-olive d-block mb-3"></i>
+          <h4 class="fw-bold text-midnight">Litige Résolu</h4>
+          <span class="status-pill" [ngClass]="getStatusClass(dispute.status)">
+            {{ getStatusLabel(dispute.status) }}
+          </span>
+        </div>
+
+        <!-- Evidence Card -->
+        <div class="detail-card shadow-sm mb-4">
+          <div class="card-section-title">
+            <i class="bi bi-folder2-open text-terracotta me-2"></i>
+            Pièces Jointes ({{ evidences.length }})
+          </div>
+
+          <!-- Evidence List -->
+          <div class="evidence-list" *ngIf="evidences.length > 0">
+            <div class="evidence-item" *ngFor="let ev of evidences; let i = index">
+              <div class="evidence-info d-flex align-items-center">
+                <i class="bi bi-file-earmark me-2 text-stone"></i>
+                <a class="evidence-name text-decoration-underline cursor-pointer text-primary" 
+                   (click)="downloadEvidence(ev.id!, ev)" 
+                   style="cursor: pointer;">
+                  {{ ev.originalFilename || ev.fileName || 'Fichier joint #' + (ev.id || (i+1)) }}
+                </a>
+              </div>
+              <button class="btn-evidence-dl" (click)="downloadEvidence(ev.id!, ev)" title="Télécharger">
+                <i class="bi bi-download"></i>
+              </button>
+            </div>
+          </div>
+          <p *ngIf="evidences.length === 0" class="text-stone small mb-3">Aucune pièce jointe.</p>
+
+          <!-- Upload -->
+          <div class="upload-zone mt-3" *ngIf="!isResolved">
+            <label for="fileInput" class="upload-label">
+              <i class="bi bi-cloud-arrow-up me-2"></i>
+              {{ selectedFile ? selectedFile.name : 'Cliquez pour ajouter un fichier' }}
+            </label>
+            <input type="file" id="fileInput" class="d-none" (change)="onFileSelected($event)">
+            <button class="btn-upload mt-2" *ngIf="selectedFile" (click)="uploadEvidence()" [disabled]="uploading">
+              <span *ngIf="!uploading"><i class="bi bi-upload me-1"></i> Envoyer</span>
+              <span *ngIf="uploading"><div class="spinner-border spinner-border-sm me-1"></div> Upload...</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- ═══ AI ANALYSIS PANEL ═══ -->
+    <div class="ai-panel mt-4" *ngIf="isAdmin">
+
+      <!-- Trigger Button -->
+      <div class="ai-trigger-bar" *ngIf="!showAiPanel">
+        <div class="ai-trigger-info">
+          <div class="ai-icon-wrap">
+            <i class="bi bi-stars"></i>
+          </div>
+          <div>
+            <strong>Analyse AI disponible</strong>
+            <small>Obtenez une recommandation de résolution basée sur Gemini AI</small>
+          </div>
+        </div>
+        <button class="btn-ai-launch" (click)="runAiAnalysis()" id="btn-ai-analyze">
+          <i class="bi bi-cpu me-2"></i> Analyser avec l'IA
+        </button>
+      </div>
+
+      <!-- AI Panel Content -->
+      <div class="ai-panel-card" *ngIf="showAiPanel">
+
+        <!-- Panel Header -->
+        <div class="ai-panel-header">
+          <div class="d-flex align-items-center gap-3">
+            <div class="ai-icon-wrap large">
+              <i class="bi bi-stars"></i>
+            </div>
+            <div>
+              <h5 class="mb-0 fw-800">Recommandation AI — Gemini</h5>
+              <small class="text-muted">Litige {{ dispute?.reference }}</small>
+            </div>
+          </div>
+          <button class="btn-ai-rerun" (click)="runAiAnalysis()" [disabled]="aiLoading" title="Re-analyser">
+            <i class="bi bi-arrow-clockwise" [class.spin]="aiLoading"></i>
+          </button>
+        </div>
+
+        <!-- Loading -->
+        <div class="ai-loading" *ngIf="aiLoading">
+          <div class="ai-loading-dots"><span></span><span></span><span></span></div>
+          <p>Analyse en cours par Gemini AI...</p>
+        </div>
+
+        <!-- Error -->
+        <div class="ai-error-state" *ngIf="!aiLoading && aiError">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span>{{ aiError }}</span>
+        </div>
+
+        <!-- Results -->
+        <div class="ai-results" *ngIf="!aiLoading && aiRecommendation">
+
+          <div class="ai-fallback-notice" *ngIf="aiRecommendation.fallback">
+            <i class="bi bi-info-circle me-2"></i>
+            Analyse basée sur le moteur d'arbitrage intelligent local — réseau Gemini Cloud indisponible.
+          </div>
+
+          <!-- Metrics Row -->
+          <div class="ai-metrics-row">
+            <div class="ai-metric-card" [ngClass]="getAiDecisionClass(aiRecommendation.suggestedDecision)">
+              <span class="ai-metric-label">Décision suggérée</span>
+              <span class="ai-metric-value decision">{{ getAiDecisionLabel(aiRecommendation.suggestedDecision) }}</span>
+            </div>
+            <div class="ai-metric-card" [ngClass]="getRiskClass(aiRecommendation.riskLevel)">
+              <span class="ai-metric-label">Niveau de risque</span>
+              <span class="ai-metric-value"><i class="bi bi-shield-fill me-1"></i>{{ getRiskLabel(aiRecommendation.riskLevel) }}</span>
+            </div>
+            <div class="ai-metric-card confidence">
+              <span class="ai-metric-label">Confiance</span>
+              <span class="ai-metric-value">{{ getConfidencePct() }}%</span>
+              <div class="confidence-bar">
+                <div class="confidence-fill" [style.width.%]="getConfidencePct()"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <div class="ai-section" *ngIf="aiRecommendation.summary">
+            <div class="ai-section-label"><i class="bi bi-file-text me-2"></i>Résumé</div>
+            <p class="ai-text">{{ aiRecommendation.summary }}</p>
+          </div>
+
+          <!-- Reasoning -->
+          <div class="ai-section">
+            <div class="ai-section-label"><i class="bi bi-chat-quote me-2"></i>Raisonnement de l'IA</div>
+            <p class="ai-text">{{ aiRecommendation.reasoning }}</p>
+          </div>
+
+          <!-- Key Factors -->
+          <div class="ai-section" *ngIf="aiRecommendation.keyFactors?.length">
+            <div class="ai-section-label"><i class="bi bi-list-check me-2"></i>Facteurs Clés</div>
+            <ul class="ai-factors-list">
+              <li *ngFor="let f of aiRecommendation.keyFactors">
+                <i class="bi bi-check2-circle text-success me-2"></i>{{ f }}
+              </li>
+            </ul>
+          </div>
+
+          <!-- Suggested Amounts -->
+          <div class="ai-section" *ngIf="aiRecommendation.suggestedMontantRembourse > 0 || aiRecommendation.suggestedMontantLibere > 0">
+            <div class="ai-section-label"><i class="bi bi-cash-stack me-2"></i>Montants Suggérés</div>
+            <div class="ai-amounts-row">
+              <div class="ai-amount-item" *ngIf="aiRecommendation.suggestedMontantRembourse > 0">
+                <span class="ai-amount-label">Remboursement Client</span>
+                <span class="ai-amount-value danger">{{ aiRecommendation.suggestedMontantRembourse | number:'1.2-2' }} DT</span>
+              </div>
+              <div class="ai-amount-item" *ngIf="aiRecommendation.suggestedMontantLibere > 0">
+                <span class="ai-amount-label">Libération Freelancer</span>
+                <span class="ai-amount-value success">{{ aiRecommendation.suggestedMontantLibere | number:'1.2-2' }} DT</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Apply Suggestion -->
+          <div class="ai-apply-row" *ngIf="isResolvable">
+            <button class="btn-ai-apply" (click)="applyAiSuggestion()" id="btn-ai-apply">
+              <i class="bi bi-magic me-2"></i>Appliquer dans le formulaire de résolution
+            </button>
+            <small>La décision finale reste sous votre contrôle</small>
+          </div>
+
+          <!-- Timestamp -->
+          <div class="ai-timestamp">
+            <i class="bi bi-clock me-1"></i>
+            Générée le {{ aiRecommendation.generatedAt | date:'dd/MM/yyyy à HH:mm:ss' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- ═══ MODALS ═══ -->
+
+
+  <!-- Respond Modal -->
+  <div class="modal-overlay" *ngIf="showRespondModal" (click)="closeRespondModal()">
+    <div class="modal-premium" (click)="$event.stopPropagation()">
+      <div class="modal-premium-header">
+        <h4><i class="bi bi-reply-fill me-2"></i> Réponse au Litige</h4>
+        <button class="btn-close-modal" (click)="closeRespondModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-premium-body">
+        <label class="modal-label">Votre réponse / preuves de défense</label>
+        <textarea [(ngModel)]="responseText" class="modal-input textarea" rows="5"
+                  placeholder="Décrivez votre point de vue et fournissez vos preuves..."></textarea>
+      </div>
+      <div class="modal-premium-footer">
+        <button class="btn-ghost" (click)="closeRespondModal()">Annuler</button>
+        <button class="btn-modal-action" (click)="submitResponse()" [disabled]="responding || !responseText.trim()">
+          <span *ngIf="!responding"><i class="bi bi-send me-2"></i> Envoyer</span>
+          <span *ngIf="responding"><div class="spinner-border spinner-border-sm me-1"></div> Envoi...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resolve Modal -->
+  <div class="modal-overlay" *ngIf="showResolveModal" (click)="closeResolveModal()">
+    <div class="modal-premium modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-premium-header">
+        <h4><i class="bi bi-gavel me-2"></i> Résoudre le Litige</h4>
+        <button class="btn-close-modal" (click)="closeResolveModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-premium-body">
+
+        <label class="modal-label">Décision</label>
+        <select [(ngModel)]="resolveForm.status" class="modal-input mb-3">
+          <option value="RESOLVED_CLIENT">Résolu en faveur du Client</option>
+          <option value="RESOLVED_FREELANCER">Résolu en faveur du Freelancer</option>
+          <option value="SPLIT">Partage des montants</option>
+          <option value="DISMISSED">Rejeté (sans suite)</option>
+        </select>
+
+        <label class="modal-label">Motivation de la décision *</label>
+        <textarea [(ngModel)]="resolveForm.decision" class="modal-input textarea mb-3" rows="4"
+                  placeholder="Expliquez la décision prise..."></textarea>
+
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="modal-label">Montant remboursé (DT)</label>
+            <input type="number" [(ngModel)]="resolveForm.montantRembourse" class="modal-input" min="0" step="0.01">
+          </div>
+          <div class="col-6">
+            <label class="modal-label">Montant libéré (DT)</label>
+            <input type="number" [(ngModel)]="resolveForm.montantLibere" class="modal-input" min="0" step="0.01">
+          </div>
+        </div>
+      </div>
+      <div class="modal-premium-footer">
+        <button class="btn-ghost" (click)="closeResolveModal()">Annuler</button>
+        <button class="btn-modal-action resolve" (click)="submitResolve()" [disabled]="resolving || !resolveForm.decision.trim()">
+          <span *ngIf="!resolving"><i class="bi bi-check-circle me-2"></i> Confirmer la Résolution</span>
+          <span *ngIf="resolving"><div class="spinner-border spinner-border-sm me-1"></div> Traitement...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

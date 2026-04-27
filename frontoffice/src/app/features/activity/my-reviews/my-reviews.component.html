@@ -1,0 +1,90 @@
+<div class="reviews-page">
+  <section class="reviews-hero premium-card">
+    <div class="reviews-hero__content">
+      <span class="eyebrow">My Reviews</span>
+      <h1>Client feedback that strengthens your trust and market positioning.</h1>
+      <p>
+        Track published feedback, pending moderation and review quality across your
+        completed missions in one premium reputation workspace.
+      </p>
+    </div>
+
+    <div class="reviews-hero__summary premium-soft-card">
+      <div class="summary-block">
+        <span>Published</span>
+        <strong>{{ publishedReviews }}</strong>
+      </div>
+      <div class="summary-block">
+        <span>Average</span>
+        <strong>{{ averageRating }}/5</strong>
+      </div>
+      <div class="summary-block">
+        <span>Trust impact</span>
+        <strong>High</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <article class="stat-card premium-card" *ngFor="let stat of stats">
+      <span>{{ stat.label }}</span>
+      <strong>{{ stat.value }}</strong>
+      <p>{{ stat.helper }}</p>
+    </article>
+  </section>
+
+  <section class="reviews-list premium-card" *ngIf="!isLoading && reviews.length; else reviewsState">
+    <div class="section-head">
+      <div>
+        <span class="section-kicker">Verified feedback</span>
+        <h2>Recent client reviews</h2>
+      </div>
+    </div>
+
+    <article class="review-card" *ngFor="let review of reviews; trackBy: trackByReview">
+      <div class="review-card__top">
+        <div>
+          <div class="review-meta">
+            <span class="client-name">{{ review.client }}</span>
+            <span class="review-date">{{ review.date }}</span>
+          </div>
+          <h3>{{ review.mission }}</h3>
+        </div>
+
+        <span class="status-pill" [ngClass]="getStatusClass(review.status)">
+          {{ review.status }}
+        </span>
+      </div>
+
+      <div class="rating-row">
+        <div class="stars">
+          <i class="fas fa-star" *ngFor="let _ of getStars(review.rating)"></i>
+          <i class="far fa-star empty" *ngFor="let _ of getEmptyStars(review.rating)"></i>
+        </div>
+        <strong>{{ review.rating.toFixed(1) }}</strong>
+      </div>
+
+      <p class="review-comment">{{ review.comment }}</p>
+
+      <div class="review-tags">
+        <span *ngFor="let tag of review.tags; trackBy: trackByText">{{ tag }}</span>
+      </div>
+    </article>
+  </section>
+
+  <ng-template #reviewsState>
+    <section class="reviews-list premium-card state-card">
+      <div *ngIf="isLoading" class="state-box">
+        <i class="fas fa-spinner fa-spin"></i>
+        <h3>Loading reviews</h3>
+        <p>We are preparing your latest feedback and reputation signals.</p>
+      </div>
+
+      <div *ngIf="!isLoading && !reviews.length" class="state-box">
+        <i class="fas fa-comment-slash"></i>
+        <h3>No reviews yet</h3>
+        <p>Your completed missions and client feedback will appear here.</p>
+      </div>
+    </section>
+  </ng-template>
+</div>

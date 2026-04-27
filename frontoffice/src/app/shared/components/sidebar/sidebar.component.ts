@@ -85,6 +85,27 @@ export class SidebarComponent implements OnInit {
       ]
     },
     {
+      label: 'Plateforme',
+      icon: 'fa-laptop-code',
+      expanded: false,
+      children: [
+        { label: 'Contrats',       icon: 'fa-file-contract',     route: '/app/activity/contracts'       },
+        { label: 'Litiges',        icon: 'fa-scale-balanced',    route: '/app/activity/disputes'        },
+        { label: 'Wallet',         icon: 'fa-wallet',            route: '/app/finance/wallet'           },
+        { label: 'Historique',     icon: 'fa-clock-rotate-left', route: '/app/finance/payments-history' },
+        { label: 'Recommendations',icon: 'fa-wand-magic-sparkles', route: '/app/recommendation'         }
+      ]
+    },
+    {
+      label: 'Gestion de Projets',
+      icon: 'fa-diagram-project',
+      expanded: false,
+      children: [
+        { label: 'Mes Projets',      icon: 'fa-folder-open',    route: '/app/projects'               },
+        { label: 'Notifications',    icon: 'fa-bell',           route: '/app/projects/notifications' }
+      ]
+    },
+    {
       label: 'Engagement & Gamification',
       icon: 'fa-gamepad',
       expanded: false,
@@ -100,8 +121,6 @@ export class SidebarComponent implements OnInit {
 
   comingSoonItems: ComingSoonItem[] = [
     { label: 'Job Board',   icon: 'fa-magnifying-glass' },
-    { label: 'Contrats',    icon: 'fa-file-contract'    },
-    { label: 'Wallet',      icon: 'fa-wallet'           },
     { label: 'Messages',    icon: 'fa-envelope'         },
     { label: 'Évènements',  icon: 'fa-calendar-days'    }
   ];

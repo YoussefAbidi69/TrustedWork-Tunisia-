@@ -1,0 +1,103 @@
+<div class="dispute-list-wrapper animate-fade-in">
+  
+  <!-- Hero Section -->
+  <section class="dispute-hero">
+    <div class="dispute-hero__glow dispute-hero__glow--one"></div>
+    <div class="dispute-hero__glow dispute-hero__glow--two"></div>
+
+    <div class="dispute-hero__content">
+      <div class="hero-text">
+        <div class="eyebrow-group">
+          <span class="eyebrow">Centre de Résolution</span>
+          <span class="eyebrow eyebrow--accent">TrustedWork Protection</span>
+        </div>
+
+        <h1>Gestion et Suivi des Litiges</h1>
+
+        <p>
+          Suivez l'état de vos réclamations, répondez aux demandes d'arbitrage et résolvez vos différends contractuels en toute sécurité.
+        </p>
+
+        <div class="hero-actions">
+          <button class="btn btn-primary" (click)="openCreate()">
+            <i class="bi bi-plus-lg me-2"></i> Ouvrir un nouveau litige
+          </button>
+        </div>
+      </div>
+
+      <div class="dispute-hero__panel">
+        <span class="card-kicker">Vue d'ensemble</span>
+        <div class="hero-panel-item">
+          <span class="small-label">Dossiers actifs</span>
+          <strong>{{ disputes.length }}</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-3 text-muted">Récupération de vos dossiers...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="alert alert-danger rounded-4 border-0 shadow-sm mb-4">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && disputes.length === 0 && !error" class="empty-state">
+    <div class="empty-illustration">
+      <i class="bi bi-shield-check"></i>
+    </div>
+    <h3>Tout est en ordre</h3>
+    <p>Aucun litige n'est actuellement ouvert. Vos collaborations se déroulent parfaitement.</p>
+    <button class="btn btn-outline-primary mt-3" (click)="openCreate()">
+      <i class="bi bi-plus-lg"></i> Ouvrir un litige préventif
+    </button>
+  </div>
+
+  <!-- Disputes Grid -->
+  <div class="dispute-grid" *ngIf="!loading && disputes.length > 0">
+    <article class="dispute-card" *ngFor="let d of disputes" (click)="openDetail(d.id!)">
+      <div class="card-status-bar" [ngClass]="getStatusClass(d.status)"></div>
+      
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <span class="ref-badge">{{ d.reference || 'DIS-' + d.id }}</span>
+            <span class="status-badge" [ngClass]="getStatusClass(d.status)">
+              {{ getStatusLabel(d.status) }}
+            </span>
+          </div>
+          <time class="date-badge">
+            <i class="bi bi-clock-history me-1"></i>
+            {{ d.openedAt | date:'dd MMM yyyy' }}
+          </time>
+        </div>
+
+        <h3 class="dispute-motif">{{ d.motif }}</h3>
+
+        <div class="meta-footer mt-4">
+          <div class="meta-item">
+            <i class="bi bi-file-earmark-text"></i>
+            <span>Contrat #{{ d.contractId }}</span>
+          </div>
+          <div class="meta-item" *ngIf="d.milestoneId">
+            <i class="bi bi-flag"></i>
+            <span>Jalon #{{ d.milestoneId }}</span>
+          </div>
+          <div class="meta-item" *ngIf="!d.milestoneId">
+            <i class="bi bi-layers"></i>
+            <span>Contrat Global</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-action">
+        <i class="bi bi-arrow-right-circle"></i>
+      </div>
+    </article>
+  </div>
+</div>

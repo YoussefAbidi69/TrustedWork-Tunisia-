@@ -1,0 +1,259 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import {
+  Project, CreateProjectDTO,
+  Task, CreateTaskDTO, TaskStatus,
+  SubTask, CreateSubTaskDTO,
+  Deliverable, CreateDeliverableDTO, DeliverableStatus,
+  ProgressReport,
+  DeliveryRiskSignal,
+  MLPrediction,
+  ProjectNotification,
+  ProjectStatus,
+  TaskSuggestionResponse,
+  BurndownChart
+} from '../models/project.models';
+
+
+
+const GATEWAY_URL = '/api';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ProjectApiService {
+
+  constructor(private http: HttpClient) {}
+
+  // ══════════════════════════════════════════
+  // PROJECTS
+  // ══════════════════════════════════════════
+
+  createProject(dto: CreateProjectDTO): Observable<Project> {
+    return this.http.post<Project>(`${GATEWAY_URL}/projects`, dto);
+  }
+
+  getProjectById(id: number): Observable<Project> {
+    return this.http.get<Project>(`${GATEWAY_URL}/projects/${id}`);
+  }
+
+  /** Endpoint enrichi : retourne le projet avec CIN + nom + prénom */
+  getProjectByIdEnriched(id: number): Observable<Project> {
+    return this.http.get<Project>(`${GATEWAY_URL}/projects/${id}/enriched`);
+  }
+
+  getProjectsByUserId(userId: number): Observable<Project[]> {
+    return this.http.get<Project[]>(`${GATEWAY_URL}/projects/user/${userId}`);
+  }
+
+  /**
+   * Endpoint principal après login.
+   * Retourne les projets de l'utilisateur connecté (lu depuis le JWT côté backend).
+   * Token ajouté automatiquement par tokenInterceptor.
+   */
+  getMyProjects(): Observable<Project[]> {
+    return this.http.get<Project[]>(`${GATEWAY_URL}/projects/my`);
+  }
+
+  getAllProjects(): Observable<Project[]> {
+    return this.http.get<Project[]>(`${GATEWAY_URL}/projects`);
+  }
+
+  updateProject(id: number, dto: Partial<Project>): Observable<Project> {
+    return this.http.put<Project>(`${GATEWAY_URL}/projects/${id}`, dto);
+  }
+
+  updateProjectStatus(id: number, status: ProjectStatus): Observable<Project> {
+    return this.http.patch<Project>(
+      `${GATEWAY_URL}/projects/${id}/status`,
+      null,
+      { params: new HttpParams().set('status', status) }
+    );
+  }
+
+  deleteProject(id: number): Observable<void> {
+    return this.http.delete<void>(`${GATEWAY_URL}/projects/${id}`);
+  }
+
+  // ══════════════════════════════════════════
+  // TASKS
+  // ══════════════════════════════════════════
+
+  createTask(projectId: number, dto: CreateTaskDTO): Observable<Task> {
+    return this.http.post<Task>(`${GATEWAY_URL}/projects/${projectId}/tasks`, dto);
+  }
+
+  getTasksByProjectId(projectId: number): Observable<Task[]> {
+    return this.http.get<Task[]>(`${GATEWAY_URL}/projects/${projectId}/tasks`);
+  }
+
+  getTaskById(id: number): Observable<Task> {
+    return this.http.get<Task>(`${GATEWAY_URL}/tasks/${id}`);
+  }
+
+  updateTask(id: number, dto: Partial<Task>): Observable<Task> {
+    return this.http.put<Task>(`${GATEWAY_URL}/tasks/${id}`, dto);
+  }
+
+  updateTaskStatus(id: number, status: TaskStatus): Observable<Task> {
+    return this.http.patch<Task>(
+      `${GATEWAY_URL}/tasks/${id}/status`,
+      null,
+      { params: new HttpParams().set('status', status) }
+    );
+  }
+
+  assignTask(id: number, assigneeId: number): Observable<Task> {
+    return this.http.patch<Task>(
+      `${GATEWAY_URL}/tasks/${id}/assign`,
+      null,
+      { params: new HttpParams().set('assigneeId', assigneeId.toString()) }
+    );
+  }
+
+  deleteTask(id: number): Observable<void> {
+    return this.http.delete<void>(`${GATEWAY_URL}/tasks/${id}`);
+  }
+
+  // ══════════════════════════════════════════
+  // SUBTASKS
+  // ══════════════════════════════════════════
+
+  createSubTask(taskId: number, dto: CreateSubTaskDTO): Observable<SubTask> {
+    return this.http.post<SubTask>(`${GATEWAY_URL}/tasks/${taskId}/subtasks`, dto);
+  }
+
+  getSubTasksByTaskId(taskId: number): Observable<SubTask[]> {
+    return this.http.get<SubTask[]>(`${GATEWAY_URL}/tasks/${taskId}/subtasks`);
+  }
+
+  toggleSubTask(id: number): Observable<SubTask> {
+    return this.http.patch<SubTask>(`${GATEWAY_URL}/subtasks/${id}/toggle`, null);
+  }
+
+  deleteSubTask(id: number): Observable<void> {
+    return this.http.delete<void>(`${GATEWAY_URL}/subtasks/${id}`);
+  }
+
+  // ══════════════════════════════════════════
+  // DELIVERABLES
+  // ══════════════════════════════════════════
+
+  submitDeliverable(projectId: number, dto: CreateDeliverableDTO): Observable<Deliverable> {
+    return this.http.post<Deliverable>(`${GATEWAY_URL}/projects/${projectId}/deliverables`, dto);
+  }
+
+  getDeliverablesByProjectId(projectId: number): Observable<Deliverable[]> {
+    return this.http.get<Deliverable[]>(`${GATEWAY_URL}/projects/${projectId}/deliverables`);
+  }
+
+  getDeliverableById(id: number): Observable<Deliverable> {
+    return this.http.get<Deliverable>(`${GATEWAY_URL}/deliverables/${id}`);
+  }
+
+  reviewDeliverable(id: number, status: DeliverableStatus, reviewComment: string): Observable<Deliverable> {
+    return this.http.patch<Deliverable>(
+      `${GATEWAY_URL}/deliverables/${id}/review`,
+      null,
+      { params: new HttpParams().set('status', status).set('reviewComment', reviewComment) }
+    );
+  }
+
+  deleteDeliverable(id: number): Observable<void> {
+    return this.http.delete<void>(`${GATEWAY_URL}/deliverables/${id}`);
+  }
+
+  // ══════════════════════════════════════════
+  // PROGRESS REPORTS
+  // ══════════════════════════════════════════
+
+  generateReport(projectId: number): Observable<ProgressReport> {
+    return this.http.get<ProgressReport>(`${GATEWAY_URL}/projects/${projectId}/report`);
+  }
+
+  getReportHistory(projectId: number): Observable<ProgressReport[]> {
+    return this.http.get<ProgressReport[]>(`${GATEWAY_URL}/projects/${projectId}/reports`);
+  }
+
+  // ══════════════════════════════════════════
+  // RISK SIGNALS
+  // ══════════════════════════════════════════
+
+  getActiveRisks(projectId: number): Observable<DeliveryRiskSignal[]> {
+    return this.http.get<DeliveryRiskSignal[]>(`${GATEWAY_URL}/projects/${projectId}/risks`);
+  }
+
+  getLatestCriticalRisk(projectId: number): Observable<DeliveryRiskSignal> {
+    return this.http.get<DeliveryRiskSignal>(`${GATEWAY_URL}/projects/${projectId}/risks/latest`);
+  }
+
+  analyzeRisks(projectId: number): Observable<void> {
+    return this.http.post<void>(`${GATEWAY_URL}/projects/${projectId}/risks/analyze`, null);
+  }
+
+  resolveRisk(id: number): Observable<DeliveryRiskSignal> {
+    return this.http.patch<DeliveryRiskSignal>(`${GATEWAY_URL}/risks/${id}/resolve`, null);
+  }
+
+  // ══════════════════════════════════════════
+  // NOTIFICATIONS
+  // ══════════════════════════════════════════
+
+  getNotifications(userId: number): Observable<ProjectNotification[]> {
+    return this.http.get<ProjectNotification[]>(`${GATEWAY_URL}/project-notifications/user/${userId}`);
+  }
+
+  getUnreadNotifications(userId: number): Observable<ProjectNotification[]> {
+    return this.http.get<ProjectNotification[]>(`${GATEWAY_URL}/project-notifications/user/${userId}/unread`);
+  }
+
+  getUnreadCount(userId: number): Observable<number> {
+    return this.http.get<number>(`${GATEWAY_URL}/project-notifications/user/${userId}/unread/count`);
+  }
+
+  markAsRead(id: number): Observable<void> {
+    return this.http.patch<void>(`${GATEWAY_URL}/project-notifications/${id}/read`, null);
+  }
+
+  markAllAsRead(userId: number): Observable<void> {
+    return this.http.patch<void>(`${GATEWAY_URL}/project-notifications/user/${userId}/read-all`, null);
+  }
+
+  // ══════════════════════════════════════════
+  // EXPORT
+  // ══════════════════════════════════════════
+
+  exportPdf(projectId: number): Observable<Blob> {
+    return this.http.get(`${GATEWAY_URL}/projects/${projectId}/export/pdf`, {
+      responseType: 'blob'
+    });
+  }
+
+  exportCsv(projectId: number): Observable<Blob> {
+    return this.http.get(`${GATEWAY_URL}/projects/${projectId}/export/csv`, {
+      responseType: 'blob'
+    });
+  }
+
+  // Prédiction ML Random Forest
+  predictDeliveryRisk(projectId: number): Observable<MLPrediction> {
+    return this.http.get<MLPrediction>(
+      `${GATEWAY_URL}/projects/${projectId}/risks/ml-predict`
+    );
+  }
+
+  // Suggestion IA de tâches (RandomForest)
+  getSuggestedTasks(projectId: number): Observable<TaskSuggestionResponse> {
+    return this.http.get<TaskSuggestionResponse>(
+      `${GATEWAY_URL}/projects/${projectId}/suggest-tasks`
+    );
+  }
+
+  // Burndown Chart
+  getBurndownChart(projectId: number): Observable<BurndownChart> {
+    return this.http.get<BurndownChart>(
+      `${GATEWAY_URL}/projects/${projectId}/burndown`
+    );
+  }
+}

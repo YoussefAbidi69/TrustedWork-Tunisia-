@@ -1,0 +1,101 @@
+<div class="deliveries-page">
+  <section class="hero">
+    <div class="hero__content">
+      <div class="hero__copy">
+        <div class="eyebrow-group">
+          <span class="eyebrow">Project Flow</span>
+          <span class="eyebrow eyebrow--accent">Deliveries Center</span>
+        </div>
+
+        <h1>Track every client handoff with clarity, quality and premium delivery standards.</h1>
+        <p>
+          Manage review stages, pending files and revision loops in one structured
+          handoff workspace designed for professional delivery operations.
+        </p>
+      </div>
+
+      <div class="hero-card">
+        <span class="card-kicker">Delivery health</span>
+        <strong>04</strong>
+        <p>Files currently in client review.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <article class="stat-card" *ngFor="let stat of stats">
+      <span>{{ stat.label }}</span>
+      <strong [ngClass]="getStatToneClass(stat.tone)">{{ stat.value }}</strong>
+    </article>
+  </section>
+
+  <section class="layout">
+    <div class="main">
+      <div class="panel-card">
+        <div class="panel-head">
+          <span class="card-kicker">Handoff list</span>
+          <h2>My deliveries</h2>
+        </div>
+
+        <div class="delivery-list">
+          <article
+            class="delivery-card"
+            *ngFor="let delivery of deliveries"
+            [class.delivery-card--active]="delivery.id === selectedDeliveryId"
+            (click)="selectDelivery(delivery.id)"
+          >
+            <div class="delivery-card__top">
+              <div>
+                <div class="title-row">
+                  <h3>{{ delivery.project }}</h3>
+                  <span [ngClass]="getStatusClass(delivery.status)">{{ delivery.status }}</span>
+                </div>
+                <p>{{ delivery.client }}</p>
+              </div>
+              <strong>{{ delivery.files }} files</strong>
+            </div>
+
+            <p class="summary">{{ delivery.summary }}</p>
+
+            <div class="meta">
+              <span>Due {{ delivery.dueDate }}</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="panel-card">
+        <div class="panel-head">
+          <span class="card-kicker">Selected delivery</span>
+          <h2>{{ selectedDelivery.project }}</h2>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-row">
+            <span>Client</span>
+            <strong>{{ selectedDelivery.client }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Status</span>
+            <strong>{{ selectedDelivery.status }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Due date</span>
+            <strong>{{ selectedDelivery.dueDate }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Files delivered</span>
+            <strong class="accent-value">{{ selectedDelivery.files }}</strong>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Delivery note</h3>
+          <p>{{ selectedDelivery.summary }}</p>
+        </div>
+      </div>
+    </aside>
+  </section>
+</div>

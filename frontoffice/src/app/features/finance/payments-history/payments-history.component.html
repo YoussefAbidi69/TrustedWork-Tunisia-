@@ -1,0 +1,168 @@
+<div class="payments-history-page animate-fade-in">
+  
+  <!-- Hero Section -->
+  <section class="payments-history-hero">
+    <div class="payments-history-hero__glow payments-history-hero__glow--one"></div>
+    <div class="payments-history-hero__glow payments-history-hero__glow--two"></div>
+
+    <div class="payments-history-hero__content">
+      <div class="hero-text">
+        <div class="eyebrow-group">
+          <span class="eyebrow">Finance Operations</span>
+          <span class="eyebrow eyebrow--accent">TrustedWork AI</span>
+        </div>
+
+        <h1>Relevé complet de vos mouvements financiers.</h1>
+
+        <p>
+          Retrouvez l'ensemble de vos transactions. Suivez l'évolution de vos paiements, téléchargez vos reçus et gérez votre comptabilité avec précision.
+        </p>
+
+        <div class="hero-actions">
+          <button type="button" class="btn">
+            <i class="bi bi-cloud-download"></i> Exporter l'archive
+          </button>
+        </div>
+      </div>
+
+      <div class="payments-history-hero__panel">
+        <span class="card-kicker">Résumé Global</span>
+        <div class="hero-panel-item">
+          <span class="small-label">Transactions totales</span>
+          <strong>{{ filteredPayments.length }}</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Grid -->
+  <section class="payments-stats-grid">
+    <div class="stat-card" *ngFor="let stat of paymentStats; trackBy: trackByLabel; let i = index">
+      <div class="stat-icon">
+        <i class="bi" [ngClass]="{'bi-wallet2': i === 0, 'bi-calendar-check': i === 1, 'bi-graph-up-arrow': i === 2}"></i>
+      </div>
+      <div>
+        <span class="label">{{ stat.label }}</span>
+        <h3>{{ stat.value }}</h3>
+      </div>
+      <p class="caption">{{ stat.caption }}</p>
+    </div>
+  </section>
+
+  <!-- Main Content: Transactions Table -->
+  <section class="payments-layout">
+    <div class="panel-head d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2>Livre des Enregistrements</h2>
+        <p class="text-muted mb-0">Audit financier détaillé de votre activité.</p>
+      </div>
+      <div class="filter-controls">
+        <select class="form-select" [(ngModel)]="selectedStatus" (ngModelChange)="selectStatus($event)">
+          <option *ngFor="let status of statusFilters" [value]="status">Statut: {{ status }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
+    <div class="table-responsive" *ngIf="!loading && filteredPayments.length">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Référence</th>
+            <th>Client & Détails</th>
+            <th>Date</th>
+            <th>Montant</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let payment of filteredPayments; trackBy: trackByPayment" 
+              [class.active]="selectedPayment?.id === payment.id"
+              (click)="selectPayment(payment)">
+            <td>
+              <strong class="text-midnight">{{ payment.id }}</strong>
+            </td>
+            <td>
+              <div class="fw-bold">{{ payment.client }}</div>
+              <small class="text-muted d-block text-truncate" style="max-width: 200px;">{{ payment.description }}</small>
+            </td>
+            <td>
+              <div class="fw-bold">{{ payment.period }}</div>
+              <small class="text-stone">{{ payment.paidAt }}</small>
+            </td>
+            <td>
+              <strong class="fs-5">{{ payment.netAmount }}</strong>
+            </td>
+            <td>
+              <span class="status-pill" [ngClass]="getStatusClass(payment.status)">
+                <i class="bi" [ngClass]="{
+                  'bi-check-circle-fill': payment.status === 'Paid',
+                  'bi-hourglass-split': payment.status === 'Processing',
+                  'bi-x-circle-fill': payment.status === 'Cancelled',
+                  'bi-calendar-event': payment.status === 'Scheduled'
+                }"></i>
+                {{ payment.status }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !filteredPayments.length" class="empty-state">
+      <i class="bi bi-folder2-open"></i>
+      <h3>Aucune transaction</h3>
+      <p>Aucun enregistrement ne correspond aux critères sélectionnés.</p>
+    </div>
+  </section>
+
+  <!-- Details & Timeline Section -->
+  <section class="details-section animate-fade-in" *ngIf="selectedPayment && filteredPayments.length > 0">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+      <div>
+        <h2 class="mb-1">Détails de la Transaction</h2>
+        <p class="text-muted mb-0">Référence {{ selectedPayment.id }}</p>
+      </div>
+      <button class="btn-print-receipt" (click)="printReceipt()">
+        <i class="bi bi-printer"></i> Imprimer le reçu
+      </button>
+    </div>
+
+    <div class="row g-5">
+      <div class="col-md-5">
+        <div class="p-4 bg-light rounded-4 mb-4">
+          <label class="text-uppercase small fw-bold text-stone mb-3 d-block">Informations Complètes</label>
+          <div class="mb-3">
+            <span class="d-block text-muted small">Description</span>
+            <strong class="d-block">{{ selectedPayment.description }}</strong>
+          </div>
+          <div class="mb-3">
+            <span class="d-block text-muted small">Méthode de paiement</span>
+            <strong class="d-block">{{ selectedPayment.method }}</strong>
+          </div>
+          <div>
+            <span class="d-block text-muted small">Client</span>
+            <strong class="d-block">{{ selectedPayment.client }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-7">
+        <label class="text-uppercase small fw-bold text-stone mb-4 d-block">Historique des Événements</label>
+        <div class="timeline">
+          <div *ngFor="let step of selectedPayment.timeline" class="timeline-item">
+            <div class="timeline-dot"></div>
+            <h6 class="fw-bold mb-1">{{ step.title }}</h6>
+            <small class="text-primary d-block mb-2">{{ step.date }}</small>
+            <p class="text-muted small mb-0">{{ step.description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>

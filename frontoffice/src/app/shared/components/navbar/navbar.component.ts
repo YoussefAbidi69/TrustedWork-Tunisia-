@@ -1,4 +1,4 @@
-﻿import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { AuthUser } from '../../../core/models/auth.model';
@@ -77,17 +77,18 @@ export class NavbarComponent implements OnInit {
     {
       label: 'Marketplace',
       children: [
-        { label: 'Offres Freelance', description: 'Missions disponibles',   disabled: true },
-        { label: 'Contrats',         description: 'Gestion des contrats',   disabled: true },
-        { label: 'Escrow',           description: 'Paiements securises',    disabled: true }
+        { label: 'Contrats',       route: '/app/activity/contracts',       description: 'Suivi de vos missions'      },
+        { label: 'Wallet',         route: '/app/finance/wallet',           description: 'Solde et transactions'      },
+        { label: 'Historique',     route: '/app/finance/payments-history', description: 'Audit des paiements'        },
+        { label: 'Recommandations',route: '/app/recommendation',           description: 'Projets suggérés par l\'IA' }
       ]
     },
     {
       label: 'Communaute',
       children: [
-        { label: 'Evenements', description: 'Hackathons et meetups', disabled: true },
-        { label: 'Challenges', description: 'Defis et gamification', disabled: true },
-        { label: 'Agences',    description: 'Equipes freelance',     disabled: true }
+        { label: 'Litiges',     route: '/app/activity/disputes', description: 'Gestion des conflits AI' },
+        { label: 'Evenements',  description: 'Hackathons et meetups',    disabled: true },
+        { label: 'Challenges',  description: 'Defis et gamification',    disabled: true }
       ]
     }
   ];

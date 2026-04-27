@@ -1,0 +1,166 @@
+<div class="admin-projects">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fas fa-table-list text-accent"></i> Gestion des Projets</h1>
+      <p class="page-subtitle">{{ filtered.length }} projet(s) trouvé(s)</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" (click)="goBack()"><i class="fas fa-arrow-left"></i> Retour</button>
+      <button class="btn btn-primary btn-sm" (click)="openCreate()"><i class="fas fa-plus"></i> Nouveau Projet</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" class="form-control" placeholder="Rechercher par titre, ID..."
+             [(ngModel)]="searchQuery" (input)="applyFilters()">
+    </div>
+    <div class="filter-chips">
+      <button *ngFor="let s of statuses" class="chip" [class.active]="selectedStatus === s" (click)="onStatusFilter(s)">
+        {{ s === 'ALL' ? 'Tous' : statusLabel(s) }}
+      </button>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <i class="fas fa-spinner fa-spin"></i><p>Chargement...</p>
+  </div>
+
+  <!-- Table -->
+  <div class="card" *ngIf="!loading">
+    <div class="table-wrap">
+      <table class="tw-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Projet</th>
+            <th>Statut</th>
+            <th>Complétion</th>
+            <th>Budget</th>
+            <th>Début</th>
+            <th>Fin</th>
+            <th>Client</th>
+            <th>Freelancer</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of filtered">
+            <td>#{{ p.id }}</td>
+            <td>
+              <div class="project-cell">
+                <strong class="clickable" (click)="goDetail(p.id)">{{ p.title }}</strong>
+                <span>{{ p.description | slice:0:50 }}{{ (p.description?.length || 0) > 50 ? '...' : '' }}</span>
+              </div>
+            </td>
+            <td><span class="badge" [ngClass]="statusBadge(p.status)">{{ statusLabel(p.status) }}</span></td>
+            <td>
+              <div class="mini-progress">
+                <div class="mini-bar"><div class="mini-fill" [style.width.%]="p.completionRate"></div></div>
+                <span>{{ p.completionRate }}%</span>
+              </div>
+            </td>
+            <td class="text-accent" style="font-weight:600">{{ p.budget | number:'1.0-0' }} DT</td>
+            <td>{{ p.startDate }}</td>
+            <td>{{ p.endDate }}</td>
+            <td>{{ p.clientFirstName ? (p.clientFirstName + ' ' + p.clientLastName) : ('#' + p.clientId) }}</td>
+            <td>{{ p.freelancerFirstName ? (p.freelancerFirstName + ' ' + p.freelancerLastName) : ('#' + p.freelancerId) }}</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn btn-icon btn-ghost" title="Voir" (click)="goDetail(p.id)"><i class="fas fa-eye"></i></button>
+                <button class="btn btn-icon btn-ghost" title="Statut" (click)="openStatus(p)"><i class="fas fa-exchange-alt"></i></button>
+                <button class="btn btn-icon btn-danger" title="Supprimer" (click)="openDelete(p)"><i class="fas fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="filtered.length === 0"><i class="fas fa-folder-open"></i><p>Aucun projet trouvé</p></div>
+    </div>
+  </div>
+
+  <!-- ═══ Modal Création ═══ -->
+  <div class="modal-overlay" *ngIf="showCreate" (click)="showCreate = false">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="fas fa-plus-circle text-accent"></i> Nouveau Projet</h3>
+        <button class="modal-close" (click)="showCreate = false">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Titre *</label>
+          <input class="form-control" [(ngModel)]="form.title" placeholder="Titre du projet"></div>
+        <div class="form-group"><label class="form-label">Description</label>
+          <textarea class="form-control" [(ngModel)]="form.description" rows="3" placeholder="Description"></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Contract ID</label>
+            <input class="form-control" type="number" [(ngModel)]="form.contractId"></div>
+          <div class="form-group"><label class="form-label">Client ID</label>
+            <input class="form-control" type="number" [(ngModel)]="form.clientId"></div>
+          <div class="form-group"><label class="form-label">Freelancer ID</label>
+            <input class="form-control" type="number" [(ngModel)]="form.freelancerId"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Début</label>
+            <input class="form-control" type="date" [(ngModel)]="form.startDate"></div>
+          <div class="form-group"><label class="form-label">Fin</label>
+            <input class="form-control" type="date" [(ngModel)]="form.endDate"></div>
+          <div class="form-group"><label class="form-label">Budget (DT)</label>
+            <input class="form-control" type="number" [(ngModel)]="form.budget"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm" (click)="showCreate = false">Annuler</button>
+        <button class="btn btn-primary btn-sm" (click)="submitCreate()" [disabled]="!form.title.trim()">
+          <i class="fas fa-check"></i> Créer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Modal Statut ═══ -->
+  <div class="modal-overlay" *ngIf="showStatusModal" (click)="showStatusModal = false">
+    <div class="modal-box modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="fas fa-exchange-alt text-accent"></i> Changer le statut</h3>
+        <button class="modal-close" (click)="showStatusModal = false">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-secondary" style="margin-bottom:12px">Projet : <strong class="text-primary">{{ targetProject?.title }}</strong></p>
+        <div class="form-group"><label class="form-label">Nouveau statut</label>
+          <select class="form-control" [(ngModel)]="newStatus">
+            <option value="ACTIVE">Active</option>
+            <option value="ON_HOLD">On Hold</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm" (click)="showStatusModal = false">Annuler</button>
+        <button class="btn btn-primary btn-sm" (click)="submitStatus()"><i class="fas fa-check"></i> Appliquer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Modal Suppression ═══ -->
+  <div class="modal-overlay" *ngIf="showDelete" (click)="showDelete = false">
+    <div class="modal-box modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="fas fa-trash text-danger"></i> Confirmer la suppression</h3>
+        <button class="modal-close" (click)="showDelete = false">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-secondary">Supprimer <strong class="text-primary">{{ deleteTarget?.title }}</strong> ?</p>
+        <p class="text-danger" style="font-size:12px;margin-top:8px">Action irréversible — toutes les tâches et livrables seront supprimés.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm" (click)="showDelete = false">Annuler</button>
+        <button class="btn btn-danger btn-sm" (click)="confirmDelete()"><i class="fas fa-trash"></i> Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+</div>

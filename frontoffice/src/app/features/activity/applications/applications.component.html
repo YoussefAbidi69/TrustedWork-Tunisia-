@@ -1,0 +1,230 @@
+<div class="applications-page">
+  <section class="applications-hero">
+    <div class="applications-hero__glow applications-hero__glow--one"></div>
+    <div class="applications-hero__glow applications-hero__glow--two"></div>
+
+    <div class="applications-hero__content">
+      <div class="applications-hero__copy">
+        <div class="eyebrow-group">
+          <span class="eyebrow">Activity Pipeline</span>
+          <span class="eyebrow eyebrow--accent">Applications Hub</span>
+        </div>
+
+        <h1>Track every freelance application with a premium, structured opportunity workflow.</h1>
+
+        <p>
+          Monitor your candidatures, follow status progression and understand where your
+          strongest opportunities are moving across your professional pipeline.
+        </p>
+
+        <div class="hero-actions">
+          <button type="button" class="hero-btn hero-btn--primary">
+            <i class="fas fa-paper-plane"></i>
+            <span>New application</span>
+          </button>
+
+          <button type="button" class="hero-btn hero-btn--ghost">
+            <i class="fas fa-filter"></i>
+            <span>Refine pipeline</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-spotlight-card">
+        <span class="card-kicker">Pipeline focus</span>
+        <h2>Your top applications are progressing toward high-value opportunities.</h2>
+
+        <div class="spotlight-score">
+          <strong>08</strong>
+          <span>Active applications</span>
+        </div>
+
+        <div class="spotlight-chip">
+          <span class="spotlight-chip__dot"></span>
+          3 interviews in progress
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <article class="stat-card" *ngFor="let stat of stats">
+      <div class="stat-card__label">{{ stat.label }}</div>
+      <strong [ngClass]="getStatToneClass(stat.tone)">{{ stat.value }}</strong>
+    </article>
+  </section>
+
+  <section class="applications-layout">
+    <div class="applications-main">
+      <div class="panel-card">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Opportunity tracker</span>
+            <h2>My applications</h2>
+          </div>
+
+          <div class="panel-head__filters">
+            <span
+              class="filter-chip"
+              [class.active]="filter === 'All'"
+              *ngFor="let filter of filters"
+            >
+              {{ filter }}
+            </span>
+          </div>
+        </div>
+
+        <div class="application-list">
+          <article
+            class="application-card"
+            *ngFor="let application of applications"
+            [class.application-card--active]="application.id === selectedApplicationId"
+            (click)="selectApplication(application.id)"
+          >
+            <div class="application-card__top">
+              <div class="application-card__identity">
+                <div class="application-icon">
+                  <i class="fas fa-briefcase"></i>
+                </div>
+
+                <div>
+                  <div class="application-title-row">
+                    <h3>{{ application.jobTitle }}</h3>
+                    <span [ngClass]="getStatusClass(application.status)">
+                      {{ application.status }}
+                    </span>
+                  </div>
+
+                  <p>{{ application.company }} • {{ application.location }}</p>
+                </div>
+              </div>
+
+              <div class="application-score">
+                <strong>{{ application.matchScore }}%</strong>
+                <span>Match</span>
+              </div>
+            </div>
+
+            <p class="application-summary">{{ application.summary }}</p>
+
+            <div class="application-meta">
+              <span>{{ application.contractType }}</span>
+              <span class="dot-separator">•</span>
+              <span>{{ application.budget }}</span>
+              <span class="dot-separator">•</span>
+              <span>Applied {{ application.appliedAt }}</span>
+            </div>
+
+            <div class="tags-row">
+              <span class="tag-chip" *ngFor="let tag of application.tags">
+                {{ tag }}
+              </span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <aside class="applications-side">
+      <div class="panel-card panel-card--detail">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Selected application</span>
+            <h2>{{ selectedApplication.jobTitle }}</h2>
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-row">
+            <span>Company</span>
+            <strong>{{ selectedApplication.company }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Status</span>
+            <strong>{{ selectedApplication.status }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Budget</span>
+            <strong>{{ selectedApplication.budget }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Match score</span>
+            <strong class="accent-value">{{ selectedApplication.matchScore }}%</strong>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Application timeline</h3>
+
+          <div class="timeline-list">
+            <article
+              class="timeline-item"
+              *ngFor="let step of selectedApplication.timeline"
+              [class.timeline-item--done]="step.done"
+            >
+              <div class="timeline-item__dot"></div>
+
+              <div class="timeline-item__content">
+                <strong>{{ step.label }}</strong>
+                <p>{{ step.done ? 'Completed successfully' : 'Waiting for progression' }}</p>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button type="button" class="detail-btn detail-btn--primary">
+            View opportunity
+          </button>
+          <button type="button" class="detail-btn detail-btn--ghost">
+            Update status
+          </button>
+        </div>
+      </div>
+
+      <div class="panel-card panel-card--dark">
+        <div class="panel-head panel-head--dark">
+          <div>
+            <span class="card-kicker card-kicker--dark">Pipeline insight</span>
+            <h2>Why this matters</h2>
+          </div>
+        </div>
+
+        <div class="insight-list">
+          <article class="insight-item">
+            <div class="insight-item__icon">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div>
+              <strong>Better visibility</strong>
+              <p>Understand where your strongest applications are progressing fastest.</p>
+            </div>
+          </article>
+
+          <article class="insight-item">
+            <div class="insight-item__icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div>
+              <strong>Pipeline control</strong>
+              <p>Track every candidature step with a clear and professional workflow.</p>
+            </div>
+          </article>
+
+          <article class="insight-item">
+            <div class="insight-item__icon">
+              <i class="fas fa-star"></i>
+            </div>
+            <div>
+              <strong>Premium positioning</strong>
+              <p>Showcase a structured freelance process aligned with high-value clients.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </aside>
+  </section>
+</div>

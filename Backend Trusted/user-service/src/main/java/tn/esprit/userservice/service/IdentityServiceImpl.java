@@ -78,6 +78,26 @@ public class IdentityServiceImpl implements IIdentityService {
                     .build();
         }
     }
+    @Override
+    public PublicUserDTO getPublicProfileByCin(Integer cin) {
+        User user = userRepository.findByCin(cin)
+                .orElseThrow(() -> new UserNotFoundException(
+                        "Utilisateur introuvable avec CIN : " + cin));
+
+        return PublicUserDTO.builder()
+                .id(user.getId())
+                .cin(user.getCin())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .role(user.getRole() != null ? user.getRole().name() : null)
+                .kycStatus(user.getKycStatus() != null
+                        ? user.getKycStatus().name() : null)
+                .trustLevel(user.getTrustLevel())
+                .accountStatus(user.getAccountStatus() != null
+                        ? user.getAccountStatus().name() : null)
+                .build();
+    }
 
     // ==================== PUBLIC PROFILE ====================
 

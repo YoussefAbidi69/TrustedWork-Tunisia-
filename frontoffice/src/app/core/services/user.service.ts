@@ -41,6 +41,10 @@ export class UserService {
     return this.api.get<ConnectedUserResponse>('/users/me');
   }
 
+  getUserByCin(cin: string | number): Observable<UserProfileResponse> {
+    return this.api.get<UserProfileResponse>(`/identity/users/by-cin/${cin}`);
+  }
+
   getMyProfile(): Observable<UserProfileResponse> {
     return this.api.get<UserProfileResponse>('/users/me');
   }

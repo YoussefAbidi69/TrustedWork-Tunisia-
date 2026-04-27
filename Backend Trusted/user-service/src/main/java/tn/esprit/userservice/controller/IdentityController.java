@@ -32,6 +32,12 @@ public class IdentityController {
         return ResponseEntity.ok(identityService.validateToken(authHeader));
     }
 
+    @GetMapping("/users/by-cin/{cin}")
+    @Operation(summary = "[Inter-modules] Profil public d'un utilisateur par CIN")
+    public ResponseEntity<PublicUserDTO> getPublicProfileByCin(@PathVariable Integer cin) {
+        return ResponseEntity.ok(identityService.getPublicProfileByCin(cin));
+    }
+
     /**
      * Retourne le profil public d'un utilisateur par son ID.
      * Consommé par Module 02, 03, 05, 06, 07, 08.

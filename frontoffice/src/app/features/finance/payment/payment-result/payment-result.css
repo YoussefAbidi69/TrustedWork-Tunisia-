@@ -1,0 +1,126 @@
+:host {
+  display: block;
+  --success: #06d6a0;
+  --warning: #ffd166;
+  --primary: #4361ee;
+  --bg-color: #f8f9fa;
+}
+
+.result-container {
+  min-height: 90vh;
+  background-color: var(--bg-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.result-card {
+  max-width: 500px;
+  width: 100%;
+  background: white;
+  border-radius: 32px;
+  padding: 4rem 2rem;
+  text-align: center;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.05);
+  border: none;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Decorative elements */
+.result-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+}
+
+.result-card.success::before { background: var(--success); }
+.result-card.cancel::before { background: var(--warning); }
+
+.icon-wrapper {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 2.5rem;
+  font-size: 3rem;
+  position: relative;
+}
+
+.success .icon-wrapper {
+  background: rgba(6, 214, 160, 0.1);
+  color: var(--success);
+}
+
+.cancel .icon-wrapper {
+  background: rgba(255, 209, 102, 0.1);
+  color: var(--warning);
+}
+
+/* Animations */
+.icon-wrapper i {
+  animation: scale-up 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes scale-up {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.result-title {
+  font-weight: 800;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #2b2d42;
+}
+
+.result-subtitle {
+  color: #8d99ae;
+  line-height: 1.6;
+  margin-bottom: 3rem;
+}
+
+.btn-result {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 10px 20px rgba(67, 97, 238, 0.2);
+}
+
+.btn-result:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(67, 97, 238, 0.3);
+  color: white;
+}
+
+.btn-result i {
+  margin-right: 12px;
+}
+
+.footer-note {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid #edf2f7;
+  font-size: 0.85rem;
+  color: #8d99ae;
+}
+
+.footer-note a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}

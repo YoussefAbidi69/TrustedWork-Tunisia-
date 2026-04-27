@@ -1,0 +1,70 @@
+.admin-detail { padding: 0; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* Participants */
+.participants-row { display: flex; gap: 32px; flex-wrap: wrap; }
+.participant { display: flex; align-items: center; gap: 10px; }
+.participant strong { display: block; font-size: 13px; color: var(--text-primary); }
+.participant span { display: block; font-size: 11px; color: var(--text-muted); }
+
+/* Table */
+.table-wrap { overflow-x: auto; }
+.file-link { color: var(--accent); font-size: 12px; font-weight: 600; }
+.file-link:hover { text-decoration: underline; }
+
+/* Risks */
+.risk-list { display: flex; flex-direction: column; gap: 4px; }
+.risk-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 8px; border-radius: var(--radius-md); transition: var(--transition);
+}
+.risk-item:hover { background: var(--bg-card-hover); }
+.risk-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.risk-type-label { font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+.risk-msg { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
+
+/* Report */
+.report-text { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+
+/* Badge critical */
+.badge-critical { background: rgba(220,38,38,0.2); color: #f87171; border: 1px solid rgba(220,38,38,0.3); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: var(--bg-overlay); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-box {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-xl);
+  width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg);
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px; border-bottom: 1px solid var(--border);
+}
+.modal-header h3 {
+  font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--text-primary);
+  display: flex; align-items: center; gap: 8px;
+}
+.modal-close { font-size: 20px; color: var(--text-muted); cursor: pointer; background: none; border: none; }
+.modal-body { padding: 20px 24px; }
+.modal-footer {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 16px 24px; border-top: 1px solid var(--border);
+}
+.form-row { display: flex; gap: 12px; margin-top: 8px; }
+.form-row .form-group { flex: 1; }
+
+@media (max-width: 900px) {
+  .stats-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 640px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .form-row { flex-direction: column; }
+}

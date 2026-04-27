@@ -20,4 +20,6 @@ public interface IIdentityService {
      * Retourne les infos Trust Level d'un utilisateur.
      */
     TokenValidationDTO getTrustLevelInfo(Long userId);
+
+    PublicUserDTO getPublicProfileByCin(Integer cin);
 }

@@ -62,6 +62,16 @@ const routes: Routes = [
         path: 'engagement',
         loadChildren: () => import('./features/engagement/engagement-admin.module').then(m => m.EngagementAdminModule)
       },
+      {
+        path: 'activity',
+        loadChildren: () => import('./features/activity/activity.module').then(m => m.ActivityModule)
+      },
+
+      // ── Module 08 : Project Management ──
+      {
+        path: 'projects',
+        loadChildren: () => import('./features/project/project.module').then(m => m.ProjectModule)
+      },
 
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]

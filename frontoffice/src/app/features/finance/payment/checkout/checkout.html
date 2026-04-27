@@ -1,0 +1,122 @@
+<div class="checkout-container d-flex align-items-center">
+  <div class="container animate-fade-in">
+    
+    <div class="payment-card row g-0">
+      
+      <!-- Summary Side (Left) -->
+      <div class="col-lg-5 card-summary">
+        <span class="summary-title">Détails du paiement</span>
+        <h1 class="project-title">{{ contract?.projectTitle || 'Chargement...' }}</h1>
+        
+        <div class="amount-box">
+          <span class="amount-label">Montant à sécuriser</span>
+          <span class="amount-value">{{ amount | number:'1.2-2' }} DT</span>
+        </div>
+
+        <ul class="benefit-list">
+          <li><i class="bi bi-shield-check text-success"></i> Fonds sécurisés par TrustedWork Escrow</li>
+          <li><i class="bi bi-calendar3 text-info"></i> Paiement débloqué jalon par jalon</li>
+          <li><i class="bi bi-envelope-check text-warning"></i> Confirmation instantanée par e-mail</li>
+          <li><i class="bi bi-patch-check text-primary"></i> Soutien client prioritaiire</li>
+        </ul>
+        
+        <div class="mt-5 pt-3">
+          <div class="d-flex align-items-center">
+            <div class="avatar bg-white bg-opacity-20 rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+              <i class="bi bi-person-circle fs-3 text-white"></i>
+            </div>
+            <div class="flex-grow-1">
+              <span class="text-white opacity-70 small d-block">Paiement autorisé par</span>
+              <span class="fw-bold d-block">{{ email }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Card Form Side (Right) -->
+      <div class="col-lg-7 card-form-side">
+        <h2 class="form-title">Méthode de paiement</h2>
+        <p class="form-subtitle">Finalisez votre transaction en toute sécurité via notre passerelle Stripe.</p>
+
+        <form (ngSubmit)="onSubmit()">
+          
+          <div class="form-group mb-4">
+            <label class="form-label">Sélectionnez une carte test</label>
+            <div class="card-type-row">
+              <div class="card-badge" 
+                  [class.active]="cardNumber.startsWith('4242')"
+                  (click)="fillTestCard('4242')">Visa Classic</div>
+              <div class="card-badge"
+                  [class.active]="cardNumber.startsWith('4000 0025')"
+                  (click)="fillTestCard('4000')">Mastercard Gold</div>
+              <div class="card-badge"
+                  [class.active]="cardNumber.startsWith('4000 0000')"
+                  (click)="fillTestCard('0002')">Carte Déclinée</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cardName">Titulaire de la carte</label>
+            <div class="input-wrapper">
+              <i class="bi bi-person-badge"></i>
+              <input type="text" id="cardName" name="cardName" class="form-control" [(ngModel)]="cardName" placeholder="NOM PRÉNOM" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cardNumber">Numéro de carte</label>
+            <div class="input-wrapper">
+              <i class="bi bi-credit-card"></i>
+              <input type="text" id="cardNumber" name="cardNumber" class="form-control" [(ngModel)]="cardNumber" placeholder="0000 0000 0000 0000" required>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 form-group">
+              <label class="form-label" for="expiryDate">Expiration</label>
+              <div class="input-wrapper">
+                <i class="bi bi-calendar2-event"></i>
+                <input type="text" id="expiryDate" name="expiryDate" class="form-control" [(ngModel)]="expiryDate" placeholder="MM/YY" required>
+              </div>
+            </div>
+            <div class="col-md-6 form-group">
+              <label class="form-label" for="cvc">CVC</label>
+              <div class="input-wrapper">
+                <i class="bi bi-lock"></i>
+                <input type="text" id="cvc" name="cvc" class="form-control" [(ngModel)]="cvc" placeholder="***" required>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="error" class="alert alert-danger mb-4 border-0 shadow-sm animate-shake">
+            <i class="bi bi-exclamation-octagon-fill me-2"></i> {{ error }}
+          </div>
+
+          <button type="submit" class="btn btn-pay" 
+                  [disabled]="loading || contract?.status === 'ACTIVE' || contract?.status === 'COMPLETED' || financialMetrics?.mismatch">
+            <span *ngIf="!loading">
+              <i class="bi bi-lock-fill me-2"></i> Sécuriser {{ amount | number:'1.2-2' }} DT
+            </span>
+            <span *ngIf="loading">
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+              Authentification bancaire...
+            </span>
+          </button>
+
+          <div *ngIf="simulationMode" class="simulation-note">
+            <i class="bi bi-info-circle-fill"></i>
+            <div>
+              <strong>Mode Simulation:</strong> Vous utilisez l'environnement de test Stripe. Aucune transaction réelle n'aura lieu. Confirmez le paiement pour activer le contrat.
+            </div>
+          </div>
+        </form>
+
+        <hr class="my-5">
+        
+        <p class="text-center text-muted small">
+          <i class="bi bi-shield-shaded me-1"></i> SSL SÉCURISÉ | PROTÉGÉ PAR STRIPE
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

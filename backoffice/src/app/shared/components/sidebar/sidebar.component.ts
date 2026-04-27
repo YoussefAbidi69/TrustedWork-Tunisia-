@@ -113,6 +113,60 @@ export class SidebarComponent implements OnInit {
       label: 'Growth Profiles',
       icon: 'fa-chart-line',
       route: '/admin/engagement/growth-profiles'
+    },
+    {
+      sectionLabel: 'Activity',
+      label: 'Contracts',
+      icon: 'fa-file-contract',
+      route: '/admin/activity/contracts'
+    },
+    {
+      label: 'Disputes',
+      icon: 'fa-gavel',
+      route: '/admin/activity/disputes'
+    },
+
+    // ── Module 08 : Project Management ──
+    {
+      sectionLabel: 'Project Management',
+      label: 'Dashboard',
+      icon: 'fa-diagram-project',
+      route: '/admin/projects'
+    },
+    {
+      label: 'Projects',
+      icon: 'fa-briefcase',
+      route: '/admin/projects/admin/list'
+    },
+    {
+      label: 'Tasks',
+      icon: 'fa-list-check',
+      route: '/admin/projects/admin/tasks'
+    },
+    {
+      label: 'Deliverables',
+      icon: 'fa-box-open',
+      route: '/admin/projects/admin/deliverables'
+    },
+    {
+      label: 'Risks',
+      icon: 'fa-triangle-exclamation',
+      route: '/admin/projects/admin/risks'
+    },
+    {
+      label: 'Reports',
+      icon: 'fa-chart-bar',
+      route: '/admin/projects/admin/reports'
+    },
+    {
+      label: 'ML Prediction',
+      icon: 'fa-wand-magic-sparkles',
+      route: '/admin/projects/admin/ml-prediction'
+    },
+    {
+      label: 'Burndown',
+      icon: 'fa-chart-line',
+      route: '/admin/projects/admin/burndown'
     }
   ];
 
@@ -135,11 +189,6 @@ export class SidebarComponent implements OnInit {
     },
     {
       sectionLabel: 'Platform',
-      label: 'Contracts',
-      icon: 'fa-file-contract',
-      comingSoon: true
-    },
-    {
       label: 'Job Listings',
       icon: 'fa-briefcase',
       comingSoon: true
@@ -255,6 +304,23 @@ export class SidebarComponent implements OnInit {
         return currentUrl.startsWith('/admin/engagement/badges');
       case '/admin/engagement/growth-profiles':
         return currentUrl.startsWith('/admin/engagement/growth-profiles');
+
+      case '/admin/projects':
+        return currentUrl === '/admin/projects';
+      case '/admin/projects/admin/list':
+        return currentUrl === '/admin/projects/admin/list';
+      case '/admin/projects/admin/tasks':
+        return currentUrl === '/admin/projects/admin/tasks';
+      case '/admin/projects/admin/deliverables':
+        return currentUrl === '/admin/projects/admin/deliverables';
+      case '/admin/projects/admin/risks':
+        return currentUrl === '/admin/projects/admin/risks';
+      case '/admin/projects/admin/reports':
+        return currentUrl === '/admin/projects/admin/reports';
+      case '/admin/projects/admin/ml-prediction':
+        return currentUrl === '/admin/projects/admin/ml-prediction';
+      case '/admin/projects/admin/burndown':
+        return currentUrl === '/admin/projects/admin/burndown';
 
       default:
         return currentUrl === route;

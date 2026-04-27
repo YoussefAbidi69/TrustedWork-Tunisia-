@@ -1,0 +1,124 @@
+<div class="admin-tasks">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fas fa-tasks text-accent"></i> Gestion des Tâches</h1>
+      <p class="page-subtitle">{{ filtered.length }} tâche(s) — tous projets confondus</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" (click)="goBack()"><i class="fas fa-arrow-left"></i> Retour</button>
+      <button class="btn btn-ghost btn-sm" (click)="loadAll()"><i class="fas fa-rotate-right"></i> Refresh</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" class="form-control" placeholder="Rechercher..." [(ngModel)]="searchQuery" (input)="applyFilters()">
+    </div>
+    <select class="form-control filter-select" [(ngModel)]="filterProject" (ngModelChange)="applyFilters()">
+      <option [ngValue]="0">Tous les projets</option>
+      <option *ngFor="let p of projects" [ngValue]="p.id">{{ p.title }}</option>
+    </select>
+    <div class="filter-chips">
+      <button *ngFor="let s of statusList" class="chip" [class.active]="filterStatus === s" (click)="filterStatus = s; applyFilters()">
+        {{ s === 'ALL' ? 'Tous' : statusLabel(s) }}
+      </button>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading"><i class="fas fa-spinner fa-spin"></i><p>Chargement...</p></div>
+
+  <div class="card" *ngIf="!loading">
+    <div class="table-wrap">
+      <table class="tw-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Tâche</th>
+            <th>Projet</th>
+            <th>Statut</th>
+            <th>Priorité</th>
+            <th>Assigné</th>
+            <th>Deadline</th>
+            <th>Heures</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of filtered">
+            <td>#{{ t.id }}</td>
+            <td>
+              <div class="task-cell">
+                <strong>{{ t.title }}</strong>
+                <span>{{ t.description | slice:0:40 }}{{ (t.description?.length || 0) > 40 ? '...' : '' }}</span>
+              </div>
+            </td>
+            <td class="text-secondary">{{ projectTitle(t.projectId) }}</td>
+            <td><span class="badge" [ngClass]="statusBadge(t.status)">{{ statusLabel(t.status) }}</span></td>
+            <td>
+              <span class="badge" [ngClass]="priorityBadge(t.priority)">
+                <i class="fas" [ngClass]="priorityIcon(t.priority)" style="margin-right:4px"></i>{{ t.priority }}
+              </span>
+            </td>
+            <td>{{ t.assigneeId ? '#' + t.assigneeId : '—' }}</td>
+            <td>{{ t.deadline || '—' }}</td>
+            <td>{{ t.actualHours || 0 }}/{{ t.estimatedHours || 0 }}h</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn btn-icon btn-ghost" title="Changer statut" (click)="openStatus(t)"><i class="fas fa-exchange-alt"></i></button>
+                <button class="btn btn-icon btn-danger" title="Supprimer" (click)="openDelete(t)"><i class="fas fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="filtered.length === 0"><i class="fas fa-inbox"></i><p>Aucune tâche trouvée</p></div>
+    </div>
+  </div>
+
+  <!-- Modal Status -->
+  <div class="modal-overlay" *ngIf="showStatusModal" (click)="showStatusModal = false">
+    <div class="modal-box modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="fas fa-exchange-alt text-accent"></i> Changer le statut</h3>
+        <button class="modal-close" (click)="showStatusModal = false">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-secondary">Tâche : <strong class="text-primary">{{ target?.title }}</strong></p>
+        <div class="form-group" style="margin-top:12px">
+          <label class="form-label">Nouveau statut</label>
+          <select class="form-control" [(ngModel)]="newStatus">
+            <option value="TODO">To Do</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="IN_REVIEW">In Review</option>
+            <option value="DONE">Done</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm" (click)="showStatusModal = false">Annuler</button>
+        <button class="btn btn-primary btn-sm" (click)="submitStatus()"><i class="fas fa-check"></i> Appliquer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Delete -->
+  <div class="modal-overlay" *ngIf="showDelete" (click)="showDelete = false">
+    <div class="modal-box modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="fas fa-trash text-danger"></i> Supprimer la tâche</h3>
+        <button class="modal-close" (click)="showDelete = false">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-secondary">Supprimer <strong class="text-primary">{{ deleteTarget?.title }}</strong> ?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm" (click)="showDelete = false">Annuler</button>
+        <button class="btn btn-danger btn-sm" (click)="confirmDelete()"><i class="fas fa-trash"></i> Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+</div>

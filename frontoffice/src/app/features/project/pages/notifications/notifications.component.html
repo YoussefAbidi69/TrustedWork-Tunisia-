@@ -1,0 +1,65 @@
+<div class="notif-page">
+
+  <!-- ══ HEADER ══ -->
+  <div class="notif-header">
+    <div>
+      <h1><i class="fas fa-bell"></i> Notifications</h1>
+      <p>{{ unreadCount }} non lue(s) sur {{ notifications.length }}</p>
+    </div>
+    <button class="btn-readall" (click)="markAllAsRead()" *ngIf="unreadCount > 0">
+      <i class="fas fa-check-double"></i> Tout marquer comme lu
+    </button>
+  </div>
+
+  <!-- ══ FILTER TABS ══ -->
+  <div class="notif-filters">
+    <button class="nf-tab" [class.nf-tab--active]="activeFilter === 'ALL'" (click)="setFilter('ALL')">
+      Toutes <span>{{ notifications.length }}</span>
+    </button>
+    <button class="nf-tab nf-tab--unread" [class.nf-tab--active]="activeFilter === 'UNREAD'" (click)="setFilter('UNREAD')">
+      Non lues <span>{{ unreadCount }}</span>
+    </button>
+    <button class="nf-tab" [class.nf-tab--active]="activeFilter === 'READ'" (click)="setFilter('READ')">
+      Lues <span>{{ notifications.length - unreadCount }}</span>
+    </button>
+  </div>
+
+  <!-- ══ NOTIFICATIONS LIST ══ -->
+  <div class="notif-list" *ngIf="!loading && filteredNotifications.length > 0">
+    <div class="notif-item" *ngFor="let notif of filteredNotifications"
+         [class.notif-item--unread]="!notif.read"
+         (click)="goToProject(notif)">
+
+      <div class="notif-item__dot" *ngIf="!notif.read"></div>
+
+      <div class="notif-item__icon" [ngClass]="getIconClass(notif.type)">
+        <i class="fas" [ngClass]="getIcon(notif.type)"></i>
+      </div>
+
+      <div class="notif-item__body">
+        <div class="notif-item__top">
+          <span class="notif-type-tag" [ngClass]="getIconClass(notif.type)">{{ getTypeLabel(notif.type) }}</span>
+          <span class="notif-time">{{ formatDate(notif.createdAt) }}</span>
+        </div>
+        <h4>{{ notif.title }}</h4>
+        <p>{{ notif.message }}</p>
+      </div>
+
+      <button class="notif-action" *ngIf="!notif.read" (click)="markAsRead(notif); $event.stopPropagation()" title="Marquer comme lu">
+        <i class="fas fa-check"></i>
+      </button>
+      <i class="fas fa-chevron-right notif-arrow"></i>
+    </div>
+  </div>
+
+  <!-- ══ EMPTY ══ -->
+  <div *ngIf="!loading && filteredNotifications.length === 0" class="notif-empty">
+    <div class="notif-empty__icon"><i class="fas fa-bell-slash"></i></div>
+    <h3>Aucune notification</h3>
+    <p *ngIf="activeFilter === 'ALL'">Vous n'avez aucune notification pour le moment.</p>
+    <p *ngIf="activeFilter === 'UNREAD'">Toutes vos notifications sont lues !</p>
+    <p *ngIf="activeFilter === 'READ'">Aucune notification lue.</p>
+  </div>
+
+  <div *ngIf="loading" class="loading-full"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>
+</div>

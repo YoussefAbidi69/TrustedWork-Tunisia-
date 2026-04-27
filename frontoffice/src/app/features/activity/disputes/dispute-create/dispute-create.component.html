@@ -1,0 +1,150 @@
+<div class="dispute-create-wrapper animate-fade-in">
+  
+  <!-- Hero Section -->
+  <section class="create-hero">
+    <div class="create-hero__glow create-hero__glow--one"></div>
+    <div class="create-hero__glow create-hero__glow--two"></div>
+
+    <div class="create-hero__content">
+      <div class="hero-text">
+        <div class="eyebrow-group">
+          <span class="eyebrow">Nouvelle Réclamation</span>
+          <span class="eyebrow eyebrow--accent">Assistance Arbitrage</span>
+        </div>
+
+        <h1>Ouvrir un Litige</h1>
+
+        <p>
+          Décrivez le problème rencontré avec précision. Notre équipe d'arbitrage (ou l'IA de résolution) examinera les faits pour une décision juste.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="alert alert-danger rounded-4 border-0 shadow-sm mb-4">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+  </div>
+
+  <!-- Form Container -->
+  <div class="form-card shadow-lg">
+    <form [formGroup]="form" (ngSubmit)="submit()" class="premium-form">
+
+      <div class="row g-4">
+        <!-- Left Column: Reference & Context -->
+        <div class="col-md-5">
+          <div class="form-section">
+            <h3 class="section-title"><i class="bi bi-info-circle me-2"></i> Contexte du Litige</h3>
+            
+            <div class="form-group mb-4">
+              <label class="form-label">Référence du Contrat <span class="text-danger">*</span></label>
+              <div class="input-wrapper">
+                <i class="bi bi-file-earmark-text input-icon"></i>
+                <input type="text"
+                       formControlName="contractReference"
+                       class="form-control premium-input with-icon"
+                       placeholder="Ex: CTR-2024-001"
+                       (change)="onContractReferenceChange()"
+                       [readonly]="isContractLocked">
+              </div>
+            </div>
+
+            <div class="form-group mb-4">
+              <div class="toggle-card" [class.active]="useContractLevel" (click)="toggleContractLevel()">
+                <div class="toggle-icon">
+                  <i class="bi" [ngClass]="useContractLevel ? 'bi-layers-fill' : 'bi-layers'"></i>
+                </div>
+                <div class="toggle-text">
+                  <strong>Contrat Entier</strong>
+                  <span>Cibler le contrat dans sa globalité</span>
+                </div>
+                <div class="toggle-check">
+                  <i class="bi bi-check-circle-fill" *ngIf="useContractLevel"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group mb-4" *ngIf="!useContractLevel">
+              <label class="form-label">Jalon concerné</label>
+              <div *ngIf="loadingMilestones" class="loading-inline">
+                <div class="spinner-border spinner-border-sm me-2"></div> Chargement des jalons...
+              </div>
+              <select *ngIf="!loadingMilestones"
+                      formControlName="milestoneId"
+                      class="form-select premium-input">
+                <option [ngValue]="null">— Niveau Contrat Global —</option>
+                <option *ngFor="let m of milestones" [ngValue]="m.id">
+                  Jalon #{{ m.id }} : {{ m.titre }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Description & Evidence -->
+        <div class="col-md-7 border-start ps-md-5">
+          <div class="form-section">
+            <h3 class="section-title"><i class="bi bi-chat-square-dots me-2"></i> Détails & Preuves</h3>
+
+            <div class="form-group mb-4">
+              <label class="form-label">Motif du litige <span class="text-danger">*</span></label>
+              <textarea formControlName="motif"
+                        class="form-control premium-textarea"
+                        rows="4"
+                        placeholder="Soyez le plus explicite possible sur le différend..."></textarea>
+              <div class="form-hint" *ngIf="form.get('motif')?.touched && form.get('motif')?.invalid">
+                <i class="bi bi-info-circle me-1"></i> Minimum 10 caractères requis.
+              </div>
+            </div>
+
+            <div class="form-group mb-4">
+              <label class="form-label">Commentaire additionnel</label>
+              <textarea formControlName="preuvesPlaignant"
+                        class="form-control premium-textarea"
+                        rows="2"
+                        placeholder="Détails, liens ou notes complémentaires..."></textarea>
+            </div>
+
+            <div class="form-group mb-0">
+              <label class="form-label">Pièces Jointes (Max 2 fiches)</label>
+              <div *ngIf="fileError" class="file-error mb-2">
+                  <i class="bi bi-exclamation-circle me-1"></i> {{ fileError }}
+              </div>
+              
+              <div class="upload-zone" (click)="fileInput.click()">
+                <i class="bi bi-cloud-arrow-up fs-2 mb-2"></i>
+                <p>Glissez ou cliquez pour ajouter des preuves</p>
+                <small class="text-muted">Images ou PDF, maximum 5Mo</small>
+                <input type="file" #fileInput (change)="onFilesSelected($event)" multiple hidden>
+              </div>
+
+              <div class="selected-files mt-3" *ngIf="selectedFiles.length > 0">
+                <div *ngFor="let file of selectedFiles; let i = index" class="file-pill">
+                  <i class="bi bi-file-earmark-check me-2"></i>
+                  <span class="file-name">{{ file.name }}</span>
+                  <button type="button" class="btn-remove-file" (click)="removeFile(i); $event.stopPropagation()">
+                    <i class="bi bi-x"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="form-footer mt-5 pt-4 border-top">
+        <div class="d-flex justify-content-end gap-3">
+          <button type="button" class="btn btn-ghost" (click)="cancel()">Annuler</button>
+          <button type="submit"
+                  class="btn btn-primary"
+                  [disabled]="form.invalid || loading">
+            <span *ngIf="!loading"><i class="bi bi-shield-exclamation me-2"></i> Soumettre le Litige</span>
+            <span *ngIf="loading"><span class="spinner-border spinner-border-sm me-2"></span> Traitement...</span>
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div>
+</div>

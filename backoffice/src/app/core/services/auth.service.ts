@@ -52,4 +52,33 @@ export class AuthService {
   getUserId(): number {
     return parseInt(localStorage.getItem('userId') || '0', 10);
   }
+
+  getCurrentAuthUser(): any {
+    return {
+      role: this.getRole(),
+      email: this.getEmail(),
+      userId: this.getUserId(),
+      cin: this.getCin()
+    };
+  }
+
+  getCin(): string {
+    let cin = localStorage.getItem('cin');
+    if (cin) return cin;
+
+    const token = this.getToken();
+    if (token) {
+      try {
+        const payloadStr = atob(token.split('.')[1]);
+        const payload = JSON.parse(payloadStr);
+        if (payload.cin) {
+          localStorage.setItem('cin', String(payload.cin));
+          return String(payload.cin);
+        }
+      } catch (e) {
+        console.warn('Impossible de lire le CIN depuis le token', e);
+      }
+    }
+    return '';
+  }
 }

@@ -1,0 +1,17 @@
+.admin-risks { padding: 0; }
+.filters-bar { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.filter-group { display: flex; align-items: center; gap: 8px; }
+.filter-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.filter-chips { display: flex; gap: 6px; }
+.chip {
+  padding: 5px 14px; border-radius: 99px; font-size: 12px; font-weight: 600;
+  background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary);
+  transition: var(--transition); cursor: pointer;
+}
+.chip:hover { border-color: var(--border-hover); color: var(--text-primary); }
+.chip.active { background: var(--accent-soft); border-color: var(--border-accent); color: var(--accent); }
+.table-wrap { overflow-x: auto; }
+.action-btns { display: flex; gap: 4px; }
+
+/* Badge critical custom */
+.badge-critical { background: rgba(220,38,38,0.2); color: #f87171; border: 1px solid rgba(220,38,38,0.3); }

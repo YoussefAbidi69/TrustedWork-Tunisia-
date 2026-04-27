@@ -14,6 +14,7 @@ import { TwoFactorComponent } from './features/auth/two-factor/two-factor.compon
 import { CompleteProfileComponent } from './features/auth/complete-profile/complete-profile.component';
 import { OverviewComponent } from './features/dashboard/overview/overview.component';
 import { FreelancersListComponent } from './features/freelancers/freelancers-list/freelancers-list.component';
+import { ContractSignComponent } from './features/activity/contract-sign/contract-sign.component';
 
 import { authGuard } from './core/guards/auth.guard';
 import { completeProfileGuard } from './core/guards/complete-profile.guard';
@@ -27,6 +28,12 @@ const routes: Routes = [
     children: [
       { path: '', component: LandingComponent }
     ]
+  },
+
+  // PUBLIC SIGNATURE (lien email — pas besoin d'être connecté)
+  {
+    path: 'sign/contract/:id',
+    component: ContractSignComponent
   },
 
   // AUTH
@@ -62,6 +69,26 @@ const routes: Routes = [
         path: 'engagement',
         loadChildren: () =>
           import('./features/engagement/engagement.module').then(m => m.EngagementModule)
+      },
+      {
+        path: 'activity',
+        loadChildren: () =>
+          import('./features/activity/activity.module').then(m => m.ActivityModule)
+      },
+      {
+        path: 'finance',
+        loadChildren: () =>
+          import('./features/finance/finance.module').then(m => m.FinanceModule)
+      },
+      {
+        path: 'recommendation',
+        loadChildren: () =>
+          import('./features/recommendation/recommendation.module').then(m => m.RecommendationModule)
+      },
+      {
+        path: 'projects',
+        loadChildren: () =>
+          import('./features/project/project.module').then(m => m.ProjectModule)
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]

@@ -12,6 +12,7 @@ import { AuthService } from './auth.service';
 export class NotificationService implements OnDestroy {
 
   private readonly BASE_URL = '/api/notifications';
+  private readonly CONTRACT_NOTIF_URL = '/api/v1/contracts/notifications';
   // Convention : userId = 0 pour les notifications admin globales
   private readonly ADMIN_USER_ID = 0;
 
@@ -72,6 +73,7 @@ export class NotificationService implements OnDestroy {
 
     // Charger les notifications admin persistées
     this.chargerNotificationsAdmin();
+    this.startContractNotificationsPolling();
 
     // WebSocket vers le topic admin
     this.connecterWebSocketAdmin();
@@ -88,6 +90,40 @@ export class NotificationService implements OnDestroy {
         }
       },
       error: (err) => console.error('[NotifAdmin] Erreur chargement :', err)
+    });
+  }
+
+  private startContractNotificationsPolling(): void {
+    // Poll every 15 seconds
+    setInterval(() => {
+      this.fetchContractNotifications();
+    }, 15000);
+    // Fetch immediately on start
+    this.fetchContractNotifications();
+  }
+
+  private fetchContractNotifications(): void {
+    this.http.get<any[]>(`${this.CONTRACT_NOTIF_URL}/unread`, {
+      headers: { 'X-User-Cin': '0' }
+    }).subscribe({
+      next: (notifications) => {
+        if (notifications && notifications.length > 0) {
+          const currentMsgs = this.messagesSubject.getValue();
+          
+          // Filter out notifications we already have
+          const newNotifs = notifications.filter(n => 
+            !currentMsgs.find(existing => existing.id === n.id || (existing.message === n.message && existing.title === n.title))
+          );
+          
+          if (newNotifs.length > 0) {
+            this.messagesSubject.next([...newNotifs, ...currentMsgs]);
+            this.countSubject.next(this.countSubject.getValue() + newNotifs.length);
+            this.jouerSon();
+            console.log(`[NotifAdmin] ${newNotifs.length} nouvelle(s) notification(s) contrat/litige`);
+          }
+        }
+      },
+      error: (err) => console.error('[NotifAdmin] Erreur polling contrats :', err)
     });
   }
 
@@ -128,10 +164,10 @@ export class NotificationService implements OnDestroy {
 
   resetCount(): void {
     this.countSubject.next(0);
-    this.http.put(
-      `${this.BASE_URL}/user/${this.ADMIN_USER_ID}/read-all`,
-      {}
-    ).subscribe();
+    this.http.put(`${this.BASE_URL}/user/${this.ADMIN_USER_ID}/read-all`, {}).subscribe();
+    this.http.put(`${this.CONTRACT_NOTIF_URL}/mark-all-read`, {}, {
+      headers: { 'X-User-Cin': '0' }
+    }).subscribe();
   }
 
   /**

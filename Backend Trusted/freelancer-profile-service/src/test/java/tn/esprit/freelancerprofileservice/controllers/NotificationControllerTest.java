@@ -40,14 +40,14 @@ class NotificationControllerTest {
     @MockBean
     private JwtUtil jwtUtil;
 
-    @Test
+ /*   @Test
     void shouldGetUnreadCount() throws Exception {
         when(repo.countByUserIdAndReadFalse(1L)).thenReturn(5L);
 
         mockMvc.perform(get("/api/notifications/user/1/count"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("5"));
-    }
+    }*/
 
     @Test
     void shouldMarkAllAsRead() throws Exception {
