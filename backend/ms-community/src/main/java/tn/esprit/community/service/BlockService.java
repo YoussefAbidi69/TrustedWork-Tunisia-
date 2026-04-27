@@ -11,5 +11,7 @@ public interface BlockService {
 
     List<BlockResponse> listBlocks(Long sectionId);
 
+    BlockResponse getBlock(Long blockId);
+
     void deleteBlock(Long blockId);
 }

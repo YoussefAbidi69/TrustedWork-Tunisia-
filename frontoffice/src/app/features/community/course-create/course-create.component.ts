@@ -288,7 +288,10 @@ export class CourseCreateComponent implements OnInit {
     this.aiSuggestion = '';
     this.aiSuggestionType = null;
 
-    const prompt = `Generate concise ${block.type} learning content for section "${section.title}" in course "${this.title || 'Untitled course'}".`;
+    let prompt = `Generate concise ${block.type} learning content for section "${section.title}" in course "${this.title || 'Untitled course'}".`;
+    if (block.type === 'QUIZ') {
+      prompt += ` Output ONLY valid JSON in exactly this format: {"question": "Question text here", "options": [{"text": "Option A", "correct": true}, {"text": "Option B", "correct": false}]}`;
+    }
     this.aiService.tutorAnswer(`${this.description}\n${block.content}`, prompt).subscribe({
       next: (answer) => {
         this.aiBusy = false;
@@ -373,6 +376,14 @@ export class CourseCreateComponent implements OnInit {
 
     if (this.selectedBlock) {
       this.selectedBlock.content = this.aiSuggestion;
+      
+      // If the block is a QUIZ, we need to force it to re-parse the new JSON content
+      if (this.selectedBlock.type === 'QUIZ') {
+        this.selectedBlock.quizQuestion = undefined;
+        this.selectedBlock.quizOptions = undefined;
+        this.ensureQuizState(this.selectedBlock);
+        this.syncQuizToContent(this.selectedBlock);
+      }
     }
   }
 
@@ -744,9 +755,16 @@ export class CourseCreateComponent implements OnInit {
       return;
     }
     // Try to parse existing JSON content first
-    if (block.content && block.content.trim().startsWith('{')) {
+    let contentToParse = (block.content || '').trim();
+    if (contentToParse.startsWith('```json')) {
+      contentToParse = contentToParse.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+    } else if (contentToParse.startsWith('```')) {
+      contentToParse = contentToParse.replace(/^```\n?/, '').replace(/\n?```$/, '').trim();
+    }
+
+    if (contentToParse.startsWith('{')) {
       try {
-        const parsed = JSON.parse(block.content);
+        const parsed = JSON.parse(contentToParse);
         if (parsed && typeof parsed === 'object') {
           const question = String(parsed.question ?? '').trim();
           const rawOptions: Array<{ text?: string; correct?: boolean }> = Array.isArray(parsed.options)

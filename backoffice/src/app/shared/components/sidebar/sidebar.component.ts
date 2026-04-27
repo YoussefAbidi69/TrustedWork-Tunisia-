@@ -103,6 +103,72 @@ export class SidebarComponent implements OnInit {
       icon: 'fa-user-tie',
       route: '/admin/recruitment',
     },
+    // ── Community Section ────────────────────────────────────────
+    {
+      sectionLabel: 'Community',
+      label: 'Communities',
+      icon: 'fa-users-rectangle',
+      route: '/admin/community/communities',
+    },
+    {
+      label: 'Posts',
+      icon: 'fa-signs-post',
+      route: '/admin/community/posts',
+    },
+    {
+      label: 'Comments',
+      icon: 'fa-comments',
+      route: '/admin/community/comments',
+    },
+    {
+      label: 'Post Votes',
+      icon: 'fa-thumbs-up',
+      route: '/admin/community/votes',
+    },
+    {
+      label: 'Reports',
+      icon: 'fa-triangle-exclamation',
+      route: '/admin/community/reports',
+      badge: '!',
+      badgeType: 'warning'
+    },
+    {
+      label: 'Contributions',
+      icon: 'fa-hand-holding-heart',
+      route: '/admin/community/contributions',
+    },
+    // ── Courses Section ──────────────────────────────────────────
+    {
+      sectionLabel: 'Courses',
+      label: 'Courses',
+      icon: 'fa-graduation-cap',
+      route: '/admin/community/courses',
+    },
+    {
+      label: 'Sections',
+      icon: 'fa-puzzle-piece',
+      route: '/admin/community/sections',
+    },
+    {
+      label: 'Blocks',
+      icon: 'fa-cubes',
+      route: '/admin/community/blocks',
+    },
+    {
+      label: 'Course Comments',
+      icon: 'fa-comment-dots',
+      route: '/admin/community/course-comments',
+    },
+    {
+      label: 'Course Votes',
+      icon: 'fa-heart',
+      route: '/admin/community/course-votes',
+    },
+    {
+      label: 'Course Reports',
+      icon: 'fa-flag',
+      route: '/admin/community/course-reports',
+    },
   ];
 
   constructor(private router: Router) {}

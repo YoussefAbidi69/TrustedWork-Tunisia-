@@ -169,6 +169,10 @@
             <!-- Block Connecting Line (Visual) -->
             <div class="cs-block-timeline"></div>
 
+            <div class="cs-block-header-title">
+              <input type="text" [(ngModel)]="block.title" class="cs-block-title-input" placeholder="Block Title (e.g. Introduction)">
+            </div>
+
             <!-- Block Content Renderers -->
             <div class="cs-block-content" [ngSwitch]="block.type">
               

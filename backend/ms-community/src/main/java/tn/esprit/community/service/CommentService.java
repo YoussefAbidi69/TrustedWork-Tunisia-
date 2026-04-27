@@ -12,4 +12,5 @@ public interface CommentService {
     CommentResponse addCommentToCourse(Long courseId, CommentRequest commentRequest);
 
     List<CommentResponse> listCommentsByCourse(Long courseId);
+    void deleteComment(Long id);
 }

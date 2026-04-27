@@ -1,0 +1,37 @@
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.title-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.blocks-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.block-mini-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.block-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge-sm {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+}

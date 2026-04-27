@@ -40,6 +40,11 @@ public class BlockController {
         return new ResponseEntity<>(blockService.updateBlock(blockId, blockRequest), HttpStatus.OK);
     }
 
+    @GetMapping("/{blockId}")
+    public ResponseEntity<BlockResponse> getBlock(@PathVariable Long blockId) {
+        return new ResponseEntity<>(blockService.getBlock(blockId), HttpStatus.OK);
+    }
+
     @DeleteMapping("/{blockId}")
     public ResponseEntity<Void> deleteBlock(@PathVariable Long blockId) {
         blockService.deleteBlock(blockId);

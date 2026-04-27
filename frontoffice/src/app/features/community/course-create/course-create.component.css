@@ -459,6 +459,25 @@
   background: transparent;
 }
 
+.cs-block-header-title {
+  margin-bottom: 12px;
+}
+
+.cs-block-title-input {
+  background: transparent;
+  border: none;
+  color: var(--cm-text-primary);
+  font-size: 18px;
+  font-weight: 600;
+  outline: none;
+  font-family: inherit;
+  width: 100%;
+}
+
+.cs-block-title-input::placeholder {
+  color: rgba(148, 163, 184, 0.4);
+}
+
 /* Text Block */
 .cs-textarea-auto {
   width: 100%;

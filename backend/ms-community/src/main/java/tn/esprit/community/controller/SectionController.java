@@ -42,6 +42,11 @@ public class SectionController {
         return new ResponseEntity<>(sectionService.updateSection(sectionId, sectionRequest), HttpStatus.OK);
     }
 
+    @GetMapping("/{sectionId}")
+    public ResponseEntity<SectionResponse> getSection(@PathVariable Long sectionId) {
+        return new ResponseEntity<>(sectionService.getSection(sectionId), HttpStatus.OK);
+    }
+
     @DeleteMapping("/{sectionId}")
     public ResponseEntity<Void> deleteSection(@PathVariable Long sectionId) {
         sectionService.deleteSection(sectionId);

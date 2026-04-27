@@ -8,4 +8,5 @@ public interface CourseCommentService {
     CourseCommentResponse addComment(Long courseId, CourseCommentRequest commentRequest);
 
     List<CourseCommentResponse> listComments(Long courseId);
+    void deleteComment(Long id);
 }

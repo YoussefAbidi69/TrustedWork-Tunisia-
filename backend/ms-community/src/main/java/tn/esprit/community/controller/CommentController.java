@@ -3,6 +3,7 @@ package tn.esprit.community.controller;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,5 +47,11 @@ public class CommentController {
     public ResponseEntity<List<CommentResponse>> listCommentsByCourse(@PathVariable Long courseId) {
         List<CommentResponse> comments = commentService.listCommentsByCourse(courseId);
         return new ResponseEntity<>(comments, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteComment(@PathVariable Long id) {
+        commentService.deleteComment(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

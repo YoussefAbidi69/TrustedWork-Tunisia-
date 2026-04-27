@@ -79,6 +79,13 @@ public class BlockServiceImpl implements BlockService {
     }
 
     @Override
+    public BlockResponse getBlock(Long blockId) {
+        return blockRepository.findById(blockId)
+                .map(this::toBlockResponse)
+                .orElseThrow(() -> new LearningNotFoundException("Block not found"));
+    }
+
+    @Override
     @Transactional
     public void deleteBlock(Long blockId) {
         if (!blockRepository.existsById(blockId)) {

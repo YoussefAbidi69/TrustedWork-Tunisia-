@@ -34,6 +34,7 @@ const routes: Routes = [
       { path: 'users',      component: UsersListComponent },
       { path: 'users/kyc',  component: KycManagementComponent },
       { path: 'users/:id',  component: UserDetailComponent },
+      { path: 'community', loadChildren: () => import('./features/community/community.module').then(m => m.CommunityModule) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

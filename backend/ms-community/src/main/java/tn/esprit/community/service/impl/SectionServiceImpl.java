@@ -74,6 +74,13 @@ public class SectionServiceImpl implements SectionService {
     }
 
     @Override
+    public SectionResponse getSection(Long sectionId) {
+        return sectionRepository.findById(sectionId)
+                .map(this::toSectionResponse)
+                .orElseThrow(() -> new LearningNotFoundException("Section not found"));
+    }
+
+    @Override
     @Transactional
     public void deleteSection(Long sectionId) {
         if (!sectionRepository.existsById(sectionId)) {

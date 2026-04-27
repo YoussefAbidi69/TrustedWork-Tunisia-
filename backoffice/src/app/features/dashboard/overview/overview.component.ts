@@ -88,7 +88,8 @@ export class OverviewComponent implements OnInit {
     { name: 'Contract Service', port: '8083', status: 'online', endpoints: 21, icon: 'fa-file-contract' },
     { name: 'Job Service', port: '8082', status: 'offline', endpoints: 15, icon: 'fa-briefcase' },
     { name: 'Event Service', port: '8087', status: 'online', endpoints: 12, icon: 'fa-calendar-days' },
-    { name: 'Recruit Service', port: '8089', status: 'offline', endpoints: 16, icon: 'fa-user-tie' }
+    { name: 'Recruit Service', port: '8089', status: 'offline', endpoints: 16, icon: 'fa-user-tie' },
+    { name: 'Community Service', port: '8090', status: 'online', endpoints: 42, icon: 'fa-users-rectangle' }
   ];
 
   constructor(private userService: UserService) {}
@@ -148,6 +149,30 @@ export class OverviewComponent implements OnInit {
             changeType: 'flat',
             icon: 'fa-building',
             iconClass: 'gold'
+          },
+          {
+            label: 'Communities',
+            value: '0',
+            change: '',
+            changeType: 'flat',
+            icon: 'fa-users-rectangle',
+            iconClass: 'accent'
+          },
+          {
+            label: 'Total Posts',
+            value: '0',
+            change: '',
+            changeType: 'flat',
+            icon: 'fa-signs-post',
+            iconClass: 'info'
+          },
+          {
+            label: 'Open Reports',
+            value: '0',
+            change: '',
+            changeType: 'flat',
+            icon: 'fa-triangle-exclamation',
+            iconClass: 'warning'
           }
         ];
       },

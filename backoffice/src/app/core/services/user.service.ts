@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map, shareReplay } from 'rxjs/operators';
 
 export interface UserDTO {
   id: number;
@@ -69,6 +70,7 @@ export interface SuspensionRecordDTO {
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private baseUrl = 'http://localhost:8081/api';
+  private userMap$: Observable<{ [id: number]: string }> | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -87,6 +89,20 @@ export class UserService {
     return this.http.get<UserDTO[]>(`${this.baseUrl}/admin/users`, {
       headers: this.getHeaders()
     });
+  }
+
+  getUserNameMap(): Observable<{ [id: number]: string }> {
+    if (!this.userMap$) {
+      this.userMap$ = this.getAllUsers().pipe(
+        map(users => {
+          const userMap: { [id: number]: string } = {};
+          users.forEach(u => userMap[u.id] = `${u.firstName} ${u.lastName}`);
+          return userMap;
+        }),
+        shareReplay(1)
+      );
+    }
+    return this.userMap$;
   }
 
   getUsersByRole(role: string): Observable<UserDTO[]> {

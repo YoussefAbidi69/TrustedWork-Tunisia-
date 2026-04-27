@@ -42,6 +42,11 @@ public class CourseCommentServiceImpl implements CourseCommentService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public void deleteComment(Long id) {
+        commentRepository.deleteById(id);
+    }
+
     private CourseCommentResponse toResponse(CourseComment comment) {
         return CourseCommentResponse.builder()
                 .id(comment.getId())

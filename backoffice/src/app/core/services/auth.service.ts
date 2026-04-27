@@ -30,7 +30,7 @@ export class AuthService {
     // Nettoyage de la session admin
     localStorage.clear();
     // Redirection vers la landing page du frontoffice
-    window.location.href = this.FRONTOFFICE_URL;
+    window.location.href = this.frontofficeUrl;
   }
 
   getToken(): string | null {
