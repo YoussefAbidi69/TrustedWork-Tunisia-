@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.trustedwork.module06.controller.BadgeControllerTest
+-------------------------------------------------------------------------------
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 19.019 s - in com.trustedwork.module06.controller.BadgeControllerTest

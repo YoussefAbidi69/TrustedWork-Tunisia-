@@ -1,0 +1,70 @@
+<div class="audit-page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Audit Logs</h1>
+      <p class="page-subtitle">{{ filteredLogs.length }} events found</p>
+    </div>
+
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" (click)="loadLogs()">
+        <i class="fas fa-rotate-right"></i>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Search by event, email, target user, IP..."
+        [(ngModel)]="searchQuery"
+        (input)="onSearch()">
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Loading audit logs...</p>
+  </div>
+
+  <div class="card" *ngIf="!loading">
+    <div class="table-wrap">
+      <table class="tw-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Actor</th>
+            <th>Target</th>
+            <th>IP Address</th>
+            <th>Date</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of filteredLogs">
+            <td>
+              <span class="badge" [ngClass]="getBadgeClass(getEventType(log))">
+                {{ getEventType(log) }}
+              </span>
+            </td>
+            <td>{{ log.actorEmail || '—' }}</td>
+            <td>{{ log.targetUser || '—' }}</td>
+            <td>{{ getIp(log) }}</td>
+            <td>{{ log.createdAt | date:'MMM d, yyyy • HH:mm' }}</td>
+            <td>{{ log.action || log.details || '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" *ngIf="filteredLogs.length === 0">
+        <i class="fas fa-scroll"></i>
+        <p>No audit logs found</p>
+      </div>
+    </div>
+  </div>
+
+</div>

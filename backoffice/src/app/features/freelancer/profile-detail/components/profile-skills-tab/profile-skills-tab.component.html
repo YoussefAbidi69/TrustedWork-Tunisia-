@@ -1,0 +1,122 @@
+<div class="card section-card">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="fas fa-code"></i> Compétences ({{ skills.length }})
+      </span>
+    </div>
+  
+    <ng-container *ngIf="skills.length > 0; else emptySkills">
+      <table class="tw-table">
+        <thead>
+          <tr>
+            <th>Skill</th>
+            <th>Niveau</th>
+            <th>Authenticité</th>
+            <th>Exam</th>
+            <th>Endorsements</th>
+            <th>Admin</th>
+          </tr>
+        </thead>
+  
+        <tbody>
+          <tr *ngFor="let s of skills" [class.row-selected]="selectedSkill?.id === s.id">
+            <td>
+              <div class="skill-name-cell">
+                <strong>{{ s.name }}</strong>
+                <span class="skill-meta" *ngIf="s.category">{{ s.category }}</span>
+              </div>
+            </td>
+  
+            <td>
+              <span class="badge badge-accent">{{ s.level || '—' }}</span>
+            </td>
+  
+            <td>
+              <div class="skill-score-wrap">
+                <span class="skill-score-value">{{ s.authenticityScore | number:'1.0-0' }}%</span>
+                <div class="mini-progress">
+                  <div class="mini-progress-bar" [style.width.%]="s.authenticityScore || 0"></div>
+                </div>
+              </div>
+            </td>
+  
+            <td>{{ s.examScore }}</td>
+  
+            <td>
+              <button
+                class="btn btn-ghost btn-sm endorsement-btn"
+                [class.endorsement-btn--active]="selectedSkill?.id === s.id"
+                (click)="skillSelected.emit(s)"
+                [title]="s.endorsementCount + ' endorsement(s) — cliquer pour voir'">
+                <i class="fas fa-thumbs-up"></i>
+                {{ s.endorsementCount }}
+              </button>
+            </td>
+  
+            <td>
+              <button
+                class="btn btn-danger btn-sm btn-icon"
+                title="Supprimer ce skill"
+                (click)="skillDeleted.emit(s.id)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+  
+      <div class="endorsement-panel" *ngIf="selectedSkill">
+        <div class="endorsement-panel-header">
+          <span>
+            <i class="fas fa-thumbs-up"></i>
+            Endorsements pour <strong>{{ selectedSkill.name }}</strong>
+          </span>
+  
+          <button class="btn btn-ghost btn-sm btn-icon" (click)="endorsementsClosed.emit()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+  
+        <div class="endorsement-loading" *ngIf="endorsementsLoading">
+          <i class="fas fa-spinner fa-spin"></i>
+          Chargement...
+        </div>
+  
+        <div class="endorsement-error" *ngIf="endorsementsError && !endorsementsLoading">
+          <i class="fas fa-exclamation-triangle"></i>
+          {{ endorsementsError }}
+        </div>
+  
+        <div class="endorsement-empty" *ngIf="!endorsementsLoading && !endorsementsError && endorsements.length === 0">
+          <i class="fas fa-inbox"></i>
+          Aucun endorsement pour ce skill.
+        </div>
+  
+        <div class="endorsement-list" *ngIf="!endorsementsLoading && !endorsementsError && endorsements.length > 0">
+          <div class="endorsement-item" *ngFor="let e of endorsements">
+            <div class="endorsement-meta">
+              <div class="avatar avatar-sm avatar-accent" style="font-size: 11px;">
+                {{ e.endorserInitials }}
+              </div>
+  
+              <div>
+                <div class="endorsement-endorser">{{ e.endorserFullName }}</div>
+                <div class="endorsement-date text-muted">{{ e.endorsedAt | date:'dd MMM yyyy' }}</div>
+              </div>
+            </div>
+  
+            <div class="endorsement-comment" *ngIf="e.comment">
+              "{{ e.comment }}"
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  
+    <ng-template #emptySkills>
+      <div class="empty-state-inline">
+        <i class="fas fa-code"></i>
+        <span>Aucune compétence déclarée.</span>
+      </div>
+    </ng-template>
+  </div>

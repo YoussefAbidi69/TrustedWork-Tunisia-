@@ -1,0 +1,254 @@
+<div class="we-page">
+  <div class="we-shell">
+
+    <div class="toast-stack" *ngIf="errorMessage || successMessage">
+      <div class="alert-banner alert-banner--error" *ngIf="errorMessage">
+        <span class="alert-icon">⚠️</span>
+        <span>{{ errorMessage }}</span>
+        <button type="button" class="alert-close" (click)="errorMessage = ''">✕</button>
+      </div>
+
+      <div class="alert-banner alert-banner--success" *ngIf="successMessage">
+        <span class="alert-icon">✅</span>
+        <span>{{ successMessage }}</span>
+        <button type="button" class="alert-close" (click)="successMessage = ''">✕</button>
+      </div>
+    </div>
+
+    <section class="we-hero">
+      <div class="we-hero__glow we-hero__glow--one"></div>
+      <div class="we-hero__glow we-hero__glow--two"></div>
+
+      <div class="we-header">
+        <div class="header-left">
+          <div class="section-icon">💼</div>
+
+          <div class="header-copy">
+            <div class="header-topline">
+              <h2>Expériences Professionnelles</h2>
+              <span class="badge-count">{{ experiences.length }} expérience(s)</span>
+            </div>
+
+            <p>
+              Construisez un profil crédible avec une timeline claire de vos postes,
+              missions et évolutions.
+            </p>
+
+            <div class="hero-stats">
+              <span class="hero-stat">⏱ Total expérience : {{ totalExperienceLabel }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button
+            class="btn-primary"
+            type="button"
+            *ngIf="!showForm"
+            (click)="openForm()">
+            + Ajouter une expérience
+          </button>
+
+          <button
+            class="btn-secondary"
+            type="button"
+            *ngIf="showForm"
+            (click)="closeForm()">
+            ✕ Annuler
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-card" *ngIf="showForm">
+      <div class="form-card__header">
+        <div>
+          <span class="section-chip">{{ isEditMode ? 'Modification' : 'Nouvelle entrée' }}</span>
+          <h3>{{ isEditMode ? 'Modifier une expérience' : 'Ajouter une expérience' }}</h3>
+          <p>
+            {{ isEditMode
+              ? 'Mettez à jour les informations de cette expérience professionnelle.'
+              : 'Ajoutez un poste marquant avec les dates, l\'entreprise et vos responsabilités.' }}
+          </p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Titre du poste *</label>
+          <input
+            type="text"
+            [(ngModel)]="newExp.jobTitle"
+            placeholder="Ex: Développeur Backend"
+            class="form-control"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Entreprise *</label>
+          <input
+            type="text"
+            [(ngModel)]="newExp.company"
+            placeholder="Ex: Esprit Corp"
+            class="form-control"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Localisation</label>
+          <input
+            type="text"
+            [(ngModel)]="newExp.location"
+            placeholder="Ex: Tunis, Tunisia ou Remote"
+            class="form-control"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Date de début *</label>
+          <input
+            type="date"
+            [(ngModel)]="newExp.startDate"
+            class="form-control"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Date de fin</label>
+          <input
+            type="date"
+            [(ngModel)]="newExp.endDate"
+            [disabled]="newExp.isCurrent"
+            class="form-control"
+          />
+        </div>
+
+        <div class="form-group full-width">
+          <label class="checkbox-row">
+            <input
+              type="checkbox"
+              [(ngModel)]="newExp.isCurrent"
+              (change)="onCurrentChange()"
+            />
+            <span>Je travaille actuellement à ce poste</span>
+          </label>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Description</label>
+          <textarea
+            [(ngModel)]="newExp.description"
+            placeholder="Décrivez vos responsabilités, livrables, stack ou impact..."
+            rows="4"
+            class="form-control"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="alert-banner alert-banner--error" *ngIf="hasDateError" style="margin-top: 16px;">
+        <span class="alert-icon">⚠️</span>
+        <span>La date de début doit être antérieure à la date de fin.</span>
+      </div>
+
+      <div class="form-actions">
+        <button
+          class="btn-primary"
+          type="button"
+          (click)="saveExperience()"
+          [disabled]="!canSave">
+          {{ isSaving ? 'Enregistrement...' : (isEditMode ? '💾 Mettre à jour' : '💾 Enregistrer') }}
+        </button>
+
+        <button
+          class="btn-ghost"
+          type="button"
+          [disabled]="isSaving"
+          (click)="closeForm()">
+          Annuler
+        </button>
+      </div>
+    </section>
+
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="loading-spinner"></div>
+      <p>Chargement des expériences...</p>
+    </div>
+
+    <ng-container *ngIf="!isLoading">
+      <section class="empty-state-card" *ngIf="!hasExperiences">
+        <div class="empty-state">
+          <div class="empty-icon">🏢</div>
+          <h3>Aucune expérience ajoutée</h3>
+          <p>
+            Ajoutez vos expériences professionnelles pour renforcer votre crédibilité
+            et enrichir votre profil freelancer.
+          </p>
+          <button class="btn-primary" type="button" (click)="openForm()">
+            + Ajouter une expérience
+          </button>
+        </div>
+      </section>
+
+      <section class="timeline-section" *ngIf="hasExperiences">
+        <div class="section-head">
+          <div>
+            <span class="section-chip">Timeline</span>
+            <h3>Parcours professionnel</h3>
+          </div>
+        </div>
+
+        <div class="timeline">
+          <article
+            class="timeline-item"
+            *ngFor="let exp of experiences; trackBy: trackByExperience">
+
+            <div class="timeline-rail">
+              <div class="timeline-dot" [class.dot-current]="exp.isCurrent"></div>
+              <div class="timeline-line"></div>
+            </div>
+
+            <div class="timeline-content">
+              <div class="exp-header">
+                <div class="exp-main">
+                  <h4 class="exp-title">{{ exp.jobTitle }}</h4>
+                  <p class="exp-company">🏢 {{ exp.company }}</p>
+                  <p class="exp-location" *ngIf="exp.location">📍 {{ exp.location }}</p>
+                </div>
+
+                <div class="exp-meta">
+                  <span class="badge-current" *ngIf="exp.isCurrent">🟢 En cours</span>
+                  <span class="exp-duration">⏱ {{ getDuration(exp) }}</span>
+
+                  <button
+                    class="btn-edit"
+                    type="button"
+                    [disabled]="deletingId === exp.id"
+                    (click)="openEditForm(exp)">
+                    ✏️
+                  </button>
+
+                  <button
+                    class="btn-delete"
+                    type="button"
+                    [disabled]="deletingId === exp.id"
+                    (click)="deleteExperience(exp.id)">
+                    {{ deletingId === exp.id ? '...' : '🗑' }}
+                  </button>
+                </div>
+              </div>
+
+              <p class="exp-dates">
+                📅 {{ getPeriod(exp) }}
+              </p>
+
+              <p class="exp-description" *ngIf="exp.description">
+                {{ exp.description }}
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+    </ng-container>
+
+  </div>
+</div>

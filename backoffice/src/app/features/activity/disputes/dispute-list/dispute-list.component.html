@@ -1,0 +1,86 @@
+<div class="container mt-4 animate-fade-in">
+
+  <!-- Page Header -->
+  <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center shadow-lg mb-4">
+    <div class="header-content">
+      <span class="badge-kicker">
+        <i class="bi bi-shield-exclamation me-1"></i>
+        Module Litiges
+      </span>
+      <h2 class="display-6 text-white mb-0">Gestion des Litiges</h2>
+      <p class="mb-0 text-white opacity-75 mt-1">
+        Suivez et résolvez les différends contractuels
+      </p>
+    </div>
+    <div class="header-actions mt-3 mt-md-0 d-flex gap-3">
+      <button class="btn-premium secondary shadow hover-up" (click)="openCreate()">
+        <i class="bi bi-plus-lg me-2"></i> Nouveau Litige
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-terracotta" role="status"></div>
+    <p class="mt-3 text-stone">Chargement des litiges...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="alert alert-danger rounded-4 border-0">
+    <i class="bi bi-exclamation-triangle me-2"></i> {{ error }}
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && disputes.length === 0 && !error" class="empty-state text-center py-5">
+    <div class="empty-icon mb-3">
+      <i class="bi bi-shield-check display-1 text-olive"></i>
+    </div>
+    <h4 class="fw-bold text-midnight">Aucun litige en cours</h4>
+    <p class="text-stone">Tous vos contrats se déroulent sans problème.</p>
+    <button class="btn-premium primary mt-3" (click)="openCreate()">
+      <i class="bi bi-plus-lg me-2"></i> Ouvrir un litige
+    </button>
+  </div>
+
+  <!-- Disputes List -->
+  <div class="disputes-stack" *ngIf="!loading && disputes.length > 0">
+    <div class="dispute-card hover-up" *ngFor="let d of disputes" (click)="openDetail(d.id!)">
+
+      <div class="dispute-card-body">
+        <div class="d-flex align-items-start justify-content-between mb-3">
+          <div>
+            <span class="dispute-ref">{{ d.reference || 'DIS-' + d.id }}</span>
+            <span class="status-pill ms-2" [ngClass]="getStatusClass(d.status)">
+              {{ getStatusLabel(d.status) }}
+            </span>
+          </div>
+          <span class="dispute-date">
+            <i class="bi bi-calendar3 me-1"></i>
+            {{ d.openedAt | date:'dd/MM/yyyy HH:mm' }}
+          </span>
+        </div>
+
+        <p class="dispute-motif">{{ d.motif }}</p>
+
+        <div class="dispute-meta d-flex gap-3 flex-wrap">
+          <span class="meta-pill">
+            <i class="bi bi-file-earmark-text me-1"></i>
+            Contrat #{{ d.contractId }}
+          </span>
+          <span class="meta-pill" *ngIf="d.milestoneId">
+            <i class="bi bi-flag me-1"></i>
+            Jalon #{{ d.milestoneId }}
+          </span>
+          <span class="meta-pill" *ngIf="!d.milestoneId">
+            <i class="bi bi-layers me-1"></i>
+            Niveau Contrat
+          </span>
+        </div>
+      </div>
+
+      <div class="dispute-card-arrow">
+        <i class="bi bi-chevron-right"></i>
+      </div>
+    </div>
+  </div>
+</div>

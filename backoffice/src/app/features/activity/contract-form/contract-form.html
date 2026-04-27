@@ -1,0 +1,97 @@
+<div class="contract-form-page">
+  
+  <section class="form-hero">
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <span class="badge-kicker">Nouvel Engagement</span>
+      <h1>{{ isEditMode ? 'Modifier le Contrat' : 'Nouveau Contrat' }} 🖊️</h1>
+      <p>Définissez les termes de votre collaboration, fixez les budgets et planifiez les échéances pour une mission réussie.</p>
+    </div>
+  </section>
+
+  <div class="form-container">
+    <div class="card-premium">
+      <div *ngIf="loading" class="loading-overlay">
+        <div class="spinner-border text-primary"></div>
+        <p>Préparation du formulaire...</p>
+      </div>
+
+      <div *ngIf="error" class="alert-premium alert-error mb-4">
+        {{ error }}
+      </div>
+
+      <form *ngIf="!loading" (ngSubmit)="onSubmit()" class="modern-form">
+        <div class="form-sections">
+          
+          <!-- Section 1: Informations Générales -->
+          <div class="form-group-section">
+            <h3 class="section-title">Informations Générales</h3>
+            <div class="row-grid">
+              <div class="input-field">
+                <label>Titre du Projet *</label>
+                <input type="text" placeholder="Ex: Développement Mobile Flutter" [(ngModel)]="contract.projectTitle" name="projectTitle" required>
+              </div>
+              <div class="input-field">
+                <label>Montant Total (DT) *</label>
+                <div class="input-with-icon">
+                  <input type="number" placeholder="0.00" [(ngModel)]="contract.montantTotal" name="montantTotal" required>
+                  <span class="icon">DT</span>
+                </div>
+              </div>
+              <div class="input-field">
+                <label>CIN du Freelancer associé *</label>
+                <input type="text" placeholder="Entrez le CIN" [(ngModel)]="contract.freelancerCin" name="freelancerCin" required>
+              </div>
+              <div class="input-field">
+                <label>Taux de Commission (%)</label>
+                <input type="number" placeholder="10" [(ngModel)]="contract.commissionRate" name="commissionRate">
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Délais & SLA -->
+          <div class="form-group-section">
+            <h3 class="section-title">Planning & Délais</h3>
+            <div class="row-grid">
+              <div class="input-field">
+                <label>Date de Début *</label>
+                <input type="date" [(ngModel)]="contract.dateDebut" name="dateDebut" required>
+              </div>
+              <div class="input-field">
+                <label>Date de Fin prévue *</label>
+                <input type="date" [(ngModel)]="contract.dateFin" name="dateFin" required>
+              </div>
+              <div class="input-field">
+                <label>SLA Freelancer (heures de réponse)</label>
+                <input type="number" placeholder="24" [(ngModel)]="contract.slaFreelancerHeures" name="slaFreelancerHeures">
+              </div>
+              <div class="input-field">
+                <label>SLA Client (jours de validation)</label>
+                <input type="number" placeholder="3" [(ngModel)]="contract.slaClientJours" name="slaClientJours">
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Description -->
+          <div class="form-group-section">
+            <h3 class="section-title">Détails de la mission</h3>
+            <div class="input-field full-width">
+              <label>Description du contrat</label>
+              <textarea rows="4" placeholder="Décrivez les objectifs et livrables attendus..." [(ngModel)]="contract.description" name="description"></textarea>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary-outline" routerLink="/app/activity/contracts">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary-elevated">
+            {{ isEditMode ? 'Mettre à jour le contrat' : 'Créer et Envoyer' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

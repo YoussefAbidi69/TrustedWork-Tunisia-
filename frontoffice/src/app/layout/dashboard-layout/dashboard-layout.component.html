@@ -1,0 +1,17 @@
+<div class="dashboard-wrapper">
+
+  <app-navbar
+    [showBrand]="false"
+    (toggleSidebar)="toggleSidebar()">
+  </app-navbar>
+
+  <main class="dashboard-content">
+    <router-outlet></router-outlet>
+  </main>
+
+</div>
+
+<app-sidebar
+  [collapsed]="isSidebarCollapsed"
+  (toggleCollapse)="toggleSidebar()">
+</app-sidebar>

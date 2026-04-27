@@ -1,0 +1,73 @@
+<div class="result-page py-5 bg-cream">
+  <div class="container d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 120px);">
+    
+    <div class="result-card-premium shadow-xl rounded-4 overflow-hidden border-0 bg-white animate-fade-in">
+      
+      <!-- SUCCESS STATE -->
+      <div *ngIf="status === 'success'">
+        <div class="success-glow"></div>
+        
+        <div class="result-icon-outer mx-auto success mb-4">
+           <div class="result-icon-inner">
+             <i class="bi bi-check-lg"></i>
+           </div>
+        </div>
+
+        <span class="feed-badge success-badge mb-3">Transaction Approuvée</span>
+        <h1 class="h1 fw-bold text-midnight mb-3">Paiement Réussi !</h1>
+        <p class="lead text-stone mb-5 mx-auto" style="max-width: 480px;">
+          Votre dépôt en séquestre a été sécurisé. Le contrat est désormais <strong>actif</strong>. Le freelancer peut officiellement commencer la mission.
+        </p>
+
+        <div class="action-grid d-flex flex-column gap-3 w-100 mx-auto" style="max-width: 360px;">
+          <a [routerLink]="['/app/activity/contracts', contractId]" class="btn btn-premium-result success shadow-lg">
+             <i class="bi bi-rocket-takeoff-fill me-2"></i> ACCÉDER AU CONTRAT
+          </a>
+          <a routerLink="/app/finance/payment-list" class="btn btn-premium-ghost">
+             <i class="bi bi-list-columns-reverse me-2"></i> Voir mes paiements
+          </a>
+        </div>
+      </div>
+
+      <!-- CANCEL / ERROR STATE -->
+      <div *ngIf="status === 'cancel'">
+        <div class="error-glow"></div>
+
+        <div class="result-icon-outer mx-auto error mb-4">
+           <div class="result-icon-inner">
+             <i class="bi bi-x-lg"></i>
+           </div>
+        </div>
+
+        <span class="feed-badge error-badge mb-3">Paiement Échoué</span>
+        <h1 class="h1 fw-bold text-midnight mb-3">Une erreur est survenue</h1>
+        <p class="lead text-stone mb-5 mx-auto" style="max-width: 480px;">
+          La transaction n'a pas pu être finalisée. Aucun montant n'a été prélevé sur votre compte.
+        </p>
+
+        <div class="action-grid d-flex flex-column gap-3 w-100 mx-auto" style="max-width: 360px;">
+          <a [routerLink]="['/app/finance/checkout', contractId]" class="btn btn-premium-result error shadow-lg">
+             <i class="bi bi-arrow-repeat me-2"></i> RÉESSAYER LE PAIEMENT
+          </a>
+          <a [routerLink]="['/app/activity/contracts', contractId]" class="btn btn-premium-ghost">
+             <i class="bi bi-chevron-left me-2"></i> Retour au contrat
+          </a>
+        </div>
+      </div>
+
+      <!-- FOOTER SECURITY -->
+      <div class="result-footer p-4 bg-cream bg-opacity-50 border-top text-center">
+         <div class="d-flex justify-content-center gap-4 opacity-75">
+            <div class="d-flex align-items-center gap-2 small fw-bold text-midnight">
+               <i class="bi bi-shield-lock-fill text-success"></i> SÉCURISÉ SSL
+            </div>
+            <div class="d-flex align-items-center gap-2 small fw-bold text-midnight">
+               <i class="bi bi-patch-check-fill text-primary"></i> CERTIFIÉ STRIPE
+            </div>
+         </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>

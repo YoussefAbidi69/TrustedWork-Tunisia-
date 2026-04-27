@@ -1,0 +1,256 @@
+<div class="page-header">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <button class="btn btn-ghost btn-sm" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i> Retour
+    </button>
+
+    <div>
+      <h1 class="page-title">Détail utilisateur</h1>
+      <p class="page-subtitle" *ngIf="user">#{{ user.id }} — {{ user.email }}</p>
+    </div>
+  </div>
+
+  <div class="page-actions" *ngIf="user">
+    <button
+      *ngIf="user.accountStatus === 'ACTIVE'"
+      class="btn btn-danger btn-sm"
+      (click)="showSuspendForm = !showSuspendForm"
+      [disabled]="actionLoading">
+      <i class="fas fa-ban"></i> Suspendre
+    </button>
+
+    <button
+      *ngIf="user.accountStatus === 'SUSPENDED'"
+      class="btn btn-success btn-sm"
+      (click)="liftSuspension()"
+      [disabled]="actionLoading">
+      <i class="fas fa-check"></i> Lever la suspension
+    </button>
+  </div>
+</div>
+
+<div class="alert-success" *ngIf="successMsg">
+  <i class="fas fa-check-circle"></i> {{ successMsg }}
+</div>
+
+<div class="alert-error" *ngIf="errorMsg && !loading">
+  <i class="fas fa-exclamation-triangle"></i> {{ errorMsg }}
+</div>
+
+<div class="card" *ngIf="loading">
+  <div class="empty-state">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Chargement...</p>
+  </div>
+</div>
+
+<ng-container *ngIf="!loading && user">
+
+  <div class="card suspend-form" *ngIf="showSuspendForm">
+    <div class="card-header">
+      <span class="card-title"><i class="fas fa-ban text-danger"></i> Motif de suspension</span>
+    </div>
+
+    <div class="suspend-form-body">
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Motif obligatoire..."
+        [(ngModel)]="suspendReason"
+        (keyup.enter)="suspendUser()">
+
+      <button
+        class="btn btn-danger btn-sm"
+        (click)="suspendUser()"
+        [disabled]="!suspendReason.trim() || actionLoading">
+        <i class="fas fa-ban"></i> Confirmer
+      </button>
+
+      <button class="btn btn-ghost btn-sm" (click)="showSuspendForm = false">
+        Annuler
+      </button>
+    </div>
+  </div>
+
+  <div class="detail-grid">
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-user"></i> Informations</span>
+      </div>
+
+      <div class="user-hero">
+        <div class="avatar avatar-lg avatar-accent">{{ getInitials(user) }}</div>
+
+        <div class="user-hero-info">
+          <div class="user-fullname">{{ user.firstName }} {{ user.lastName }}</div>
+          <div class="user-email text-muted">{{ user.email }}</div>
+
+          <div class="badge-row">
+            <span class="badge" [ngClass]="getRoleBadge(user.role)">
+              {{ getRoleLabel(user.role) }}
+            </span>
+
+            <span class="badge" [ngClass]="getStatusBadge(user.accountStatus)">
+              {{ getStatusLabel(user.accountStatus) }}
+            </span>
+
+            <span class="badge" [ngClass]="getKycBadge(user.kycStatus)">
+              KYC : {{ getKycLabel(user.kycStatus) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-row">
+          <span class="info-label">CIN</span>
+          <span class="info-value">{{ user.cin || '—' }}</span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">Téléphone</span>
+          <span class="info-value">{{ user.phone || '—' }}</span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">2FA</span>
+          <span class="info-value">
+            <span class="badge" [ngClass]="user.twoFactorEnabled ? 'badge-success' : 'badge-muted'">
+              {{ user.twoFactorEnabled ? 'Activé' : 'Désactivé' }}
+            </span>
+          </span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">Trust Level</span>
+          <span class="info-value">{{ user.trustLevel ?? '—' }}</span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">Inscrit le</span>
+          <span class="info-value">{{ user.createdAt | date:'dd MMM yyyy' }}</span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">Dernière connexion</span>
+          <span class="info-value">
+            {{ user.lastLoginAt ? (user.lastLoginAt | date:'dd MMM yyyy, HH:mm') : '—' }}
+          </span>
+        </div>
+
+        <div class="info-row" *ngIf="user.failedAttempts">
+          <span class="info-label">Tentatives échouées</span>
+          <span class="info-value text-danger">{{ user.failedAttempts }}</span>
+        </div>
+
+        <div class="info-row" *ngIf="user.lockedUntil">
+          <span class="info-label">Bloqué jusqu'au</span>
+          <span class="info-value text-warning">{{ user.lockedUntil | date:'dd MMM yyyy, HH:mm' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-address-card"></i> Profil Freelancer</span>
+      </div>
+
+      <div class="empty-state" *ngIf="!freelancerProfile">
+        <i class="fas fa-user-slash"></i>
+        <p>Aucun profil freelancer lié</p>
+      </div>
+
+      <ng-container *ngIf="freelancerProfile">
+        <div class="info-grid">
+          <div class="info-row">
+            <span class="info-label">Headline</span>
+            <span class="info-value">{{ freelancerProfile.headline || '—' }}</span>
+          </div>
+
+          <div class="info-row">
+            <span class="info-label">Région</span>
+            <span class="info-value">{{ freelancerProfile.region || '—' }}</span>
+          </div>
+
+          <div class="info-row">
+            <span class="info-label">Disponibilité</span>
+            <span class="info-value">
+              <span class="badge" [ngClass]="getFreelancerAvailabilityBadge(freelancerProfile.availabilityStatus)">
+                {{ getFreelancerAvailabilityLabel(freelancerProfile.availabilityStatus) }}
+              </span>
+            </span>
+          </div>
+
+          <div class="info-row">
+            <span class="info-label">Complétude</span>
+            <span class="info-value">{{ freelancerProfile.completenessScore }}%</span>
+          </div>
+
+          <div class="info-row">
+            <span class="info-label">Taux horaire</span>
+            <span class="info-value">{{ freelancerProfile.hourlyRate }} TND/h</span>
+          </div>
+
+          <div class="info-row">
+            <span class="info-label">Rang régional</span>
+            <span class="info-value">#{{ freelancerProfile.regionalRank || '—' }}</span>
+          </div>
+
+          <div class="info-row">
+            <span class="info-label">Vues</span>
+            <span class="info-value">{{ freelancerProfile.totalViews }}</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px;">
+          <button class="btn btn-ghost btn-sm" (click)="goToFreelancerProfile()">
+            <i class="fas fa-external-link-alt"></i> Voir le profil complet
+          </button>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
+  <div class="card section-card">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="fas fa-ban"></i>
+        Historique des suspensions
+        <span class="badge badge-muted" style="margin-left: 6px;">{{ suspensions.length }}</span>
+      </span>
+    </div>
+
+    <div class="empty-state" *ngIf="suspensions.length === 0">
+      <i class="fas fa-check-circle text-success"></i>
+      <p>Aucune suspension enregistrée</p>
+    </div>
+
+    <table class="tw-table" *ngIf="suspensions.length > 0">
+      <thead>
+        <tr>
+          <th>Motif</th>
+          <th>Suspendu par</th>
+          <th>Date</th>
+          <th>Levée le</th>
+          <th>Statut</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let s of suspensions">
+          <td>{{ s.reason }}</td>
+          <td class="text-muted">{{ s.suspendedBy }}</td>
+          <td>{{ s.suspendedAt | date:'dd MMM yyyy, HH:mm' }}</td>
+          <td>{{ s.liftedAt ? (s.liftedAt | date:'dd MMM yyyy') : '—' }}</td>
+          <td>
+            <span class="badge" [ngClass]="s.active ? 'badge-danger' : 'badge-muted'">
+              {{ s.active ? 'Active' : 'Levée' }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</ng-container>

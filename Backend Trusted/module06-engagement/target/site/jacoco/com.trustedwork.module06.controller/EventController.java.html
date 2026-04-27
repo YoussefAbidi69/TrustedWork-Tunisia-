@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">module06-engagement</a> &gt; <a href="index.source.html" class="el_package">com.trustedwork.module06.controller</a> &gt; <span class="el_source">EventController.java</span></div><h1>EventController.java</h1><pre class="source lang-java linenums">package com.trustedwork.module06.controller;
+
+import com.trustedwork.module06.dto.EventDTO;
+import com.trustedwork.module06.entity.EventRegistration;
+import com.trustedwork.module06.security.JwtUtil;
+import com.trustedwork.module06.service.EventService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/events&quot;)
+@RequiredArgsConstructor
+@Tag(name = &quot;Events&quot;, description = &quot;Gestion des événements&quot;)
+public class EventController {
+
+    private final EventService eventService;
+    private final JwtUtil jwtUtil;
+
+    @GetMapping
+    public ResponseEntity&lt;List&lt;EventDTO&gt;&gt; getAll() {
+<span class="fc" id="L25">        return ResponseEntity.ok(eventService.getAllEvents());</span>
+    }
+
+    @GetMapping(&quot;/governorate/{gov}&quot;)
+    public ResponseEntity&lt;List&lt;EventDTO&gt;&gt; getByGovernorate(@PathVariable String gov) {
+<span class="fc" id="L30">        return ResponseEntity.ok(eventService.getEventsByGovernorate(gov));</span>
+    }
+
+    @PostMapping
+    public ResponseEntity&lt;EventDTO&gt; create(@RequestBody EventDTO dto) {
+<span class="fc" id="L35">        return ResponseEntity.ok(eventService.createEvent(dto));</span>
+    }
+
+    @PostMapping(&quot;/{eventId}/register&quot;)
+    public ResponseEntity&lt;?&gt; register(
+            @PathVariable Long eventId,
+            @RequestHeader(value = &quot;Authorization&quot;, required = false) String token) {
+<span class="pc bpc" id="L42" title="2 of 4 branches missed.">        if (token == null || !token.startsWith(&quot;Bearer &quot;)) {</span>
+<span class="nc" id="L43">            return ResponseEntity.status(401).body(Map.of(&quot;message&quot;, &quot;Please login to register&quot;));</span>
+        }
+<span class="fc" id="L45">        Long userId = jwtUtil.extractUserId(token.substring(7));</span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">        if (userId == null) {</span>
+<span class="nc" id="L47">            return ResponseEntity.status(401).body(Map.of(&quot;message&quot;, &quot;Invalid session, please login again&quot;));</span>
+        }
+<span class="fc" id="L49">        return ResponseEntity.ok(eventService.registerToEvent(eventId, userId));</span>
+    }
+
+    @GetMapping(&quot;/my-registrations&quot;)
+    public ResponseEntity&lt;?&gt; getMyRegisteredEvents(
+            @RequestHeader(value = &quot;Authorization&quot;, required = false) String token) {
+<span class="pc bpc" id="L55" title="2 of 4 branches missed.">        if (token == null || !token.startsWith(&quot;Bearer &quot;)) {</span>
+<span class="nc" id="L56">            return ResponseEntity.status(401).body(Map.of(&quot;message&quot;, &quot;Please login&quot;));</span>
+        }
+<span class="fc" id="L58">        Long userId = jwtUtil.extractUserId(token.substring(7));</span>
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">        if (userId == null) return ResponseEntity.status(401).body(Map.of(&quot;message&quot;, &quot;Invalid session&quot;));</span>
+<span class="fc" id="L60">        return ResponseEntity.ok(eventService.getMyRegisteredEventIds(userId));</span>
+    }
+
+    @PatchMapping(&quot;/registrations/{regId}/attend&quot;)
+    public ResponseEntity&lt;Void&gt; markAttended(
+            @PathVariable Long regId,
+            @RequestHeader(&quot;Authorization&quot;) String token) {
+<span class="nc" id="L67">        Long userId = jwtUtil.extractUserId(token.substring(7));</span>
+<span class="nc" id="L68">        eventService.markAttended(regId, userId);</span>
+<span class="nc" id="L69">        return ResponseEntity.ok().build();</span>
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;EventDTO&gt; update(@PathVariable Long id, @RequestBody EventDTO dto) {
+<span class="fc" id="L74">        return ResponseEntity.ok(eventService.updateEvent(id, dto));</span>
+    }
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;Void&gt; delete(@PathVariable Long id) {
+<span class="fc" id="L79">        eventService.deleteEvent(id);</span>
+<span class="fc" id="L80">        return ResponseEntity.ok().build();</span>
+    }
+
+    @DeleteMapping(&quot;/{eventId}/registrations/{userId}&quot;)
+    public ResponseEntity&lt;Void&gt; cancelRegistration(@PathVariable Long eventId, @PathVariable Long userId) {
+<span class="nc" id="L85">        eventService.cancelRegistration(eventId, userId);</span>
+<span class="nc" id="L86">        return ResponseEntity.ok().build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

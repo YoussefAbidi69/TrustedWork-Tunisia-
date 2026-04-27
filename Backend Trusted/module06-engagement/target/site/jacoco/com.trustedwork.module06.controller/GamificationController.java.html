@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GamificationController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">module06-engagement</a> &gt; <a href="index.source.html" class="el_package">com.trustedwork.module06.controller</a> &gt; <span class="el_source">GamificationController.java</span></div><h1>GamificationController.java</h1><pre class="source lang-java linenums">package com.trustedwork.module06.controller;
+
+import com.trustedwork.module06.dto.BadgeDTO;
+import com.trustedwork.module06.dto.GrowthProfileDTO;
+import com.trustedwork.module06.security.JwtUtil;
+import com.trustedwork.module06.service.EngagementScoreService;
+import com.trustedwork.module06.service.GamificationService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/gamification&quot;)
+@RequiredArgsConstructor
+@Tag(name = &quot;Gamification&quot;, description = &quot;XP, badges et streaks&quot;)
+public class GamificationController {
+
+    private final GamificationService gamificationService;
+    private final EngagementScoreService scoreService;
+    private final JwtUtil jwtUtil;
+
+    @GetMapping(&quot;/profile&quot;)
+    public ResponseEntity&lt;?&gt; getMyProfile(
+            @RequestHeader(value = &quot;Authorization&quot;, required = false) String token) {
+<span class="fc" id="L28">        Long userId = getUserId(token);</span>
+<span class="pc bpc" id="L29" title="1 of 2 branches missed.">        if (userId == null) return ResponseEntity.status(401).body(Map.of(&quot;message&quot;, &quot;Invalid or expired session&quot;));</span>
+<span class="fc" id="L30">        return ResponseEntity.ok(gamificationService.getProfile(userId));</span>
+    }
+
+    @GetMapping(&quot;/badges&quot;)
+    public ResponseEntity&lt;?&gt; getMyBadges(
+            @RequestHeader(value = &quot;Authorization&quot;, required = false) String token) {
+<span class="fc" id="L36">        Long userId = getUserId(token);</span>
+<span class="pc bpc" id="L37" title="1 of 2 branches missed.">        if (userId == null) return ResponseEntity.status(401).body(Map.of(&quot;message&quot;, &quot;Invalid or expired session&quot;));</span>
+<span class="fc" id="L38">        return ResponseEntity.ok(gamificationService.getUserBadges(userId));</span>
+    }
+
+    @GetMapping(&quot;/score&quot;)
+    public ResponseEntity&lt;?&gt; getScore(
+            @RequestHeader(value = &quot;Authorization&quot;, required = false) String token) {
+<span class="fc" id="L44">        Long userId = getUserId(token);</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">        if (userId == null) return ResponseEntity.status(401).body(Map.of(&quot;message&quot;, &quot;Invalid or expired session&quot;));</span>
+<span class="fc" id="L46">        double score = scoreService.computeEngagementScore(userId);</span>
+<span class="fc" id="L47">        return ResponseEntity.ok(Map.of(&quot;engagementScore&quot;, score));</span>
+    }
+
+    // ==================== ADMIN ENDPOINTS ====================
+
+    @GetMapping(&quot;/admin/profiles&quot;)
+    public ResponseEntity&lt;List&lt;GrowthProfileDTO&gt;&gt; getAllProfiles() {
+<span class="fc" id="L54">        return ResponseEntity.ok(gamificationService.getAllProfiles());</span>
+    }
+
+    @GetMapping(&quot;/admin/user/{userId}/profile&quot;)
+    public ResponseEntity&lt;?&gt; getUserProfile(@PathVariable Long userId) {
+        // Admin can view any profile
+<span class="fc" id="L60">        return ResponseEntity.ok(gamificationService.getProfile(userId));</span>
+    }
+
+    @GetMapping(&quot;/admin/user/{userId}/badges&quot;)
+    public ResponseEntity&lt;?&gt; getUserBadges(@PathVariable Long userId) {
+<span class="nc" id="L65">        return ResponseEntity.ok(gamificationService.getUserBadges(userId));</span>
+    }
+
+    @GetMapping(&quot;/admin/user/{userId}/score&quot;)
+    public ResponseEntity&lt;?&gt; getUserScore(@PathVariable Long userId) {
+<span class="nc" id="L70">        double score = scoreService.computeEngagementScore(userId);</span>
+<span class="nc" id="L71">        return ResponseEntity.ok(Map.of(&quot;engagementScore&quot;, score));</span>
+    }
+
+    @DeleteMapping(&quot;/admin/user/{userId}/badges/{badgeId}&quot;)
+    public ResponseEntity&lt;Void&gt; removeUserBadge(@PathVariable Long userId, @PathVariable Long badgeId) {
+<span class="fc" id="L76">        gamificationService.removeBadge(userId, badgeId);</span>
+<span class="fc" id="L77">        return ResponseEntity.ok().build();</span>
+    }
+
+    private Long getUserId(String token) {
+<span class="pc bpc" id="L81" title="2 of 4 branches missed.">        if (token == null || !token.startsWith(&quot;Bearer &quot;)) return null;</span>
+<span class="fc" id="L82">        return jwtUtil.extractUserId(token.substring(7));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
