@@ -1,0 +1,39 @@
+<div
+  class="fs"
+  [class.fs--compact]="size === 'compact'"
+  [class.jb-glow-risk]="tier() === 'high' && size === 'full'"
+  [ngClass]="'fs--' + tier()">
+  <div class="fs__head">
+    <span class="fs__icon" aria-hidden="true">
+      <i class="fas fa-shield-halved"></i>
+    </span>
+    <div>
+      <div class="fs__label">✦ AI Fraud Shield</div>
+      <ng-container [ngSwitch]="tier()">
+        <div *ngSwitchCase="'low'" class="fs__msg">✓ Verified — Low Risk</div>
+        <div *ngSwitchCase="'mid'" class="fs__msg">⚠ Moderate Risk — Review Advised</div>
+        <div *ngSwitchCase="'high'" class="fs__msg fs__msg--bold jb-banner-pulse">⚠ High Risk Detected</div>
+      </ng-container>
+    </div>
+  </div>
+
+  <button
+    type="button"
+    class="fs__expand"
+    *ngIf="tier() === 'high' && signals?.length && size === 'full'"
+    (click)="expanded = !expanded">
+    {{ expanded ? 'Hide signals' : 'View triggered signals' }}
+  </button>
+
+  <div class="fs__panel" *ngIf="expanded && tier() === 'high'">
+    <div class="fs__signal" *ngFor="let s of signals">
+      <div class="fs__signal-head">
+        <i class="fas fa-triangle-exclamation"></i>
+        <span>{{ s.message || s.code }}</span>
+      </div>
+      <div class="fs__bar">
+        <div class="fs__bar-fill" [style.width.%]="Math.min(100, s.weight * 100)"></div>
+      </div>
+    </div>
+  </div>
+</div>

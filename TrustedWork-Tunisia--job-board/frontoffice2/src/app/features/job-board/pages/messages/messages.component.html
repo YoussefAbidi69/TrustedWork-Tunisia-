@@ -1,0 +1,54 @@
+<div class="messages-page">
+  <div class="messages-container">
+    
+    <!-- Conversations List -->
+    <div class="conversations-sidebar">
+      <app-conversation-list
+        [conversations]="filteredConversations"
+        [selectedConv]="selectedConv"
+        [activeFilter]="activeFilter"
+        [searchQuery]="searchQuery"
+        (selectConv)="selectConversation($event)"
+        (filterChange)="setFilter($event)"
+        (searchChange)="onSearch($event)">
+      </app-conversation-list>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="chat-area">
+      <!-- Empty state when no conversation selected -->
+      <div class="chat-empty-state" *ngIf="!selectedConv">
+        <div class="empty-icon">
+          <i class="fas fa-comments"></i>
+        </div>
+        <h3>Your Messages</h3>
+        <p>Select a conversation from the sidebar to view or send messages.</p>
+      </div>
+
+      <!-- Active Chat -->
+      <ng-container *ngIf="selectedConv">
+        
+        <app-chat-header [conv]="selectedConv"></app-chat-header>
+
+        <div class="chat-messages" #chatScroll>
+          <div class="chat-spinner" *ngIf="chatLoading">
+            <i class="fas fa-spinner fa-spin"></i>
+          </div>
+          
+          <app-message-bubble 
+            *ngFor="let msg of chatMessages" 
+            [msg]="msg"
+            [isMe]="isMe(msg)">
+          </app-message-bubble>
+        </div>
+        
+        <app-message-input
+          [disabled]="chatSending"
+          (send)="sendChat($event)">
+        </app-message-input>
+
+      </ng-container>
+    </div>
+
+  </div>
+</div>

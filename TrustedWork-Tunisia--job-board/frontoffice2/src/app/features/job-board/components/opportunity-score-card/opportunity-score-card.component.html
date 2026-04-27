@@ -1,0 +1,15 @@
+<div
+  class="osc"
+  [class.osc--compact]="size === 'compact'"
+  [style.--osc-glow.px]="glow">
+  <div class="osc__label">✦ AI Opportunity Score</div>
+  <div class="osc__score">
+    <span class="osc__num" [appCountUp]="opportunity.total" [countDuration]="900" [countDecimals]="0"></span>
+  </div>
+  <div class="osc__tier" [ngClass]="'osc__tier--' + labelClass">{{ label }}</div>
+  <div class="osc__pills" *ngIf="size === 'full'">
+    <span class="osc__pill">Budget {{ opportunity.budget != null ? (opportunity.budget | number : '1.0-0') : '—' }}</span>
+    <span class="osc__pill">Demand {{ opportunity.demand != null ? (opportunity.demand | number : '1.0-0') : '—' }}</span>
+    <span class="osc__pill">Competition {{ opportunity.competition != null ? (opportunity.competition | number : '1.0-0') : '—' }}</span>
+  </div>
+</div>

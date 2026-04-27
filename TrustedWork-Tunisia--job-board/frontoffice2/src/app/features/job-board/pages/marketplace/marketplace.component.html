@@ -1,0 +1,602 @@
+<div class="jobs-page">
+  <section class="jobs-hero">
+    <div class="jobs-hero__glow jobs-hero__glow--one"></div>
+    <div class="jobs-hero__glow jobs-hero__glow--two"></div>
+
+    <div class="jobs-hero__content">
+      <div class="jobs-hero__copy">
+        <div class="eyebrow-group">
+          <span class="eyebrow">TrustedWork Opportunities</span>
+          <span class="eyebrow eyebrow--accent">Curated freelance marketplace</span>
+        </div>
+
+        <h1>Premium freelance missions matched to your profile strength.</h1>
+
+        <p>
+          Discover high-value opportunities with verified clients, clean project briefs and strong compatibility with
+          your expertise, trust score and platform activity.
+        </p>
+
+        <div class="hero-actions">
+          <button type="button" class="hero-btn hero-btn--primary" (click)="scrollToFeed()">Explore top matches</button>
+          <button type="button" class="hero-btn hero-btn--secondary" (click)="scrollToFeed()">Saved searches</button>
+        </div>
+      </div>
+
+      <div class="hero-market-card">
+        <div class="hero-market-card__header">
+          <div>
+            <span class="card-kicker">Market pulse</span>
+            <h3>This week on TrustedWork</h3>
+          </div>
+          <span class="pulse-dot"></span>
+        </div>
+
+        <div class="market-signal-list" *ngIf="marketSignals.length">
+          <article class="market-signal" *ngFor="let signal of marketSignals; trackBy: trackBySignal">
+            <div>
+              <strong>{{ signal.label }}</strong>
+              <span>From live job board demand</span>
+            </div>
+            <em [class.market-signal__value--up]="signal.trend === 'up'">
+              {{ signal.value }}
+            </em>
+          </article>
+        </div>
+        <p class="hero-market-empty" *ngIf="!marketSignals.length">No market snapshot yet.</p>
+      </div>
+    </div>
+
+    <div class="hero-stats-grid">
+      <article class="hero-stat-card" *ngFor="let stat of heroStats; trackBy: trackByStat">
+        <span>{{ stat.label }}</span>
+        <strong>{{ stat.value }}</strong>
+        <p>{{ stat.caption }}</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="jobs-toolbar">
+    <div class="toolbar-block">
+      <div class="toolbar-title">
+        <span>Categories</span>
+        <strong>Find the right mission faster</strong>
+      </div>
+
+      <div class="filter-chip-group">
+        <button
+          type="button"
+          class="filter-chip"
+          *ngFor="let category of categoryFilters"
+          [class.active]="selectedCategory === category"
+          (click)="selectCategory(category)"
+        >
+          {{ category }}
+        </button>
+      </div>
+    </div>
+
+    <div class="toolbar-block toolbar-block--compact">
+      <div class="toolbar-title">
+        <span>Experience</span>
+        <strong>Refine precision</strong>
+      </div>
+
+      <div class="filter-chip-group">
+        <button
+          type="button"
+          class="filter-chip filter-chip--soft"
+          *ngFor="let level of levelFilters"
+          [class.active]="selectedLevel === level"
+          (click)="selectLevel(level)"
+        >
+          {{ level }}
+        </button>
+      </div>
+    </div>
+
+    <button type="button" class="featured-toggle" [class.active]="featuredOnly" (click)="toggleFeaturedOnly()">
+      <span class="featured-toggle__dot"></span>
+      Featured only
+    </button>
+  </section>
+
+  <section class="jobs-summary-row">
+    <article class="summary-card">
+      <span>Results</span>
+      <strong>{{ displayJobs.length }}</strong>
+      <p>Opportunities matching your current filters</p>
+    </article>
+
+    <article class="summary-card">
+      <span>Featured</span>
+      <strong>{{ featuredCount }}</strong>
+      <p>Highlighted by quality, scope and client intent</p>
+    </article>
+
+    <article class="summary-card">
+      <span>Verified clients</span>
+      <strong>{{ verifiedCount }}</strong>
+      <p>Opportunities from validated companies and teams</p>
+    </article>
+  </section>
+
+  <section class="jobs-layout">
+    <div class="jobs-list-panel">
+      <div class="panel-head">
+        <div>
+          <span class="card-kicker">Opportunity feed</span>
+          <h2>Freelance jobs</h2>
+        </div>
+        <div class="panel-head__meta">Sorted by <strong>best match</strong></div>
+      </div>
+
+      <div class="panel-filters">
+        <select [value]="filterCategory" (change)="onCategoryChange($event)">
+          <option value="">All categories</option>
+          <ng-container *ngFor="let c of categoryFilters">
+            <option *ngIf="c !== 'All'" [value]="c">{{ c }}</option>
+          </ng-container>
+        </select>
+        <input type="text" [value]="filterSkill" placeholder="Search skills..." (input)="onSkillSearch($event)" />
+        <label class="filter-toggle">
+          <input type="checkbox" [checked]="filterRemoteOnly" (change)="onRemoteToggle($event)" />
+          Remote only
+        </label>
+        <div style="display:flex; gap:8px; align-items:center; margin-left: auto;">
+           <span style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#5f6b7d;">Sort:</span>
+           <button class="filter-chip filter-chip--soft" [class.active]="sortFilter === 'LATEST'" (click)="sortFilter = 'LATEST'" style="padding:4px 10px; font-size:13px;">Latest</button>
+           <button class="filter-chip filter-chip--soft" [class.active]="sortFilter === 'MATCH'" (click)="sortFilter = 'MATCH'" style="padding:4px 10px; font-size:13px;">Highest Match</button>
+           <button class="filter-chip filter-chip--soft" [class.active]="sortFilter === 'PAY'" (click)="sortFilter = 'PAY'" style="padding:4px 10px; font-size:13px;">Highest Pay</button>
+        </div>
+      </div>
+
+      <div class="error-state" *ngIf="apiError && !apiLoading">
+        <i class="fas fa-exclamation-circle"></i>
+        <p>{{ apiError }}</p>
+        <button type="button" class="hero-btn hero-btn--secondary" (click)="retryLoadJobs()">Try again</button>
+      </div>
+      <p class="jobs-api-error" *ngIf="myApplicationsError">{{ myApplicationsError }}</p>
+
+      <div class="jobs-skeleton-list" *ngIf="apiLoading">
+        <article class="job-card job-card--skeleton" *ngFor="let _ of [1, 2, 3, 4]">
+          <div class="shimmer-bar skel-line"></div>
+          <div class="shimmer-bar skel-line short"></div>
+          <div class="shimmer-bar skel-line"></div>
+        </article>
+      </div>
+
+      <div class="jobs-list" *ngIf="!apiLoading && !apiError && displayJobs.length; else emptyJobs">
+        <article
+          class="job-card"
+          *ngFor="let job of displayJobs; trackBy: trackByJobId"
+          [class.job-card--active]="selectedJob?.id === job.id"
+          (click)="selectJob(job)"
+        >
+          <div class="job-card__top">
+            <div class="job-company">
+              <div class="job-company__logo">{{ job.initials }}</div>
+              <div>
+                <h3>{{ job.title }}</h3>
+                <p>
+                  {{ job.category }}
+                  <span class="dot-separator">•</span>
+                  {{ job.location }} {{ job.isRemote ? '· Remote' : '' }}
+                </p>
+              </div>
+            </div>
+            <div class="job-card__actions">
+              <span class="job-status job-status--applied" *ngIf="appliedJobIds.has(job.id)">
+                <i class="fas fa-check-circle"></i> Applied
+              </span>
+              <span class="job-status" [ngClass]="job.statusClass">
+                {{ job.statusLabel }}
+              </span>
+              <button
+                type="button"
+                class="save-btn"
+                [class.active]="isSaved(job.id)"
+                (click)="toggleSave(job.id); $event.stopPropagation()"
+              >
+                <i class="fas" [ngClass]="isSaved(job.id) ? 'fa-bookmark' : 'fa-regular fa-bookmark'"></i>
+              </button>
+            </div>
+          </div>
+
+          <p class="job-description">{{ job.description | slice : 0 : 120 }}...</p>
+
+          <div class="job-tags">
+            <span class="job-tag" *ngFor="let skill of job.requiredSkills | slice : 0 : 5; trackBy: trackBySkill">
+              {{ skill }}
+            </span>
+          </div>
+
+          <div class="job-highlights" *ngIf="job.highlights.length">
+            <span *ngFor="let h of job.highlights; trackBy: trackByText">{{ h }}</span>
+          </div>
+
+          <div class="job-card__bottom">
+            <div class="job-meta-grid">
+              <div class="job-meta">
+                <span>Budget</span>
+                <strong>${{ job.budgetMin | number }} – ${{ job.budgetMax | number }}</strong>
+                <small>{{ job.isRemote ? 'Remote' : 'On-site' }}</small>
+              </div>
+              <div class="job-meta">
+                <span>Duration</span>
+                <strong>{{ job.duration }}</strong>
+                <small>{{ job.experienceLabel }}</small>
+              </div>
+              <div class="job-meta">
+                <span>Proposals</span>
+                <strong>{{ job.applicationCount }}</strong>
+                <small>{{ job.publishedAt | timeAgo }}</small>
+              </div>
+            </div>
+            <div class="match-score">
+              <span>Match</span>
+              <ng-container *ngIf="job.matchScore != null; else noCardMatch">
+                <strong [countUp]="job.matchScore" [countUpDuration]="1000" [countUpDecimals]="0">0</strong>%
+              </ng-container>
+              <ng-template #noCardMatch><strong>—</strong></ng-template>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="jobs-pager" *ngIf="page && page.totalPages > 1 && !apiLoading">
+        <button type="button" class="hero-btn hero-btn--secondary" [disabled]="pageIndex <= 0" (click)="goPage(-1)">
+          Previous
+        </button>
+        <span>Page {{ pageIndex + 1 }} / {{ page.totalPages }}</span>
+        <button
+          type="button"
+          class="hero-btn hero-btn--secondary"
+          [disabled]="pageIndex >= page.totalPages - 1"
+          (click)="goPage(1)"
+        >
+          Next
+        </button>
+      </div>
+
+      <ng-template #emptyJobs>
+        <div class="empty-state empty-panel" *ngIf="!apiLoading && !apiError">
+          <i class="fas fa-briefcase"></i>
+          <p>No jobs available right now. Check back soon.</p>
+        </div>
+      </ng-template>
+    </div>
+
+    <aside class="job-details-panel" *ngIf="selectedJob">
+      <div class="panel-head panel-head--details">
+        <div>
+          <span class="card-kicker">Selected mission</span>
+          <h2>Opportunity details</h2>
+        </div>
+        <span class="job-status" [ngClass]="selectedJob.statusClass">{{ selectedJob.statusLabel }}</span>
+      </div>
+
+      <div class="detail-loading" *ngIf="detailLoading">
+        <div class="shimmer-bar skel-line"></div>
+        <p>Loading details…</p>
+      </div>
+
+      <div class="selected-job-card" *ngIf="!detailLoading && selectedDetail">
+        <div class="selected-job-card__brand">
+          <div class="job-company__logo job-company__logo--large">{{ selectedJob.initials }}</div>
+          <div>
+            <h3>{{ selectedDetail.title }}</h3>
+            <p>{{ selectedDetail.category }} · {{ selectedDetail.location }}</p>
+          </div>
+        </div>
+
+        <div class="selected-job-card__trust">
+          <span class="trust-chip">
+            <i class="fas fa-shield-check"></i>
+            {{ fraudLabel() }}
+          </span>
+          <span class="trust-chip trust-chip--accent" *ngIf="panelMatchScore != null; else noTrustMatch">
+            <strong [countUp]="panelMatchScore" [countUpDuration]="1000" [countUpDecimals]="0">0</strong>% compatibility
+          </span>
+          <ng-template #noTrustMatch>
+            <span class="trust-chip trust-chip--accent">— compatibility</span>
+          </ng-template>
+        </div>
+
+        <div class="selected-job-card__grid">
+          <div class="detail-box">
+            <span>Budget</span>
+            <strong>${{ selectedDetail.budgetMin | number }} – ${{ selectedDetail.budgetMax | number }}</strong>
+            <small>{{ selectedDetail.remote ? 'Remote' : 'On-site' }}</small>
+          </div>
+          <div class="detail-box">
+            <span>Duration</span>
+            <strong>{{ selectedJob.duration }}</strong>
+            <small>{{ selectedJob.experienceLabel }}</small>
+          </div>
+          <div class="detail-box">
+            <span>Posted</span>
+            <strong>{{ selectedDetail.publishedAt | timeAgo }}</strong>
+            <small>{{ selectedDetail.applicationCount || 0 }} proposals</small>
+          </div>
+        </div>
+
+        <div class="selected-job-card__section">
+          <div class="description-header">
+            <i class="fas fa-align-left"></i>
+            <h4>Mission overview</h4>
+          </div>
+          <div class="mission-description">
+            <p *ngFor="let para of descriptionParagraphs">{{ para }}</p>
+          </div>
+        </div>
+
+        <div class="selected-job-card__section">
+          <h4>Required skills</h4>
+          <div class="job-tags">
+            <span class="job-tag" *ngFor="let s of selectedDetail.requiredSkills; trackBy: trackBySkill">{{ s }}</span>
+          </div>
+        </div>
+
+        <div class="selected-job-card__section">
+          <h4>✦ AI-detected skills</h4>
+          <div class="job-tags">
+            <span class="job-tag job-tag--ai" *ngFor="let s of selectedDetail.extractedSkills; trackBy: trackBySkill">
+              <i class="fas fa-sparkles"></i> {{ s }}
+            </span>
+          </div>
+        </div>
+
+        <div class="selected-job-card__section">
+          <h4>✦ AI Fraud Shield</h4>
+          <div [ngClass]="fraudShieldClass()">
+            <i class="fas fa-shield-alt"></i>
+            <span>{{ fraudShieldLabel() }}</span>
+            <small>Risk score: {{ (selectedDetail.fraudRiskScore * 100) | number : '1.0-0' }}%</small>
+          </div>
+          <div class="fraud-signals" *ngIf="selectedDetail.fraudRiskScore > 0.3">
+            <div class="fraud-signal" *ngFor="let sig of fraudSignalsView()">
+              <span class="signal-name">{{ sig.signalName }}</span>
+              <span class="signal-weight">{{ sig.signalWeight * 100 | number : '1.0-0' }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="selected-job-card__section">
+          <h4>✦ Opportunity Score</h4>
+          <div class="opportunity-score-row">
+            <div class="opp-score-number" [countUp]="selectedDetail.opportunityScore" [countUpDuration]="1200">0</div>
+            <div class="opp-score-label">{{ opportunityLabel() }}</div>
+          </div>
+          <div class="opp-score-bars">
+            <div class="opp-bar">
+              <span>Budget</span>
+              <div class="bar-track">
+                <div
+                  class="bar-fill bar-fill--budget"
+                  [style.width.%]="selectedDetail.opportunityBudgetComponent ?? 0"
+                ></div>
+              </div>
+            </div>
+            <div class="opp-bar">
+              <span>Demand</span>
+              <div class="bar-track">
+                <div
+                  class="bar-fill bar-fill--demand"
+                  [style.width.%]="selectedDetail.opportunityDemandComponent ?? 0"
+                ></div>
+              </div>
+            </div>
+            <div class="opp-bar">
+              <span>Competition</span>
+              <div class="bar-track">
+                <div
+                  class="bar-fill bar-fill--competition"
+                  [style.width.%]="selectedDetail.opportunityCompetitionComponent ?? 0"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="selected-job-card__section" *ngIf="isFreelancer() && highlightDetails().length">
+          <h4>Why this mission stands out</h4>
+          <div class="highlight-list">
+            <article class="highlight-item" *ngFor="let h of highlightDetails()">
+              <span class="highlight-item__bullet"></span>
+              <div>
+                <strong>{{ h.title }}</strong>
+                <p>{{ h.description }}</p>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="selected-job-card__section" *ngIf="isFreelancer() && prediction && !submitSuccess">
+          <h4>✦ AI Success Prediction</h4>
+          <div class="success-gauge-wrapper">
+            <app-success-prediction-gauge
+              [probability]="prediction.probability"
+              [confidenceLabel]="prediction.confidenceLabel"
+              size="full"
+            >
+            </app-success-prediction-gauge>
+          </div>
+          <div class="prediction-why">
+            <h5>Why this prediction?</h5>
+            <ul class="prediction-factors">
+              <li>
+                <i class="fas fa-code"></i>
+                <span>Skill overlap: </span>
+                <strong [countUp]="prediction.skillOverlapPercent ?? 0" [countUpDuration]="800" [countUpDecimals]="0"
+                  >0</strong
+                >% of required skills matched
+              </li>
+              <li>
+                <i class="fas fa-star"></i>
+                <span>Reputation: </span>
+                <strong [countUp]="prediction.reputationScore ?? 0" [countUpDuration]="800" [countUpDecimals]="0">0</strong
+                >/100
+              </li>
+              <li>
+                <i class="fas fa-trophy"></i>
+                <span>Success rate: </span>
+                <strong [countUp]="prediction.successRateScore ?? 0" [countUpDuration]="800" [countUpDecimals]="0">0</strong
+                >%
+              </li>
+            </ul>
+            <p class="prediction-summary">{{ prediction.predictionSummary }}</p>
+          </div>
+        </div>
+
+        <div class="selected-job-card__footer">
+          <button
+            type="button"
+            class="hero-btn hero-btn--primary"
+            *ngIf="isFreelancer() && !hasApplied() && !submitSuccess"
+            (click)="openApplyForm()"
+          >
+            Apply now
+          </button>
+          <button type="button" class="hero-btn hero-btn--secondary" (click)="saveJob()">
+            Save for later
+          </button>
+          <div class="already-applied-badge" *ngIf="hasApplied() && !submitSuccess">
+            <i class="fas fa-check-circle"></i>
+            Already applied
+            <span class="job-status" *ngIf="existingApplication"> {{ existingApplication.status }} </span>
+          </div>
+        </div>
+
+        <div class="apply-form-section" *ngIf="applyFormOpen" [@slideDownForm]>
+          <h4>Submit your proposal</h4>
+          <form [formGroup]="applyForm" (ngSubmit)="submitApplication()">
+            <div class="form-group">
+              <div class="form-group-header">
+                <label>Cover Letter</label>
+                <button type="button" class="ai-write-btn" (click)="generateAiCoverLetter()" [disabled]="generatingCoverLetter">
+                  <i class="fas fa-magic" [class.fa-spin]="generatingCoverLetter"></i> 
+                  {{ generatingCoverLetter ? 'Writing...' : 'Help me write this' }}
+                </button>
+              </div>
+              <textarea
+                formControlName="coverLetter"
+                placeholder="Describe why you are the best fit..."
+                rows="5"
+              ></textarea>
+              <small class="char-count"> {{ applyForm.get('coverLetter')?.value?.length ?? 0 }} / 500 </small>
+              <div
+                class="field-error"
+                *ngIf="applyForm.get('coverLetter')?.touched && applyForm.get('coverLetter')?.hasError('required')"
+              >
+                Cover letter is required
+              </div>
+              <div
+                class="field-error"
+                *ngIf="applyForm.get('coverLetter')?.touched && applyForm.get('coverLetter')?.hasError('minlength')"
+              >
+                Minimum 50 characters required
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Your Rate ($)</label>
+              <input type="number" formControlName="proposedRate" placeholder="e.g. 1500" min="1" step="0.01" />
+              <small class="field-hint">
+                Client budget: ${{ selectedDetail.budgetMin }} – ${{ selectedDetail.budgetMax }}
+              </small>
+              <div class="field-error" *ngIf="applyForm.get('proposedRate')?.touched && applyForm.get('proposedRate')?.invalid">
+                Enter a valid rate greater than 0
+              </div>
+            </div>
+            <div class="your-skills-row">
+              <label>Your Skills (used for AI matching)</label>
+              <div class="skill-tags-input">
+                <span class="job-tag" *ngFor="let s of mySkills; trackBy: trackBySkill">
+                  {{ s }}
+                  <button type="button" (click)="removeSkill(s)">×</button>
+                </span>
+                <input type="text" placeholder="Add a skill + Enter" (keydown.enter)="addSkill($event)" />
+              </div>
+              <small class="field-hint"> These skills are used to compute your AI match score </small>
+            </div>
+            <div class="submit-error" *ngIf="submitError">
+              <i class="fas fa-exclamation-circle"></i>
+              {{ submitError }}
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="hero-btn hero-btn--primary" [disabled]="applyForm.invalid || submitting">
+                <i class="fas fa-spinner fa-spin" *ngIf="submitting"></i>
+                {{ submitting ? 'Submitting...' : 'Submit Proposal' }}
+              </button>
+              <button
+                type="button"
+                class="hero-btn hero-btn--secondary"
+                (click)="closeApplyForm()"
+                [disabled]="submitting"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="apply-success" *ngIf="submitSuccess" [@fadeIn]>
+          <div class="success-header">
+            <i class="fas fa-check-circle"></i>
+            <strong>Application submitted successfully!</strong>
+          </div>
+          <p class="success-sub">
+            Your match score is being calculated by AI. Check "My Applications" to track your status.
+          </p>
+          <div *ngIf="livePrediction" class="prediction-section">
+            <h5>AI Success Prediction</h5>
+            <div class="success-gauge-wrapper">
+              <app-success-prediction-gauge
+                [probability]="livePrediction.probability"
+                [confidenceLabel]="livePrediction.confidenceLabel"
+                size="full"
+              >
+              </app-success-prediction-gauge>
+            </div>
+            <div class="prediction-why">
+              <h5>Why this prediction?</h5>
+              <ul class="prediction-factors">
+                <li>
+                  <i class="fas fa-code"></i>
+                  Skill overlap:
+                  <strong
+                    [countUp]="livePrediction.skillOverlapPercent ?? 0"
+                    [countUpDuration]="1200"
+                    [countUpDecimals]="0"
+                    >0</strong
+                  >%
+                </li>
+                <li>
+                  <i class="fas fa-star"></i>
+                  Reputation:
+                  <strong
+                    [countUp]="livePrediction.reputationScore ?? 70"
+                    [countUpDuration]="1000"
+                    [countUpDecimals]="0"
+                    >0</strong
+                  >/100
+                </li>
+                <li>
+                  <i class="fas fa-trophy"></i>
+                  Success rate:
+                  <strong
+                    [countUp]="livePrediction.successRateScore ?? 75"
+                    [countUpDuration]="1000"
+                    [countUpDecimals]="0"
+                    >0</strong
+                  >%
+                </li>
+              </ul>
+              <p class="prediction-summary">{{ livePrediction.predictionSummary }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </section>
+</div>

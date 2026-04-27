@@ -1,0 +1,62 @@
+<div class="auth-wrapper">
+
+  <div class="auth-left">
+    <div class="auth-brand">
+      <div class="brand-logo">
+        <i class="fas fa-shield-halved"></i>
+      </div>
+      <div class="brand-text">
+        <strong>TrustedWork</strong>
+        <small>Admin Console</small>
+      </div>
+    </div>
+
+    <div class="auth-hero">
+      <div class="hero-badge">
+        <span class="pulse-dot green"></span>
+        Platform Status — All systems operational
+      </div>
+      <h1 class="hero-title">
+        Control your<br>
+        <span class="gradient-text">platform</span><br>
+        from one place.
+      </h1>
+      <p class="hero-sub">
+        Manage users, contracts, reviews and reputation<br>
+        across the entire TrustedWork ecosystem.
+      </p>
+      <div class="hero-stats">
+        <div class="hstat">
+          <strong>9</strong>
+          <span>Modules</span>
+        </div>
+        <div class="hstat-divider"></div>
+        <div class="hstat">
+          <strong>100%</strong>
+          <span>Tunisian</span>
+        </div>
+        <div class="hstat-divider"></div>
+        <div class="hstat">
+          <strong>24/7</strong>
+          <span>Monitoring</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-modules">
+      <div class="module-chip" *ngFor="let m of modules">
+        <span>{{ m.label }}</span>
+      </div>
+    </div>
+
+    <div class="auth-left-footer">
+      <span>TrustedWork Tunisia © 2025</span>
+      <span>ESPRIT — PI Cloud</span>
+    </div>
+  </div>
+
+  <div class="auth-right">
+    <router-outlet></router-outlet>
+  </div>
+
+</div>

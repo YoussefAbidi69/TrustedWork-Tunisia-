@@ -1,0 +1,134 @@
+<div class="home-feed-page">
+  <section class="feed-hero">
+    <div class="feed-hero__content">
+      <span class="feed-badge">Market Pulse</span>
+      <h1>✦ AI Market Intelligence 
+        <span class="live-dot-wrap"><span class="jb-live-dot"></span> Live</span>
+      </h1>
+      <p>Last updated: {{ lastUpdated | timeAgo }}</p>
+      
+      <div class="feed-hero__actions">
+        <button type="button" class="btn btn-primary" (click)="refreshMarketData()">
+          <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> Refresh Data
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed-section">
+    <div class="section-head">
+      <div>
+        <span class="section-kicker">What is this?</span>
+        <h2>Real-time analysis of job postings</h2>
+      </div>
+    </div>
+    
+    <div class="trend-list explain-list">
+      <article class="trend-card">
+        <span class="trend-tag"><i class="fas fa-arrow-up"></i> RISING</span>
+        <p>20%+ more jobs this month vs last</p>
+      </article>
+      <article class="trend-card">
+        <span class="trend-tag"><i class="fas fa-arrow-down"></i> DECLINING</span>
+        <p>20%+ fewer jobs vs last month</p>
+      </article>
+      <article class="trend-card">
+        <span class="trend-tag"><i class="fas fa-arrow-right"></i> STABLE</span>
+        <p>Consistent demand month over month</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="feed-section" *ngIf="aiSummary && !loading && !error">
+    <div class="table-card" style="background: linear-gradient(135deg, rgba(97, 189, 151, 0.05), rgba(97, 189, 151, 0.15)); border: 1px solid rgba(97, 189, 151, 0.2); padding: 20px;">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+        <div class="avatar avatar-success"><i class="fas fa-robot"></i></div>
+        <h3 style="margin:0; font-size:16px; color:#1c684a;">AI Executive Summary</h3>
+      </div>
+      <p style="margin:0; font-size:14px; color:#2c3e50; line-height:1.6;">{{ aiSummary }}</p>
+    </div>
+  </section>
+
+  <section class="stats-grid" *ngIf="!loading && !error">
+    <article class="stat-card">
+      <div class="stat-card__label">🔥 Hottest Skill ✦ AI</div>
+      <strong class="stat-value" *ngIf="hottestSkill">
+         {{ hottestSkill.skill }}
+         <span class="stat-sub" [countUp]="hottestSkill.count" [countUpDuration]="1000">0</span>
+      </strong>
+      <strong class="stat-value" *ngIf="!hottestSkill">—</strong>
+    </article>
+    
+    <article class="stat-card">
+      <div class="stat-card__label">📈 Fastest Rising</div>
+      <strong class="stat-value stat-value--success" *ngIf="fastestRising">
+         {{ fastestRising.skill }}
+         <span class="stat-sub">+{{ fastestRising.changePercent | number:'1.0-0' }}%</span>
+      </strong>
+      <strong class="stat-value" *ngIf="!fastestRising">—</strong>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-card__label">⚠ Most Declining</div>
+      <strong class="stat-value stat-value--warning" *ngIf="mostDeclining">
+         {{ mostDeclining.skill }}
+         <span class="stat-sub">{{ mostDeclining.changePercent | number:'1.0-0' }}%</span>
+      </strong>
+      <strong class="stat-value" *ngIf="!mostDeclining">—</strong>
+    </article>
+  </section>
+
+  <section class="feed-section" *ngIf="!error">
+    <div class="section-head">
+      <div>
+         <span class="section-kicker">Top 20 Skills</span>
+         <h2>Demand distribution</h2>
+      </div>
+    </div>
+    
+    <div class="trend-card chart-container">
+      <app-market-chart [insights]="insights"></app-market-chart>
+    </div>
+  </section>
+
+  <section class="feed-section" *ngIf="!error">
+    <div class="section-head">
+      <div>
+         <span class="section-kicker">Market Data</span>
+         <h2>Trend Table</h2>
+      </div>
+      <button type="button" class="btn btn-secondary" (click)="exportCsv()">Export CSV</button>
+    </div>
+
+    <div class="table-card">
+      <table class="market-table">
+        <thead>
+          <tr>
+            <th (click)="sort('skill')">Skill <i class="fas fa-sort"></i></th>
+            <th (click)="sort('count')">Count <i class="fas fa-sort"></i></th>
+            <th (click)="sort('trend')">Trend <i class="fas fa-sort"></i></th>
+            <th (click)="sort('lastPeriodCount')">vs Last Period <i class="fas fa-sort"></i></th>
+            <th (click)="sort('changePercent')">Change <i class="fas fa-sort"></i></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of displayInsights">
+            <td><strong>{{ m.skill }}</strong></td>
+            <td><span [countUp]="m.count" [countUpDuration]="800">0</span></td>
+            <td>
+              <span [ngClass]="trendClass(m.trend)">{{ m.trend }}</span>
+            </td>
+            <td>{{ m.lastPeriodCount }}</td>
+            <td [ngClass]="changeClass(m.changePercent || 0)">
+               {{ (m.changePercent || 0) > 0 ? '+' : '' }}{{ (m.changePercent || 0) | number:'1.0-1' }}%
+            </td>
+          </tr>
+          <tr *ngIf="!displayInsights.length && !loading">
+            <td colspan="5" class="empty-cell">No market data available.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>

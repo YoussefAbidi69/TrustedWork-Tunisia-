@@ -1,0 +1,36 @@
+@import '../marketplace/marketplace.component.scss';
+
+.rec-banner {
+  padding: 34px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(200, 92, 59, 0.1), rgba(36, 88, 160, 0.1));
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
+  margin-bottom: 24px;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.why-match-toggle {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #c85c3b;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.why-match {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(16, 32, 58, 0.04);
+}

@@ -1,0 +1,199 @@
+<div class="users-page">
+  <div class="page-top">
+    <div>
+      <h2>Applications Monitor</h2>
+      <p class="page-subtitle">All freelancer applications across the platform</p>
+    </div>
+    <div class="page-top__actions">
+      <button type="button" class="secondary-btn" (click)="exportCsv()" [disabled]="!applications.length">
+        <span class="btn-ic" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+        </span>
+        Export CSV
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon-wrapper">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+        </div>
+        <span class="stat-title">Total (platform)</span>
+      </div>
+      <div class="stat-value" [countUp]="pageStats.total" [countUpDuration]="800" [countUpDecimals]="0">0</div>
+      <div class="stat-sub">From API pagination total</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon-wrapper stat-icon--warning">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+        </div>
+        <span class="stat-title">Pending (this page)</span>
+      </div>
+      <div class="stat-value" [countUp]="pageStats.pending" [countUpDuration]="800" [countUpDecimals]="0">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon-wrapper stat-icon--success">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+        <span class="stat-title">Accepted (this page)</span>
+      </div>
+      <div class="stat-value" [countUp]="pageStats.accepted" [countUpDuration]="800" [countUpDecimals]="0">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon-wrapper stat-icon--danger">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+        </div>
+        <span class="stat-title">Rejected / withdrawn (this page)</span>
+      </div>
+      <div class="stat-value stat-value--danger" [countUp]="pageStats.rejected" [countUpDuration]="800" [countUpDecimals]="0">
+        0
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <select [ngModel]="filters.status" (ngModelChange)="onStatusFilter($event)">
+      <option value="">All status</option>
+      <option value="PENDING">PENDING</option>
+      <option value="SHORTLISTED">SHORTLISTED</option>
+      <option value="ACCEPTED">ACCEPTED</option>
+      <option value="REJECTED">REJECTED</option>
+      <option value="WITHDRAWN">WITHDRAWN</option>
+    </select>
+    <div class="filter-score">
+      <label class="text-muted" for="minScore">Min match %</label>
+      <input id="minScore" type="number" min="0" max="100" [(ngModel)]="minScoreInput" />
+    </div>
+    <button type="button" class="primary-btn" (click)="applyFilters()">Apply</button>
+  </div>
+
+  <div class="alert error" *ngIf="error">
+    <span>{{ error }}</span>
+    <button type="button" class="secondary-btn" (click)="retry()">Retry</button>
+  </div>
+
+  <div class="table-card">
+    <div class="loading" *ngIf="loading && !applications.length">Loading applications…</div>
+    <div class="table-skeleton" *ngIf="tableLoading && !loading">
+      <div class="skeleton-row" *ngFor="let _ of [1, 2, 3, 4, 5, 6]"></div>
+    </div>
+    <div class="table-wrapper" *ngIf="!loading && !tableLoading && applications.length">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Job</th>
+            <th>Freelancer</th>
+            <th>Rate</th>
+            <th>Match (AI)</th>
+            <th>Status</th>
+            <th>Applied</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let app of applications">
+            <tr>
+              <td>{{ app.id }}</td>
+              <td class="name-cell">
+                <span class="user-name" [title]="app.jobTitle">{{ app.jobTitle | slice : 0 : 40 }}{{ app.jobTitle.length > 40 ? '…' : '' }}</span>
+              </td>
+              <td>#{{ app.freelancerId }}</td>
+              <td>${{ app.proposedRate }}</td>
+              <td>
+                <div class="match-bar-cell">
+                  <div class="match-bar-track">
+                    <div class="match-bar-fill" [ngClass]="matchBarClass(matchPct(app))" [style.width.%]="matchPct(app)"></div>
+                  </div>
+                  <span [countUp]="matchPct(app)" [countUpDuration]="800" [countUpDecimals]="0">0</span>
+                  <span class="pct-suffix">%</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="statusBadgeClass(app.status)">{{ app.status }}</span>
+              </td>
+              <td>{{ app.appliedAt | timeAgo }}</td>
+              <td class="actions">
+                <button type="button" class="act-btn neutral" (click)="toggleRow(app.id)" title="View details">
+                  <svg *ngIf="!expandedRows.has(app.id)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  <svg *ngIf="expandedRows.has(app.id)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="18 15 12 9 6 15" />
+                  </svg>
+                </button>
+                <button type="button" class="act-btn neutral" (click)="viewJob(app.jobOfferId)" title="Open job in Job Moderation">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="expandedRows.has(app.id)" class="detail-row" [@accordionExpand]>
+              <td colspan="8" class="td-detail">
+                <div class="detail-grid">
+                  <div>
+                    <h4 class="detail-heading">Cover letter</h4>
+                    <blockquote class="cover-quote">{{ app.coverLetter }}</blockquote>
+                  </div>
+                  <div class="detail-side">
+                    <p>
+                      <span class="text-muted">Job</span><br />
+                      <span class="user-name">{{ app.jobTitle }}</span>
+                    </p>
+                    <p><span class="text-muted">Freelancer</span><br />#{{ app.freelancerId }}</p>
+                    <p><span class="text-muted">Rate</span><br />${{ app.proposedRate }}</p>
+                    <p><span class="text-muted">Applied</span><br />{{ app.appliedAt | timeAgo }}</p>
+                    <p>
+                      <span class="text-muted">Status</span><br />
+                      <span class="badge" [ngClass]="statusBadgeClass(app.status)">{{ app.status }}</span>
+                    </p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+    <div class="empty" *ngIf="!loading && !tableLoading && !applications.length">No applications for this filter.</div>
+    <div class="pager" *ngIf="!loading && !tableLoading && totalPages > 1">
+      <button type="button" class="secondary-btn" [disabled]="currentPage <= 0" (click)="onPageChange(currentPage - 1)">
+        Previous
+      </button>
+      <span class="pager-info">Page {{ currentPage + 1 }} of {{ totalPages }} · {{ total }} total</span>
+      <button
+        type="button"
+        class="secondary-btn"
+        [disabled]="currentPage >= totalPages - 1"
+        (click)="onPageChange(currentPage + 1)"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+</div>

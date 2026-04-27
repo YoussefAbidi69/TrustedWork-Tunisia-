@@ -1,0 +1,177 @@
+<div class="home-feed-page">
+  <section class="feed-hero">
+    <div class="feed-hero__content">
+      <span class="feed-badge">Client Portal</span>
+      <h1>Post a New Job</h1>
+      <p>Describe your opportunity, set the budget, and let AI find the perfect match.</p>
+    </div>
+  </section>
+
+  <div class="feed-layout">
+    <form class="feed-main" [formGroup]="form" (ngSubmit)="$event.preventDefault()">
+      <div class="jb-error" *ngIf="error">
+        <i class="fas fa-exclamation-circle"></i> {{ error }}
+      </div>
+
+      <div *ngIf="published">
+        <div class="table-card publish-success">
+          <i class="fas fa-check-circle publish-success__icon text-success"></i>
+          <h3>Job Published Successfully!</h3>
+          <p class="text-muted mb-4">Your job is now live and visible to freelancers. AI fraud analysis has been run automatically.</p>
+          <div class="publish-actions">
+            <a class="hero-btn hero-btn--secondary" routerLink="/app/job-board/my-jobs">View My Jobs</a>
+            <button type="button" class="hero-btn hero-btn--primary" (click)="resetForm()">Post Another Job</button>
+          </div>
+        </div>
+      </div>
+
+      <ng-container *ngIf="!published">
+        <!-- Basic Info Card -->
+        <section class="feed-section">
+          <div class="section-head">
+            <div>
+              <span class="section-kicker">Step 1</span>
+              <h2>Basic Information</h2>
+            </div>
+          </div>
+          <div class="table-card p-4">
+            <div class="form-group mb-3">
+              <label class="form-label">Job Title *</label>
+              <input class="form-control" formControlName="title" placeholder="e.g. Senior React Developer" />
+              <div class="form-error text-danger mt-1" *ngIf="form.get('title')?.touched && form.get('title')?.invalid">
+                <small>Title must be at least 10 characters</small>
+              </div>
+            </div>
+
+            <div class="form-group mb-3">
+              <label class="form-label">Category *</label>
+              <select class="form-control" formControlName="category">
+                <option value="">Select category...</option>
+                <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+
+            <div class="form-group mb-3">
+              <label class="form-label">Location *</label>
+              <input class="form-control" formControlName="location" placeholder="e.g. Tunis, Tunisia" />
+            </div>
+
+            <div class="form-group mb-3">
+              <label class="checkbox-label" style="display:flex; gap:8px; align-items:center;">
+                <input type="checkbox" formControlName="remote" />
+                <span style="font-weight:600;">Remote position</span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <!-- Skills & Description Card -->
+        <section class="feed-section">
+          <div class="section-head">
+            <div>
+              <span class="section-kicker">Step 2</span>
+              <h2>Job Description & Skills</h2>
+            </div>
+          </div>
+          <div class="table-card p-4">
+            <div class="form-group mb-3">
+              <label class="form-label">Description *</label>
+              <textarea
+                class="form-control"
+                formControlName="description"
+                rows="6"
+                placeholder="Describe the project, requirements, and expectations in detail..."
+              ></textarea>
+              <small class="text-muted mt-1">{{ form.get('description')?.value?.length ?? 0 }} / minimum 100 characters</small>
+            </div>
+
+            <div class="ai-extraction-section" *ngIf="form.get('description')?.value?.length >= 100">
+              <div class="ai-extraction-loading" *ngIf="extracting">
+                <div class="shimmer-bar"></div>
+                <span>✦ AI is analyzing your description...</span>
+              </div>
+              <div *ngIf="!extracting && extractedSkills.length > 0">
+                <div class="form-label text-success mb-2">✦ Skills detected by AI</div>
+                <div class="skill-chips" style="display:flex; flex-wrap:wrap; gap:8px;">
+                  <span class="job-tag job-tag--ai" *ngFor="let s of extractedSkills">
+                    <i class="fas fa-sparkles"></i> {{ s }}
+                    <button type="button" class="tag-remove" (click)="removeSkill(s)">×</button>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group mt-4 mb-3">
+              <label class="form-label">Required Skills</label>
+              <div class="skill-tags-input" style="display:flex; flex-wrap:wrap; gap:8px; padding:12px; border:1px solid rgba(16,32,58,.1); border-radius:12px;">
+                <span class="job-tag" *ngFor="let s of requiredSkills">
+                  {{ s }}
+                  <button type="button" class="tag-remove" (click)="removeSkill(s)">×</button>
+                </span>
+                <input type="text" style="border:none;outline:none;background:transparent;flex:1;min-width:150px;" placeholder="Add a skill + Enter" [(ngModel)]="manualSkill" [ngModelOptions]="{standalone: true}" (keydown.enter)="addManualSkill(); $event.preventDefault()" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Budget & Duration Card -->
+        <section class="feed-section">
+          <div class="section-head">
+            <div>
+              <span class="section-kicker">Step 3</span>
+              <h2>Budget & Timeline</h2>
+            </div>
+          </div>
+          <div class="table-card p-4">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+              <div class="form-group">
+                <label class="form-label">Minimum Budget ($)</label>
+                <input type="number" class="form-control" formControlName="budgetMin" placeholder="500" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Maximum Budget ($)</label>
+                <input type="number" class="form-control" formControlName="budgetMax" placeholder="2000" />
+              </div>
+            </div>
+            <div class="form-error text-danger mt-1" *ngIf="form.get('budgetMax')?.touched && budgetInvalid">
+              <small>Maximum budget must be greater than minimum</small>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px;">
+              <div class="form-group">
+                <label class="form-label">Duration (days)</label>
+                <input class="form-control" type="number" formControlName="durationDays" placeholder="90" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Expires At *</label>
+                <input type="date" class="form-control" formControlName="expiresAt" [min]="tomorrow" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+          <button type="button" class="hero-btn hero-btn--secondary" (click)="saveDraft()" [disabled]="saving">Save as Draft</button>
+          <button type="button" class="hero-btn hero-btn--primary" (click)="publishNow()" [disabled]="saving || form.invalid">
+            <i class="fas fa-spinner fa-spin" *ngIf="saving"></i>
+            {{ saving ? 'Publishing...' : 'Publish Job' }}
+          </button>
+        </div>
+      </ng-container>
+    </form>
+
+    <aside class="feed-sidebar">
+      <div class="side-panel side-panel--accent" style="position:sticky; top:24px;">
+        <span class="section-kicker">✦ AI Trust Engine</span>
+        <h3>Automatic Fraud Scanning</h3>
+        <p class="side-text mt-2">When you publish this job, our AI will automatically scan the content to ensure it meets platform guidelines and detect anomalies.</p>
+        <div class="mini-list mt-3">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+             <span>Security Level</span>
+             <strong>Maximum</strong>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>

@@ -1,0 +1,155 @@
+<section class="jobs-page rec-page">
+  <div class="jobs-hero rec-banner">
+    <div class="jobs-hero__content">
+      <div class="jobs-hero__copy">
+        <h1>✦ Opportunities Curated for You by AI</h1>
+      </div>
+    </div>
+  </div>
+  <div class="jobs-list-panel rec-panel">
+    <div class="panel-head">
+      <div>
+        <span class="card-kicker">AI-powered</span>
+        <h2>Recommended for you</h2>
+      </div>
+      <div class="skill-input-row">
+        <div class="skill-tags-input">
+          <span class="job-tag" *ngFor="let s of mySkills; trackBy: trackBySkill">
+            {{ s }}
+            <button type="button" (click)="removeSkill(s)">×</button>
+          </span>
+          <input type="text" placeholder="Add your skills + Enter" (keydown.enter)="addSkill($event)" />
+        </div>
+        <button type="button" class="hero-btn hero-btn--secondary" (click)="refreshRecommendations()">Update</button>
+      </div>
+    </div>
+
+    <div class="error-state" *ngIf="error && !loading">
+      <i class="fas fa-exclamation-circle"></i>
+      <p>{{ error }}</p>
+      <button type="button" class="hero-btn hero-btn--secondary" (click)="retry()">Try again</button>
+    </div>
+
+    <div class="jobs-skeleton-list" *ngIf="loading">
+      <article class="job-card job-card--skeleton" *ngFor="let _ of [1, 2, 3]">
+        <div class="shimmer-bar skel-line"></div>
+        <div class="shimmer-bar skel-line short"></div>
+      </article>
+    </div>
+
+    <div class="jobs-list" *ngIf="!loading && !error && rows.length">
+      <ng-container *ngFor="let row of rows; let i = index; trackBy: trackByRow">
+        <article class="job-card" *ngIf="row.job as job" (click)="openJob(row.jobOfferId)">
+          <div class="job-card__top">
+            <div class="job-company">
+              <div class="job-company__logo">{{ initials(job) }}</div>
+              <div>
+                <h3>{{ job.title }}</h3>
+                <p>
+                  {{ job.category }}
+                  <span class="dot-separator">•</span>
+                  {{ job.location || '—' }} {{ job.remote ? '· Remote' : '' }}
+                </p>
+              </div>
+            </div>
+            <div class="job-card__actions">
+              <span class="job-status" [ngClass]="rankBadge(i).cls">{{ rankBadge(i).label }}</span>
+              <span class="job-status" [ngClass]="statusFor(job).cls">{{ statusFor(job).label }}</span>
+              <button type="button" class="save-btn" (click)="$event.stopPropagation()">
+                <i class="fa-regular fa-bookmark"></i>
+              </button>
+            </div>
+          </div>
+
+          <p class="job-description">{{ job.description | slice : 0 : 120 }}...</p>
+
+          <div class="job-tags">
+            <span class="job-tag" *ngFor="let skill of job.requiredSkills | slice : 0 : 5; trackBy: trackBySkill">
+              {{ skill }}
+            </span>
+          </div>
+
+          <div class="job-highlights" *ngIf="highlights(job).length">
+            <span *ngFor="let h of highlights(job); trackBy: trackByText">{{ h }}</span>
+          </div>
+
+          <div class="why-match" *ngIf="isExpanded(row.jobOfferId)" [@accordionExpand]>
+            <span class="card-kicker">Why you match</span>
+            <div class="job-tags" *ngIf="row.topMatchingSkills?.length">
+              <span class="job-tag job-tag--ai" *ngFor="let s of row.topMatchingSkills; trackBy: trackBySkill">
+                <i class="fas fa-check"></i> {{ s }}
+              </span>
+            </div>
+            <p class="why-match-empty" *ngIf="!row.topMatchingSkills?.length">No specific skill matches found.</p>
+          </div>
+          <button type="button" class="why-match-toggle" (click)="toggleExpand(row.jobOfferId); $event.stopPropagation()">
+            {{ isExpanded(row.jobOfferId) ? 'Hide' : 'Why this match?' }}
+            <i class="fas" [ngClass]="isExpanded(row.jobOfferId) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+          </button>
+
+          <div class="job-card__bottom">
+            <div class="job-meta-grid">
+              <div class="job-meta">
+                <span>Budget</span>
+                <strong>${{ job.budgetMin | number }} – ${{ job.budgetMax | number }}</strong>
+                <small>{{ job.remote ? 'Remote' : 'On-site' }}</small>
+              </div>
+              <div class="job-meta">
+                <span>Duration</span>
+                <strong>{{ durationLabel(job) }}</strong>
+                <small>—</small>
+              </div>
+              <div class="job-meta">
+                <span>Proposals</span>
+                <strong>{{ job.applicationCount ?? 0 }}</strong>
+                <small>{{ job.publishedAt | timeAgo }}</small>
+              </div>
+            </div>
+            <div style="display: flex; gap: 16px; align-items: center;">
+              <div class="match-score">
+                <span>Match</span>
+                <strong [countUp]="row.matchScore" [countUpDuration]="1000" [countUpDecimals]="0">0</strong>%
+              </div>
+              <div class="ai-prediction" *ngIf="row.successProbability != null" style="width: 80px; text-align: center;">
+                <app-success-prediction-gauge [probability]="row.successProbability" [confidenceLabel]="row.confidence || 'MEDIUM'" size="compact"></app-success-prediction-gauge>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="job-card rec-row-partial" *ngIf="!row.job" (click)="openJob(row.jobOfferId)">
+          <div class="job-card__top">
+            <div class="job-company">
+              <div class="job-company__logo">—</div>
+              <div>
+                <h3>{{ row.title }}</h3>
+                <p>{{ row.category }}</p>
+              </div>
+            </div>
+            <div class="job-card__actions">
+              <span class="job-status" [ngClass]="rankBadge(i).cls">{{ rankBadge(i).label }}</span>
+            </div>
+          </div>
+          <p class="job-description">Full job details could not be loaded. Open to view on the job board.</p>
+          <div style="display: flex; gap: 16px; align-items: center; margin-top: 16px;">
+            <div class="match-score">
+              <span>Match</span>
+              <strong [countUp]="row.matchScore" [countUpDuration]="1000" [countUpDecimals]="0">0</strong>%
+            </div>
+            <div class="ai-prediction" *ngIf="row.successProbability != null" style="width: 80px; text-align: center;">
+              <app-success-prediction-gauge [probability]="row.successProbability" [confidenceLabel]="row.confidence || 'MEDIUM'" size="compact"></app-success-prediction-gauge>
+            </div>
+          </div>
+        </article>
+      </ng-container>
+    </div>
+
+    <div class="jobs-list" *ngIf="!loading && !error && !rows.length">
+      <div class="empty-state">
+        <i class="fas fa-robot"></i>
+        <p>No recommendations yet.</p>
+        <p>Add your skills above and click Update to get AI-matched jobs.</p>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,17 @@
+<article class="stat-card" [ngClass]="toneClass">
+  <div class="stat-card__top">
+    <div class="stat-card__icon">
+      <i class="fas" [class]="icon"></i>
+    </div>
+
+    <span *ngIf="trend" class="stat-card__trend">
+      {{ trend }}
+    </span>
+  </div>
+
+  <div class="stat-card__body">
+    <span class="stat-card__label">{{ label }}</span>
+    <strong class="stat-card__value">{{ value }}</strong>
+    <p *ngIf="hint" class="stat-card__hint">{{ hint }}</p>
+  </div>
+</article>

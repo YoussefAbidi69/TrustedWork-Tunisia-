@@ -1,0 +1,30 @@
+<div class="cr" *ngIf="suggestions.length">
+  <div class="cr__nodes">
+    <div class="cr__node" *ngFor="let s of suggestions; let i = index" [style.animationDelay.ms]="i * 200">
+      <div class="cr__node-card">
+        <div class="cr__skill">{{ s.skill }}</div>
+        <span class="cr__trend" [ngClass]="'cr__trend--' + trendLabel(s).toLowerCase()">{{ trendLabel(s) }}</span>
+        <svg class="cr__mini" viewBox="0 0 36 36">
+          <circle class="cr__mini-track" cx="18" cy="18" r="16" />
+          <circle
+            class="cr__mini-val"
+            cx="18"
+            cy="18"
+            r="16"
+            [style.stroke-dasharray]="miniCirc"
+            [style.stroke-dashoffset]="ringDash(s)" />
+        </svg>
+        <div class="cr__income">+{{ s.estimatedIncomeIncreasePercent }}% income impact</div>
+      </div>
+      <div class="cr__dash" *ngIf="i < suggestions.length - 1" aria-hidden="true"></div>
+    </div>
+    <div class="cr__node cr__node--final" [style.animationDelay.ms]="suggestions.length * 200">
+      <div class="cr__node-card cr__node-card--final">
+        <div class="cr__skill">💰 Total Income Boost</div>
+        <div class="cr__total">
+          +<span [appCountUp]="totalIncomeBoost" [countDuration]="1200" [countDecimals]="0"></span>%
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

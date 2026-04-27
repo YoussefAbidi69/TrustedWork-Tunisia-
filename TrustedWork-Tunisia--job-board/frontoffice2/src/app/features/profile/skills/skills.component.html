@@ -1,0 +1,210 @@
+<div class="skills-page">
+  <section class="skills-hero">
+    <div class="skills-hero__glow skills-hero__glow--one"></div>
+    <div class="skills-hero__glow skills-hero__glow--two"></div>
+
+    <div class="skills-hero__content">
+      <div class="skills-hero__copy">
+        <div class="eyebrow-group">
+          <span class="eyebrow">Profile Expertise</span>
+          <span class="eyebrow eyebrow--accent">Talent Positioning</span>
+        </div>
+
+        <h1>Showcase the skills that make your profile premium and client-ready.</h1>
+
+        <p>
+          Organize your core expertise, highlight high-value competencies and
+          present a stronger professional profile for premium freelance opportunities.
+        </p>
+
+        <div class="hero-actions">
+          <button type="button" class="hero-btn hero-btn--primary">
+            <i class="fas fa-plus"></i>
+            <span>Add skill</span>
+          </button>
+
+          <button type="button" class="hero-btn hero-btn--ghost">
+            <i class="fas fa-chart-line"></i>
+            <span>Optimize profile</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-spotlight-card">
+        <span class="card-kicker">Profile skill score</span>
+        <h2>Your expertise positioning is strong and marketable.</h2>
+
+        <div class="spotlight-score">
+          <strong>92%</strong>
+          <span>Profile strength</span>
+        </div>
+
+        <div class="spotlight-meta">
+          <div class="spotlight-chip">
+            <span class="spotlight-chip__dot"></span>
+            High-value profile
+          </div>
+          <p>Skills aligned with premium missions and trusted delivery.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <article class="stat-card" *ngFor="let stat of stats">
+      <div class="stat-card__label">{{ stat.label }}</div>
+      <strong>{{ stat.value }}</strong>
+    </article>
+  </section>
+
+  <section class="skills-layout">
+    <div class="skills-main">
+      <div class="panel-card">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Expertise library</span>
+            <h2>Your skills</h2>
+          </div>
+
+          <div class="panel-head__filters">
+            <span class="filter-chip active">All</span>
+            <span class="filter-chip">Top skills</span>
+            <span class="filter-chip">Trending</span>
+          </div>
+        </div>
+
+        <div class="categories-row">
+          <article class="category-chip" *ngFor="let category of categories">
+            <strong>{{ category.name }}</strong>
+            <span>{{ category.count }} skills</span>
+          </article>
+        </div>
+
+        <div class="skills-list">
+          <article
+            class="skill-card"
+            *ngFor="let skill of skills"
+            [class.skill-card--active]="skill.id === activeSkillId"
+            (click)="selectSkill(skill.id)"
+          >
+            <div class="skill-card__top">
+              <div class="skill-card__identity">
+                <div class="skill-icon">
+                  <i class="fas fa-bolt"></i>
+                </div>
+
+                <div>
+                  <div class="skill-title-row">
+                    <h3>{{ skill.name }}</h3>
+                    <span *ngIf="skill.trending" class="trending-chip">Trending</span>
+                  </div>
+                  <p>{{ skill.category }} • {{ skill.experience }}</p>
+                </div>
+              </div>
+
+              <div class="skill-score">{{ skill.level }}%</div>
+            </div>
+
+            <div class="skill-progress">
+              <div class="skill-progress__bar">
+                <div
+                  class="skill-progress__fill"
+                  [style.width.%]="skill.level"
+                ></div>
+              </div>
+            </div>
+
+            <div class="skill-meta">
+              <span>{{ skill.projects }} completed projects</span>
+              <span>Verified relevance for premium work</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <aside class="skills-side">
+      <div class="panel-card panel-card--detail">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Selected skill</span>
+            <h2>{{ activeSkill.name }}</h2>
+          </div>
+        </div>
+
+        <div class="detail-score-card">
+          <div>
+            <span>Mastery level</span>
+            <strong>{{ activeSkill.level }}%</strong>
+          </div>
+          <div class="detail-score-card__pill">High demand</div>
+        </div>
+
+        <div class="big-progress">
+          <div
+            class="big-progress__fill"
+            [style.width.%]="activeSkill.level"
+          ></div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-row">
+            <span>Category</span>
+            <strong>{{ activeSkill.category }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Experience</span>
+            <strong>{{ activeSkill.experience }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Projects delivered</span>
+            <strong>{{ activeSkill.projects }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Portfolio impact</span>
+            <strong class="accent-value">Strong positioning</strong>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Why this skill matters</h3>
+
+          <div class="insight-list">
+            <article class="insight-item">
+              <div class="insight-item__icon">
+                <i class="fas fa-shield-halved"></i>
+              </div>
+              <div>
+                <strong>Trust signal</strong>
+                <p>Supports your profile credibility and helps clients assess expertise faster.</p>
+              </div>
+            </article>
+
+            <article class="insight-item">
+              <div class="insight-item__icon">
+                <i class="fas fa-briefcase"></i>
+              </div>
+              <div>
+                <strong>Job matching</strong>
+                <p>Improves visibility for relevant opportunities and premium mission targeting.</p>
+              </div>
+            </article>
+
+            <article class="insight-item">
+              <div class="insight-item__icon">
+                <i class="fas fa-star"></i>
+              </div>
+              <div>
+                <strong>Portfolio value</strong>
+                <p>Positions your profile with a clearer and more premium specialization.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </section>
+</div>

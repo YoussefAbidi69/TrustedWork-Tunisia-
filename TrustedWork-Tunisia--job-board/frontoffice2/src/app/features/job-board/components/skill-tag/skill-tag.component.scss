@@ -1,0 +1,26 @@
+@import '../../styles/job-board-ai.scss';
+
+.skill-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--azure-light);
+  color: var(--azure);
+  border: 1px solid var(--azure);
+}
+
+.skill-pill--ai {
+  background: var(--gold-light);
+  color: var(--terracotta-dark);
+  border-color: var(--gold);
+  box-shadow: 0 0 10px rgba(212, 168, 67, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skill-pill--ai {
+    box-shadow: none;
+  }
+}

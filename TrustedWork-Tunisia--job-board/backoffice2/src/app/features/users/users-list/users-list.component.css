@@ -1,0 +1,52 @@
+.users-page { padding: 0; }
+
+.filters-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.search-bar input { width: 280px; }
+
+.filter-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.chip {
+  padding: 5px 14px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.chip:hover { border-color: var(--border-hover); color: var(--text-primary); }
+.chip.active { background: var(--accent-soft); border-color: var(--border-accent); color: var(--accent); }
+
+.table-wrap { overflow-x: auto; }
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-info strong {
+  display: block;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.user-info span {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.action-btns { display: flex; gap: 6px; }

@@ -1,0 +1,32 @@
+/* Shared layout tokens for job-board feature pages (import from component SCSS or shell). */
+
+@mixin jb-page-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, 2.2vw, 2rem);
+  font-weight: 700;
+  color: var(--midnight);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+@mixin jb-lead {
+  margin-top: 0.5rem;
+  max-width: 42rem;
+  font-size: 1.02rem;
+  color: var(--slate);
+  line-height: 1.55;
+}
+
+@mixin jb-surface {
+  background: var(--white);
+  border: 1px solid var(--sand);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+@mixin jb-focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--azure);
+    outline-offset: 2px;
+  }
+}

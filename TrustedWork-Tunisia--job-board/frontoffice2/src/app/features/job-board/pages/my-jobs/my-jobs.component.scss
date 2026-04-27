@@ -1,0 +1,13 @@
+@import '../my-applications/my-applications.component.scss';
+
+.fraud-shield-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(192, 57, 43, 0.12);
+  color: #a02828;
+}

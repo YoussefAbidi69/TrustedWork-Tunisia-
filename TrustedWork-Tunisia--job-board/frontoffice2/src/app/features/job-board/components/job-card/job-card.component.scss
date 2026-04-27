@@ -1,0 +1,89 @@
+.jc {
+  position: relative;
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  border: 1px solid var(--sand);
+  box-shadow: var(--shadow-md);
+  padding: 1.05rem 1.15rem;
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  outline: none;
+}
+
+.jc::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 0 0 1px var(--azure);
+  transition: opacity var(--transition);
+}
+
+.jc:hover,
+.jc:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(61, 126, 199, 0.35);
+}
+
+.jc:hover::before,
+.jc:focus-visible::before {
+  opacity: 0.35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jc:hover,
+  .jc:focus-visible {
+    transform: none;
+  }
+}
+
+.jc__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.jc__title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--midnight);
+}
+
+.jc__cat {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--azure);
+  background: var(--azure-light);
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.jc__meta {
+  margin-top: 0.35rem;
+  color: var(--slate);
+  font-size: 0.85rem;
+}
+
+.jc__skills {
+  margin-top: 0.55rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.jc__ai {
+  margin-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.jc__foot {
+  margin-top: 0.65rem;
+  color: var(--stone);
+}

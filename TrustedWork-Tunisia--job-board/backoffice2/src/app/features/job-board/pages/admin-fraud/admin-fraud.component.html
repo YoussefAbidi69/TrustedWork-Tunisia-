@@ -1,0 +1,265 @@
+<div class="users-page">
+  <div class="page-top">
+    <div>
+      <h2>AI Fraud Monitor</h2>
+      <p class="page-subtitle">AI-powered fraud detection and moderation</p>
+    </div>
+    <div class="page-top__actions" *ngIf="selectedRows.size > 0">
+      <button type="button" class="secondary-btn" (click)="bulkApprove()">Approve selected</button>
+      <button type="button" class="secondary-btn" (click)="openBulkRemove()">Remove selected</button>
+      <button type="button" class="secondary-btn" (click)="clearSelection()">Clear</button>
+    </div>
+  </div>
+
+  <div class="stats-grid" *ngIf="stats as s">
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon-wrapper stat-icon--danger">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+            <line x1="4" y1="22" x2="4" y2="15" />
+          </svg>
+        </div>
+        <span class="stat-title">Total Flagged</span>
+      </div>
+      <div class="stat-value stat-value--danger" [countUp]="flaggedJobs.length" [countUpDuration]="800" [countUpDecimals]="0">
+        0
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon-wrapper stat-icon--danger">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+        </div>
+        <span class="stat-title">High Risk (AI)</span>
+      </div>
+      <div class="stat-value stat-value--danger" [countUp]="highRiskJobs.length" [countUpDuration]="800" [countUpDecimals]="0">
+        0
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon-wrapper stat-icon--warning">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+        </div>
+        <span class="stat-title">Auto-flagged today (AI)</span>
+      </div>
+      <div class="stat-value" [countUp]="autoFlaggedToday.length" [countUpDuration]="800" [countUpDecimals]="0">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon-wrapper">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+        </div>
+        <span class="stat-title">Avg Risk Score (AI)</span>
+      </div>
+      <div class="stat-value" [countUp]="avgRiskScore" [countUpDuration]="800" [countUpDecimals]="1">0</div>
+      <div class="stat-sub">% across flagged queue</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <span class="count-badge" *ngIf="stats">Platform flagged (stats): {{ stats.flaggedJobs }}</span>
+    <button type="button" class="secondary-btn" (click)="reload()" [disabled]="loading">Refresh</button>
+  </div>
+
+  <div class="alert error" *ngIf="error">
+    <span>{{ error }}</span>
+    <button type="button" class="secondary-btn" (click)="reload()">Retry</button>
+  </div>
+
+  <div class="table-card">
+    <div class="loading" *ngIf="loading">Loading flagged jobs…</div>
+    <div class="table-wrapper" *ngIf="!loading && flaggedJobs.length">
+      <table>
+        <thead>
+          <tr>
+            <th class="th-check">
+              <input type="checkbox" [checked]="allPageSelected()" (change)="toggleSelectAll()" />
+            </th>
+            <th>#</th>
+            <th>Title</th>
+            <th>Client</th>
+            <th>Risk score (AI)</th>
+            <th>Signals</th>
+            <th>Status</th>
+            <th>Posted</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let job of flaggedJobs">
+            <tr [class.row--selected]="selectedRows.has(job.id)">
+              <td class="td-check" (click)="$event.stopPropagation()">
+                <input type="checkbox" [checked]="selectedRows.has(job.id)" (change)="toggleSelectRow(job.id)" />
+              </td>
+              <td>{{ job.id }}</td>
+              <td class="name-cell">
+                <span class="user-name" [title]="job.title">{{ job.title | slice : 0 : 42 }}{{ job.title.length > 42 ? '…' : '' }}</span>
+              </td>
+              <td>#{{ job.clientId }}</td>
+              <td>
+                <div class="risk-score-cell">
+                  <div class="risk-bar-track risk-bar-track--wide">
+                    <div class="risk-bar-fill" [ngClass]="riskBarClass(job.fraudRiskScore)" [style.width.%]="job.fraudRiskScore * 100"></div>
+                  </div>
+                  <div class="risk-score-meta">
+                    <span class="risk-score-num" [class.text-danger]="job.fraudRiskScore >= 0.6" [class.text-warning]="job.fraudRiskScore >= 0.3 && job.fraudRiskScore < 0.6">
+                      {{ job.fraudRiskScore * 100 | number : '1.0-0' }}%
+                    </span>
+                    <span class="risk-score-label text-muted">{{ riskLabel(job.fraudRiskScore) }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="signal-pills" *ngIf="jobFlags.has(job.id); else sigLoading">
+                  <span class="badge jb-DRAFT" *ngFor="let sig of signalPreview(job)">{{ sig.signalName }}</span>
+                  <span class="text-muted pill-more" *ngIf="signalMoreCount(job) > 0">+{{ signalMoreCount(job) }} more</span>
+                  <span class="text-muted" *ngIf="!jobFlags.get(job.id)?.length">—</span>
+                </div>
+                <ng-template #sigLoading><span class="text-muted">Expand row</span></ng-template>
+              </td>
+              <td><span class="badge" [ngClass]="'jb-' + job.status">{{ job.status }}</span></td>
+              <td>{{ job.publishedAt | timeAgo }}</td>
+              <td class="actions">
+                <button type="button" class="act-btn neutral" (click)="toggleRow(job.id)" title="View details">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                </button>
+                <button type="button" class="act-btn ok" (click)="onApprove(job)" [disabled]="isActionLoading(job.id, 'approve')" title="Approve (unflag)">
+                  <span *ngIf="isActionLoading(job.id, 'approve')" class="btn-spin"></span>
+                  <svg *ngIf="!isActionLoading(job.id, 'approve')" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </button>
+                <button type="button" class="act-btn warn" (click)="onRemove(job)" [disabled]="isActionLoading(job.id, 'remove')" title="Remove (force close)">
+                  <span *ngIf="isActionLoading(job.id, 'remove')" class="btn-spin"></span>
+                  <svg *ngIf="!isActionLoading(job.id, 'remove')" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                  </svg>
+                </button>
+                <button type="button" class="act-btn danger" (click)="openDeleteConfirm(job)" [disabled]="isActionLoading(job.id, 'delete')" title="Delete permanently">
+                  <span *ngIf="isActionLoading(job.id, 'delete')" class="btn-spin"></span>
+                  <svg *ngIf="!isActionLoading(job.id, 'delete')" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="expandedRows.has(job.id)" class="detail-row" [@accordionExpand]>
+              <td colspan="9" class="td-detail">
+                <div class="detail-panel">
+                  <div class="detail-col">
+                    <h4 class="detail-heading">Description</h4>
+                    <p class="detail-text">
+                      {{ (job.description || '') | slice : 0 : 200 }}{{ (job.description?.length ?? 0) > 200 ? '…' : '' }}
+                    </p>
+                    <div class="detail-meta">
+                      <span>Budget: {{ job.budgetMin }} – {{ job.budgetMax }}</span>
+                      <span *ngIf="job.location"> · {{ job.location }}</span>
+                      <span> · Posted {{ job.publishedAt | timeAgo }}</span>
+                    </div>
+                  </div>
+                  <div class="detail-col">
+                    <h4 class="detail-heading detail-heading--ai">Signal breakdown</h4>
+                    <div *ngIf="!jobFlags.has(job.id)" class="flags-loading"><span class="btn-spin"></span></div>
+                    <div class="signal-list" *ngIf="jobFlags.has(job.id)">
+                      <div class="signal-item" *ngFor="let sig of jobFlags.get(job.id)">
+                        <span class="signal-name">{{ sig.signalName }}</span>
+                        <div class="signal-bar-track">
+                          <div class="signal-bar-fill" [style.width.%]="sig.signalWeight * 100"></div>
+                        </div>
+                        <span class="signal-pct">{{ sig.signalWeight * 100 | number : '1.0-0' }}%</span>
+                      </div>
+                      <p class="text-muted" *ngIf="jobFlags.get(job.id)?.length === 0">No signals</p>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+    <div class="empty" *ngIf="!loading && !flaggedJobs.length">No flagged jobs — monitoring is active.</div>
+  </div>
+
+  <div class="table-card today-card" *ngIf="!loading">
+    <div class="card-strip">
+      <h3>Jobs auto-flagged today (AI)</h3>
+      <span class="count-badge">{{ autoFlaggedToday.length }}</span>
+    </div>
+    <div class="table-wrapper" *ngIf="autoFlaggedToday.length; else noToday">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Title</th>
+            <th>Risk</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let j of autoFlaggedToday">
+            <td>{{ j.id }}</td>
+            <td class="name-cell">{{ j.title | slice : 0 : 50 }}</td>
+            <td>{{ j.fraudRiskScore * 100 | number : '1.0-0' }}%</td>
+            <td>{{ j.createdAt | timeAgo }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noToday>
+      <div class="empty">No jobs auto-flagged today — monitoring is active.</div>
+    </ng-template>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showDeleteConfirm" (click)="showDeleteConfirm = false">
+  <div class="modal-panel modal-panel--sm" (click)="$event.stopPropagation()">
+    <div class="modal-header modal-header--danger">
+      <h3>Delete job</h3>
+      <button type="button" class="modal-close" (click)="showDeleteConfirm = false" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        Permanently delete
+        <strong>{{ deleteConfirmJob?.title }}</strong>
+        ?
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="secondary-btn" (click)="showDeleteConfirm = false">Cancel</button>
+      <button type="button" class="danger-btn" (click)="onDeleteConfirmed()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showBulkRemoveConfirm" (click)="showBulkRemoveConfirm = false">
+  <div class="modal-panel modal-panel--sm" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Force-close selected</h3>
+      <button type="button" class="modal-close" (click)="showBulkRemoveConfirm = false" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Force-close {{ selectedRows.size }} job(s)?</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="secondary-btn" (click)="showBulkRemoveConfirm = false">Cancel</button>
+      <button type="button" class="primary-btn" (click)="bulkRemoveConfirmed()">Confirm</button>
+    </div>
+  </div>
+</div>

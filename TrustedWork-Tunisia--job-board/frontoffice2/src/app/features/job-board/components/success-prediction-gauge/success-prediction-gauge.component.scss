@@ -1,0 +1,102 @@
+@import '../../styles/job-board-ai.scss';
+
+.spg {
+  padding: 0.75rem;
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  border: 1px solid var(--sand);
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+}
+
+.spg--compact {
+  padding: 0.4rem;
+}
+
+.spg__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--slate);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.spg__gauge {
+  position: relative;
+  margin: 0.35rem auto 0;
+  max-width: 220px;
+}
+
+.spg--compact .spg__gauge {
+  max-width: 140px;
+}
+
+.spg__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.spg__arc--danger {
+  stroke: var(--danger);
+  opacity: 0.35;
+}
+
+.spg__arc--warn {
+  stroke: var(--gold);
+  opacity: 0.45;
+}
+
+.spg__arc--ok {
+  stroke: var(--olive);
+  opacity: 0.45;
+}
+
+.spg__needle {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  width: 4px;
+  height: 42%;
+  margin-left: -2px;
+  background: var(--midnight);
+  border-radius: 4px;
+  transform-origin: bottom center;
+  transition: transform 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spg__needle {
+    transition: none;
+  }
+}
+
+.spg__zone {
+  font-size: 0.78rem;
+  color: var(--slate);
+  margin-top: 0.15rem;
+}
+
+.spg__pct {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--midnight);
+}
+
+.spg--compact .spg__pct {
+  font-size: 1.1rem;
+}
+
+.spg__conf {
+  margin-top: 0.35rem;
+}
+
+.spg__badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--azure-light);
+  color: var(--azure);
+  font-size: 0.75rem;
+  font-weight: 700;
+}

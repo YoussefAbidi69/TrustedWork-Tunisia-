@@ -1,0 +1,80 @@
+<div class="suspensions-page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Suspensions</h1>
+      <p class="page-subtitle">{{ filteredSuspensions.length }} active suspensions</p>
+    </div>
+
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" (click)="loadSuspensions()">
+        <i class="fas fa-rotate-right"></i>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Search by user ID, reason, admin..."
+        [(ngModel)]="searchQuery"
+        (input)="onSearch()">
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Loading suspensions...</p>
+  </div>
+
+  <div class="card" *ngIf="!loading">
+    <div class="table-wrap">
+      <table class="tw-table">
+        <thead>
+          <tr>
+            <th>User ID</th>
+            <th>Reason</th>
+            <th>Suspended By</th>
+            <th>Suspended At</th>
+            <th>Status</th>
+            <th>Lift</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of filteredSuspensions">
+            <td>
+              <strong>#{{ item.userId }}</strong>
+            </td>
+            <td>{{ item.reason }}</td>
+            <td>{{ item.suspendedBy || '—' }}</td>
+            <td>{{ item.suspendedAt | date:'MMM d, yyyy • HH:mm' }}</td>
+            <td>
+              <span class="badge" [ngClass]="getStatusBadge(item.active)">
+                {{ item.active ? 'ACTIVE' : 'LIFTED' }}
+              </span>
+            </td>
+            <td>
+              <button
+                class="btn btn-sm btn-success"
+                (click)="liftSuspension(item)"
+                [disabled]="actionLoading === item.userId || !item.active">
+                <i class="fas fa-unlock"></i>
+                Lift
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" *ngIf="filteredSuspensions.length === 0">
+        <i class="fas fa-ban"></i>
+        <p>No active suspensions found</p>
+      </div>
+    </div>
+  </div>
+
+</div>

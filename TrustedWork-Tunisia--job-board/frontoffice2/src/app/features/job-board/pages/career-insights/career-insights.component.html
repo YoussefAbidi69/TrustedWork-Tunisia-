@@ -1,0 +1,358 @@
+<div class="career-insights-page">
+
+  <!-- TOP HEADER SECTION -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="header-icon">
+        <i class="fas fa-route"></i>
+      </div>
+      <div class="header-title">
+        <h1>Career Trajectory Generator</h1>
+        <p>AI-powered roadmap based on real-time market demand.</p>
+      </div>
+    </div>
+    
+    <!-- VIEW TOGGLE -->
+    <div class="view-toggle" *ngIf="roadmapVisible">
+      <button class="toggle-btn" [class.active]="activeView === 'timeline'" (click)="setView('timeline')">
+        <i class="fas fa-list"></i> Timeline View
+      </button>
+      <button class="toggle-btn" [class.active]="activeView === '3d'" (click)="setView('3d')">
+        <i class="fas fa-cube"></i> 3D View
+      </button>
+    </div>
+  </div>
+
+  <div class="layout-grid" [class.full-width]="activeView === '3d'">
+
+    <!-- LEFT COLUMN: Input & Content -->
+    <div class="main-column">
+
+      <!-- SKILL INPUT BOX -->
+      <div class="input-card" *ngIf="!roadmapVisible && !loading">
+        <div class="input-header">
+          <h2>Enter Your Current Stack</h2>
+          <p>We'll analyze your skills against the market to chart your next moves.</p>
+        </div>
+
+        <div class="skill-chips-container">
+          <div class="skill-chip-input" *ngFor="let s of skills; trackBy: trackBySkill">
+            {{ s }}
+            <button class="remove-btn" (click)="removeSkill(s)" type="button">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <form class="skill-form" (ngSubmit)="addSkill($event)">
+            <input
+              type="text"
+              name="newSkill"
+              [(ngModel)]="newSkillInput"
+              placeholder="e.g. React, Docker, Python..."
+              autocomplete="off" />
+          </form>
+        </div>
+
+        <button class="generate-btn" (click)="generateRoadmap()" [disabled]="skills.length === 0">
+          <i class="fas fa-magic"></i> Generate Career Roadmap
+        </button>
+        <div class="error-msg" *ngIf="error">
+          <i class="fas fa-exclamation-triangle"></i> {{ error }}
+        </div>
+      </div>
+
+      <!-- LOADING STATE -->
+      <div class="loading-state" *ngIf="loading">
+        <div class="ai-spinner">
+          <i class="fas fa-brain fa-pulse"></i>
+        </div>
+        <h3>Analyzing your skills with AI...</h3>
+        <p>Building your personalized career trajectory.</p>
+      </div>
+
+      <!-- TIMELINE VIEW -->
+      <div class="timeline-container" *ngIf="roadmapVisible && activeView === 'timeline'" @fadeIn>
+        <div class="timeline-header">
+          <span class="eyebrow">RESULTS</span>
+          <h2>Career Milestones</h2>
+        </div>
+
+        <div class="timeline">
+          <!-- Animated connector line -->
+          <div class="timeline-line">
+            <div class="timeline-dot-anim"></div>
+          </div>
+          
+          <div class="timeline-step" *ngFor="let step of roadmap.steps; let i = index" [style.animationDelay]="(i * 100) + 'ms'">
+            <div class="step-circle" [class.active]="i === 0">
+              {{ i + 1 }}
+            </div>
+            
+            <div class="step-card">
+              <div class="card-header">
+                <span class="step-badge">Step {{ i + 1 }}</span>
+                <h3 class="step-title">{{ step.title }}</h3>
+                <p class="step-desc">{{ step.description }}</p>
+              </div>
+
+              <div class="card-metrics">
+                <div class="metric-badge">
+                  <i class="fas fa-clock"></i>
+                  {{ step.estimatedWeeks }} weeks · {{ step.hoursPerDay }}h/day
+                </div>
+                <div class="metric-badge">
+                  <span class="diff-dot" [ngClass]="step?.difficultyLevel?.toLowerCase()"></span>
+                  {{ step.difficultyLevel }}
+                </div>
+                <div class="metric-badge demand">
+                  <i class="fas fa-chart-line"></i>
+                  {{ step.demandLevel }}
+                </div>
+              </div>
+              <div class="section-divider"></div>
+
+              <div class="curriculum-list" *ngIf="step.microCurriculum?.length">
+                <div class="section-label">
+                  <i class="fas fa-calendar-alt"></i> Weekly Curriculum
+                </div>
+                <div class="curriculum-row" *ngFor="let curr of step.microCurriculum; let c = index" [style.animationDelay]="((i * 100) + 200 + (c * 50)) + 'ms'">
+                  <span class="week-bubble">W{{ curr.week }}</span>
+                  <span class="focus-text">{{ curr.focus }}</span>
+                </div>
+              </div>
+              <div class="section-divider"></div>
+
+              <div class="skills-split">
+                <div class="skills-block" *ngIf="step.prerequisiteSkills?.length">
+                  <span class="skills-label">PREREQUISITES</span>
+                  <div class="chips-row">
+                    <span class="skill-chip" 
+                          [class.gained]="hasSkill(req)" 
+                          [class.missing]="!hasSkill(req)"
+                          *ngFor="let req of step.prerequisiteSkills">
+                      <i class="fas" [class.fa-check]="hasSkill(req)" [class.fa-times]="!hasSkill(req)"></i>
+                      {{ req }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="skills-block" *ngIf="step.skillsUnlocked?.length">
+                  <span class="skills-label">SKILLS YOU'LL GAIN</span>
+                  <div class="chips-row">
+                    <span class="skill-chip gained" *ngFor="let gain of step.skillsUnlocked">
+                      {{ gain }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="section-divider"></div>
+
+              <div class="portfolio-box" *ngIf="step.portfolioProject">
+                <div class="portfolio-label">
+                  <i class="fas fa-briefcase"></i> Build This
+                </div>
+                <p>{{ step.portfolioProject }}</p>
+              </div>
+
+              <div class="resources-box" *ngIf="step.resources?.length">
+                <a class="resource-row" [href]="extractUrl(res)" target="_blank" rel="noopener noreferrer" *ngFor="let res of step.resources">
+                  <i class="fas fa-external-link-alt"></i>
+                  <span>{{ res }}</span>
+                </a>
+              </div>
+
+              <div class="income-impact-box">
+                <div class="impact-text">After this step: <strong>+{{ step.incomeBoostThisStep }}% income</strong></div>
+                <div class="impact-bar-bg">
+                  <div class="impact-bar-fill" 
+                       [class.active]="incomeBarActive"
+                       [style.--target-width]="(step.incomeBoostThisStep * 2) + '%'">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3D VIEW -->
+      <div class="three-view-wrapper" [class.show]="roadmapVisible && activeView === '3d'">
+        <!-- Canvas Container -->
+        <div id="three-canvas-container"></div>
+        
+        <div class="node-labels" *ngIf="roadmapVisible && activeView === '3d'">
+          <div class="node-label" 
+               *ngFor="let step of roadmap.steps; let i = index"
+               [class.active]="i === activeNodeIndex"
+               (click)="flyToNode(i)">
+            {{ step.title }}
+          </div>
+        </div>
+        
+        <!-- Click hint overlay -->
+        <div class="click-hint-overlay" *ngIf="!is3DPanelOpen && hudVisible">
+          <span>Click any node to explore this step</span>
+        </div>
+        
+        <!-- 3D HUD (Bottom) -->
+        <div class="three-hud glass-panel" [class.visible]="hudVisible" *ngIf="roadmapVisible && activeView === '3d' && roadmap?.steps">
+          <button class="nav-btn" (click)="prevNode()" [disabled]="activeNodeIndex === 0"><i class="fas fa-chevron-left"></i></button>
+          
+          <div class="hud-center">
+            <span class="hud-step-text">Step {{ activeNodeIndex + 1 }} of {{ roadmap.steps.length }}</span>
+            <div class="hud-dots">
+              <span class="hud-dot" *ngFor="let s of roadmap.steps; let i = index" 
+                [class.active]="i === activeNodeIndex" [class.completed]="i < activeNodeIndex" (click)="flyToNode(i)">
+              </span>
+            </div>
+          </div>
+          
+          <button class="nav-btn" (click)="nextNode()" [disabled]="activeNodeIndex === roadmap.steps.length - 1"><i class="fas fa-chevron-right"></i></button>
+        </div>
+
+        <!-- Detail Overlay Panel (Right Side of Canvas) -->
+        <div class="three-detail-overlay glass-panel" [class.open]="is3DPanelOpen && selectedNode">
+          <button class="close-overlay-btn" (click)="close3DPanel()"><i class="fas fa-times"></i></button>
+          
+          <ng-container *ngIf="selectedNode">
+            <div class="card-header">
+              <span class="step-badge">Step {{ activeNodeIndex + 1 }}</span>
+              <h3 class="step-title">{{ selectedNode.title }}</h3>
+              <p class="step-desc">{{ selectedNode.description }}</p>
+            </div>
+
+            <div class="card-metrics">
+              <div class="metric-badge">
+                <i class="fas fa-clock"></i>
+                {{ selectedNode.estimatedWeeks }} weeks · {{ selectedNode.hoursPerDay }}h/day
+              </div>
+              <div class="metric-badge">
+                <span class="diff-dot" [ngClass]="selectedNode?.difficultyLevel?.toLowerCase()"></span>
+                {{ selectedNode.difficultyLevel }}
+              </div>
+              <div class="metric-badge demand">
+                <i class="fas fa-chart-line"></i>
+                {{ selectedNode.demandLevel }}
+              </div>
+            </div>
+            <div class="section-divider"></div>
+
+            <div class="curriculum-list" *ngIf="selectedNode.microCurriculum?.length">
+              <div class="section-label">
+                <i class="fas fa-calendar-alt"></i> Weekly Curriculum
+              </div>
+              <div class="curriculum-row" *ngFor="let curr of selectedNode.microCurriculum">
+                <span class="week-bubble">W{{ curr.week }}</span>
+                <span class="focus-text">{{ curr.focus }}</span>
+              </div>
+            </div>
+            <div class="section-divider"></div>
+
+            <div class="skills-split">
+              <div class="skills-block" *ngIf="selectedNode.prerequisiteSkills?.length">
+                <span class="skills-label">PREREQUISITES</span>
+                <div class="chips-row">
+                  <span class="skill-chip" 
+                        [class.gained]="hasSkill(req)" 
+                        [class.missing]="!hasSkill(req)"
+                        *ngFor="let req of selectedNode.prerequisiteSkills">
+                    <i class="fas" [class.fa-check]="hasSkill(req)" [class.fa-times]="!hasSkill(req)"></i>
+                    {{ req }}
+                  </span>
+                </div>
+              </div>
+              <div class="skills-block" *ngIf="selectedNode.skillsUnlocked?.length">
+                <span class="skills-label">SKILLS YOU'LL GAIN</span>
+                <div class="chips-row">
+                  <span class="skill-chip gained" *ngFor="let gain of selectedNode.skillsUnlocked">{{ gain }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="section-divider"></div>
+
+            <div class="portfolio-box" *ngIf="selectedNode.portfolioProject">
+              <div class="portfolio-label"><i class="fas fa-briefcase"></i> Build This</div>
+              <p>{{ selectedNode.portfolioProject }}</p>
+            </div>
+
+            <div class="resources-box" *ngIf="selectedNode.resources?.length">
+              <a class="resource-row" [href]="extractUrl(res)" target="_blank" rel="noopener noreferrer" *ngFor="let res of selectedNode.resources">
+                <i class="fas fa-external-link-alt"></i><span>{{ res }}</span>
+              </a>
+            </div>
+
+            <div class="income-impact-box">
+              <div class="impact-text">After this step: <strong>+{{ selectedNode.incomeBoostThisStep }}% income</strong></div>
+              <div class="impact-bar-bg">
+                <div class="impact-bar-fill" 
+                     [class.active]="incomeBarActive"
+                     [style.--target-width]="(selectedNode.incomeBoostThisStep * 2) + '%'">
+                </div>
+              </div>
+            </div>
+            
+            <div class="overlay-nav">
+              <button class="nav-btn outline" (click)="prevNode()" [disabled]="activeNodeIndex === 0"><i class="fas fa-arrow-left"></i> Prev</button>
+              <button class="nav-btn filled" (click)="nextNode()" *ngIf="activeNodeIndex < roadmap.steps.length - 1">Next <i class="fas fa-arrow-right"></i></button>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: Target Card -->
+    <div class="sidebar-column" *ngIf="roadmapVisible" @slideInRight>
+      <div class="target-card">
+        <span class="eyebrow">NEXT TARGET</span>
+        <h2 class="target-title">{{ roadmap.targetRole }}</h2>
+        <p class="target-level">From {{ roadmap.currentLevel }}</p>
+
+        <div class="target-metrics">
+          <div class="metric-item">
+            <span class="label">Difficulty</span>
+            <span class="value diff-value">{{ roadmap.difficulty }}</span>
+          </div>
+        </div>
+
+        <div class="target-stats">
+          <div class="progress-ring-container">
+            <svg class="progress-ring" width="80" height="80">
+              <circle class="ring-bg" stroke="#f0ede8" stroke-width="6" fill="transparent" r="34" cx="40" cy="40"/>
+              <circle class="ring-fill" stroke="#E8735A" stroke-width="6" fill="transparent" r="34" cx="40" cy="40" stroke-dasharray="213" stroke-dashoffset="213"/>
+            </svg>
+            <div class="ring-text">{{ completionPercent }}%</div>
+          </div>
+          <div class="stat-rows">
+            <div class="stat-row">
+              <span class="stat-label">Estimated completion</span>
+              <span class="stat-val">{{ roadmap.totalWeeks }} weeks</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Projected rate</span>
+              <span class="stat-val rate-up">
+                ${{ roadmap.currentRate }}/h → ${{ roadmap.projectedRate }}/h
+                <i class="fas fa-arrow-up"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="target-skills-summary">
+          <span class="skills-label">TOP ROADMAP SKILLS</span>
+          <div class="chips-row">
+            <ng-container *ngIf="roadmap.steps?.length">
+              <span class="skill-chip gained" *ngFor="let s of roadmap.steps[0].skillsUnlocked?.slice(0,3)">
+                {{ s }}
+              </span>
+            </ng-container>
+          </div>
+        </div>
+
+        <div class="total-boost-summary" *ngIf="roadmap.totalIncomeBoost">
+          <span>Total boost: <strong>+{{ roadmap.totalIncomeBoost }}%</strong></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

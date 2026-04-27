@@ -1,0 +1,219 @@
+<div class="kyc-page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">KYC Management</h1>
+      <p class="page-subtitle">{{ pendingUsers.length }} requests pending review</p>
+    </div>
+    <button class="btn btn-ghost btn-sm" (click)="loadPending()">
+      <i class="fas fa-rotate-right"></i>
+      Refresh
+    </button>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Loading KYC requests...</p>
+  </div>
+
+  <div class="kyc-grid" *ngIf="!loading">
+
+    <div class="empty-state" *ngIf="pendingUsers.length === 0">
+      <i class="fas fa-check-circle" style="color: var(--success)"></i>
+      <p>No pending KYC requests</p>
+    </div>
+
+    <div class="kyc-card card" *ngFor="let user of pendingUsers">
+      <div class="kyc-card-header">
+        <div class="avatar avatar-md avatar-warning">{{ getInitials(user) }}</div>
+        <div class="kyc-user-info">
+          <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+          <span>{{ user.email || user.userEmail }}</span>
+          <span class="kyc-cin">CIN: {{ user.cin }}</span>
+        </div>
+        <span class="badge badge-warning">{{ user.status || 'IN_REVIEW' }}</span>
+      </div>
+
+      <div class="kyc-details">
+        <div class="kyc-detail-row">
+          <span>Request ID</span>
+          <strong>{{ user.id }}</strong>
+        </div>
+        <div class="kyc-detail-row">
+          <span>Role</span>
+          <strong>{{ user.role || '—' }}</strong>
+        </div>
+        <div class="kyc-detail-row">
+          <span>Phone</span>
+          <strong>{{ user.phone || '—' }}</strong>
+        </div>
+        <div class="kyc-detail-row">
+          <span>Submitted</span>
+          <strong>{{ user.createdAt | date:'MMM d, yyyy' }}</strong>
+        </div>
+        <div class="kyc-detail-row">
+          <span>Liveness Score</span>
+          <strong>{{ user.livenessScore ?? '—' }}</strong>
+        </div>
+        <div class="kyc-detail-row">
+          <span>Liveness Passed</span>
+          <strong>{{ user.livenessPassed ? 'Yes' : 'No' }}</strong>
+        </div>
+      </div>
+
+      <div class="kyc-actions">
+        <button class="btn btn-success btn-sm" (click)="openReview(user)">
+          <i class="fas fa-eye"></i>
+          Review
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <ng-container *ngIf="selectedUser as user">
+    <div class="modal-overlay" (click)="closeReview()">
+      <div class="modal-box" (click)="$event.stopPropagation()">
+
+        <div class="modal-header">
+          <div>
+            <h3>Review KYC Request</h3>
+            <p>
+              {{ user.firstName }} {{ user.lastName }}
+              — Request #{{ user.id }}
+            </p>
+          </div>
+          <button class="btn btn-icon btn-ghost" (click)="closeReview()">
+            <i class="fas fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="modal-body">
+
+          <div class="kyc-info-grid">
+            <div class="info-item">
+              <span>Full Name</span>
+              <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Email</span>
+              <strong>{{ user.email || user.userEmail || '—' }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>CIN</span>
+              <strong>{{ user.cin || '—' }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Phone</span>
+              <strong>{{ user.phone || '—' }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Role</span>
+              <strong>{{ user.role || '—' }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Account Status</span>
+              <strong>{{ user.accountStatus || '—' }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Liveness Score</span>
+              <strong>{{ user.livenessScore ?? '—' }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Liveness Passed</span>
+              <strong>{{ user.livenessPassed ? 'Yes' : 'No' }}</strong>
+            </div>
+          </div>
+
+          <div class="kyc-files" style="margin-top: 20px;">
+
+            <div *ngIf="user.selfiePath">
+              <p><strong>Selfie</strong></p>
+              <img
+                [src]="getFileUrl(user.selfiePath)"
+                alt="Selfie"
+                style="max-width: 260px; border-radius: 8px;" />
+            </div>
+
+            <div *ngIf="user.cinDocumentPath">
+              <p><strong>CIN</strong></p>
+
+              <img
+                *ngIf="!user.cinDocumentPath.endsWith('.pdf')"
+                [src]="getFileUrl(user.cinDocumentPath)"
+                alt="CIN Document"
+                style="max-width: 260px; border-radius: 8px;" />
+
+              <a
+                *ngIf="user.cinDocumentPath.endsWith('.pdf')"
+                [href]="getFileUrl(user.cinDocumentPath)"
+                target="_blank"
+                rel="noopener noreferrer">
+                Voir CIN (PDF)
+              </a>
+            </div>
+
+            <div *ngIf="user.diplomaDocumentPath">
+              <p><strong>Diploma</strong></p>
+
+              <img
+                *ngIf="!user.diplomaDocumentPath.endsWith('.pdf')"
+                [src]="getFileUrl(user.diplomaDocumentPath)"
+                alt="Diploma"
+                style="max-width: 260px; border-radius: 8px;" />
+
+              <a
+                *ngIf="user.diplomaDocumentPath.endsWith('.pdf')"
+                [href]="getFileUrl(user.diplomaDocumentPath)"
+                target="_blank"
+                rel="noopener noreferrer">
+                Voir diplôme (PDF)
+              </a>
+            </div>
+
+          </div>
+
+          <div class="form-group" style="margin-top: 20px;">
+            <label class="form-label">Admin Notes (optional)</label>
+            <textarea
+              class="form-control"
+              rows="3"
+              placeholder="Add notes about this KYC decision..."
+              [(ngModel)]="notes">
+            </textarea>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-ghost" (click)="closeReview()">Cancel</button>
+
+          <button
+            class="btn btn-danger"
+            (click)="reject()"
+            [disabled]="actionLoading === user.id">
+            <i class="fas fa-xmark"></i>
+            Reject
+          </button>
+
+          <button
+            class="btn btn-success"
+            (click)="approve()"
+            [disabled]="actionLoading === user.id">
+            <i class="fas fa-check"></i>
+            Approve
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </ng-container>
+
+</div>

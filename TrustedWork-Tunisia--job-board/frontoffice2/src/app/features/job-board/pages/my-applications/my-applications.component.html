@@ -1,0 +1,265 @@
+<div class="applications-page">
+  <section class="applications-hero">
+    <div class="applications-hero__glow applications-hero__glow--one"></div>
+    <div class="applications-hero__glow applications-hero__glow--two"></div>
+
+    <div class="applications-hero__content">
+      <div class="applications-hero__copy">
+        <div class="eyebrow-group">
+          <span class="eyebrow">Activity Pipeline</span>
+          <span class="eyebrow eyebrow--accent">Applications Hub</span>
+        </div>
+
+        <h1>Track every freelance application with a premium, structured opportunity workflow.</h1>
+
+        <p>
+          Monitor your candidatures, follow status progression and understand where your strongest opportunities are
+          moving across your professional pipeline.
+        </p>
+
+        <div class="hero-actions" *ngIf="isFreelancer">
+          <a routerLink="/app/opportunities/freelance-jobs" class="hero-btn hero-btn--primary">
+            <i class="fas fa-paper-plane"></i>
+            <span>New application</span>
+          </a>
+
+          <button type="button" class="hero-btn hero-btn--ghost">
+            <i class="fas fa-filter"></i>
+            <span>Refine pipeline</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-spotlight-card" *ngIf="isFreelancer && !jbLoading">
+        <span class="card-kicker">Pipeline focus</span>
+        <h2>Your job board applications at a glance.</h2>
+
+        <div class="spotlight-score">
+          <strong>{{ jbApps.length }}</strong>
+          <span>Total applications</span>
+        </div>
+
+        <div class="spotlight-chip">
+          <span class="spotlight-chip__dot"></span>
+          {{ activePipelineCount }} active in pipeline
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-grid" *ngIf="isFreelancer && !jbLoading && !jbError">
+    <article class="stat-card">
+      <div class="stat-card__label">Total applications</div>
+      <strong class="stat-value">{{ jbApps.length }}</strong>
+    </article>
+    <article class="stat-card">
+      <div class="stat-card__label">Pending</div>
+      <strong class="stat-value stat-value--accent">{{ pendingCount }}</strong>
+    </article>
+    <article class="stat-card">
+      <div class="stat-card__label">Shortlisted</div>
+      <strong class="stat-value stat-value--warning">{{ shortlistedCount }}</strong>
+    </article>
+    <article class="stat-card">
+      <div class="stat-card__label">Accepted</div>
+      <strong class="stat-value stat-value--success">{{ acceptedCount }}</strong>
+    </article>
+  </section>
+
+  <section class="applications-layout" *ngIf="isFreelancer">
+    <div class="applications-main">
+      <div class="panel-card">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Smart Job Board</span>
+            <h2>My applications</h2>
+          </div>
+
+          <div class="panel-head__filters">
+            <button
+              type="button"
+              class="filter-chip"
+              *ngFor="let f of statusFilters"
+              [class.active]="activeFilter === f"
+              (click)="setFilter(f)"
+            >
+              {{ f === 'ALL' ? 'All' : f }}
+            </button>
+          </div>
+        </div>
+
+        <div class="error-state" *ngIf="jbError && !jbLoading">
+          <i class="fas fa-exclamation-circle"></i>
+          <p>{{ jbError }}</p>
+          <button type="button" class="hero-btn hero-btn--secondary" (click)="loadApplications()">Try again</button>
+        </div>
+
+        <div class="jb-apps-skeleton" *ngIf="jbLoading">
+          <div class="jb-apps-skeleton__row" *ngFor="let _ of [1, 2, 3]"></div>
+        </div>
+
+        <div class="application-list" *ngIf="!jbLoading && !jbError && filteredJbApps.length">
+          <article
+            class="application-card"
+            *ngFor="let app of filteredJbApps; trackBy: trackByApp"
+            [class.application-card--active]="selectedJbApp?.id === app.id"
+            (click)="selectJb(app)"
+          >
+            <div class="application-card__top">
+              <div class="application-card__identity">
+                <div class="application-icon">
+                  <i class="fas fa-briefcase"></i>
+                </div>
+                <div>
+                  <div class="application-title-row">
+                    <h3>
+                      <a
+                        class="job-board-app-link"
+                        [routerLink]="['/app/opportunities/freelance-jobs']"
+                        [queryParams]="{ job: app.jobOfferId }"
+                        (click)="$event.stopPropagation()"
+                        >{{ app.jobTitle || 'Job offer' }}</a
+                      >
+                    </h3>
+                    <app-status-badge [status]="app.status" type="application"></app-status-badge>
+                  </div>
+                  <p>Proposed rate: ${{ app.proposedRate | number : '1.0-0' }}</p>
+                </div>
+              </div>
+              <div class="application-score" *ngIf="app.matchScore as m">
+                <span>Match</span>
+                <strong [countUp]="m.totalScore" [countUpDuration]="1000" [countUpDecimals]="0">0</strong>%
+              </div>
+            </div>
+            <p class="application-summary">Applied {{ app.appliedAt | date : 'medium' }}</p>
+            <div class="hero-actions job-board-app-actions">
+              <button type="button" class="hero-btn hero-btn--primary" (click)="openJbJob(app.jobOfferId); $event.stopPropagation()">
+                View opportunity
+              </button>
+              <button
+                type="button"
+                class="hero-btn hero-btn--ghost"
+                *ngIf="app.status === 'PENDING'"
+                (click)="withdrawJb(app); $event.stopPropagation()"
+              >
+                Withdraw
+              </button>
+              <button
+                type="button"
+                class="hero-btn hero-btn--ghost"
+                (click)="openChat(app); $event.stopPropagation()"
+              >
+                <i class="fas fa-comment-dots"></i> Message Client
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <div class="empty-state" *ngIf="!jbLoading && !jbError && !filteredJbApps.length">
+          <i class="fas fa-file-alt"></i>
+          <p>You haven't applied to any jobs yet.</p>
+          <a routerLink="/app/opportunities/freelance-jobs" class="hero-btn hero-btn--secondary">Browse Jobs</a>
+        </div>
+      </div>
+    </div>
+
+    <aside class="applications-side" *ngIf="selectedJbApp && !jbLoading && !jbError">
+      <div class="panel-card panel-card--detail">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Selected application</span>
+            <h2>{{ selectedJbApp.jobTitle || 'Job offer' }}</h2>
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-row">
+            <span>Status</span>
+            <strong>{{ selectedJbApp.status }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Proposed rate</span>
+            <strong>${{ selectedJbApp.proposedRate | number : '1.0-0' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Applied</span>
+            <strong>{{ selectedJbApp.appliedAt | date : 'medium' }}</strong>
+          </div>
+
+          <div class="detail-row" *ngIf="selectedJbApp.matchScore as sm">
+            <span>Match score</span>
+            <strong class="accent-value"><span [countUp]="sm.totalScore" [countUpDuration]="800" [countUpDecimals]="0">0</span>%</strong>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button type="button" class="detail-btn detail-btn--primary" (click)="openJbJob(selectedJbApp.jobOfferId)">
+            View opportunity
+          </button>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="applications-layout" *ngIf="!isFreelancer">
+    <div class="applications-main">
+      <div class="panel-card">
+        <div class="empty-state">
+          <i class="fas fa-user"></i>
+          <p>Job board applications are available for freelancer accounts.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Chat Drawer -->
+<div class="chat-drawer-overlay" *ngIf="chatOpen" (click)="closeChat()"></div>
+<div class="chat-drawer" [class.open]="chatOpen">
+  <div class="chat-header">
+    <h3><i class="fas fa-comment-dots"></i> {{ chatPeerLabel }}</h3>
+    <button class="icon-btn" (click)="closeChat()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+  
+  <div class="chat-messages" #chatScroll>
+    <div class="chat-spinner" *ngIf="chatLoading">
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
+    
+    <div class="empty-chat" *ngIf="!chatLoading && !chatMessages.length">
+      <i class="fas fa-paper-plane"></i>
+      <p>No messages yet. Say hello!</p>
+    </div>
+
+    <div class="message-bubble" 
+         *ngFor="let msg of chatMessages" 
+         [class.me]="isMe(msg)" 
+         [class.them]="!isMe(msg)">
+      <div class="bubble-content">
+        {{ msg.content }}
+      </div>
+      <div class="bubble-meta">
+        {{ msg.sentAt | date:'shortTime' }}
+        <span *ngIf="isMe(msg) && msg.read" class="read-receipt">
+          <i class="fas fa-check-double"></i>
+        </span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="chat-input-area">
+    <textarea 
+      [(ngModel)]="chatInput" 
+      placeholder="Type a message..." 
+      (keydown.enter)="$event.preventDefault(); sendChat()"
+      [disabled]="chatSending">
+    </textarea>
+    <button class="send-btn" (click)="sendChat()" [disabled]="!chatInput.trim() || chatSending">
+      <i class="fas" [class.fa-paper-plane]="!chatSending" [class.fa-spinner]="chatSending" [class.fa-spin]="chatSending"></i>
+    </button>
+  </div>
+</div>

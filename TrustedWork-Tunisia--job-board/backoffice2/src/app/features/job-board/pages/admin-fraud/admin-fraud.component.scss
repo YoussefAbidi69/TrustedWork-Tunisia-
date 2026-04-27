@@ -1,0 +1,187 @@
+:host {
+  display: block;
+}
+
+.th-check,
+.td-check {
+  width: 44px;
+}
+
+.risk-score-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 140px;
+}
+
+.risk-bar-track {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.risk-bar-track--wide {
+  min-width: 120px;
+}
+
+.risk-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s ease-out;
+}
+
+.risk-bar-fill--low {
+  background: var(--success);
+}
+
+.risk-bar-fill--mod {
+  background: var(--warning);
+}
+
+.risk-bar-fill--high {
+  background: var(--error);
+  animation: fraudPulse 2s ease-in-out infinite;
+}
+
+.risk-score-num {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.risk-score-label {
+  display: block;
+  font-size: 0.72rem;
+}
+
+.signal-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.pill-more {
+  font-size: 0.75rem;
+}
+
+.detail-row .td-detail {
+  padding: 0;
+  background: var(--surface);
+}
+
+.detail-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-heading {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+.detail-heading--ai {
+  color: var(--primary);
+}
+
+.detail-text {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.detail-meta {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.detail-col {
+  min-width: 0;
+}
+
+.signal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.signal-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.signal-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.signal-bar-track {
+  width: 100px;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.signal-bar-fill {
+  height: 100%;
+  background: var(--error);
+  border-radius: 3px;
+}
+
+.signal-pct {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  min-width: 36px;
+  text-align: right;
+}
+
+.flags-loading {
+  padding: 8px 0;
+}
+
+.today-card {
+  margin-top: 8px;
+}
+
+.card-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-strip h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+@keyframes fraudPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.65;
+  }
+}
+
+@media (max-width: 900px) {
+  .detail-panel {
+    grid-template-columns: 1fr;
+  }
+}

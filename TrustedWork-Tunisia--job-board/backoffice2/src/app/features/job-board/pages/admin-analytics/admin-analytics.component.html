@@ -1,0 +1,137 @@
+<div class="users-page">
+  <div class="page-top">
+    <div>
+      <h2>AI Market Intelligence</h2>
+      <p class="page-subtitle">Real-time skill demand analysis</p>
+    </div>
+    <div class="page-top__actions">
+      <span class="live-badge"><span class="live-dot" aria-hidden="true"></span> Live</span>
+      <span class="text-muted" *ngIf="lastUpdated">Updated {{ lastUpdated.toISOString() | timeAgo }}</span>
+      <button type="button" class="secondary-btn" (click)="triggerRefresh()" [disabled]="refreshing || loading">
+        {{ refreshing ? 'Refreshing…' : 'Refresh Data' }}
+      </button>
+      <button type="button" class="secondary-btn" (click)="exportCsv()" [disabled]="!insights.length">Export CSV</button>
+    </div>
+  </div>
+
+  <div class="stats-grid" *ngIf="stats as s">
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon-wrapper stat-icon--success">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+        <span class="stat-title">Published Jobs</span>
+      </div>
+      <div class="stat-value" [countUp]="s.publishedJobs" [countUpDuration]="800" [countUpDecimals]="0">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon-wrapper">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+        </div>
+        <span class="stat-title">Total Applications</span>
+      </div>
+      <div class="stat-value" [countUp]="s.totalApplications" [countUpDuration]="800" [countUpDecimals]="0">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon-wrapper stat-icon--warning">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+        </div>
+        <span class="stat-title">Hottest skill (AI)</span>
+      </div>
+      <div class="stat-value stat-value--sm">{{ hottestSkill?.skillName ?? '—' }}</div>
+      <div class="stat-sub" *ngIf="hottestSkill">
+        Mentions:
+        <span [countUp]="hottestSkill.count" [countUpDuration]="800" [countUpDecimals]="0">0</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon-wrapper stat-icon--danger">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+        </div>
+        <span class="stat-title">Avg match score (AI)</span>
+      </div>
+      <div class="stat-value" [ngClass]="avgMatchClass()">
+        <span [countUp]="s.avgMatchScore" [countUpDuration]="800" [countUpDecimals]="1">0</span>
+        <span class="stat-sub-inline">%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert error" *ngIf="error">
+    <span>{{ error }}</span>
+    <button type="button" class="secondary-btn" (click)="load()">Retry</button>
+  </div>
+
+  <div class="table-card">
+    <div class="table-card-head">
+      <h3>Top 20 skills by demand</h3>
+    </div>
+    <div class="table-skeleton" *ngIf="loading">
+      <div class="skeleton-row" *ngFor="let _ of [1, 2, 3, 4, 5, 6, 7, 8]"></div>
+    </div>
+    <div class="chart" *ngIf="!loading && insights.length">
+      <div class="chart-row" *ngFor="let row of insights | slice : 0 : 20">
+        <span class="chart-label">{{ row.skillName }}</span>
+        <div class="chart-track">
+          <div
+            class="chart-fill"
+            [style.width.%]="(row.count / barMax) * 100"
+            [style.background]="barColor(row)"
+          ></div>
+        </div>
+        <span class="chart-count">{{ row.count }}</span>
+      </div>
+    </div>
+    <div class="empty" *ngIf="!loading && !insights.length">
+      <p>Generating data…</p>
+      <button type="button" class="primary-btn" (click)="triggerRefresh()" [disabled]="refreshing">Run refresh</button>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-card-head">
+      <h3>Full skill demand breakdown</h3>
+      <button type="button" class="secondary-btn" (click)="exportCsv()" [disabled]="!insights.length">Export</button>
+    </div>
+    <div class="table-skeleton" *ngIf="loading">
+      <div class="skeleton-row" *ngFor="let _ of [1, 2, 3, 4, 5]"></div>
+    </div>
+    <div class="table-wrapper" *ngIf="!loading && insights.length">
+      <table>
+        <thead>
+          <tr>
+            <th class="th-sort" (click)="sortBy('skillName')">Skill {{ sortIndicator('skillName') }}</th>
+            <th class="th-sort" (click)="sortBy('count')">Count {{ sortIndicator('count') }}</th>
+            <th class="th-sort" (click)="sortBy('trend')">Trend {{ sortIndicator('trend') }}</th>
+            <th class="th-sort" (click)="sortBy('lastPeriodCount')">Last period {{ sortIndicator('lastPeriodCount') }}</th>
+            <th class="th-sort" (click)="sortBy('changePercent')">Change {{ sortIndicator('changePercent') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of tableRows">
+            <td class="name-cell"><span class="user-name">{{ row.skillName }}</span></td>
+            <td>{{ row.count }}</td>
+            <td><span class="badge" [ngClass]="'trend-' + row.trend">{{ row.trend }}</span></td>
+            <td>{{ row.lastPeriodCount }}</td>
+            <td [ngClass]="changeClass(row)">{{ changeDisplay(row) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
