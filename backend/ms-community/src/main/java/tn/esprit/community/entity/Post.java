@@ -1,7 +1,6 @@
 package tn.esprit.community.entity;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -20,7 +19,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import tn.esprit.community.entity.Enum.PostStatus;
+import tn.esprit.community.entity.enums.PostStatus;
 
 @Entity
 @Data
@@ -41,10 +40,6 @@ public class Post {
 
     private String content;
 
-
-
-    /** PDF or CDN link; long URLs (e.g. signed FilePost links) exceed default VARCHAR(255). */
-
     private Long createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -55,7 +50,6 @@ public class Post {
 
     @Enumerated(EnumType.STRING)
     private PostStatus status;
-
 
     private int reportCount;
 

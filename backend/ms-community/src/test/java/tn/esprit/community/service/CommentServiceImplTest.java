@@ -76,7 +76,7 @@ class CommentServiceImplTest {
         Post post = Post.builder().id(1L).build();
         Comment c1 = Comment.builder().id(1L).content("A").userId(1L).post(post).build();
         Comment c2 = Comment.builder().id(2L).content("B").userId(2L).post(post).build();
-        when(commentRepository.findByPost_IdOrderByIdAsc(1L)).thenReturn(List.of(c1, c2));
+        when(commentRepository.findByPostIdOrderByIdAsc(1L)).thenReturn(List.of(c1, c2));
 
         List<CommentResponse> result = commentService.listComments(1L);
 
@@ -121,7 +121,7 @@ class CommentServiceImplTest {
     void shouldReturnCourseComments_whenListingByCourseId() {
         Course course = Course.builder().id(2L).build();
         Comment c = Comment.builder().id(5L).content("Great").userId(1L).course(course).build();
-        when(commentRepository.findByCourse_IdOrderByIdAsc(2L)).thenReturn(List.of(c));
+        when(commentRepository.findByCourseIdOrderByIdAsc(2L)).thenReturn(List.of(c));
 
         List<CommentResponse> result = commentService.listCommentsByCourse(2L);
         assertThat(result).hasSize(1);

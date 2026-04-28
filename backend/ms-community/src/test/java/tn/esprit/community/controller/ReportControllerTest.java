@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import tn.esprit.community.dto.request.ReportRequest;
 import tn.esprit.community.dto.response.ReportResponse;
-import tn.esprit.community.entity.Enum.ReportStatus;
+import tn.esprit.community.entity.enums.ReportStatus;
 import tn.esprit.community.service.ReportService;
 
 import static org.assertj.core.api.Assertions.assertThat;

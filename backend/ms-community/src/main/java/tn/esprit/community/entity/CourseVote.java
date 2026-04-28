@@ -17,7 +17,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import tn.esprit.community.entity.Enum.VoteType;
+import tn.esprit.community.entity.enums.VoteType;
 
 @Entity
 @Table(

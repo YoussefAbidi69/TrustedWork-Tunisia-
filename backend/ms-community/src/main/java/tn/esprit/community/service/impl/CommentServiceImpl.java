@@ -41,7 +41,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public List<CommentResponse> listComments(Long postId) {
-        return commentRepository.findByPost_IdOrderByIdAsc(postId).stream()
+        return commentRepository.findByPostIdOrderByIdAsc(postId).stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -61,7 +61,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public List<CommentResponse> listCommentsByCourse(Long courseId) {
-        return commentRepository.findByCourse_IdOrderByIdAsc(courseId).stream()
+        return commentRepository.findByCourseIdOrderByIdAsc(courseId).stream()
                 .map(this::toResponse).toList();
     }
 

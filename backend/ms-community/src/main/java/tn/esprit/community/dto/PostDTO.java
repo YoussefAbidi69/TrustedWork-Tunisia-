@@ -4,8 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import tn.esprit.community.entity.Enum.PostStatus;
-import tn.esprit.community.entity.Enum.VoteType;
+import tn.esprit.community.entity.enums.PostStatus;
+import tn.esprit.community.entity.enums.VoteType;
 
 @Data
 @Builder

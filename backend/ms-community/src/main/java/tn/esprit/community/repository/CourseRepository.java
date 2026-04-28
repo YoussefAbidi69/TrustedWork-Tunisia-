@@ -6,7 +6,7 @@ import tn.esprit.community.entity.Course;
 
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
-    List<Course> findByCommunity_IdAndPublishedTrueOrderByTitleAsc(Long communityId);
+    List<Course> findByCommunityIdAndPublishedTrueOrderByTitleAsc(Long communityId);
 
-    List<Course> findByCommunity_IdOrderByTitleAsc(Long communityId);
+    List<Course> findByCommunityIdOrderByTitleAsc(Long communityId);
 }

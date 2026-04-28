@@ -10,8 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.community.dto.request.PostRequest;
 import tn.esprit.community.dto.response.PostResponse;
 import tn.esprit.community.entity.Community;
-import tn.esprit.community.entity.Enum.PostStatus;
-import tn.esprit.community.entity.Enum.VoteType;
+import tn.esprit.community.entity.enums.PostStatus;
+import tn.esprit.community.entity.enums.VoteType;
 import tn.esprit.community.entity.Post;
 import tn.esprit.community.entity.Vote;
 import tn.esprit.community.exception.PostDeleteForbiddenException;
@@ -105,7 +105,7 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional
     public void deletePost(Long id, Long userId) {
-        Post post = postRepository.findById(id).orElseThrow(() -> new PostNotFoundException("Post not found"));
+        Post post = postRepository.findById(id).orElseThrow(() -> new PostNotFoundException(POST_NOT_FOUND));
         if (post.getCreatedBy() == null || !post.getCreatedBy().equals(userId)) {
             throw new PostDeleteForbiddenException("Only the author can delete this post");
         }
@@ -116,9 +116,9 @@ public class PostServiceImpl implements PostService {
     public List<PostResponse> listPosts(Long communityId, PostStatus status, Long voterId) {
         List<Post> posts;
         if (communityId != null && status != null) {
-            posts = postRepository.findByCommunity_IdAndStatusOrderByIdDesc(communityId, status);
+            posts = postRepository.findByCommunityIdAndStatusOrderByIdDesc(communityId, status);
         } else if (communityId != null) {
-            posts = postRepository.findByCommunity_IdOrderByIdDesc(communityId);
+            posts = postRepository.findByCommunityIdOrderByIdDesc(communityId);
         } else if (status != null) {
             posts = postRepository.findByStatus(status);
         } else {
@@ -134,8 +134,8 @@ public class PostServiceImpl implements PostService {
     }
 
     private PostResponse toPostResponse(Post post, Long voterId) {
-        long up = voteRepository.countByPost_IdAndType(post.getId(), VoteType.UP);
-        long down = voteRepository.countByPost_IdAndType(post.getId(), VoteType.DOWN);
+        long up = voteRepository.countByPostIdAndType(post.getId(), VoteType.UP);
+        long down = voteRepository.countByPostIdAndType(post.getId(), VoteType.DOWN);
 
         PostResponse response = PostResponse.builder()
                 .id(post.getId())
@@ -150,7 +150,7 @@ public class PostServiceImpl implements PostService {
                 .build();
 
         if (voterId != null) {
-            voteRepository.findByPost_IdAndUserId(post.getId(), voterId).ifPresent(v -> response.setMyVote(v.getType()));
+            voteRepository.findByPostIdAndUserId(post.getId(), voterId).ifPresent(v -> response.setMyVote(v.getType()));
         }
         return response;
     }
@@ -167,7 +167,7 @@ public class PostServiceImpl implements PostService {
         if (ids.isEmpty()) {
             return;
         }
-        List<Vote> votes = voteRepository.findByUserIdAndPost_IdIn(voterId, ids);
+        List<Vote> votes = voteRepository.findByUserIdAndPostIdIn(voterId, ids);
         Map<Long, VoteType> byPostId =
                 votes.stream().collect(Collectors.toMap(v -> v.getPost().getId(), Vote::getType, (a, b) -> a));
         for (PostResponse dto : dtos) {

@@ -9,8 +9,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import tn.esprit.community.dto.request.ReportRequest;
 import tn.esprit.community.dto.response.ReportResponse;
 import tn.esprit.community.entity.Course;
-import tn.esprit.community.entity.Enum.PostStatus;
-import tn.esprit.community.entity.Enum.ReportStatus;
+import tn.esprit.community.entity.enums.PostStatus;
+import tn.esprit.community.entity.enums.ReportStatus;
 import tn.esprit.community.entity.Post;
 import tn.esprit.community.entity.Report;
 import tn.esprit.community.exception.LearningNotFoundException;
@@ -110,7 +110,7 @@ class ReportServiceImplTest {
     void shouldReturnReports_whenListingByPostId() {
         Post post = post(1L, 1, PostStatus.PUBLISHED);
         Report r = Report.builder().id(1L).post(post).status(ReportStatus.PENDING).build();
-        when(reportRepository.findByPost_IdOrderByIdDesc(1L)).thenReturn(List.of(r));
+        when(reportRepository.findByPostIdOrderByIdDesc(1L)).thenReturn(List.of(r));
 
         List<ReportResponse> result = reportService.listReportsByPost(1L);
         assertThat(result).hasSize(1);

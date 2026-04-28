@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import tn.esprit.community.dto.request.CourseReportRequest;
 import tn.esprit.community.dto.response.CourseReportResponse;
-import tn.esprit.community.entity.Enum.ReportStatus;
+import tn.esprit.community.entity.enums.ReportStatus;
 import tn.esprit.community.service.CourseReportService;
 
 @RestController

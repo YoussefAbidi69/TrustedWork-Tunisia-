@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import tn.esprit.community.entity.Enum.ReportStatus;
+import tn.esprit.community.entity.enums.ReportStatus;
 
 @Data
 @Builder

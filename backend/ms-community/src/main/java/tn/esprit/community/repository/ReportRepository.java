@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import tn.esprit.community.entity.Report;
 
 public interface ReportRepository extends JpaRepository<Report, Long> {
-	List<Report> findByPost_IdOrderByIdDesc(Long postId);
+	List<Report> findByPostIdOrderByIdDesc(Long postId);
 }

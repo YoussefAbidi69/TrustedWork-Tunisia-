@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import tn.esprit.community.dto.request.PostRequest;
 import tn.esprit.community.dto.response.PostResponse;
 import tn.esprit.community.service.PostService;
-import tn.esprit.community.entity.Enum.PostStatus;
+import tn.esprit.community.entity.enums.PostStatus;
 
 @RestController
 @RequestMapping("/api/posts")

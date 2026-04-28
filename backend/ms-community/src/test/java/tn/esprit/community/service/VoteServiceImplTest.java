@@ -8,7 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tn.esprit.community.dto.request.VoteRequest;
 import tn.esprit.community.dto.response.VoteResponse;
-import tn.esprit.community.entity.Enum.VoteType;
+import tn.esprit.community.entity.enums.VoteType;
 import tn.esprit.community.entity.Post;
 import tn.esprit.community.entity.Vote;
 import tn.esprit.community.repository.PostRepository;
@@ -49,7 +49,7 @@ class VoteServiceImplTest {
     void shouldDeleteVoteAndReturnNullType_whenSameVoteTypeSubmittedAgain() {
         Post post = post(1L);
         Vote existing = Vote.builder().id(5L).post(post).userId(10L).type(VoteType.UP).build();
-        when(voteRepository.findByPost_IdAndUserId(1L, 10L)).thenReturn(Optional.of(existing));
+        when(voteRepository.findByPostIdAndUserId(1L, 10L)).thenReturn(Optional.of(existing));
 
         VoteRequest request = VoteRequest.builder().userId(10L).type(VoteType.UP).build();
         VoteResponse response = voteService.vote(1L, request);
@@ -68,7 +68,7 @@ class VoteServiceImplTest {
     void shouldUpdateVoteType_whenDifferentVoteTypeSubmitted() {
         Post post = post(1L);
         Vote existing = Vote.builder().id(5L).post(post).userId(10L).type(VoteType.UP).build();
-        when(voteRepository.findByPost_IdAndUserId(1L, 10L)).thenReturn(Optional.of(existing));
+        when(voteRepository.findByPostIdAndUserId(1L, 10L)).thenReturn(Optional.of(existing));
 
         Vote updated = Vote.builder().id(5L).post(post).userId(10L).type(VoteType.DOWN).build();
         when(voteRepository.save(existing)).thenReturn(updated);
@@ -87,7 +87,7 @@ class VoteServiceImplTest {
     @Test
     @DisplayName("shouldCreateNewVote_whenNoExistingVoteForUser")
     void shouldCreateNewVote_whenNoExistingVoteForUser() {
-        when(voteRepository.findByPost_IdAndUserId(1L, 20L)).thenReturn(Optional.empty());
+        when(voteRepository.findByPostIdAndUserId(1L, 20L)).thenReturn(Optional.empty());
         Post post = post(1L);
         when(postRepository.getReferenceById(1L)).thenReturn(post);
 

@@ -6,5 +6,5 @@ import tn.esprit.community.entity.Section;
 
 public interface SectionRepository extends JpaRepository<Section, Long> {
 
-    List<Section> findByCourse_IdOrderByOrderIndexAsc(Long courseId);
+    List<Section> findByCourseIdOrderByOrderIndexAsc(Long courseId);
 }

@@ -1,4 +1,4 @@
-package tn.esprit.community.entity.Enum;
+package tn.esprit.community.entity.enums;
 
 public enum BlockType {
     TEXT,

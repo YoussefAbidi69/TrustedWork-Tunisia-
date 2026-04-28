@@ -21,7 +21,7 @@ public class VoteServiceImpl implements VoteService {
     @Override
     public VoteResponse vote(Long postId, VoteRequest voteRequest) {
         Vote existingVote = voteRepository
-                .findByPost_IdAndUserId(postId, voteRequest.getUserId())
+                .findByPostIdAndUserId(postId, voteRequest.getUserId())
                 .orElse(null);
 
         if (existingVote != null && existingVote.getType() == voteRequest.getType()) {

@@ -15,7 +15,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import tn.esprit.community.entity.Enum.ReportStatus;
+import tn.esprit.community.entity.enums.ReportStatus;
 
 @Entity
 @Data

@@ -11,12 +11,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/api/quality")
 public class CourseQualityController {
+
+    private static final String KEY_AVAILABLE = "available";
+    private static final String KEY_IS_PLAGIARIZED = "is_plagiarized";
+    private static final String PLAGIARISM_UNAVAILABLE = "Plagiarism service unavailable";
 
     private final WebClient qualityClient;
 
@@ -43,11 +46,9 @@ public class CourseQualityController {
                     .retrieve()
                     .bodyToMono(Map.class)
                     .block();
-            return ResponseEntity.ok(response == null ? Map.of("available", false) : response);
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("available", false));
+            return ResponseEntity.ok(response == null ? Map.of(KEY_AVAILABLE, false) : response);
         } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("available", false));
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of(KEY_AVAILABLE, false));
         }
     }
 
@@ -60,13 +61,10 @@ public class CourseQualityController {
                     .retrieve()
                     .bodyToMono(Map.class)
                     .block();
-            return ResponseEntity.ok(response == null ? Map.of("is_plagiarized", false) : response);
-        } catch (WebClientResponseException ex) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("is_plagiarized", false, "error", "Plagiarism service unavailable"));
+            return ResponseEntity.ok(response == null ? Map.of(KEY_IS_PLAGIARIZED, false) : response);
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("is_plagiarized", false, "error", "Plagiarism service unavailable"));
+                    .body(Map.of(KEY_IS_PLAGIARIZED, false, "error", PLAGIARISM_UNAVAILABLE));
         }
     }
 }

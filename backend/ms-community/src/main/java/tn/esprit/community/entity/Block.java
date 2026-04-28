@@ -16,7 +16,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import tn.esprit.community.entity.Enum.BlockType;
+import tn.esprit.community.entity.enums.BlockType;
 
 @Entity
 @Data

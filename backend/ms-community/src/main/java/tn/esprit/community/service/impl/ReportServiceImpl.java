@@ -8,8 +8,8 @@ import tn.esprit.community.dto.request.ReportRequest;
 import tn.esprit.community.dto.response.ReportResponse;
 import tn.esprit.community.entity.Post;
 import tn.esprit.community.entity.Report;
-import tn.esprit.community.entity.Enum.PostStatus;
-import tn.esprit.community.entity.Enum.ReportStatus;
+import tn.esprit.community.entity.enums.PostStatus;
+import tn.esprit.community.entity.enums.ReportStatus;
 import tn.esprit.community.exception.PostNotFoundException;
 import tn.esprit.community.repository.PostRepository;
 import tn.esprit.community.repository.ReportRepository;
@@ -55,7 +55,7 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<ReportResponse> listReportsByPost(Long postId) {
-        return reportRepository.findByPost_IdOrderByIdDesc(postId).stream()
+        return reportRepository.findByPostIdOrderByIdDesc(postId).stream()
                 .map(this::toResponse)
                 .toList();
     }

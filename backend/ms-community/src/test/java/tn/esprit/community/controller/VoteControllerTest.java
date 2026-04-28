@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import tn.esprit.community.dto.request.VoteRequest;
 import tn.esprit.community.dto.response.VoteResponse;
-import tn.esprit.community.entity.Enum.VoteType;
+import tn.esprit.community.entity.enums.VoteType;
 import tn.esprit.community.service.VoteService;
 
 import static org.assertj.core.api.Assertions.assertThat;

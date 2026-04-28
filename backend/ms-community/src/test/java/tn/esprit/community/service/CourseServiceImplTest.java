@@ -13,9 +13,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import tn.esprit.community.dto.request.CourseRequest;
+import tn.esprit.community.dto.response.CourseDownloadResponse;
 import tn.esprit.community.dto.response.CourseResponse;
+import tn.esprit.community.entity.Block;
 import tn.esprit.community.entity.Community;
 import tn.esprit.community.entity.Course;
+import tn.esprit.community.entity.Section;
 import tn.esprit.community.exception.LearningNotFoundException;
 import tn.esprit.community.repository.BlockRepository;
 import tn.esprit.community.repository.CommunityRepository;
@@ -185,7 +188,7 @@ class CourseServiceImplTest {
     @DisplayName("shouldReturnPublishedCoursesByCommunity_whenCommunityIdAndPublishedOnlyAreProvided")
     void shouldReturnPublishedCoursesByCommunity_whenCommunityIdAndPublishedOnlyAreProvided() {
         Course c = buildCourse(1L, "Spring", true);
-        when(courseRepository.findByCommunity_IdAndPublishedTrueOrderByTitleAsc(3L))
+        when(courseRepository.findByCommunityIdAndPublishedTrueOrderByTitleAsc(3L))
                 .thenReturn(List.of(c));
 
         List<CourseResponse> result = courseService.listCourses(3L, true);
@@ -197,7 +200,7 @@ class CourseServiceImplTest {
     @Test
     @DisplayName("shouldReturnAllCoursesByCommunity_whenCommunityIdProvidedWithoutPublishedFilter")
     void shouldReturnAllCoursesByCommunity_whenCommunityIdProvidedWithoutPublishedFilter() {
-        when(courseRepository.findByCommunity_IdOrderByTitleAsc(3L))
+        when(courseRepository.findByCommunityIdOrderByTitleAsc(3L))
                 .thenReturn(List.of(buildCourse(1L, "A", false), buildCourse(2L, "B", true)));
 
         List<CourseResponse> result = courseService.listCourses(3L, false);
@@ -276,7 +279,7 @@ class CourseServiceImplTest {
     void shouldCallPlagiarismServiceAndNotifyDiscord_whenPublishingDraftCourse() {
         Course existing = buildCourse(8L, "Draft course", false);
         when(courseRepository.findById(8L)).thenReturn(Optional.of(existing));
-        when(sectionRepository.findByCourse_IdOrderByOrderIndexAsc(8L)).thenReturn(List.of());
+        when(sectionRepository.findByCourseIdOrderByOrderIndexAsc(8L)).thenReturn(List.of());
         when(responseSpec.bodyToMono(eq(Map.class))).thenReturn(Mono.just(Map.of("is_plagiarized", false)));
         when(responseSpec.bodyToMono(eq(Void.class))).thenReturn(Mono.empty());
         when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -295,7 +298,7 @@ class CourseServiceImplTest {
     void shouldRejectPublishing_whenPlagiarismServiceFlagsCourse() {
         Course existing = buildCourse(9L, "Draft course", false);
         when(courseRepository.findById(9L)).thenReturn(Optional.of(existing));
-        when(sectionRepository.findByCourse_IdOrderByOrderIndexAsc(9L)).thenReturn(List.of());
+        when(sectionRepository.findByCourseIdOrderByOrderIndexAsc(9L)).thenReturn(List.of());
         when(responseSpec.bodyToMono(eq(Map.class))).thenReturn(Mono.just(Map.of(
                 "is_plagiarized", true,
                 "max_similarity", 87.5
@@ -328,5 +331,26 @@ class CourseServiceImplTest {
                 .hasMessageContaining("Course not found");
 
         verify(courseRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("shouldDownloadCourse_withSectionsAndBlocks")
+    void shouldDownloadCourse_withSectionsAndBlocks() {
+        Course course = buildCourse(1L, "Java Masterclass", true);
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
+
+        Section section = Section.builder().id(10L).course(course).title("Intro").orderIndex(1).build();
+        when(sectionRepository.findByCourseIdOrderByOrderIndexAsc(1L)).thenReturn(List.of(section));
+
+        Block block = Block.builder().id(100L).section(section).title("Welcome").orderIndex(1).build();
+        when(blockRepository.findBySectionIdOrderByOrderIndexAsc(10L)).thenReturn(List.of(block));
+
+        CourseDownloadResponse response = courseService.downloadCourse(1L);
+
+        assertThat(response.getId()).isEqualTo(1L);
+        assertThat(response.getTitle()).isEqualTo("Java Masterclass");
+        assertThat(response.getSections()).hasSize(1);
+        assertThat(response.getSections().get(0).getBlocks()).hasSize(1);
+        assertThat(response.getSections().get(0).getBlocks().get(0).getTitle()).isEqualTo("Welcome");
     }
 }

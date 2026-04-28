@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.community.dto.request.BlockRequest;
 import tn.esprit.community.dto.response.BlockResponse;
 import tn.esprit.community.entity.Block;
-import tn.esprit.community.entity.Enum.BlockType;
+import tn.esprit.community.entity.enums.BlockType;
 import tn.esprit.community.entity.Section;
 import tn.esprit.community.exception.LearningNotFoundException;
 import tn.esprit.community.repository.BlockRepository;
@@ -19,6 +19,7 @@ public class BlockServiceImpl implements BlockService {
 
     private final BlockRepository blockRepository;
     private final SectionRepository sectionRepository;
+    private static final String BLOCK_NOT_FOUND = "Block not found";
 
     public BlockServiceImpl(BlockRepository blockRepository, SectionRepository sectionRepository) {
         this.blockRepository = blockRepository;
@@ -49,7 +50,8 @@ public class BlockServiceImpl implements BlockService {
     @Override
     @Transactional
     public BlockResponse updateBlock(Long blockId, BlockRequest blockRequest) {
-        Block block = blockRepository.findById(blockId).orElseThrow(() -> new LearningNotFoundException("Block not found"));
+        Block block = blockRepository.findById(blockId)
+            .orElseThrow(() -> new LearningNotFoundException(BLOCK_NOT_FOUND));
 
         if (blockRequest.getTitle() != null) {
             block.setTitle(blockRequest.getTitle());
@@ -72,7 +74,7 @@ public class BlockServiceImpl implements BlockService {
 
     @Override
     public List<BlockResponse> listBlocks(Long sectionId) {
-        return blockRepository.findBySection_IdOrderByOrderIndexAsc(sectionId).stream()
+        return blockRepository.findBySectionIdOrderByOrderIndexAsc(sectionId).stream()
                 .map(this::toBlockResponse)
                 .toList();
     }
@@ -81,20 +83,20 @@ public class BlockServiceImpl implements BlockService {
     public BlockResponse getBlock(Long blockId) {
         return blockRepository.findById(blockId)
                 .map(this::toBlockResponse)
-                .orElseThrow(() -> new LearningNotFoundException("Block not found"));
+                .orElseThrow(() -> new LearningNotFoundException(BLOCK_NOT_FOUND));
     }
 
     @Override
     @Transactional
     public void deleteBlock(Long blockId) {
         if (!blockRepository.existsById(blockId)) {
-            throw new LearningNotFoundException("Block not found");
+            throw new LearningNotFoundException(BLOCK_NOT_FOUND);
         }
         blockRepository.deleteById(blockId);
     }
 
     private int nextBlockOrder(Long sectionId) {
-        return blockRepository.findBySection_IdOrderByOrderIndexAsc(sectionId).stream()
+        return blockRepository.findBySectionIdOrderByOrderIndexAsc(sectionId).stream()
                 .mapToInt(Block::getOrderIndex)
                 .max()
                 .orElse(-1) + 1;

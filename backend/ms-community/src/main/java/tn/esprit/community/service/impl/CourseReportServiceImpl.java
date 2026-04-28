@@ -7,7 +7,7 @@ import tn.esprit.community.dto.request.CourseReportRequest;
 import tn.esprit.community.dto.response.CourseReportResponse;
 import tn.esprit.community.entity.Course;
 import tn.esprit.community.entity.CourseReport;
-import tn.esprit.community.entity.Enum.ReportStatus;
+import tn.esprit.community.entity.enums.ReportStatus;
 import tn.esprit.community.exception.PostNotFoundException;
 import tn.esprit.community.repository.CourseReportRepository;
 import tn.esprit.community.repository.CourseRepository;

@@ -22,6 +22,7 @@ public class SectionServiceImpl implements SectionService {
     private final SectionRepository sectionRepository;
     private final CourseRepository courseRepository;
     private final BlockRepository blockRepository;
+    private static final String SECTION_NOT_FOUND = "Section not found";
 
     public SectionServiceImpl(
             SectionRepository sectionRepository, CourseRepository courseRepository, BlockRepository blockRepository) {
@@ -53,7 +54,7 @@ public class SectionServiceImpl implements SectionService {
     public SectionResponse updateSection(Long sectionId, SectionRequest sectionRequest) {
         Section section = sectionRepository
                 .findById(sectionId)
-                .orElseThrow(() -> new LearningNotFoundException("Section not found"));
+                .orElseThrow(() -> new LearningNotFoundException(SECTION_NOT_FOUND));
 
         if (sectionRequest.getTitle() != null) {
             section.setTitle(sectionRequest.getTitle());
@@ -67,7 +68,7 @@ public class SectionServiceImpl implements SectionService {
 
     @Override
     public List<SectionResponse> listSections(Long courseId) {
-        return sectionRepository.findByCourse_IdOrderByOrderIndexAsc(courseId).stream()
+        return sectionRepository.findByCourseIdOrderByOrderIndexAsc(courseId).stream()
                 .map(this::toSectionResponse)
                 .toList();
     }
@@ -76,27 +77,27 @@ public class SectionServiceImpl implements SectionService {
     public SectionResponse getSection(Long sectionId) {
         return sectionRepository.findById(sectionId)
                 .map(this::toSectionResponse)
-                .orElseThrow(() -> new LearningNotFoundException("Section not found"));
+                .orElseThrow(() -> new LearningNotFoundException(SECTION_NOT_FOUND));
     }
 
     @Override
     @Transactional
     public void deleteSection(Long sectionId) {
         if (!sectionRepository.existsById(sectionId)) {
-            throw new LearningNotFoundException("Section not found");
+            throw new LearningNotFoundException(SECTION_NOT_FOUND);
         }
         sectionRepository.deleteById(sectionId);
     }
 
     private int nextSectionOrder(Long courseId) {
-        return sectionRepository.findByCourse_IdOrderByOrderIndexAsc(courseId).stream()
+        return sectionRepository.findByCourseIdOrderByOrderIndexAsc(courseId).stream()
                 .mapToInt(Section::getOrderIndex)
                 .max()
                 .orElse(-1) + 1;
     }
 
     private SectionResponse toSectionResponse(Section section) {
-        List<BlockResponse> blocks = blockRepository.findBySection_IdOrderByOrderIndexAsc(section.getId()).stream()
+        List<BlockResponse> blocks = blockRepository.findBySectionIdOrderByOrderIndexAsc(section.getId()).stream()
                 .map(this::toBlockResponse)
                 .toList();
 

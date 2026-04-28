@@ -92,9 +92,9 @@ public class CourseServiceImpl implements CourseService {
         List<Course> courses;
 
         if (communityId != null && published) {
-            courses = courseRepository.findByCommunity_IdAndPublishedTrueOrderByTitleAsc(communityId);
+            courses = courseRepository.findByCommunityIdAndPublishedTrueOrderByTitleAsc(communityId);
         } else if (communityId != null) {
-            courses = courseRepository.findByCommunity_IdOrderByTitleAsc(communityId);
+            courses = courseRepository.findByCommunityIdOrderByTitleAsc(communityId);
         } else {
             courses = courseRepository.findAll();
             if (published) {
@@ -210,7 +210,7 @@ public class CourseServiceImpl implements CourseService {
                 .findById(courseId)
                 .orElseThrow(() -> new LearningNotFoundException(COURSE_NOT_FOUND));
 
-        List<Section> sections = sectionRepository.findByCourse_IdOrderByOrderIndexAsc(courseId);
+        List<Section> sections = sectionRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
         List<SectionResponse> sectionResponses = sections.stream().map(this::toSectionTree).toList();
 
         return CourseDownloadResponse.builder()
@@ -225,7 +225,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     private SectionResponse toSectionTree(Section section) {
-        List<BlockResponse> blocks = blockRepository.findBySection_IdOrderByOrderIndexAsc(section.getId()).stream()
+        List<BlockResponse> blocks = blockRepository.findBySectionIdOrderByOrderIndexAsc(section.getId()).stream()
                 .map(this::toBlockResponse)
                 .toList();
 

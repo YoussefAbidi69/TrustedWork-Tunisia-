@@ -15,7 +15,7 @@ import tn.esprit.community.dto.request.CourseRequest;
 import tn.esprit.community.dto.response.BlockResponse;
 import tn.esprit.community.dto.response.CourseResponse;
 import tn.esprit.community.dto.response.SectionResponse;
-import tn.esprit.community.entity.Enum.BlockType;
+import tn.esprit.community.entity.enums.BlockType;
 import tn.esprit.community.service.impl.LearningCourseServiceImpl;
 
 import static org.assertj.core.api.Assertions.assertThat;

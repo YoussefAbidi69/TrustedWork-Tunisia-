@@ -3,7 +3,7 @@ package tn.esprit.community.service;
 import java.util.List;
 import tn.esprit.community.dto.request.PostRequest;
 import tn.esprit.community.dto.response.PostResponse;
-import tn.esprit.community.entity.Enum.PostStatus;
+import tn.esprit.community.entity.enums.PostStatus;
 
 public interface PostService {
     PostResponse createPost(PostRequest postRequest);
