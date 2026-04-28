@@ -196,17 +196,23 @@ public class AgencyController {
 
     // ── INVITATIONS ENDPOINTS ──
 
-    // SEND INVITATION
     @PostMapping("/{id}/invitations")
-    public tn.esprit.userservice.dto.AgencyInvitationResponseDto sendInvitation(
+    public ResponseEntity<?> sendInvitation(
             @PathVariable Long id,
             @RequestBody tn.esprit.userservice.dto.AgencyInvitationRequestDto dto) {
-        tn.esprit.userservice.entity.AgencyInvitation invitation = new tn.esprit.userservice.entity.AgencyInvitation();
-        invitation.setMessage(dto.getMessage());
-        tn.esprit.userservice.entity.AgencyInvitation savedInvitation = invitationService.createInvitation(
-                id, dto.getSenderId(), dto.getReceiverId(), invitation
-        );
-        return agencyInvitationMapper.toResponseDto(savedInvitation);
+        try {
+            tn.esprit.userservice.entity.AgencyInvitation invitation = new tn.esprit.userservice.entity.AgencyInvitation();
+            invitation.setMessage(dto.getMessage());
+            invitation.setProposedRole(dto.getProposedRole());
+            
+            tn.esprit.userservice.entity.AgencyInvitation savedInvitation = invitationService.createInvitation(
+                    id, dto.getSenderId(), dto.getReceiverId(), invitation
+            );
+            return ResponseEntity.ok(agencyInvitationMapper.toResponseDto(savedInvitation));
+        } catch (Exception e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                    .body(java.util.Map.of("message", e.getMessage() != null ? e.getMessage() : "Unknown error"));
+        }
     }
 
     // LIST OUTGOING INVITATIONS

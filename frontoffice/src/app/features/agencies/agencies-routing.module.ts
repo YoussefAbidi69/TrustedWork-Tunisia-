@@ -6,6 +6,8 @@ import { AgencyFormComponent } from './components/agency-form/agency-form.compon
 import { MyInvitationsComponent } from './pages/my-invitations/my-invitations.component';
 import { OwnerDashboardComponent } from './pages/owner-dashboard/owner-dashboard.component';
 import { MyAgenciesComponent } from './pages/my-agencies/my-agencies.component';
+import { RecommendedFreelancersComponent } from './pages/recommended-freelancers/recommended-freelancers.component';
+import { AgencyChatComponent } from './pages/agency-chat/agency-chat.component';
 
 const routes: Routes = [
   { path: '', component: AgencyListComponent, pathMatch: 'full' },
@@ -14,8 +16,10 @@ const routes: Routes = [
   { path: 'invitations', component: MyInvitationsComponent },
   { path: 'mon-agence', component: OwnerDashboardComponent },
   { path: 'mes-agences', component: MyAgenciesComponent },
+  { path: 'chat', component: AgencyChatComponent },
   { path: ':id', component: AgencyDetailComponent },
-  { path: ':id/edit', component: AgencyFormComponent }
+  { path: ':id/edit', component: AgencyFormComponent },
+  { path: ':id/members', component: RecommendedFreelancersComponent }
 ];
 
 

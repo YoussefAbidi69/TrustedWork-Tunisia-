@@ -1,0 +1,30 @@
+{
+  "row_count": 2036,
+  "positive_rate": 0.23477406679764243,
+  "means": {
+    "agency_id": 12.583497053045187,
+    "freelancer_id": 1081.1414538310412,
+    "skill_match_score": 0.024341019864584177,
+    "trust_score": 0.4603345386736155,
+    "experience_score": 0.4795309073793753,
+    "availability_score": 0.4564231075518309,
+    "similarity_score": 0.023436275831137273,
+    "location_score": 0.5193023524945336,
+    "kyc_bonus": 0.5697445972495089,
+    "liveness_bonus": 1.0,
+    "was_hired": 0.23477406679764243
+  },
+  "stds": {
+    "agency_id": 6.297568092728064,
+    "freelancer_id": 155.26067366489804,
+    "skill_match_score": 0.029971724423411346,
+    "trust_score": 0.26161422534752354,
+    "experience_score": 0.33670690815005017,
+    "availability_score": 0.3627318714095129,
+    "similarity_score": 0.030390609329995544,
+    "location_score": 0.12370317663947901,
+    "kyc_bonus": 0.49523343077138576,
+    "liveness_bonus": 0.0,
+    "was_hired": 0.4239616574793553
+  }
+}

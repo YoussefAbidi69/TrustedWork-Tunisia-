@@ -12,6 +12,88 @@
 
   <!-- reCAPTCHA v2 -->
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <script>
+    if (typeof global === 'undefined') {
+      window.global = window;
+    }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      corePlugins: {
+        preflight: false,
+      },
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Source Sans 3"', 'sans-serif'],
+            display: ['"Playfair Display"', 'serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            blue: {
+              50: '#E8F1FB', // azure-light
+              100: '#D1E3F7',
+              200: '#A4C8EF',
+              300: '#76ACE6',
+              400: '#4991DE',
+              500: '#3D7EC7', // azure
+              600: '#3D7EC7', // azure
+              700: '#2a5b92',
+            },
+            orange: {
+              50: '#F5E0D8', // terracotta-light
+              100: '#EBC1B1',
+              200: '#DCA28A',
+              300: '#CD8363',
+              400: '#BE643C',
+              500: '#C85C3B', // terracotta
+              600: '#A84830', // terracotta-dark
+            },
+            red: {
+              50: '#FCEAE8', // danger-light
+              100: '#f9d5d1',
+              500: '#C0392B', // danger
+              600: '#a33024',
+              700: '#86281e',
+            },
+            green: {
+              50: '#E8F0E5', // olive-light
+              100: '#d1e1cb',
+              500: '#5B7553', // olive
+              600: '#4d6346',
+            },
+            yellow: {
+              50: '#FDF6E3', // gold-light
+              100: '#fbedc7',
+              500: '#D4A843', // gold
+              600: '#b48f39',
+              700: '#94752f',
+            },
+            purple: {
+              50: '#E8F1FB', // map to azure-light for task refs
+              200: '#A4C8EF',
+              500: '#3D7EC7', // map to azure
+              600: '#3D7EC7',
+              700: '#2a5b92',
+            },
+            gray: {
+              50: '#FAF7F4', // cream
+              100: '#F2E9E0', // sand
+              200: '#E2E8F0', // standard
+              300: '#CBD5E1', // standard
+              400: '#8D99AE', // stone
+              500: '#4F5D75', // slate
+              600: '#4F5D75', // slate
+              700: '#2D3142', // charcoal
+              800: '#1B1F2A', // midnight
+              900: '#11131A',
+            }
+          }
+        }
+      }
+    }
+  </script>
 </head>
 <body>
   <app-root></app-root>

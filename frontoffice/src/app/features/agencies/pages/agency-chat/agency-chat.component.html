@@ -1,0 +1,156 @@
+<div class="flex h-[calc(100vh-64px)] bg-gray-50 border-t border-gray-200" style="margin-left: 250px;">
+  
+  <!-- Left Sidebar (Agencies List) -->
+  <div class="w-64 bg-white border-r border-gray-200 flex flex-col hidden md:flex">
+    <div class="p-4 border-b border-gray-200 bg-gray-50">
+      <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+        <i class="fas fa-building text-blue-600"></i> Mes Agences
+      </h2>
+    </div>
+    <div class="flex-1 overflow-y-auto p-2">
+      <div *ngIf="myAgencies().length === 0" class="text-center text-gray-500 py-4 text-sm">
+        Aucune agence trouvée.
+      </div>
+      <div *ngFor="let agency of myAgencies()"
+           class="flex items-center gap-3 p-3 mb-1 rounded-lg cursor-pointer transition-all duration-200"
+           [class.bg-blue-50]="agencyId() === agency.id"
+           [class.border-l-4]="agencyId() === agency.id"
+           [class.border-blue-600]="agencyId() === agency.id"
+           [class.hover:bg-gray-100]="agencyId() !== agency.id"
+           (click)="onAgencyChange(agency.id)">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold shadow-sm">
+          {{ agency.name.substring(0,2).toUpperCase() }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-gray-800 truncate">{{ agency.name }}</p>
+          <p class="text-xs text-gray-500 truncate">Cliquez pour ouvrir</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Chat Area -->
+  <div class="flex-1 flex flex-col relative" *ngIf="agencyId()">
+    
+    <!-- Chat Header -->
+    <div class="h-16 px-6 bg-white border-b border-gray-200 flex items-center justify-between shadow-sm z-10">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold">
+          {{ (myAgencies() | slice:0:1)[0]?.name?.substring(0,2)?.toUpperCase() || 'AG' }}
+        </div>
+        <div>
+          <h2 class="font-bold text-gray-800 text-lg leading-tight">
+            {{ (myAgencies() | slice:0:1)[0]?.name || 'Chat Agence' }}
+          </h2>
+          <div class="flex items-center gap-2">
+            <span class="flex h-2 w-2 rounded-full bg-green-500"></span>
+            <span class="text-xs text-gray-500">{{ chatService.onlineMembers().length }} membre(s) en ligne</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Pinned Messages Panel -->
+    <app-pinned-messages-panel
+      [pinnedMessages]="chatService.pinnedMessages()"
+      [canUnpin]="isLead()"
+      (unpin)="onPin($event, true)">
+    </app-pinned-messages-panel>
+
+    <!-- Messages Container -->
+    <div class="flex-1 overflow-y-auto p-4 md:p-6 bg-[#f8f9fa] custom-scrollbar" #messageContainer (scroll)="onScroll(messageContainer)">
+      
+      <div *ngIf="isLoadingHistory()" class="flex justify-center py-4">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+
+      <div *ngIf="!isLoadingHistory() && chatService.messages().length === 0" class="flex flex-col items-center justify-center h-full text-gray-400 space-y-3">
+        <i class="far fa-comments text-5xl"></i>
+        <p class="text-lg">Aucun message pour le moment</p>
+        <p class="text-sm">Soyez le premier à envoyer un message !</p>
+      </div>
+
+      <div class="space-y-4">
+        @for (msg of chatService.messages(); track msg.id) {
+          <app-chat-message-bubble
+            [message]="msg"
+            [isMine]="isOwnMessage(msg)"
+            [canDelete]="isOwnMessage(msg) || isLead()"
+            [canPin]="isLead()"
+            (reply)="onReply(msg)"
+            (react)="onReact(msg.id, $event)"
+            (delete)="onDelete(msg.id)"
+            (pin)="onPin(msg.id, msg.isPinned)">
+          </app-chat-message-bubble>
+        }
+      </div>
+
+      <!-- Typing Indicator -->
+      <div *ngIf="chatService.typingUsers().length > 0" class="flex items-center gap-2 text-gray-400 text-sm italic mt-2">
+        <div class="flex space-x-1">
+          <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+          <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+          <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+        </div>
+        <span>
+          {{ chatService.typingUsers()[0].firstName }} écrit...
+        </span>
+      </div>
+
+    </div>
+
+    <!-- Input Area -->
+    <div *ngIf="!isObserver()">
+      <app-chat-input-bar
+        [agencyId]="agencyId()!"
+        [replyTo]="replyTo()"
+        (send)="onSend($event)"
+        (typing)="onTyping($event)"
+        (cancelReply)="replyTo.set(null)">
+      </app-chat-input-bar>
+    </div>
+
+    <div *ngIf="isObserver()" class="p-4 bg-gray-100 text-center text-gray-500 italic border-t border-gray-200">
+      Mode observateur : vous ne pouvez pas envoyer de messages.
+    </div>
+  </div>
+
+  <!-- Right Sidebar (Online Members) -->
+  <div class="w-64 bg-white border-l border-gray-200 hidden lg:flex flex-col" *ngIf="agencyId()">
+    <div class="p-4 border-b border-gray-200 bg-gray-50">
+      <h3 class="font-bold text-gray-800 flex items-center gap-2">
+        <i class="fas fa-users text-indigo-600"></i> Membres
+      </h3>
+    </div>
+    <div class="flex-1 overflow-y-auto p-3">
+      <div *ngFor="let member of chatService.onlineMembers()" class="flex items-center gap-3 mb-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+        <div class="relative">
+          <img *ngIf="member.photo" [src]="'http://localhost:8082' + member.photo" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm">
+          <div *ngIf="!member.photo" class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center font-bold text-gray-600 border-2 border-white shadow-sm">
+            {{ member.firstName.charAt(0) }}{{ member.lastName.charAt(0) }}
+          </div>
+          <div class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white"
+               [ngClass]="member.isOnline ? 'bg-green-500' : 'bg-gray-400'">
+          </div>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-gray-800 truncate">{{ member.firstName }} {{ member.lastName }}</p>
+          <p class="text-[10px] uppercase font-bold tracking-wider"
+             [ngClass]="member.role === 'LEAD' ? 'text-purple-600' : (member.role === 'MEMBER' ? 'text-blue-600' : 'text-gray-500')">
+            {{ member.role }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State (No Agency Selected) -->
+  <div class="flex-1 flex flex-col items-center justify-center bg-gray-50" *ngIf="!agencyId()">
+    <div class="w-24 h-24 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center mb-6 shadow-inner">
+      <i class="fas fa-building text-4xl"></i>
+    </div>
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">Bienvenue dans l'espace Agence</h2>
+    <p class="text-gray-500 text-center max-w-md">Sélectionnez une agence dans la liste de gauche pour rejoindre la conversation et collaborer avec votre équipe.</p>
+  </div>
+
+</div>

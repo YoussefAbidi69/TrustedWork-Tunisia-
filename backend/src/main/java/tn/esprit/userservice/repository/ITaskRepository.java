@@ -33,4 +33,13 @@ public interface ITaskRepository extends JpaRepository<Task, Long> {
            "WHEN tn.esprit.userservice.entity.TaskPriority.FAIBLE THEN 1 " +
            "ELSE 0 END DESC")
     List<Task> findUnassignedTasksByPriority(Long agencyId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT t FROM Task t " +
+           "LEFT JOIN FETCH t.assignedMember am " +
+           "LEFT JOIN FETCH am.user u " +
+           "LEFT JOIN FETCH t.project tp " +
+           "WHERE t.agency.id = :agencyId " +
+           "AND (:query IS NULL OR LOWER(t.title) LIKE LOWER(CONCAT('%', :query, '%'))) " +
+           "ORDER BY t.updatedAt DESC")
+    org.springframework.data.domain.Page<Task> searchByAgencyAndTitle(@org.springframework.data.repository.query.Param("agencyId") Long agencyId, @org.springframework.data.repository.query.Param("query") String query, org.springframework.data.domain.Pageable pageable);
 }

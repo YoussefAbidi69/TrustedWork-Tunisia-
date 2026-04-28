@@ -26,6 +26,7 @@ public class TaskServiceImpl implements ITaskServices {
     private final IAgencyRepository agencyRepository;
     private final ITaskAssignmentRepository taskAssignmentRepository;
     private final IEmailService emailService;
+    private final org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
 
     @Override
     public List<Task> getTasksByAgency(Long agencyId) {
@@ -201,7 +202,16 @@ public class TaskServiceImpl implements ITaskServices {
             autoAssignTasks(agencyId, task.getAssignedMember());
         }
         
-        return taskRepository.save(task);
+        Task saved = taskRepository.save(task);
+
+        tn.esprit.userservice.dto.chat.TaskStatusUpdateDTO updateDto = new tn.esprit.userservice.dto.chat.TaskStatusUpdateDTO(
+                taskId,
+                status.name(),
+                java.time.LocalDateTime.now()
+        );
+        messagingTemplate.convertAndSend("/topic/agency/" + agencyId + "/tasks", updateDto);
+
+        return saved;
     }
 
     @Override

@@ -34,7 +34,7 @@ public class CollaborationLogServiceImpl implements ICollaborationLogServices {
 
     @Override
     public List<CollaborationLog> getLogsByAgencyAndUser(Long agencyId, Long userId) {
-        return collaborationLogRepository.findByAgencyIdAndUserIdOrderBySentAtDesc(agencyId, userId);
+        return collaborationLogRepository.findByAgencyIdAndSenderIdOrderBySentAtDesc(agencyId, userId);
     }
 
     @Override
@@ -50,6 +50,6 @@ public class CollaborationLogServiceImpl implements ICollaborationLogServices {
 
     @Override
     public List<CollaborationLog> getLogsByUser(Long userId) {
-        return collaborationLogRepository.findByUserId(userId);
+        return collaborationLogRepository.findBySenderId(userId);
     }
 }

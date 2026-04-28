@@ -102,6 +102,12 @@ export class SidebarComponent implements OnInit {
     });
 
     this.agencyItems.push({
+      label: 'Messagerie',
+      icon: 'fa-comments',
+      route: '/app/agencies/chat'
+    });
+
+    this.agencyItems.push({
       label: 'Créer une agence',
       icon: 'fa-square-plus',
       route: '/app/agencies/new'

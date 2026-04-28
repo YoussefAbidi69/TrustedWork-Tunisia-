@@ -13,10 +13,12 @@ public class CollaborationLogMapper {
             return null;
         }
 
+        tn.esprit.userservice.entity.User sender = new tn.esprit.userservice.entity.User();
+        sender.setId(dto.getUserId());
+
         return CollaborationLog.builder()
-                .userId(dto.getUserId())
+                .sender(sender)
                 .message(dto.getMessage())
-                .attachmentUrl(dto.getAttachmentUrl())
                 .build();
     }
 
@@ -27,10 +29,10 @@ public class CollaborationLogMapper {
 
         return CollaborationLogResponseDto.builder()
                 .id(log.getId())
-                .agencyId(log.getAgency().getId())
-                .userId(log.getUserId())
+                .agencyId(log.getAgency() != null ? log.getAgency().getId() : null)
+                .userId(log.getSender() != null ? log.getSender().getId() : null)
                 .message(log.getMessage())
-                .attachmentUrl(log.getAttachmentUrl())
+                .attachmentUrl(null)
                 .sentAt(log.getSentAt())
                 .build();
     }

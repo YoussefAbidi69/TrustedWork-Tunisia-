@@ -20,14 +20,31 @@ public class CollaborationLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User sender;
 
     @Column(nullable = false, length = 2000)
     private String message;
 
-    @Column(length = 255)
-    private String attachmentUrl;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reply_to_id")
+    private CollaborationLog replyTo;
+
+    @Column(name = "task_ref_id")
+    private Long taskRefId;
+
+    @Column(name = "is_pinned", nullable = false)
+    private boolean isPinned = false;
+
+    @Column(name = "pinned_at")
+    private LocalDateTime pinnedAt;
+
+    @Column(name = "pinned_by_id")
+    private Long pinnedById;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime sentAt;

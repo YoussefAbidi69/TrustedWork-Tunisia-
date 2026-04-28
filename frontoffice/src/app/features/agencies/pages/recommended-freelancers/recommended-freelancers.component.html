@@ -1,0 +1,148 @@
+<div class="recommendations-container">
+  <header class="page-header">
+    <div class="header-content">
+      <h1>Trouver des collaborateurs</h1>
+      <p class="subtitle" *ngIf="agencyName">Recommandations intelligentes pour <strong>{{ agencyName }}</strong></p>
+    </div>
+  </header>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-group search-group">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" placeholder="Rechercher par nom, compétence..." (input)="onSearchChange($event)" class="form-control search-input">
+    </div>
+    
+    <div class="filter-group">
+      <select [(ngModel)]="filters.availability" (change)="onFilterChange()" class="form-select">
+        <option value="">Toute disponibilité</option>
+        <option value="FULL_TIME">Temps plein</option>
+        <option value="PART_TIME">Temps partiel</option>
+        <option value="WEEKENDS">Weekends</option>
+      </select>
+    </div>
+    
+    <div class="filter-group">
+      <select [(ngModel)]="filters.sortBy" (change)="onFilterChange()" class="form-select">
+        <option value="score">Trier par : Score Recommandation ↓</option>
+        <option value="trust">Trier par : Confiance ↓</option>
+        <option value="availability">Trier par : Disponibilité ↓</option>
+      </select>
+    </div>
+    
+    <div class="filter-group score-range">
+      <label>Score min ({{filters.minScore}}%)</label>
+      <input type="range" min="0" max="1" step="0.1" [(ngModel)]="filters.minScore" (change)="onFilterChange()" class="form-range">
+    </div>
+
+    <div class="filter-group">
+      <button class="btn-secondary" (click)="refreshRecommendations()">
+        <i class="fas fa-sync" [ngClass]="{'fa-spin': computing}"></i> Actualiser
+      </button>
+    </div>
+  </div>
+
+  <div class="results-stats" *ngIf="!loading || freelancers.length > 0">
+    <p><strong>{{ totalCandidates }}</strong> freelancers trouvés</p>
+  </div>
+
+  <!-- Grid -->
+  <div class="freelancer-grid">
+    <div class="freelancer-card fade-in-up" *ngFor="let f of freelancers">
+      <div class="card-header">
+        <div class="avatar">
+          <img *ngIf="f.photo" [src]="f.photo" alt="Avatar">
+          <div *ngIf="!f.photo" class="avatar-initials">{{ getInitials(f.firstName, f.lastName) }}</div>
+        </div>
+        <div class="main-info">
+          <h3>{{ f.firstName }} {{ f.lastName }} <span class="verified-badge" *ngIf="f.kycStatus === 'APPROVED'" title="Vérifié"><i class="fas fa-check-circle"></i></span></h3>
+          <p class="headline">{{ f.headline || 'Freelancer' }}</p>
+          <p class="location" *ngIf="f.location"><i class="fas fa-map-marker-alt"></i> {{ f.location }}</p>
+        </div>
+        <!-- Score Badge Component -->
+        <app-score-badge [score]="f.recommendationScore" [breakdown]="f.scoreBreakdown"></app-score-badge>
+      </div>
+
+      <div class="card-body">
+        <div class="skills-list">
+          <span class="skill-pill" *ngFor="let skill of f.skills | slice:0:4">{{ skill }}</span>
+          <span class="skill-pill extra" *ngIf="f.skills.length > 4">+{{ f.skills.length - 4 }}</span>
+        </div>
+        
+        <div class="metrics">
+          <div class="metric">
+            <span class="label">Confiance</span>
+            <span class="stars">
+              <i class="fas fa-star" *ngFor="let s of [1,2,3,4,5]" [ngClass]="{'active': s <= f.trustLevel}"></i>
+            </span>
+          </div>
+          <div class="metric">
+            <span class="label">Disponibilité</span>
+            <span class="availability-badge" [ngClass]="f.availability?.toLowerCase() || 'unknown'">
+              {{ f.availability === 'FULL_TIME' ? 'Temps plein' : (f.availability === 'PART_TIME' ? 'Partiel' : (f.availability === 'WEEKENDS' ? 'Weekends' : 'Non dispo')) }}
+            </span>
+          </div>
+        </div>
+        
+        <p class="explanation">{{ f.explanation }}</p>
+      </div>
+
+      <div class="card-footer">
+        <button class="btn-primary invite-btn" *ngIf="!f.alreadyInvited" (click)="openInviteModal(f)">
+          <i class="fas fa-user-plus"></i> Ajouter collaborateur
+        </button>
+        <button class="btn-disabled invite-btn" *ngIf="f.alreadyInvited" disabled>
+          <i class="fas fa-check"></i> Invitation envoyée
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des recommandations...</p>
+  </div>
+  
+  <div class="empty-state" *ngIf="!loading && freelancers.length === 0">
+    <div class="empty-icon"><i class="fas fa-users-slash"></i></div>
+    <h3>Aucun freelancer trouvé</h3>
+    <p>Modifiez vos filtres pour voir plus de résultats.</p>
+  </div>
+
+  <div class="load-more-container" *ngIf="!loading && hasMore && freelancers.length > 0">
+    <button class="btn-secondary" (click)="loadMore()">Charger plus</button>
+  </div>
+</div>
+
+<!-- Invite Modal -->
+<div class="modal-overlay" *ngIf="showModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Inviter {{ selectedFreelancer?.firstName }}</h2>
+      <button class="close-btn" (click)="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p>Vous êtes sur le point d'inviter <strong>{{ selectedFreelancer?.firstName }} {{ selectedFreelancer?.lastName }}</strong> à rejoindre <strong>{{ agencyName }}</strong>.</p>
+      
+      <div class="form-group mt-3">
+        <label>Rôle proposé</label>
+        <select [(ngModel)]="invitationRole" class="form-control">
+          <option value="MEMBER">Membre</option>
+          <option value="OBSERVER">Observateur</option>
+        </select>
+      </div>
+      
+      <div class="form-group mt-3">
+        <label>Message (optionnel)</label>
+        <textarea [(ngModel)]="invitationMessage" class="form-control" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()" [disabled]="inviting">Annuler</button>
+      <button class="btn-primary" (click)="confirmInvitation()" [disabled]="inviting">
+        <span *ngIf="!inviting">Confirmer l'invitation</span>
+        <span *ngIf="inviting"><i class="fas fa-spinner fa-spin"></i> Envoi...</span>
+      </button>
+    </div>
+  </div>
+</div>

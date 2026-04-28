@@ -11,6 +11,7 @@ import { SectionHeaderComponent } from './components/section-header/section-head
 import { EmptyStateComponent } from './components/empty-state/empty-state.component';
 import { NotificationBellComponent } from './components/notification-bell/notification-bell.component';
 import { LoadingSpinnerComponent } from './components/loading-spinner/loading-spinner.component';
+import { ScoreBadgeComponent } from './components/score-badge/score-badge.component';
 import { StatusCountPipe } from './pipes/status-count.pipe';
 
 @NgModule({
@@ -23,6 +24,7 @@ import { StatusCountPipe } from './pipes/status-count.pipe';
     EmptyStateComponent,
     NotificationBellComponent,
     LoadingSpinnerComponent,
+    ScoreBadgeComponent,
     StatusCountPipe
   ],
   imports: [
@@ -39,6 +41,7 @@ import { StatusCountPipe } from './pipes/status-count.pipe';
     EmptyStateComponent,
     NotificationBellComponent,
     LoadingSpinnerComponent,
+    ScoreBadgeComponent,
     FormsModule,
     RouterModule,
     StatusCountPipe

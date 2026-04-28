@@ -62,4 +62,9 @@ public interface UserRepository extends JpaRepository<User, Long>{
                                                          @Param("role") Role role,
                                                          @Param("skill") String skill,
                                                          @Param("search") String search);
+
+    @Query("SELECT u FROM User u WHERE u.role = tn.esprit.userservice.entity.Role.FREELANCER AND u.accountStatus = tn.esprit.userservice.entity.AccountStatus.ACTIVE " +
+           "AND NOT EXISTS (SELECT 1 FROM AgencyMember am WHERE am.user.id = u.id AND am.agency.id = :agencyId AND am.status = tn.esprit.userservice.entity.MemberStatus.ACTIVE) " +
+           "AND NOT EXISTS (SELECT 1 FROM AgencyInvitation ai WHERE ai.receiver.id = u.id AND ai.agency.id = :agencyId AND ai.status = tn.esprit.userservice.entity.InvitationStatus.PENDING)")
+    List<User> findEligibleFreelancers(@Param("agencyId") Long agencyId);
 }

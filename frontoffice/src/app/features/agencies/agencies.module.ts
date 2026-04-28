@@ -20,6 +20,7 @@ import { AgencyJoinRequestsComponent } from './components/agency-join-requests/a
 import { MyInvitationsComponent } from './pages/my-invitations/my-invitations.component';
 import { OwnerDashboardComponent } from './pages/owner-dashboard/owner-dashboard.component';
 import { MyAgenciesComponent } from './pages/my-agencies/my-agencies.component';
+import { RecommendedFreelancersComponent } from './pages/recommended-freelancers/recommended-freelancers.component';
 
 import { DragDropModule } from '@angular/cdk/drag-drop';
 
@@ -37,7 +38,8 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
     AgencyJoinRequestsComponent,
     MyInvitationsComponent,
     OwnerDashboardComponent,
-    MyAgenciesComponent
+    MyAgenciesComponent,
+    RecommendedFreelancersComponent
   ],
   imports: [
     CommonModule,

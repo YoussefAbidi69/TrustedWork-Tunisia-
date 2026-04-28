@@ -1,0 +1,37 @@
+<div class="score-badge-container" (mouseenter)="showTooltip = true" (mouseleave)="showTooltip = false">
+  <div class="circular-progress" [ngClass]="colorClass" [style.--progress]="formattedScore + '%'">
+    <div class="inner-circle">
+      <span class="score-text">{{ formattedScore }}<small>%</small></span>
+    </div>
+  </div>
+  
+  <div class="tooltip" *ngIf="showTooltip && breakdown">
+    <h4>Détail du Score</h4>
+    <div class="breakdown-list">
+      <div class="breakdown-item">
+        <span>Compétences</span>
+        <strong>{{ breakdown.skillMatch | percent:'1.0-0' }}</strong>
+      </div>
+      <div class="breakdown-item">
+        <span>Confiance</span>
+        <strong>{{ breakdown.trust | percent:'1.0-0' }}</strong>
+      </div>
+      <div class="breakdown-item">
+        <span>Disponibilité</span>
+        <strong>{{ breakdown.availability | percent:'1.0-0' }}</strong>
+      </div>
+      <div class="breakdown-item">
+        <span>Expérience</span>
+        <strong>{{ breakdown.experience | percent:'1.0-0' }}</strong>
+      </div>
+      <div class="breakdown-item">
+        <span>Similarité</span>
+        <strong>{{ breakdown.similarity | percent:'1.0-0' }}</strong>
+      </div>
+      <div class="breakdown-item">
+        <span>Localisation</span>
+        <strong>{{ breakdown.location | percent:'1.0-0' }}</strong>
+      </div>
+    </div>
+  </div>
+</div>

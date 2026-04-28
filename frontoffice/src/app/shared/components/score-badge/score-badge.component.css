@@ -1,0 +1,89 @@
+.score-badge-container {
+  position: relative;
+  display: inline-block;
+}
+
+.circular-progress {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: conic-gradient(var(--clr) var(--progress), #e5e7eb 0deg);
+  transition: transform 0.2s;
+}
+
+.circular-progress:hover {
+  transform: scale(1.05);
+}
+
+.circular-progress.green { --clr: #10b981; }
+.circular-progress.blue { --clr: #3b82f6; }
+.circular-progress.yellow { --clr: #f59e0b; }
+.circular-progress.gray { --clr: #9ca3af; }
+
+.inner-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.score-text {
+  font-weight: 700;
+  font-size: 14px;
+  color: #111827;
+  display: flex;
+  align-items: baseline;
+}
+
+.score-text small {
+  font-size: 10px;
+  margin-left: 1px;
+}
+
+.tooltip {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: #1f2937;
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  width: 180px;
+  z-index: 100;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.tooltip h4 {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #374151;
+  padding-bottom: 4px;
+}
+
+.breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
