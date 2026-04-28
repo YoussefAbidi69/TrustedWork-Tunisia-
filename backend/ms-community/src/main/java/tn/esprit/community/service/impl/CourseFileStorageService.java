@@ -78,15 +78,14 @@ public class CourseFileStorageService {
             throw new ValidationException("Only PDF, images, and videos are accepted");
         }
         
-        if (lower.endsWith(".pdf")) {
-            if (content.length < 4
+        if (lower.endsWith(".pdf") && (content.length < 4
                     || content[0] != '%'
                     || content[1] != 'P'
                     || content[2] != 'D'
-                    || content[3] != 'F') {
+                    || content[3] != 'F')) {
                 throw new ValidationException("File is not a valid PDF");
             }
-        }
+
     }
 
     /**
@@ -94,20 +93,16 @@ public class CourseFileStorageService {
      */
     public String storeFile(MultipartFile file) throws IOException {
         byte[] content = file.getBytes();
-        String originalName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "";
+        String originalName = java.util.Objects.toString(file.getOriginalFilename(), "");
         validateMediaContent(content, originalName);
-        
-        String ext = "";
+
         int i = originalName.lastIndexOf('.');
-        if (i > 0) {
-            ext = originalName.substring(i);
-        } else {
-            ext = ".bin";
-        }
-        
+        String ext = (i >0) ? originalName.substring(i) : ".bin";
+
         String stored = UUID.randomUUID() + ext;
         Path target = uploadDirectory.resolve(stored);
         Files.write(target, content);
         return externalApiBaseUrl + "/api/course-files/" + stored;
     }
+
 }

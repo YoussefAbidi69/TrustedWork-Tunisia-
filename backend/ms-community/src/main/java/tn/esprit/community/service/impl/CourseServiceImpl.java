@@ -1,7 +1,6 @@
 package tn.esprit.community.service.impl;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.community.dto.request.CourseRequest;
@@ -23,6 +22,8 @@ import tn.esprit.community.exception.PlagiarismException;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.beans.factory.annotation.Value;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tn.esprit.community.service.DiscordNotificationService;
 
 @Service
@@ -35,6 +36,8 @@ public class CourseServiceImpl implements CourseService {
     private final BlockRepository blockRepository;
     private final WebClient aiClient;
     private final DiscordNotificationService discordNotificationService;
+    private static final Logger logger = LoggerFactory.getLogger(CourseServiceImpl.class);
+    private static final String COURSE_NOT_FOUND = "Course not found";
 
     public CourseServiceImpl(
             CourseRepository courseRepository,
@@ -79,7 +82,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public CourseResponse getCourse(Long id) {
-        Course course = courseRepository.findById(id).orElseThrow(() -> new LearningNotFoundException("Course not found"));
+        Course course = courseRepository.findById(id).orElseThrow(() -> new LearningNotFoundException(COURSE_NOT_FOUND));
         return toCourseResponse(course);
     }
 
@@ -95,18 +98,29 @@ public class CourseServiceImpl implements CourseService {
         } else {
             courses = courseRepository.findAll();
             if (published) {
-                courses = courses.stream().filter(Course::isPublished).collect(Collectors.toList());
+                courses = courses.stream().filter(Course::isPublished).toList();
             }
         }
 
-        return courses.stream().map(this::toCourseResponse).collect(Collectors.toList());
+        return courses.stream().map(this::toCourseResponse).toList();
     }
 
     @Override
     @Transactional
     public CourseResponse updateCourse(Long id, CourseRequest courseRequest) {
-        Course course = courseRepository.findById(id).orElseThrow(() -> new LearningNotFoundException("Course not found"));
+        Course course = courseRepository.findById(id).orElseThrow(() -> new LearningNotFoundException(COURSE_NOT_FOUND));
 
+        updateBasicFields(course, courseRequest);
+        boolean justPublished = handlePublishing(course, courseRequest, id);
+
+        CourseResponse response = toCourseResponse(courseRepository.save(course));
+        if (justPublished) {
+            discordNotificationService.notifyCoursePublished(response);
+        }
+        return response;
+    }
+
+    private void updateBasicFields(Course course, CourseRequest courseRequest) {
         if (courseRequest.getTitle() != null) {
             course.setTitle(courseRequest.getTitle());
         }
@@ -116,68 +130,76 @@ public class CourseServiceImpl implements CourseService {
         if (courseRequest.getAuthorId() != null) {
             course.setAuthorId(courseRequest.getAuthorId());
         }
-        boolean justPublished = false;
-        if (courseRequest.getPublished() != null) {
-            // If the user wants to publish the course, run plagiarism check
-            if (Boolean.TRUE.equals(courseRequest.getPublished()) && !course.isPublished()) {
-                justPublished = true;
-                CourseDownloadResponse fullCourseData = downloadCourse(id);
-                try {
-                    Map<String, Object> response = aiClient.post()
-                            .uri("/check_plagiarism")
-                            .bodyValue(fullCourseData)
-                            .retrieve()
-                            .bodyToMono(Map.class)
-                            .block();
-
-                    if (response != null && Boolean.TRUE.equals(response.get("is_plagiarized"))) {
-                        double similarity = (double) response.get("max_similarity");
-                        throw new PlagiarismException("Cannot publish: This course matches an existing course by " + similarity + "%.");
-                    }
-                } catch (PlagiarismException e) {
-                    throw e; // Rethrow custom exception
-                } catch (Exception e) {
-                    // If AI server is down, we allow publishing or we can block it. Let's block it for safety or log it.
-                    System.err.println("Failed to reach Plagiarism Checker API: " + e.getMessage());
-                }
-            }
-            course.setPublished(courseRequest.getPublished());
-            
-            // Trigger an index update in the background if successfully published
-            if (Boolean.TRUE.equals(course.isPublished())) {
-                try {
-                    aiClient.post()
-                        .uri("/update_index")
-                        .retrieve()
-                        .bodyToMono(Void.class)
-                        .subscribe(
-                            v -> System.out.println("AI Plagiarism index updated."),
-                            err -> System.err.println("Failed to update AI index: " + err.getMessage())
-                        );
-                } catch (Exception e) {
-                    System.err.println("Error calling update_index: " + e.getMessage());
-                }
-            }
-        }
         if (courseRequest.getCommunityId() != null) {
             Community community = communityRepository
                     .findById(courseRequest.getCommunityId())
                     .orElseThrow(() -> new LearningNotFoundException("Community not found"));
             course.setCommunity(community);
         }
+    }
 
-        CourseResponse response = toCourseResponse(courseRepository.save(course));
-        if (justPublished) {
-            discordNotificationService.notifyCoursePublished(response);
+    private boolean handlePublishing(Course course, CourseRequest courseRequest, Long id) {
+        if (courseRequest.getPublished() == null) {
+            return false;
         }
-        return response;
+
+        boolean justPublished = false;
+        if (Boolean.TRUE.equals(courseRequest.getPublished()) && !course.isPublished()) {
+            justPublished = true;
+            checkPlagiarism(id);
+        }
+
+        course.setPublished(courseRequest.getPublished());
+
+        if (Boolean.TRUE.equals(course.isPublished())) {
+            updateAiIndex();
+        }
+
+        return justPublished;
+    }
+
+    private void checkPlagiarism(Long id) {
+        CourseDownloadResponse fullCourseData = downloadCourse(id);
+        try {
+            Map<String, Object> response = aiClient.post()
+                    .uri("/check_plagiarism")
+                    .bodyValue(fullCourseData)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+
+            if (response != null && Boolean.TRUE.equals(response.get("is_plagiarized"))) {
+                double similarity = (double) response.get("max_similarity");
+                throw new PlagiarismException("Cannot publish: This course matches an existing course by " + similarity + "%.");
+            }
+        } catch (PlagiarismException e) {
+            throw e; // Rethrow custom exception
+        } catch (Exception e) {
+            // If AI server is down, we allow publishing or we can block it. Let's block it for safety or log it.
+            logger.error("Failed to reach Plagiarism Checker API: {}", e.getMessage(), e);
+        }
+    }
+
+    private void updateAiIndex() {
+        try {
+            aiClient.post()
+                .uri("/update_index")
+                .retrieve()
+                .bodyToMono(Void.class)
+                .subscribe(
+                    v -> logger.info("AI Plagiarism index updated."),
+                    err -> logger.error("Failed to update AI index: {}", err.getMessage(), err)
+                );
+        } catch (Exception e) {
+            logger.error("Error calling update_index: {}", e.getMessage(), e);
+        }
     }
 
     @Override
     @Transactional
     public void deleteCourse(Long id) {
         if (!courseRepository.existsById(id)) {
-            throw new LearningNotFoundException("Course not found");
+            throw new LearningNotFoundException(COURSE_NOT_FOUND);
         }
         courseRepository.deleteById(id);
     }
@@ -186,10 +208,10 @@ public class CourseServiceImpl implements CourseService {
     public CourseDownloadResponse downloadCourse(Long courseId) {
         Course course = courseRepository
                 .findById(courseId)
-                .orElseThrow(() -> new LearningNotFoundException("Course not found"));
+                .orElseThrow(() -> new LearningNotFoundException(COURSE_NOT_FOUND));
 
         List<Section> sections = sectionRepository.findByCourse_IdOrderByOrderIndexAsc(courseId);
-        List<SectionResponse> sectionResponses = sections.stream().map(this::toSectionTree).collect(Collectors.toList());
+        List<SectionResponse> sectionResponses = sections.stream().map(this::toSectionTree).toList();
 
         return CourseDownloadResponse.builder()
                 .id(course.getId())
@@ -205,7 +227,7 @@ public class CourseServiceImpl implements CourseService {
     private SectionResponse toSectionTree(Section section) {
         List<BlockResponse> blocks = blockRepository.findBySection_IdOrderByOrderIndexAsc(section.getId()).stream()
                 .map(this::toBlockResponse)
-                .collect(Collectors.toList());
+                .toList();
 
         return SectionResponse.builder()
                 .id(section.getId())

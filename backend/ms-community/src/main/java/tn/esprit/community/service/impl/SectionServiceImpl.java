@@ -1,7 +1,6 @@
 package tn.esprit.community.service.impl;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.community.dto.request.SectionRequest;
@@ -70,7 +69,7 @@ public class SectionServiceImpl implements SectionService {
     public List<SectionResponse> listSections(Long courseId) {
         return sectionRepository.findByCourse_IdOrderByOrderIndexAsc(courseId).stream()
                 .map(this::toSectionResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -99,7 +98,7 @@ public class SectionServiceImpl implements SectionService {
     private SectionResponse toSectionResponse(Section section) {
         List<BlockResponse> blocks = blockRepository.findBySection_IdOrderByOrderIndexAsc(section.getId()).stream()
                 .map(this::toBlockResponse)
-                .collect(Collectors.toList());
+                .toList();
 
         return SectionResponse.builder()
                 .id(section.getId())

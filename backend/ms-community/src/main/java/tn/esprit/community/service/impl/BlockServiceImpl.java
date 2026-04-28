@@ -1,7 +1,6 @@
 package tn.esprit.community.service.impl;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.community.dto.request.BlockRequest;
@@ -75,7 +74,7 @@ public class BlockServiceImpl implements BlockService {
     public List<BlockResponse> listBlocks(Long sectionId) {
         return blockRepository.findBySection_IdOrderByOrderIndexAsc(sectionId).stream()
                 .map(this::toBlockResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

@@ -57,7 +57,7 @@ public class ReportServiceImpl implements ReportService {
     public List<ReportResponse> listReportsByPost(Long postId) {
         return reportRepository.findByPost_IdOrderByIdDesc(postId).stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -83,7 +83,7 @@ public class ReportServiceImpl implements ReportService {
         return reportRepository.findAll().stream()
                 .filter(r -> r.getCourse() != null && r.getCourse().getId().equals(courseId))
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

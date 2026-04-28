@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Map;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
@@ -26,6 +28,16 @@ import tn.esprit.community.exception.ValidationException;
  */
 @Service
 public class FilePostUploadService {
+
+    private static final Map<String, MediaType> EXTENSION_TO_MEDIA_TYPE = Map.of(
+            ".png",  MediaType.IMAGE_PNG,
+            ".jpg",  MediaType.IMAGE_JPEG,
+            ".jpeg", MediaType.IMAGE_JPEG,
+            ".gif",  MediaType.IMAGE_GIF,
+            ".mp4",  MediaType.parseMediaType("video/mp4"),
+            ".webm", MediaType.parseMediaType("video/webm"),
+            ".pdf",  MediaType.APPLICATION_PDF
+    );
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
@@ -57,41 +69,26 @@ public class FilePostUploadService {
     }
 
     /**
-     * POST {@code /v1/upload} with multipart {@code file}; returns public CDN URL for {@link tn.esprit.community.entity.Post#setFileUrl}.
+     * POST {@code /v1/upload} with multipart {@code file}; returns public CDN URL
+     * for .
      */
     public String uploadFile(MultipartFile file) throws IOException {
         if (!enabled) {
             throw new IllegalStateException("FilePost is not configured (missing app.filepost.api-key)");
         }
         byte[] content = file.getBytes();
-        String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "document.bin";
+        // Objects.toString guarantees filename is never null even when getOriginalFilename() returns null
+        String filename = Objects.toString(file.getOriginalFilename(), "document.bin");
         courseFileStorageService.validateMediaContent(content, filename);
+
         ByteArrayResource resource = new ByteArrayResource(content) {
             @Override
             public String getFilename() {
                 return filename;
             }
         };
-        HttpHeaders partHeaders = new HttpHeaders();
-        
-        String lower = filename.toLowerCase();
-        if (lower.endsWith(".png")) {
-            partHeaders.setContentType(MediaType.IMAGE_PNG);
-        } else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
-            partHeaders.setContentType(MediaType.IMAGE_JPEG);
-        } else if (lower.endsWith(".gif")) {
-            partHeaders.setContentType(MediaType.IMAGE_GIF);
-        } else if (lower.endsWith(".mp4")) {
-            partHeaders.setContentType(MediaType.parseMediaType("video/mp4"));
-        } else if (lower.endsWith(".webm")) {
-            partHeaders.setContentType(MediaType.parseMediaType("video/webm"));
-        } else if (lower.endsWith(".pdf")) {
-            partHeaders.setContentType(MediaType.APPLICATION_PDF);
-        } else {
-            partHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        }
-        
-        partHeaders.setContentDispositionFormData("file", filename);
+
+        HttpHeaders partHeaders = buildPartHeaders(filename);
         MultiValueMap<String, HttpEntity<?>> multipart = new LinkedMultiValueMap<>();
         multipart.add("file", new HttpEntity<>(resource, partHeaders));
 
@@ -109,6 +106,7 @@ public class FilePostUploadService {
                                         : "FilePost upload failed (HTTP " + response.statusCode() + ")"))))
                 .bodyToMono(String.class)
                 .block(Duration.ofMinutes(2));
+
         if (json == null || json.isBlank()) {
             throw new ValidationException("FilePost returned an empty response");
         }
@@ -118,6 +116,19 @@ public class FilePostUploadService {
             throw new ValidationException("FilePost response had no public URL: " + json);
         }
         return url;
+    }
+
+    private static HttpHeaders buildPartHeaders(String filename) {
+        HttpHeaders partHeaders = new HttpHeaders();
+        String lower = filename.toLowerCase();
+        MediaType mediaType = EXTENSION_TO_MEDIA_TYPE.entrySet().stream()
+                .filter(e -> lower.endsWith(e.getKey()))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(MediaType.APPLICATION_OCTET_STREAM);
+        partHeaders.setContentType(mediaType);
+        partHeaders.setContentDispositionFormData("file", filename);
+        return partHeaders;
     }
 
     private static String extractPublicUrl(JsonNode root) {

@@ -1,11 +1,9 @@
 package tn.esprit.community.service.impl;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import tn.esprit.community.dto.request.CourseCommentRequest;
 import tn.esprit.community.dto.response.CourseCommentResponse;
-import tn.esprit.community.entity.Course;
 import tn.esprit.community.entity.CourseComment;
 import tn.esprit.community.exception.PostNotFoundException;
 import tn.esprit.community.repository.CourseCommentRepository;
@@ -39,8 +37,8 @@ public class CourseCommentServiceImpl implements CourseCommentService {
     public List<CourseCommentResponse> listComments(Long courseId) {
         return commentRepository.findByCourseIdOrderByIdAsc(courseId).stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
-    }
+                .toList();
+            }
 
     @Override
     public void deleteComment(Long id) {

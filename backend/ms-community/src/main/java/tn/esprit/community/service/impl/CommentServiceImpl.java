@@ -1,7 +1,6 @@
 package tn.esprit.community.service.impl;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import tn.esprit.community.dto.request.CommentRequest;
 import tn.esprit.community.dto.response.CommentResponse;
@@ -13,6 +12,7 @@ import tn.esprit.community.service.CommentService;
 
 import tn.esprit.community.repository.CourseRepository;
 import tn.esprit.community.exception.LearningNotFoundException;
+
 
 @Service
 public class CommentServiceImpl implements CommentService {
@@ -43,7 +43,7 @@ public class CommentServiceImpl implements CommentService {
     public List<CommentResponse> listComments(Long postId) {
         return commentRepository.findByPost_IdOrderByIdAsc(postId).stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -62,8 +62,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public List<CommentResponse> listCommentsByCourse(Long courseId) {
         return commentRepository.findByCourse_IdOrderByIdAsc(courseId).stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+                .map(this::toResponse).toList();
     }
 
     @Override

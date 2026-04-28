@@ -24,6 +24,8 @@ import tn.esprit.community.service.PostService;
 
 @Service
 public class PostServiceImpl implements PostService {
+    private static final String POST_NOT_FOUND = "Post not found";
+
     private final PostRepository postRepository;
     private final CommunityRepository communityRepository;
     private final VoteRepository voteRepository;
@@ -64,13 +66,13 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public PostResponse getPost(Long id, Long voterId) {
-        Post post = postRepository.findById(id).orElseThrow(() -> new PostNotFoundException("Post not found"));
+        Post post = postRepository.findById(id).orElseThrow(() -> new PostNotFoundException(POST_NOT_FOUND));
         return toPostResponse(post, voterId);
     }
 
     @Override
     public PostResponse updatePost(Long id, PostRequest postRequest) {
-        Post post = postRepository.findById(id).orElseThrow(() -> new PostNotFoundException("Post not found"));
+        Post post = postRepository.findById(id).orElseThrow(() -> new PostNotFoundException(POST_NOT_FOUND));
 
         if (postRequest.getTitle() != null) {
             post.setTitle(postRequest.getTitle());
@@ -93,7 +95,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public PostResponse publishPost(Long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException("Post not found"));
+        Post post = postRepository.findById(postId).orElseThrow(() -> new PostNotFoundException(POST_NOT_FOUND));
         post.setStatus(PostStatus.PUBLISHED);
         PostResponse response = toPostResponse(postRepository.save(post), null);
         discordNotificationService.notifyPostPublished(response);

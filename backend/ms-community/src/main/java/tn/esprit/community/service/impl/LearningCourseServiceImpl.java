@@ -1,7 +1,6 @@
 package tn.esprit.community.service.impl;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import tn.esprit.community.dto.lms.BlockDTO;
 import tn.esprit.community.dto.lms.CourseDTO;
@@ -40,7 +39,7 @@ public class LearningCourseServiceImpl implements LearningCourseService {
     public List<CourseDTO> listCoursesByCommunity(Long communityId, boolean publishedOnly) {
         return courseService.listCourses(communityId, publishedOnly).stream()
                 .map(this::toCourseDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -69,7 +68,7 @@ public class LearningCourseServiceImpl implements LearningCourseService {
 
     @Override
     public List<SectionDTO> listSections(Long courseId) {
-        return sectionService.listSections(courseId).stream().map(this::toSectionDto).collect(Collectors.toList());
+        return sectionService.listSections(courseId).stream().map(this::toSectionDto).toList();
     }
 
     @Override
@@ -95,7 +94,7 @@ public class LearningCourseServiceImpl implements LearningCourseService {
 
     @Override
     public List<BlockDTO> listBlocks(Long sectionId) {
-        return blockService.listBlocks(sectionId).stream().map(this::toBlockDto).collect(Collectors.toList());
+        return blockService.listBlocks(sectionId).stream().map(this::toBlockDto).toList();
     }
 
     @Override

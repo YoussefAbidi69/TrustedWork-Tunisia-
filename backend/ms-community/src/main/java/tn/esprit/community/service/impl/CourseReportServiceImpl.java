@@ -1,7 +1,6 @@
 package tn.esprit.community.service.impl;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.community.dto.request.CourseReportRequest;
@@ -44,7 +43,7 @@ public class CourseReportServiceImpl implements CourseReportService {
     public List<CourseReportResponse> listReportsByCourse(Long courseId) {
         return reportRepository.findByCourseIdOrderByIdDesc(courseId).stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

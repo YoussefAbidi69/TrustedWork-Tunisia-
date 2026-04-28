@@ -1,7 +1,6 @@
 package tn.esprit.community.service.impl;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import tn.esprit.community.dto.request.CommunityRequest;
 import tn.esprit.community.dto.response.CommunityResponse;
@@ -38,7 +37,7 @@ public class CommunityServiceImpl implements CommunityService {
 
     @Override
     public List<CommunityResponse> listCommunities() {
-        return communityRepository.findAll().stream().map(this::toResponse).collect(Collectors.toList());
+        return communityRepository.findAll().stream().map(this::toResponse).toList();
     }
 
     private CommunityResponse toResponse(Community community) {

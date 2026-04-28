@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class DiscordNotificationService {
@@ -15,6 +17,7 @@ public class DiscordNotificationService {
     private final String webhookUrl;
     private final String webhookSecret;
     private final RestTemplate restTemplate;
+    private static final Logger logger = LoggerFactory.getLogger(DiscordNotificationService.class);
 
     public DiscordNotificationService(
             @Value("${app.discord.webhook-url:http://localhost:3000/webhook}") String webhookUrl,
@@ -47,9 +50,9 @@ public class DiscordNotificationService {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
             restTemplate.postForEntity(webhookUrl, request, String.class);
-            System.out.println("✅ Successfully notified Discord bot for event: " + event);
+            logger.info("✅ Successfully notified Discord bot for event: {}", event);
         } catch (Exception e) {
-            System.err.println("❌ Failed to notify Discord bot: " + e.getMessage());
+            logger.error("❌ Failed to notify Discord bot: {}", e.getMessage(), e);
         }
     }
 }

@@ -4,4 +4,6 @@ import org.springframework.stereotype.Service;
 import tn.esprit.community.service.LearningCertificateService;
 
 @Service
-public class LearningCertificateServiceImpl implements LearningCertificateService {}
+public class LearningCertificateServiceImpl implements LearningCertificateService {
+    // TODO: Implement LearningCertificateService methods
+}
