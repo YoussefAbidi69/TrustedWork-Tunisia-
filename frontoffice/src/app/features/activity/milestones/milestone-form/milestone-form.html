@@ -1,0 +1,288 @@
+<div class="milestone-form-page bg-cream py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-xl-8 col-lg-10">
+
+        <!-- Header -->
+        <div class="form-page-header d-flex align-items-center gap-4 mb-5">
+          <a routerLink="/app/activity/contracts" class="back-btn">
+            <i class="bi bi-arrow-left"></i>
+          </a>
+          <div>
+            <span class="section-kicker">Gestion des Jalons</span>
+            <h1 class="h2 fw-bold text-midnight mb-0">
+              {{ isEditMode ? 'Modifier le Jalon' : 'Nouveau Jalon' }}
+            </h1>
+          </div>
+        </div>
+
+        <!-- Loading -->
+        <div *ngIf="loading" class="text-center py-5">
+          <div class="spinner-border text-terracotta" role="status" style="width: 3rem; height: 3rem;"></div>
+          <p class="text-stone mt-3 fw-bold">Chargement des données...</p>
+        </div>
+
+        <!-- Error -->
+        <div *ngIf="error" class="alert-premium-danger mb-4">
+          <i class="bi bi-exclamation-circle-fill me-2"></i> {{ error }}
+        </div>
+
+        <!-- 🧠 Assistant IA (Non visible en mode édition) -->
+        <div class="ai-assistant-card" *ngIf="!isEditMode && !loading">
+          <div class="ai-header">
+            <span class="ai-icon">✨</span>
+            <div class="ai-title">
+              <h3>Assistant IA</h3>
+              <p>Décrivez la tâche et l'IA générera le jalon en fonction du reste de votre budget.</p>
+            </div>
+          </div>
+          <div class="ai-body">
+            <div class="ai-context" *ngIf="parentContract">
+              💡 <strong>Contrat :</strong> {{ parentContract.projectTitle }} 
+              <span class="ai-budget ms-2">&bull; Budget restant : <span class="text-terracotta fw-bold">{{ remainingContractAmount }} DT</span></span>
+            </div>
+            <textarea
+              class="form-control-premium ai-input"
+              rows="2"
+              [(ngModel)]="aiPrompt"
+              placeholder="Ex: La partie paiement en ligne avec Stripe..."
+              [disabled]="generating"
+            ></textarea>
+            <button 
+              type="button" 
+              class="btn-premium-ai" 
+              (click)="generateMilestoneWithAI()"
+              [disabled]="generating || !aiPrompt"
+            >
+              <span *ngIf="generating" class="spinner-border spinner-border-sm me-2"></span>
+              {{ generating ? 'Génération...' : 'Générer avec l\'IA' }}
+            </button>
+          </div>
+        </div>
+        <div class="divider-text" *ngIf="!isEditMode && !loading"><span>OU REMPLIR MANUELLEMENT</span></div>
+
+        <form *ngIf="!loading" #mForm="ngForm" (ngSubmit)="mForm.valid && milestone.montant <= remainingContractAmount && onSubmit()" class="premium-form-card shadow-xl">
+          <input type="hidden" [(ngModel)]="milestone.contractId" name="contractId">
+
+          <!-- SECTION: Info Base -->
+          <div class="form-section">
+            <div class="form-section-label">
+              <div class="form-section-icon"><i class="bi bi-info-circle-fill"></i></div>
+              <div>
+                <strong>Informations générales</strong>
+                <span>Identifiez clairement ce jalon et sa valeur</span>
+              </div>
+            </div>
+
+            <div class="row g-4 mt-1">
+              <div class="col-md-7">
+                <div class="form-group-premium">
+                  <label>Titre du jalon <span class="required-dot">*</span></label>
+                  <div class="input-modern">
+                    <i class="bi bi-bookmark-fill"></i>
+                    <input
+                      type="text"
+                      [(ngModel)]="milestone.titre"
+                      name="titre"
+                      placeholder="Ex: Maquettes UI complètes"
+                      #mTitle="ngModel"
+                      required
+                      minlength="3"
+                      [disabled]="(!isClient && !isAdmin) || (isEditMode && milestone.status !== 'PENDING')"
+                    >
+                  </div>
+                  <div *ngIf="mTitle.invalid && (mTitle.dirty || mTitle.touched)" class="error-msg">
+                    <span *ngIf="mTitle.errors?.['required']">Titre obligatoire.</span>
+                    <span *ngIf="mTitle.errors?.['minlength']">Minimum 3 caractères.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-5">
+                <div class="form-group-premium">
+                  <label>Montant (DT) <span class="required-dot">*</span></label>
+                  <div class="input-modern" [class.input-error]="milestone.montant > remainingContractAmount">
+                    <i class="bi bi-cash-coin"></i>
+                    <input
+                      type="number"
+                      [(ngModel)]="milestone.montant"
+                      name="montant"
+                      placeholder="0.00"
+                      #mMontant="ngModel"
+                      required
+                      min="1"
+                      [disabled]="(!isClient && !isAdmin) || (isEditMode && milestone.status !== 'PENDING')"
+                    >
+                  </div>
+                  <div *ngIf="mMontant.invalid && (mMontant.dirty || mMontant.touched)" class="error-msg">
+                    <span *ngIf="mMontant.errors?.['required']">Montant obligatoire.</span>
+                    <span *ngIf="mMontant.errors?.['min']">Le montant doit être supérieur à 0.</span>
+                  </div>
+                  <div *ngIf="milestone.montant > remainingContractAmount" class="error-msg">
+                    <span>Dépasse le budget restant ({{ remainingContractAmount }} DT).</span>
+                  </div>
+                  <div class="budget-indicator mt-2" *ngIf="totalContractAmount > 0">
+                    <i class="bi bi-wallet2 me-1"></i>
+                    Budget restant :
+                    <strong [class.text-danger]="milestone.montant > remainingContractAmount"
+                            [class.text-success]="milestone.montant <= remainingContractAmount">
+                      {{ remainingContractAmount }} DT
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <!-- SECTION: Deadline & Description -->
+          <div class="form-section">
+            <div class="form-section-label">
+              <div class="form-section-icon"><i class="bi bi-calendar3"></i></div>
+              <div>
+                <strong>Planification</strong>
+                <span>Deadline et description des livrables</span>
+              </div>
+            </div>
+
+            <div class="row g-4 mt-1">
+              <div class="col-md-5">
+                <div class="form-group-premium">
+                  <label>Date limite <span class="required-dot">*</span></label>
+                  <div class="input-modern">
+                    <i class="bi bi-calendar-check"></i>
+                    <input
+                      type="date"
+                      [(ngModel)]="milestone.deadline"
+                      name="deadline"
+                      #mDeadline="ngModel"
+                      required
+                      [min]="minDateToday"
+                      [disabled]="(!isClient && !isAdmin) || ['IN_PROGRESS', 'SUBMITTED', 'APPROVED'].includes(milestone.status)"
+                    >
+                  </div>
+                  <div *ngIf="mDeadline.invalid && (mDeadline.dirty || mDeadline.touched)" class="error-msg">
+                    <span *ngIf="mDeadline.errors?.['required']">Date limite obligatoire.</span>
+                    <span *ngIf="mDeadline.errors?.['min']">La date ne peut pas être passée.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="form-group-premium">
+                  <label>Description des livrables</label>
+                  <div class="textarea-modern">
+                    <i class="bi bi-file-text-fill"></i>
+                    <textarea
+                      [(ngModel)]="milestone.description"
+                      name="description"
+                      rows="4"
+                      #mDesc="ngModel"
+                      required
+                      minlength="5"
+                      placeholder="Décrivez précisément ce qui sera livré lors de ce jalon..."
+                      [disabled]="(!isClient && !isAdmin) || (isEditMode && milestone.status !== 'PENDING')"
+                    ></textarea>
+                  </div>
+                  <div *ngIf="mDesc.invalid && (mDesc.dirty || mDesc.touched)" class="error-msg">
+                    <span *ngIf="mDesc.errors?.['required']">Description obligatoire.</span>
+                    <span *ngIf="mDesc.errors?.['minlength']">Minimum 5 caractères.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION: Status (edit mode only) -->
+          <div *ngIf="isEditMode && (isFreelancer || isAdmin)">
+            <div class="form-divider"></div>
+            <div class="form-section">
+              <div class="form-section-label">
+                <div class="form-section-icon terracotta"><i class="bi bi-activity"></i></div>
+                <div>
+                  <strong>Avancement</strong>
+                  <span>Modifier le statut actuel de ce jalon</span>
+                </div>
+              </div>
+
+              <div class="row mt-3">
+                <div class="col-md-6">
+                  <div class="form-group-premium">
+                    <label>Statut <span class="required-dot">*</span></label>
+                    <div class="select-modern">
+                      <i class="bi bi-toggle-on"></i>
+                      <select [(ngModel)]="milestone.status" name="status">
+                        <option value="PENDING">⏳ En attente</option>
+                        <option value="IN_PROGRESS">🔵 En cours</option>
+                        <option value="SUBMITTED">📤 Soumis</option>
+                        <option value="REJECTED">❌ Rejeté</option>
+                        <option value="APPROVED">✅ Approuvé</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION: Budget Summary (UI display only, backend is source of truth) -->
+          <div class="form-divider"></div>
+          <div class="form-section" *ngIf="totalContractAmount > 0">
+            <div class="form-section-label">
+              <div class="form-section-icon" style="background: linear-gradient(135deg,#10b981,#059669);"><i class="bi bi-pie-chart-fill"></i></div>
+              <div>
+                <strong>Répartition des jalons (aperçu UI)</strong>
+                <span>Le backend synchronisera le total après sauvegarde</span>
+              </div>
+            </div>
+            <div class="row g-3 mt-2">
+              <div class="col-6 col-md-3">
+                <div class="p-3 rounded-3 text-center" style="background:#f0f9ff; border:1px solid #bae6fd;">
+                  <div class="small text-muted mb-1">Budget contrat</div>
+                  <div class="fw-bold text-primary">{{ totalContractAmount | number:'1.2-2' }} DT</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="p-3 rounded-3 text-center" style="background:#f0fdf4; border:1px solid #bbf7d0;">
+                  <div class="small text-muted mb-1">Autres jalons</div>
+                  <div class="fw-bold text-success">{{ otherMilestonesTotal | number:'1.2-2' }} DT</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="p-3 rounded-3 text-center" style="background:#fefce8; border:1px solid #fde68a;">
+                  <div class="small text-muted mb-1">Ce jalon</div>
+                  <div class="fw-bold text-warning">{{ (milestone.montant || 0) | number:'1.2-2' }} DT</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="p-3 rounded-3 text-center"
+                     [style.background]="(remainingContractAmount - (milestone.montant || 0)) < -0.01 ? '#fef2f2' : '#f0f9ff'"
+                     [style.border]="(remainingContractAmount - (milestone.montant || 0)) < -0.01 ? '1px solid #fecaca' : '1px solid #bae6fd'">
+                  <div class="small text-muted mb-1">Reste après</div>
+                  <div class="fw-bold"
+                       [class.text-danger]="(remainingContractAmount - (milestone.montant || 0)) < -0.01"
+                       [class.text-primary]="(remainingContractAmount - (milestone.montant || 0)) >= -0.01">
+                    {{ (remainingContractAmount - (milestone.montant || 0)) | number:'1.2-2' }} DT
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="form-actions">
+            <button type="button" class="btn btn-ghost" routerLink="/app/activity/contracts">
+              <i class="bi bi-x-lg me-2"></i> Annuler
+            </button>
+            <button type="submit" class="btn btn-submit" [disabled]="mForm.invalid || milestone.montant > remainingContractAmount">
+              <i class="bi bi-check2-circle me-2"></i>
+              {{ isEditMode ? 'Mettre à jour le jalon' : 'Créer le jalon' }}
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>

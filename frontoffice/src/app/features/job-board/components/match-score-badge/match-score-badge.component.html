@@ -1,0 +1,28 @@
+<div class="msb" [class.msb--compact]="size === 'compact'">
+  <div class="msb__label">✦ AI Compatibility Score</div>
+  <div class="msb__ring-wrap">
+    <svg class="msb__svg" viewBox="0 0 100 100" aria-hidden="true">
+      <circle class="msb__track" cx="50" cy="50" r="42" />
+      <circle
+        class="msb__value"
+        cx="50"
+        cy="50"
+        r="42"
+        [style.stroke]="ringColor()"
+        [style.stroke-dasharray]="circumference"
+        [style.stroke-dashoffset]="dashOffset" />
+    </svg>
+    <div class="msb__center">
+      <span [appCountUp]="total" [countDuration]="1000" [countDecimals]="0"></span>
+    </div>
+  </div>
+
+  <div class="msb__bars" *ngIf="size === 'full' && matchScore">
+    <div class="msb__bar" *ngFor="let d of dims(); let i = index" [style.transitionDelay.ms]="i * 100">
+      <span>{{ d.label }}</span>
+      <div class="msb__bar-track">
+        <div class="msb__bar-fill" [style.width.%]="d.value"></div>
+      </div>
+    </div>
+  </div>
+</div>

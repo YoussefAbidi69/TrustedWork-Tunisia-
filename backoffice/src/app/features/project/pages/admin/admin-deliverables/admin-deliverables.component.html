@@ -1,0 +1,125 @@
+<div class="admin-deliverables">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fas fa-file-circle-check text-accent"></i> Gestion des Livrables</h1>
+      <p class="page-subtitle">{{ filtered.length }} livrable(s)</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" (click)="goBack()"><i class="fas fa-arrow-left"></i> Retour</button>
+      <button class="btn btn-ghost btn-sm" (click)="loadAll()"><i class="fas fa-rotate-right"></i> Refresh</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" class="form-control" placeholder="Rechercher..." [(ngModel)]="searchQuery" (input)="applyFilters()">
+    </div>
+    <div class="filter-chips">
+      <button *ngFor="let s of statusList" class="chip" [class.active]="filterStatus === s" (click)="filterStatus = s; applyFilters()">
+        {{ s === 'ALL' ? 'Tous' : statusLabel(s) }}
+      </button>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading"><i class="fas fa-spinner fa-spin"></i><p>Chargement...</p></div>
+
+  <div class="card" *ngIf="!loading">
+    <div class="table-wrap">
+      <table class="tw-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Livrable</th>
+            <th>Projet</th>
+            <th>Statut</th>
+            <th>Fichier</th>
+            <th>Soumis le</th>
+            <th>Commentaire</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of filtered">
+            <td>#{{ d.id }}</td>
+            <td>
+              <div class="deliv-cell">
+                <strong>{{ d.title }}</strong>
+                <span>{{ d.description | slice:0:40 }}{{ (d.description?.length || 0) > 40 ? '...' : '' }}</span>
+              </div>
+            </td>
+            <td class="text-secondary">{{ projectTitle(d.projectId) }}</td>
+            <td><span class="badge" [ngClass]="statusBadge(d.status)">{{ statusLabel(d.status) }}</span></td>
+            <td>
+              <a *ngIf="d.fileUrl" [href]="d.fileUrl" target="_blank" class="file-link">
+                <i class="fas fa-external-link-alt"></i> Voir
+              </a>
+              <span *ngIf="!d.fileUrl" class="text-muted">—</span>
+            </td>
+            <td>{{ d.submittedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="text-secondary" style="max-width:160px">{{ d.reviewComment || '—' }}</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn btn-icon btn-ghost" title="Reviewer" (click)="openReview(d)" *ngIf="d.status === 'SUBMITTED'">
+                  <i class="fas fa-gavel"></i>
+                </button>
+                <button class="btn btn-icon btn-danger" title="Supprimer" (click)="openDelete(d)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="filtered.length === 0"><i class="fas fa-inbox"></i><p>Aucun livrable trouvé</p></div>
+    </div>
+  </div>
+
+  <!-- Modal Review -->
+  <div class="modal-overlay" *ngIf="showReview" (click)="showReview = false">
+    <div class="modal-box modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="fas fa-gavel text-accent"></i> Reviewer le livrable</h3>
+        <button class="modal-close" (click)="showReview = false">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-secondary">Livrable : <strong class="text-primary">{{ reviewTarget?.title }}</strong></p>
+        <div class="form-group" style="margin-top:12px">
+          <label class="form-label">Décision</label>
+          <select class="form-control" [(ngModel)]="reviewStatus">
+            <option value="APPROVED">Approuver</option>
+            <option value="REJECTED">Rejeter</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-top:10px">
+          <label class="form-label">Commentaire</label>
+          <textarea class="form-control" [(ngModel)]="reviewComment" rows="3" placeholder="Commentaire optionnel"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm" (click)="showReview = false">Annuler</button>
+        <button class="btn btn-primary btn-sm" (click)="submitReview()"><i class="fas fa-check"></i> Valider</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Delete -->
+  <div class="modal-overlay" *ngIf="showDelete" (click)="showDelete = false">
+    <div class="modal-box modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="fas fa-trash text-danger"></i> Supprimer le livrable</h3>
+        <button class="modal-close" (click)="showDelete = false">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-secondary">Supprimer <strong class="text-primary">{{ deleteTarget?.title }}</strong> ?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm" (click)="showDelete = false">Annuler</button>
+        <button class="btn btn-danger btn-sm" (click)="confirmDelete()"><i class="fas fa-trash"></i> Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+</div>

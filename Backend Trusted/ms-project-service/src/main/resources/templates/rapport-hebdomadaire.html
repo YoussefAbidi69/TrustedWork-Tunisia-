@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Rapport Hebdomadaire — TrustedWork</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; color: #333; }
+        .wrapper { max-width: 620px; margin: 30px auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 36px 40px; text-align: center; }
+        .header .logo { color: #e94560; font-size: 22px; font-weight: 800; letter-spacing: 2px; margin-bottom: 8px; }
+        .header h1 { color: #ffffff; font-size: 20px; font-weight: 600; }
+        .header .date { color: #a0aec0; font-size: 13px; margin-top: 6px; }
+        .project-badge { background: #f0f4ff; border-left: 4px solid #e94560; padding: 16px 24px; margin: 28px 40px 0; border-radius: 6px; }
+        .project-badge .project-name { font-size: 17px; font-weight: 700; color: #1a1a2e; }
+        .project-badge .project-dates { font-size: 12px; color: #718096; margin-top: 4px; }
+        .section { padding: 20px 40px; }
+        .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #718096; margin-bottom: 16px; }
+        .progress-container { background: #edf2f7; border-radius: 20px; height: 14px; overflow: hidden; margin: 6px 0 4px; }
+        .progress-bar { height: 100%; border-radius: 20px; background: linear-gradient(90deg, #e94560, #ff6b6b); }
+        .progress-label { font-size: 13px; color: #4a5568; text-align: right; }
+        .completion-rate { font-size: 36px; font-weight: 800; color: #e94560; text-align: center; margin: 10px 0 4px; }
+        .completion-sub { font-size: 13px; color: #718096; text-align: center; margin-bottom: 16px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+        .stat-card { background: #f7fafc; border-radius: 8px; padding: 16px 12px; text-align: center; border: 1px solid #e2e8f0; }
+        .stat-card .stat-value { font-size: 26px; font-weight: 800; color: #1a1a2e; }
+        .stat-card .stat-label { font-size: 11px; color: #718096; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card.warning .stat-value { color: #d69e2e; }
+        .stat-card.danger  .stat-value { color: #e53e3e; }
+        .stat-card.success .stat-value { color: #38a169; }
+        .divider { height: 1px; background: #edf2f7; margin: 0 40px; }
+        .summary-box { background: #f7fafc; border-radius: 8px; padding: 18px 20px; margin: 8px 0; border: 1px solid #e2e8f0; font-size: 14px; line-height: 1.7; color: #4a5568; }
+        .cta-section { text-align: center; padding: 24px 40px; }
+        .cta-button { display: inline-block; background: #e94560; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 8px; font-weight: 700; font-size: 14px; }
+        .footer { background: #f7fafc; padding: 20px 40px; text-align: center; border-top: 1px solid #edf2f7; }
+        .footer p { font-size: 12px; color: #a0aec0; line-height: 1.6; }
+        .footer .brand { color: #e94560; font-weight: 700; }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+
+    <div class="header">
+        <div class="logo">TRUSTEDWORK</div>
+        <h1>Rapport Hebdomadaire de Projet</h1>
+        <div class="date" th:text="${dateGeneration}">01/01/2026 a 08:00</div>
+    </div>
+
+    <div class="project-badge">
+        <div class="project-name" th:text="${projetTitre}">Nom du Projet</div>
+        <div class="project-dates" th:text="${'Du ' + dateDebut + ' au ' + dateFin}">Du 01/04/2026 au 30/06/2026</div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Avancement Global</div>
+        <div class="completion-rate" th:text="${completionRate + '%'}">65%</div>
+        <div class="completion-sub">Taux de completion du projet</div>
+        <div class="progress-container">
+            <div class="progress-bar" th:style="'width: ' + ${completionRate} + '%'"></div>
+        </div>
+        <div class="progress-label" th:text="${completedTasks + ' / ' + totalTasks + ' tache(s) terminee(s)'}">
+            8 / 12 tache(s) terminee(s)
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+        <div class="section-title">Indicateurs Cles</div>
+        <div class="stats-grid">
+            <div class="stat-card success">
+                <div class="stat-value" th:text="${completedTasks}">8</div>
+                <div class="stat-label">Taches<br/>Terminees</div>
+            </div>
+            <div class="stat-card" th:classappend="${openDeliverables > 0 ? 'warning' : 'success'}">
+                <div class="stat-value" th:text="${openDeliverables}">2</div>
+                <div class="stat-label">Livrables<br/>En attente</div>
+            </div>
+            <div class="stat-card" th:classappend="${activeRisks > 0 ? 'danger' : 'success'}">
+                <div class="stat-value" th:text="${activeRisks}">1</div>
+                <div class="stat-label">Signaux<br/>de Risque</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+        <div class="section-title">Resume Intelligent du Projet</div>
+        <div class="summary-box" th:text="${summary}">Resume genere automatiquement.</div>
+    </div>
+
+    <div class="cta-section">
+        <a href="http://localhost:4200/projects" class="cta-button">Voir le tableau de bord</a>
+    </div>
+
+    <div class="footer">
+        <p>
+            Cet email a ete genere automatiquement par <span class="brand">TrustedWork Tunisia</span>.<br/>
+            Module 08 — Project Management &amp; Delivery Intelligence
+        </p>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,42 @@
+.cm-filter__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cm-filter__btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--cm-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--cm-radius-sm);
+  cursor: pointer;
+  transition: var(--cm-transition);
+  text-align: left;
+}
+
+.cm-filter__btn i {
+  font-size: 14px;
+  color: var(--cm-text-muted);
+}
+
+.cm-filter__btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--cm-text-primary);
+}
+
+.cm-filter__btn--active {
+  background-color: rgba(232, 98, 42, 0.1);
+  color: var(--cm-accent-primary);
+  border-color: rgba(232, 98, 42, 0.2);
+}
+
+.cm-filter__btn--active i {
+  color: var(--cm-accent-primary);
+}

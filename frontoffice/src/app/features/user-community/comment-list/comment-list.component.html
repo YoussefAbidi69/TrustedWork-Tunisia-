@@ -1,0 +1,17 @@
+<div class="cm-comment-list">
+  <div *ngIf="loading" class="cm-state cm-comment-list__state">Loading comments…</div>
+
+  <div *ngIf="!loading && comments.length === 0" class="cm-state cm-comment-list__state">
+    No comments yet. Start the thread.
+  </div>
+
+  <div *ngIf="!loading && comments.length > 0" class="cm-comment-list__items">
+    <p class="cm-muted" style="margin-bottom: 12px">{{ comments.length }} comment{{ comments.length === 1 ? '' : 's' }}</p>
+    <article *ngFor="let comment of comments; trackBy: trackByCommentId" class="cm-comment-card">
+      <div class="cm-comment-card__head">
+        <span class="cm-comment-card__author">User #{{ comment.userId }}</span>
+      </div>
+      <p class="cm-comment-card__body">{{ comment.content }}</p>
+    </article>
+  </div>
+</div>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChallengeMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">module06-engagement</a> &gt; <a href="index.source.html" class="el_package">com.trustedwork.module06.mapper</a> &gt; <span class="el_source">ChallengeMapper.java</span></div><h1>ChallengeMapper.java</h1><pre class="source lang-java linenums">package com.trustedwork.module06.mapper;
+
+import com.trustedwork.module06.dto.ChallengeDTO;
+import com.trustedwork.module06.dto.ChallengeParticipationDTO;
+import com.trustedwork.module06.entity.Challenge;
+import com.trustedwork.module06.entity.ChallengeParticipation;
+
+public class ChallengeMapper {
+
+<span class="nc" id="L10">    private ChallengeMapper() {</span>
+<span class="nc" id="L11">        throw new IllegalStateException(&quot;Utility class&quot;);</span>
+    }
+
+    public static ChallengeDTO toDTO(Challenge challenge) {
+<span class="nc bnc" id="L15" title="All 2 branches missed.">        if (challenge == null) return null;</span>
+<span class="nc" id="L16">        return ChallengeDTO.builder()</span>
+<span class="nc" id="L17">                .id(challenge.getId())</span>
+<span class="nc" id="L18">                .title(challenge.getTitle())</span>
+<span class="nc" id="L19">                .description(challenge.getDescription())</span>
+<span class="nc" id="L20">                .xpReward(challenge.getXpReward())</span>
+<span class="nc bnc" id="L21" title="All 2 branches missed.">                .deadline(challenge.getDeadline() != null ? challenge.getDeadline().toString() : null)</span>
+<span class="nc" id="L22">                .challengeTypeCode(challenge.getChallengeTypeCode())</span>
+<span class="nc" id="L23">                .status(challenge.getStatus())</span>
+<span class="nc" id="L24">                .build();</span>
+    }
+
+    public static Challenge toEntity(ChallengeDTO dto) {
+<span class="nc bnc" id="L28" title="All 2 branches missed.">        if (dto == null) return null;</span>
+<span class="nc" id="L29">        Challenge.ChallengeBuilder builder = Challenge.builder()</span>
+<span class="nc" id="L30">                .id(dto.getId())</span>
+<span class="nc" id="L31">                .title(dto.getTitle())</span>
+<span class="nc" id="L32">                .description(dto.getDescription())</span>
+<span class="nc" id="L33">                .xpReward(dto.getXpReward())</span>
+<span class="nc" id="L34">                .challengeTypeCode(dto.getChallengeTypeCode())</span>
+<span class="nc" id="L35">                .status(dto.getStatus());</span>
+
+<span class="nc bnc" id="L37" title="All 4 branches missed.">        if (dto.getDeadline() != null &amp;&amp; !dto.getDeadline().isEmpty()) {</span>
+            try {
+<span class="nc bnc" id="L39" title="All 2 branches missed.">                if (dto.getDeadline().length() == 10) {</span>
+<span class="nc" id="L40">                    builder.deadline(java.time.LocalDate.parse(dto.getDeadline()).atStartOfDay());</span>
+                } else {
+<span class="nc" id="L42">                    builder.deadline(java.time.LocalDateTime.parse(dto.getDeadline()));</span>
+                }
+<span class="nc" id="L44">            } catch (Exception e) {}</span>
+        }
+<span class="nc" id="L46">        return builder.build();</span>
+    }
+
+    public static ChallengeParticipationDTO toParticipationDTO(ChallengeParticipation p) {
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        if (p == null) return null;</span>
+<span class="nc" id="L51">        return ChallengeParticipationDTO.builder()</span>
+<span class="nc" id="L52">                .id(p.getId())</span>
+<span class="nc" id="L53">                .challengeId(p.getChallenge().getId())</span>
+<span class="nc" id="L54">                .userId(p.getUserId())</span>
+<span class="nc" id="L55">                .status(p.getStatus())</span>
+<span class="nc" id="L56">                .joinedAt(p.getJoinedAt())</span>
+<span class="nc" id="L57">                .completedAt(p.getCompletedAt())</span>
+<span class="nc" id="L58">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

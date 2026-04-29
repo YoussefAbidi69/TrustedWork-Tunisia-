@@ -1,0 +1,41 @@
+<article class="cm-feed-card" [class.cm-feed-card--draft]="!course.published">
+  <div class="cm-feed-card__meta">
+    <span class="cm-badge cm-badge--slate" *ngIf="communityName">
+      <i class="fas fa-layer-group"></i> {{ communityName }}
+    </span>
+    <span class="cm-badge cm-badge--published" *ngIf="course.published">
+      Published
+    </span>
+    <span class="cm-badge cm-badge--draft" *ngIf="!course.published">
+      <i class="far fa-edit"></i> Draft
+    </span>
+    <span class="cm-muted" *ngIf="course.createdBy != null">Author #{{ course.createdBy }}</span>
+  </div>
+
+  <h3 class="cm-feed-card__title">
+    <a [routerLink]="['course', course.id]" [relativeTo]="shell">{{ course.title || 'Untitled Course' }}</a>
+  </h3>
+
+  <p class="cm-feed-card__preview">{{ preview || 'Explore this meticulously crafted course...' }}</p>
+
+  <div class="cm-feed-card__footer">
+    <div class="cm-feed-card__stats">
+      <span><i class="fas fa-graduation-cap"></i> Curriculum</span>
+    </div>
+
+    <div class="cm-btn-group">
+      <button
+        type="button"
+        class="cm-btn cm-btn--secondary cm-btn--sm"
+        [disabled]="downloadBusy || !canDownload"
+        (click)="onDownloadCourse($event)"
+        title="Download offline bundle">
+        <i class="fas" [class.fa-download]="!downloadBusy" [class.fa-spinner]="downloadBusy" [class.fa-spin]="downloadBusy"></i>
+        {{ downloadBusy ? '…' : 'Download' }}
+      </button>
+      <a class="cm-btn cm-btn--primary cm-btn--sm" [routerLink]="['course', course.id]" [relativeTo]="shell">
+        Explore <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+</article>

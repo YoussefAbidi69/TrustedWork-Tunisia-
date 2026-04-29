@@ -1,0 +1,111 @@
+<div class="proj-list-page">
+
+  <div class="proj-page-header">
+    <div>
+      <h1>
+        <i class="fas fa-diagram-project"></i>
+        {{ isAdmin ? 'Tous les Projets' : (isClient ? 'Mes Projets' : 'Projets Assignés') }}
+      </h1>
+      <p>
+        {{ isAdmin
+          ? 'Vue administrateur — Tous les projets de la plateforme'
+          : (isClient
+            ? 'Suivez l\'avancement de vos projets confiés aux freelancers'
+            : 'Tous les projets auxquels vous êtes assigné comme freelancer') }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="proj-loading-state">
+    <i class="fas fa-spinner fa-spin"></i> Chargement des projets...
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="proj-error-state">
+    <i class="fas fa-exclamation-triangle"></i> {{ error }}
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="!loading && !error && projects.length === 0" class="proj-empty-state">
+    <i class="fas fa-folder-open"></i>
+    <h3>Aucun projet</h3>
+    <p>{{ isAdmin
+      ? 'Aucun projet sur la plateforme pour le moment.'
+      : (isClient
+        ? 'Vous n\'avez pas encore de projets. Un projet est créé automatiquement après la signature d\'un contrat.'
+        : 'Aucun projet ne vous est assigné pour le moment.') }}</p>
+  </div>
+
+  <!-- Project Cards -->
+  <div *ngIf="!loading && projects.length > 0" class="proj-grid">
+    <a *ngFor="let project of projects"
+       [routerLink]="['/app/projects', project.id]"
+       class="proj-card">
+
+      <div class="proj-card__header">
+        <span class="proj-status" [ngClass]="getStatusClass(project.status)">
+          {{ getStatusLabel(project.status) }}
+        </span>
+        <span class="proj-budget">{{ project.budget | number:'1.0-0' }} DT</span>
+      </div>
+
+      <h3 class="proj-card__title">{{ project.title }}</h3>
+      <p class="proj-card__desc">
+        {{ project.description | slice:0:100 }}{{ project.description.length > 100 ? '...' : '' }}
+      </p>
+
+      <!-- Participant : affiche l'AUTRE partie selon le rôle -->
+      <div class="proj-card__participants">
+
+        <!-- Client connecté → affiche le freelancer -->
+        <div class="proj-participant" *ngIf="isClient && project.freelancerFirstName">
+          <i class="fas fa-briefcase"></i>
+          <span>
+            <strong>Freelancer :</strong> {{ project.freelancerFirstName }} {{ project.freelancerLastName }}
+          </span>
+        </div>
+
+        <!-- Freelancer connecté → affiche le client -->
+        <div class="proj-participant" *ngIf="isFreelancer && project.clientFirstName">
+          <i class="fas fa-user"></i>
+          <span>
+            <strong>Client :</strong> {{ project.clientFirstName }} {{ project.clientLastName }}
+          </span>
+        </div>
+
+        <!-- Admin → affiche les deux -->
+        <ng-container *ngIf="isAdmin">
+          <div class="proj-participant" *ngIf="project.clientFirstName">
+            <i class="fas fa-user"></i>
+            <span>
+              <strong>Client :</strong> {{ project.clientFirstName }} {{ project.clientLastName }}
+            </span>
+          </div>
+          <div class="proj-participant" *ngIf="project.freelancerFirstName">
+            <i class="fas fa-briefcase"></i>
+            <span>
+              <strong>Freelancer :</strong> {{ project.freelancerFirstName }} {{ project.freelancerLastName }}
+            </span>
+          </div>
+        </ng-container>
+      </div>
+
+      <div class="proj-card__progress">
+        <div class="proj-progress-bar">
+          <div class="proj-progress-fill" [style.width.%]="project.completionRate"></div>
+        </div>
+        <span class="proj-progress-label">{{ project.completionRate }}%</span>
+      </div>
+
+      <div class="proj-card__footer">
+        <span class="proj-date">
+          <i class="fas fa-calendar"></i>
+          {{ project.startDate }} → {{ project.endDate }}
+        </span>
+        <i class="fas fa-arrow-right proj-arrow"></i>
+      </div>
+    </a>
+  </div>
+
+</div>

@@ -1,0 +1,233 @@
+<div class="cm-page" *ngIf="!loading && post as p">
+  <a class="cm-back" [routerLink]="['']" [relativeTo]="route.parent">
+    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+    Back to feed
+  </a>
+
+  <app-community-page-header
+    eyebrow="Post"
+    [title]="p.title"
+    [subtitle]="communityName">
+    <ng-container cmActions *ngIf="isPostOwner && !editMode">
+      <button type="button" class="cm-btn cm-btn--secondary" (click)="startEdit()">
+        <i class="fas fa-pen" aria-hidden="true"></i>
+        Edit
+      </button>
+      <button
+        type="button"
+        class="cm-btn cm-btn--ghost"
+        [disabled]="deleting"
+        (click)="confirmAndDeletePost()">
+        <i class="fas fa-trash" aria-hidden="true"></i>
+        {{ deleting ? 'Deleting…' : 'Delete' }}
+      </button>
+      <button *ngIf="p.status === PostStatus.DRAFT" type="button" class="cm-btn cm-btn--primary" (click)="publishPost()">
+        Publish
+      </button>
+    </ng-container>
+  </app-community-page-header>
+
+  <div *ngIf="publishError" class="cm-banner cm-banner--warn">{{ publishError }}</div>
+  <div *ngIf="saveError" class="cm-banner cm-banner--warn">{{ saveError }}</div>
+  <div *ngIf="deleteError" class="cm-banner cm-banner--warn">{{ deleteError }}</div>
+  <div *ngIf="courseDownloadError" class="cm-banner cm-banner--warn">{{ courseDownloadError }}</div>
+
+  <div class="cm-split cm-split--wide-aside">
+    <div class="cm-page-body">
+      <section class="cm-panel" *ngIf="!editMode">
+        <div class="cm-panel__head">
+          <h2 class="cm-panel__title">Content</h2>
+          <div class="cm-btn-group">
+            <span
+              class="cm-badge"
+              [ngClass]="{
+                'cm-badge--course': p.type === PostType.COURSE,
+                'cm-badge--info': p.type === PostType.INFO
+              }">
+              {{ p.type }}
+            </span>
+            <span
+              class="cm-badge"
+              [ngClass]="{
+                'cm-badge--published': p.status === PostStatus.PUBLISHED,
+                'cm-badge--draft': p.status === PostStatus.DRAFT,
+                'cm-badge--hidden': p.status === PostStatus.HIDDEN,
+                'cm-badge--rejected': p.status === PostStatus.REJECTED
+              }">
+              {{ p.status }}
+            </span>
+          </div>
+        </div>
+        <div class="cm-panel__body">
+          <div class="cm-article-body">{{ p.content }}</div>
+          <p class="cm-muted" *ngIf="p.upvoteCount != null || p.downvoteCount != null">
+            {{ p.upvoteCount ?? 0 }} up · {{ p.downvoteCount ?? 0 }} down
+          </p>
+          <div class="cm-btn-group" style="margin-top: 16px">
+            <button
+              type="button"
+              class="cm-btn"
+              [class.cm-btn--primary]="post.myVote === VoteType.UP"
+              [class.cm-btn--secondary]="post.myVote !== VoteType.UP"
+              (click)="vote(VoteType.UP)"
+              [attr.aria-pressed]="post.myVote === VoteType.UP">
+              <i class="fas fa-arrow-up" aria-hidden="true"></i>
+              Upvote
+            </button>
+            <button
+              type="button"
+              class="cm-btn"
+              [class.cm-btn--primary]="post.myVote === VoteType.DOWN"
+              [class.cm-btn--ghost]="post.myVote !== VoteType.DOWN"
+              (click)="vote(VoteType.DOWN)"
+              [attr.aria-pressed]="post.myVote === VoteType.DOWN">
+              <i class="fas fa-arrow-down" aria-hidden="true"></i>
+              Downvote
+            </button>
+            <button
+              *ngIf="canDownloadCourse"
+              type="button"
+              class="cm-btn cm-btn--primary"
+              [disabled]="courseDownloadBusy"
+              (click)="downloadCourseFile()">
+              <i class="fas fa-download" aria-hidden="true"></i>
+              {{ courseDownloadBusy ? 'Downloading…' : 'Download' }}
+            </button>
+            <button type="button" class="cm-btn cm-btn--ghost" (click)="sharePost()">
+              <i class="fas fa-share" aria-hidden="true"></i>
+              Share
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="cm-panel" *ngIf="editMode">
+        <div class="cm-panel__head">
+          <h2 class="cm-panel__title">Edit post</h2>
+        </div>
+        <div class="cm-panel__body">
+          <form [formGroup]="editForm" (ngSubmit)="saveEdits()">
+            <div class="cm-field">
+              <span class="cm-label">Type</span>
+              <div class="cm-seg" role="group">
+                <button
+                  type="button"
+                  class="cm-seg__btn"
+                  [class.cm-seg__btn--active]="editForm.get('type')?.value === PostType.INFO"
+                  (click)="setEditType(PostType.INFO)">
+                  Info
+                </button>
+                <button
+                  type="button"
+                  class="cm-seg__btn"
+                  [class.cm-seg__btn--active]="editForm.get('type')?.value === PostType.COURSE"
+                  (click)="setEditType(PostType.COURSE)">
+                  Course
+                </button>
+              </div>
+            </div>
+            <div class="cm-field">
+              <label class="cm-label" for="ed-title">Title</label>
+              <input id="ed-title" class="cm-input" type="text" formControlName="title" />
+              <span class="cm-error" *ngIf="ef['title'].touched && ef['title'].invalid">Title required (min 3).</span>
+            </div>
+            <div class="cm-field">
+              <label class="cm-label" for="ed-content">Content</label>
+              <textarea id="ed-content" class="cm-textarea" rows="10" formControlName="content"></textarea>
+              <span class="cm-error" *ngIf="ef['content'].touched && ef['content'].invalid">Content required (min 50).</span>
+            </div>
+            <div class="cm-field">
+              <label class="cm-label" for="ed-media">Media URL</label>
+              <input id="ed-media" class="cm-input" type="text" formControlName="mediaUrl" />
+            </div>
+            <div class="cm-field" *ngIf="isCourseEdit">
+              <span class="cm-label">Course PDF</span>
+              <p class="cm-hint">Upload a PDF (same as when creating a post) or paste a direct https URL below.</p>
+              <div class="cm-btn-group" style="flex-wrap: wrap; align-items: center">
+                <input
+                  #editCoursePdfInput
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  style="display: none"
+                  [disabled]="coursePdfUploading"
+                  (change)="onCoursePdfEditSelected($event)" />
+                <button
+                  type="button"
+                  class="cm-btn cm-btn--secondary"
+                  [disabled]="coursePdfUploading"
+                  (click)="editCoursePdfInput.click()">
+                  {{ coursePdfUploading ? 'Uploading…' : 'Upload PDF' }}
+                </button>
+              </div>
+              <p *ngIf="coursePdfError" class="cm-error">{{ coursePdfError }}</p>
+              <p *ngIf="editForm.get('fileUrl')?.value" class="cm-muted" style="margin-top: 8px">
+                Attached:
+                <strong>{{ coursePdfDisplayName || 'PDF' }}</strong>
+                <span class="cm-hint" style="display: block; margin-top: 4px; word-break: break-all">
+                  {{ editForm.get('fileUrl')?.value }}
+                </span>
+                <button
+                  type="button"
+                  class="cm-btn cm-btn--ghost cm-btn--sm"
+                  style="margin-left: 8px"
+                  (click)="clearCoursePdfEdit(editCoursePdfInput)">
+                  Remove
+                </button>
+              </p>
+              <label class="cm-label" for="ed-file" style="margin-top: 12px">Or paste file URL</label>
+              <input id="ed-file" class="cm-input" type="text" formControlName="fileUrl" />
+            </div>
+            <div class="cm-form-actions">
+              <button type="submit" class="cm-btn cm-btn--primary">Save</button>
+              <button type="button" class="cm-btn cm-btn--ghost" (click)="cancelEdit()">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="cm-panel">
+        <div class="cm-panel__head">
+          <h2 class="cm-panel__title">Discussion ({{ comments.length }})</h2>
+        </div>
+        <div class="cm-panel__body">
+          <div *ngIf="commentError" class="cm-banner cm-banner--warn">{{ commentError }}</div>
+          <div *ngIf="authService.isLoggedIn()">
+            <app-comment-input
+              [submitting]="submittingComment"
+              (submitComment)="onSubmitComment($event)">
+            </app-comment-input>
+          </div>
+          <p *ngIf="!authService.isLoggedIn()" class="cm-muted">Sign in to comment.</p>
+
+          <div *ngIf="commentsLoading" class="cm-state">Loading comments…</div>
+          <app-comment-list *ngIf="!commentsLoading" [comments]="comments" [loading]="commentsLoading">
+          </app-comment-list>
+        </div>
+      </section>
+    </div>
+
+    <aside class="cm-aside-stack">
+      <section class="cm-aside-card">
+        <h3 class="cm-aside-card__title">Details</h3>
+        <div class="cm-aside-card__body">
+          <p class="cm-muted">Author</p>
+          <p>User #{{ p.createdBy }}</p>
+          <hr class="cm-divider" />
+          <p class="cm-muted">Community</p>
+          <p>{{ communityName }}</p>
+          <p *ngIf="p.isAiGenerated" class="cm-banner cm-banner--warn" style="margin-top: 10px">AI-assisted content</p>
+          <p *ngIf="p.isValidated" class="cm-banner cm-banner--success" style="margin-top: 10px">Validated</p>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<div *ngIf="loading" class="cm-page">
+  <div class="cm-state">Loading post…</div>
+</div>
+
+<div *ngIf="!loading && error" class="cm-page">
+  <div class="cm-state cm-state--error">{{ error }}</div>
+  <a class="cm-btn cm-btn--primary" style="margin-top: 16px; display: inline-flex" [routerLink]="['']" [relativeTo]="route.parent">Back</a>
+</div>

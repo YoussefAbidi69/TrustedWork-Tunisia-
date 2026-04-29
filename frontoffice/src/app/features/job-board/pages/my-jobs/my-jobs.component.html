@@ -1,0 +1,103 @@
+<div class="applications-page">
+  <section class="stats-grid" *ngIf="!loading && !error">
+    <article class="stat-card">
+      <div class="stat-card__label">Published jobs</div>
+      <strong class="stat-value stat-value--success" [countUp]="publishedCount" [countUpDuration]="1000">0</strong>
+    </article>
+    <article class="stat-card">
+      <div class="stat-card__label">Drafts</div>
+      <strong class="stat-value stat-value--accent" [countUp]="draftCount" [countUpDuration]="1000">0</strong>
+    </article>
+    <article class="stat-card">
+      <div class="stat-card__label">Closed</div>
+      <strong class="stat-value" [countUp]="closedCount" [countUpDuration]="1000">0</strong>
+    </article>
+    <article class="stat-card">
+      <div class="stat-card__label">Flagged</div>
+      <strong class="stat-value stat-value--warning" [countUp]="flaggedCount" [countUpDuration]="1000">0</strong>
+    </article>
+  </section>
+
+  <section class="applications-layout">
+    <div class="applications-main">
+      <div class="panel-card">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Client Portal</span>
+            <h2>My jobs</h2>
+          </div>
+          <a routerLink="/app/job-board/post-job" class="hero-btn hero-btn--primary">Post New Job</a>
+        </div>
+
+        <div class="error-state" *ngIf="error && !loading">
+          <i class="fas fa-exclamation-circle"></i>
+          <p>{{ error }}</p>
+          <button type="button" class="hero-btn hero-btn--secondary" (click)="loadJobs()">Try again</button>
+        </div>
+
+        <div class="jb-apps-skeleton" *ngIf="loading">
+          <div class="jb-apps-skeleton__row" *ngFor="let _ of [1, 2, 3]"></div>
+        </div>
+
+        <div class="application-list" *ngIf="!loading && !error && displayJobs.length">
+          <div class="filters-bar" style="display:flex; gap:10px; padding:12px 16px; border-radius:12px; margin-bottom:20px; align-items:center;">
+            <strong style="font-size:14px; margin-right:10px;">Filter:</strong>
+            <button class="badge" [class.badge-accent]="statusFilter === 'ALL'" [class.badge-muted]="statusFilter !== 'ALL'" (click)="statusFilter = 'ALL'" style="border:none; cursor:pointer;">All</button>
+            <button class="badge" [class.badge-success]="statusFilter === 'PUBLISHED'" [class.badge-muted]="statusFilter !== 'PUBLISHED'" (click)="statusFilter = 'PUBLISHED'" style="border:none; cursor:pointer;">Published</button>
+            <button class="badge" [class.badge-warning]="statusFilter === 'DRAFT'" [class.badge-muted]="statusFilter !== 'DRAFT'" (click)="statusFilter = 'DRAFT'" style="border:none; cursor:pointer;">Drafts</button>
+            <button class="badge" [class.badge-danger]="statusFilter === 'FLAGGED'" [class.badge-muted]="statusFilter !== 'FLAGGED'" (click)="statusFilter = 'FLAGGED'" style="border:none; cursor:pointer;">Flagged</button>
+          </div>
+          <article class="application-card" *ngFor="let job of displayJobs">
+            <div class="application-card__top">
+              <div class="application-card__identity">
+                <div class="application-icon">
+                  <i class="fas fa-building"></i>
+                </div>
+                <div>
+                  <div class="application-title-row">
+                    <h3>
+                      <a class="job-board-app-link" [routerLink]="['/app/job-board/marketplace']" [queryParams]="{ job: job.id }">
+                        {{ job.title }}
+                      </a>
+                    </h3>
+                    <app-status-badge [status]="job.status" type="job"></app-status-badge>
+                    <span class="fraud-shield-compact" *ngIf="job.status === 'FLAGGED'">
+                      <i class="fas fa-shield-alt"></i> Flagged
+                    </span>
+                  </div>
+                  <p>{{ job.category }} · {{ job.remote ? 'Remote' : 'On-site' }} · {{ job.applicationCount ?? 0 }} applicants</p>
+                </div>
+              </div>
+              <div class="application-score">
+                <span>Opportunity</span>
+                <strong [countUp]="job.opportunityScore" [countUpDuration]="1000" [countUpDecimals]="0">0</strong>
+              </div>
+            </div>
+            <p class="application-summary">Published {{ job.publishedAt | timeAgo }}</p>
+            <div class="hero-actions job-board-app-actions">
+              <button type="button" class="hero-btn hero-btn--primary" *ngIf="job.status === 'DRAFT'" (click)="publish(job)">
+                Publish
+              </button>
+              <button type="button" class="hero-btn hero-btn--ghost" *ngIf="job.status === 'DRAFT'" (click)="deleteJob(job)">
+                Delete
+              </button>
+
+              <button type="button" class="hero-btn hero-btn--ghost" *ngIf="job.status === 'PUBLISHED'" (click)="close(job)">
+                Close
+              </button>
+              <button type="button" class="hero-btn hero-btn--primary" *ngIf="job.status === 'PUBLISHED' || job.status === 'CLOSED' || job.status === 'FLAGGED'" (click)="applicants(job)">
+                View applicants
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <div class="empty-state" *ngIf="!loading && !error && !displayJobs.length">
+          <i class="fas fa-briefcase"></i>
+          <p>You haven't posted any jobs yet.</p>
+          <a routerLink="/app/job-board/post-job" class="hero-btn hero-btn--secondary">Post a job</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

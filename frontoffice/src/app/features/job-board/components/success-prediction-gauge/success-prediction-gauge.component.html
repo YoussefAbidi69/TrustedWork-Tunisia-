@@ -1,0 +1,30 @@
+<div class="spg" [class.spg--compact]="size === 'compact'">
+  <div class="spg__label">✦ AI Success Prediction</div>
+  <div class="spg__gauge" aria-hidden="true">
+    <svg class="spg__svg" viewBox="0 0 200 110">
+      <path
+        class="spg__arc spg__arc--danger"
+        d="M 20 100 A 80 80 0 0 1 68 36"
+        fill="none"
+        stroke-width="14" />
+      <path
+        class="spg__arc spg__arc--warn"
+        d="M 68 36 A 80 80 0 0 1 132 36"
+        fill="none"
+        stroke-width="14" />
+      <path
+        class="spg__arc spg__arc--ok"
+        d="M 132 36 A 80 80 0 0 1 180 100"
+        fill="none"
+        stroke-width="14" />
+    </svg>
+    <div class="spg__needle" [style.transform]="'rotate(' + (needleDeg - 90) + 'deg)'"></div>
+  </div>
+  <div class="spg__zone">{{ zoneLabel() }} likelihood band</div>
+  <div class="spg__pct">
+    <span [appCountUp]="probability * 100" [countDuration]="1000" [countDecimals]="0"></span>%
+  </div>
+  <div class="spg__conf" *ngIf="showConfidence && confidenceLabel">
+    <span class="spg__badge">Confidence: {{ confidenceLabel }}</span>
+  </div>
+</div>

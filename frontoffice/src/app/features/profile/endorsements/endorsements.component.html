@@ -1,0 +1,209 @@
+<div class="endorsements-page">
+  <div class="endorsements-shell">
+
+    <!-- Toasts -->
+    <div class="toast-stack" *ngIf="errorMessage || successMessage">
+      <div class="alert-banner alert-banner--error" *ngIf="errorMessage">
+        <span class="alert-icon">⚠️</span>
+        <span>{{ errorMessage }}</span>
+        <button type="button" class="alert-close" (click)="errorMessage = ''">✕</button>
+      </div>
+
+      <div class="alert-banner alert-banner--success" *ngIf="successMessage">
+        <span class="alert-icon">✅</span>
+        <span>{{ successMessage }}</span>
+        <button type="button" class="alert-close" (click)="successMessage = ''">✕</button>
+      </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="endorsements-hero">
+      <div class="hero-glow hero-glow--one"></div>
+      <div class="hero-glow hero-glow--two"></div>
+
+      <div class="endorsements-header">
+        <div class="header-left">
+          <div class="section-icon">🤝</div>
+
+          <div class="header-copy">
+            <div class="header-topline">
+              <h2>Endorsements</h2>
+              <span class="badge-count">{{ totalEndorsements }} validation(s)</span>
+            </div>
+
+            <p class="subtitle">
+              Vos compétences validées par la communauté. Cette vue affiche les endorsements
+              reçus depuis votre profil public.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics Grid - 4 Cards -->
+      <div class="hero-stats" *ngIf="skills.length > 0">
+        <div class="stat-card">
+          <span class="stat-label">Skills</span>
+          <strong class="stat-value">{{ skills.length }}</strong>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-label">Compétences endorsées</span>
+          <strong class="stat-value">{{ endorsedSkillsCount }}</strong>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-label">Endorsements reçus</span>
+          <strong class="stat-value">{{ totalEndorsements }}</strong>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-label">Authenticité moyenne</span>
+          <strong class="stat-value">{{ averageAuthenticity.toFixed(0) }}%</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- Info Banner -->
+    <section class="info-banner" *ngIf="!isLoading && skills.length > 0">
+      <span class="info-banner-icon">💡</span>
+      <div class="info-banner-text">
+        Les endorsements sont ajoutés par d'autres freelancers depuis votre profil public.
+        Vous ne pouvez pas valider vos propres compétences depuis cet espace.
+      </div>
+    </section>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="loading-spinner"></div>
+      <p>Chargement des endorsements...</p>
+    </div>
+
+    <!-- Empty State -->
+    <section class="empty-state-card" *ngIf="!isLoading && skills.length === 0">
+      <div class="empty-state">
+        <div class="empty-icon">🤝</div>
+        <h3>Aucune compétence à valider</h3>
+        <p>
+          Ajoutez d'abord des compétences dans l'onglet Skills pour commencer à recevoir
+          des endorsements de la communauté.
+        </p>
+      </div>
+    </section>
+
+    <!-- Skills List with Dynamic Endorsements -->
+    <section class="skills-section" *ngIf="!isLoading && skills.length > 0">
+      <div class="section-head">
+        <div>
+          <span class="section-chip">Compétences</span>
+          <h3>Validations reçues</h3>
+        </div>
+      </div>
+
+      <div class="skills-list">
+        
+        <!-- Dynamic Skill Cards with *ngFor -->
+        <article 
+          class="skill-card" 
+          *ngFor="let skill of skills; let i = index; trackBy: trackBySkill">
+
+          <!-- Skill Header -->
+          <div class="skill-header">
+            <div class="skill-info">
+              <div class="skill-topline">
+                <h4 class="skill-name">{{ skill.name }}</h4>
+
+                <span 
+                  class="skill-level" 
+                  [ngClass]="getLevelClass(skill.level)">
+                  {{ getLevelLabel(skill.level) }}
+                </span>
+
+                <span class="top-skill-badge" *ngIf="i === 0">⭐ Top Skill</span>
+              </div>
+
+              <div class="skill-meta">
+                <span>{{ getEndorsementCount(skill.id) }} endorsement(s)</span>
+                <span>{{ skill.authenticityScore.toFixed(0) }}% authenticité</span>
+              </div>
+            </div>
+
+            <div class="skill-stats">
+              <div class="mini-stat">
+                <span class="mini-stat__value">{{ getEndorsementCount(skill.id) }}</span>
+                <span class="mini-stat__label">Reçus</span>
+              </div>
+
+              <div class="mini-stat">
+                <span class="mini-stat__value">{{ skill.authenticityScore.toFixed(0) }}%</span>
+                <span class="mini-stat__label">Score</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="progress-block">
+            <div class="progress-label-row">
+              <span>Authenticité</span>
+              <span>{{ skill.authenticityScore.toFixed(0) }}%</span>
+            </div>
+
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                [ngClass]="getAuthenticityClass(skill.authenticityScore)"
+                [style.width.%]="skill.authenticityScore">
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Endorsements List -->
+          <div 
+            class="endorsements-list" 
+            *ngIf="getEndorsementCount(skill.id) > 0">
+
+            <article
+              class="endorsement-item"
+              *ngFor="let endorsement of endorsementsBySkill[skill.id]; trackBy: trackByEndorsement">
+
+              <!-- Avatar with Initials -->
+              <div class="endorser-avatar">{{ endorsement.endorserInitials }}</div>
+
+              <div class="endorsement-body">
+                <div class="endorsement-head">
+                  <span class="endorser-name">{{ endorsement.endorserName }}</span>
+
+                  <span 
+                    class="endorser-role"
+                    [ngClass]="getRoleClass(endorsement.endorserRole)">
+                    {{ endorsement.endorserRole }}
+                  </span>
+
+                  <span class="endorsement-date">
+                    {{ endorsement.endorsedAt | date:'dd MMM yyyy' }}
+                  </span>
+                </div>
+
+                <!-- Comment (if exists) -->
+                <p 
+                  class="endorsement-comment" 
+                  *ngIf="endorsement.comment && endorsement.comment.trim()">
+                  "{{ endorsement.comment }}"
+                </p>
+              </div>
+            </article>
+          </div>
+
+          <!-- No Endorsements Message -->
+          <div 
+            class="no-endorsements" 
+            *ngIf="getEndorsementCount(skill.id) === 0">
+            <span>Aucun endorsement reçu pour ce skill.</span>
+          </div>
+
+        </article>
+
+      </div>
+    </section>
+
+  </div>
+</div>

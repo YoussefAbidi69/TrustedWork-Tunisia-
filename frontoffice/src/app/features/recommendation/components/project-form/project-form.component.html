@@ -1,0 +1,270 @@
+<div class="recommendation-wrapper">
+  <!-- Header Section -->
+  <div class="hero-header">
+    <div class="hero-content">
+      <h1 class="hero-title">
+        <i class="bi bi-magic me-2 text-primary"></i>
+        Trouvez le freelancer idéal
+      </h1>
+      <p class="hero-subtitle">
+        Notre intelligence artificielle analyse des milliers de profils pour vous trouver la perle rare, parfaitement alignée avec vos objectifs.
+      </p>
+      
+      <!-- ML Status Badge -->
+      <div class="ml-status-badge" [class.status-online]="isMLServiceAvailable" [class.status-offline]="!isMLServiceAvailable">
+        <span class="pulse-ring"></span>
+        <span class="status-text">
+          <i class="bi" [ngClass]="isMLServiceAvailable ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
+          {{ isMLServiceAvailable ? 'Moteur IA Opérationnel' : 'Service IA Indisponible' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="recommendation-content" *ngIf="!submitted">
+    
+    <!-- Custom Stepper Navigation -->
+    <div class="stepper-nav">
+      <div class="stepper-progress">
+        <div class="stepper-progress-bar" [style.width.%]="(currentStep / 2) * 100"></div>
+      </div>
+      <div class="step-items">
+        <div class="step-item" [class.active]="currentStep === 0" [class.completed]="currentStep > 0" (click)="setStep(0)">
+          <div class="step-circle"><i class="bi bi-journal-text" *ngIf="currentStep <= 0"></i><i class="bi bi-check" *ngIf="currentStep > 0"></i></div>
+          <span class="step-label">Description</span>
+        </div>
+        <div class="step-item" [class.active]="currentStep === 1" [class.completed]="currentStep > 1" (click)="setStep(1)">
+          <div class="step-circle"><i class="bi bi-wallet2" *ngIf="currentStep <= 1"></i><i class="bi bi-check" *ngIf="currentStep > 1"></i></div>
+          <span class="step-label">Budget & Délai</span>
+        </div>
+        <div class="step-item" [class.active]="currentStep === 2" [class.completed]="currentStep > 2" (click)="setStep(2)">
+          <div class="step-circle"><i class="bi bi-bullseye" *ngIf="currentStep <= 2"></i><i class="bi bi-check" *ngIf="currentStep > 2"></i></div>
+          <span class="step-label">Optimisation</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step Content Container -->
+    <div class="step-container shadow-premium">
+      
+      <!-- STEP 1: Description -->
+      <div class="step-pane animate-fade-in" *ngIf="currentStep === 0">
+        <div class="pane-header">
+          <h3><i class="bi bi-journal-text me-2 text-primary"></i> Description du projet</h3>
+          <p>Donnez un maximum de détails pour permettre à notre IA de comprendre vos besoins.</p>
+        </div>
+        
+        <form [formGroup]="descriptionForm" class="custom-form">
+          <div class="form-group mb-4">
+            <label class="form-label">Catégorie du projet</label>
+            <div class="category-grid">
+              <label class="category-card" *ngFor="let cat of categories">
+                <input type="radio" formControlName="category" [value]="cat.value" class="d-none">
+                <div class="card-content" [class.selected]="descriptionForm.get('category')?.value === cat.value">
+                  <span class="cat-icon">{{ cat.label.split(' ')[0] }}</span>
+                  <span class="cat-text">{{ cat.label.substring(cat.label.indexOf(' ') + 1) }}</span>
+                </div>
+              </label>
+            </div>
+          </div>
+          
+          <div class="form-group mb-4">
+            <label class="form-label">Description détaillée <span class="text-danger">*</span></label>
+            <textarea formControlName="description" class="form-control premium-textarea" rows="5" 
+                      placeholder="Ex: J'ai besoin d'un développeur React pour créer un dashboard avec authentification et gestion des paiements via Stripe..."></textarea>
+            <div class="form-text mt-2 text-stone">
+              <i class="bi bi-info-circle me-1"></i> Plus la description est détaillée, plus la correspondance sémantique sera précise. Minimum 10 caractères.
+            </div>
+          </div>
+        </form>
+
+        <div class="pane-footer justify-content-end">
+          <button class="btn-premium btn-primary" (click)="nextStep()" [disabled]="descriptionForm.invalid">
+            Étape suivante <i class="bi bi-arrow-right ms-2"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Budget & Deadline -->
+      <div class="step-pane animate-fade-in" *ngIf="currentStep === 1">
+        <div class="pane-header">
+          <h3><i class="bi bi-wallet2 me-2 text-primary"></i> Budget & Délai</h3>
+          <p>Ces informations permettent d'exclure les profils hors de votre portée financière ou de temps.</p>
+        </div>
+
+        <form [formGroup]="budgetForm" class="custom-form">
+          <div class="row g-4 mb-4">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label">Budget Global Estimé (DT) <span class="text-danger">*</span></label>
+                <div class="input-icon-wrapper">
+                  <i class="bi bi-cash-coin input-icon"></i>
+                  <input type="number" formControlName="budget" class="form-control premium-input with-icon" min="100">
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label">Délai Maximum (Jours) <span class="text-danger">*</span></label>
+                <div class="input-icon-wrapper">
+                  <i class="bi bi-calendar-event input-icon"></i>
+                  <input type="number" formControlName="deadlineDays" class="form-control premium-input with-icon" min="1" max="365">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="alert-premium info">
+            <div class="alert-icon"><i class="bi bi-lightbulb-fill"></i></div>
+            <div class="alert-content">
+              <strong>Le saviez-vous ?</strong> L'IA croise votre budget avec le Taux Horaire (TJM) des freelancers pour calculer un score de compatibilité budgétaire.
+            </div>
+          </div>
+        </form>
+
+        <div class="pane-footer justify-content-between">
+          <button class="btn-premium btn-ghost" (click)="prevStep()">
+            <i class="bi bi-arrow-left me-2"></i> Retour
+          </button>
+          <button class="btn-premium btn-primary" (click)="nextStep()" [disabled]="budgetForm.invalid">
+            Étape suivante <i class="bi bi-arrow-right ms-2"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Optimization Mode -->
+      <div class="step-pane animate-fade-in" *ngIf="currentStep === 2">
+        <div class="pane-header">
+          <h3><i class="bi bi-bullseye me-2 text-primary"></i> Stratégie d'Optimisation</h3>
+          <p>Indiquez à l'algorithme ce qui compte le plus pour vous.</p>
+        </div>
+
+        <form [formGroup]="modeForm" class="custom-form">
+          <div class="optimization-grid mb-4">
+            <label class="opt-card" *ngFor="let mode of optimizationModes">
+              <input type="radio" formControlName="optimizationMode" [value]="mode.value" class="d-none">
+              <div class="opt-content" [class.selected]="modeForm.get('optimizationMode')?.value === mode.value">
+                <div class="opt-header">
+                  <span class="opt-icon">{{ mode.label.split(' ')[0] }}</span>
+                  <span class="opt-title">{{ mode.label.substring(mode.label.indexOf(' ') + 1) }}</span>
+                  <i class="bi bi-check-circle-fill check-icon"></i>
+                </div>
+                <p class="opt-desc">{{ mode.description }}</p>
+              </div>
+            </label>
+          </div>
+        </form>
+
+        <div class="pane-footer justify-content-between">
+          <button class="btn-premium btn-ghost" (click)="prevStep()" [disabled]="isLoading">
+            <i class="bi bi-arrow-left me-2"></i> Retour
+          </button>
+          <button class="btn-premium btn-primary" (click)="onSubmit()" [disabled]="!modeForm.valid || isLoading || !isMLServiceAvailable">
+            <span *ngIf="!isLoading"><i class="bi bi-magic me-2"></i> Lancer l'IA</span>
+            <span *ngIf="isLoading"><span class="spinner-border spinner-border-sm me-2"></span> Analyse en cours...</span>
+          </button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-overlay animate-fade-in">
+    <div class="ai-loader">
+      <div class="loader-ring"></div>
+      <i class="bi bi-robot loader-icon"></i>
+    </div>
+    <h3 class="mt-4 text-midnight">Notre IA analyse les profils...</h3>
+    <p class="text-stone">Calcul des scores sémantiques et prédictions de succès en cours.</p>
+  </div>
+
+  <!-- Results Section -->
+  <div *ngIf="submitted && !isLoading" class="results-container animate-fade-in">
+    
+    <div class="results-header d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="results-title"><i class="bi bi-stars text-warning me-2"></i> Top {{ recommendations.length }} Recommandations</h2>
+        <p class="text-stone">Voici les meilleurs profils trouvés pour votre projet.</p>
+      </div>
+      <button class="btn-premium btn-ghost" (click)="submitted = false; recommendations = []">
+        <i class="bi bi-arrow-counterclockwise me-2"></i> Nouvelle recherche
+      </button>
+    </div>
+
+    <div *ngIf="recommendations.length === 0" class="empty-state shadow-premium">
+      <i class="bi bi-search display-1 text-muted mb-3"></i>
+      <h4>Aucun freelancer trouvé</h4>
+      <p class="text-stone">Modifiez vos critères (augmentez le budget ou le délai) pour obtenir plus de résultats.</p>
+    </div>
+
+    <div class="freelancer-grid">
+      <div class="freelancer-card shadow-premium" *ngFor="let rec of recommendations; let i = index">
+        
+        <div class="card-ribbon" [ngClass]="{'gold': i === 0, 'silver': i === 1, 'bronze': i === 2}">
+          <span class="rank">#{{ i + 1 }}</span>
+        </div>
+
+        <div class="fc-header">
+          <div class="fc-avatar">{{ rec.name.charAt(0) }}</div>
+          <div class="fc-info">
+            <h4>{{ rec.name }}</h4>
+            <div class="fc-badges">
+              <span class="badge-cat">{{ rec.category }}</span>
+              <span class="badge-level" [ngClass]="rec.experienceLevel.toLowerCase()">{{ rec.experienceLevel }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="fc-body">
+          <!-- Scores Section -->
+          <div class="score-container">
+            <div class="score-box" title="Probabilité de succès prédictive">
+              <div class="score-circle" [style.--percent]="(rec.successProba * 100) + '%'">
+                <span class="score-val">{{ (rec.successProba * 100).toFixed(0) }}%</span>
+              </div>
+              <span class="score-lbl">Succès IA</span>
+            </div>
+            
+            <div class="score-box" title="Correspondance sémantique avec votre description">
+              <div class="score-circle semantic" [style.--percent]="(rec.semanticScore * 100) + '%'">
+                <span class="score-val">{{ (rec.semanticScore * 100).toFixed(0) }}%</span>
+              </div>
+              <span class="score-lbl">Pertinence</span>
+            </div>
+            
+            <div class="score-box" title="Note moyenne des clients">
+              <div class="score-circle rating" [style.--percent]="(rec.avgRating / 5 * 100) + '%'">
+                <span class="score-val">{{ rec.avgRating | number:'1.1-1' }}</span>
+              </div>
+              <span class="score-lbl">Note /5</span>
+            </div>
+          </div>
+
+          <div class="fc-details mt-3">
+            <div class="detail-row">
+              <i class="bi bi-cash-stack text-success"></i>
+              <span><strong>{{ rec.hourlyRateUsd }} DT</strong> / heure</span>
+            </div>
+            <div class="detail-row">
+              <i class="bi bi-person-badge text-primary"></i>
+              <span>CIN : {{ rec.cin }}</span>
+            </div>
+          </div>
+
+          <div class="fc-skills mt-3">
+            <span class="skill-tag" *ngFor="let skill of rec.skills.slice(0, 4)">{{ skill }}</span>
+            <span class="skill-tag extra" *ngIf="rec.skills.length > 4">+{{ rec.skills.length - 4 }}</span>
+          </div>
+        </div>
+
+        <div class="fc-footer">
+          <button class="btn-premium btn-ghost w-100" (click)="viewProfile(rec.cin.toString())">Voir Profil</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

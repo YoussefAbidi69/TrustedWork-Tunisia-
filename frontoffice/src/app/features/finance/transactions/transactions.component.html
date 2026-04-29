@@ -1,0 +1,119 @@
+<div class="transactions-page animate-fade-in">
+  <section class="transactions-hero shadow-sm">
+    <div class="transactions-hero__glow transactions-hero__glow--one"></div>
+    <div class="transactions-hero__glow transactions-hero__glow--two"></div>
+
+    <div class="transactions-hero__content">
+      <div class="transactions-hero__copy">
+        <div class="eyebrow-group">
+          <span class="eyebrow">Finance Operations</span>
+          <span class="eyebrow eyebrow--accent">Suivi des Transactions</span>
+        </div>
+
+        <h1>Visualisez précisément le statut de vos contrats et jalons.</h1>
+
+        <p>
+          Retrouvez dans ce tableau détaillé toutes les informations liées au client, au contrat et à l'état du paiement.
+        </p>
+
+        <div class="hero-actions">
+          <button type="button" class="btn btn-primary px-4 py-2 rounded-pill">
+            <i class="bi bi-download me-2"></i> Exporter
+          </button>
+        </div>
+      </div>
+
+      <div class="transactions-hero__panel bg-white rounded-4 shadow-sm p-4">
+        <span class="card-kicker card-kicker--dark">Résumé financier</span>
+
+        <div class="hero-panel-list d-flex flex-column gap-3 mt-3">
+          <article class="hero-panel-item d-flex justify-content-between align-items-center">
+             <span class="text-stone">Transactions (Mois)</span>
+             <strong class="fs-4">{{ filteredTransactions.length }}</strong>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="transactions-stats-grid my-4 row g-3">
+    <div class="col-md-4" *ngFor="let stat of transactionStats; trackBy: trackByLabel">
+      <div class="bg-white rounded-4 shadow-sm p-4 h-100 border-start border-4 border-primary">
+         <span class="text-stone small fw-bold text-uppercase">{{ stat.label }}</span>
+         <h3 class="mt-2 mb-1">{{ stat.value }}</h3>
+         <p class="small text-muted mb-0">{{ stat.caption }}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="transactions-layout p-4 bg-white rounded-4 shadow-sm">
+    <div class="panel-head d-flex justify-content-between align-items-end border-bottom pb-3 mb-4">
+      <div>
+        <span class="text-primary small fw-bold text-uppercase">Historique Complet</span>
+        <h2 class="mb-0 mt-1">Registre des Opérations</h2>
+      </div>
+      <div class="filter-controls d-flex gap-3">
+         <select class="form-select border-0 bg-light rounded-pill px-4" [(ngModel)]="selectedStatus" (ngModelChange)="selectStatus($event)">
+           <option *ngFor="let status of statusFilters" [value]="status">Statut: {{ status }}</option>
+         </select>
+         <select class="form-select border-0 bg-light rounded-pill px-4" [(ngModel)]="selectedDirection" (ngModelChange)="selectDirection($event)">
+           <option *ngFor="let dir of directionFilters" [value]="dir">Type: {{ dir }}</option>
+         </select>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="text-center py-5">
+       <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
+    <div class="table-responsive" *ngIf="!loading && filteredTransactions.length">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="text-muted small text-uppercase bg-light">
+          <tr>
+            <th class="ps-3 py-3 border-0 rounded-start-pill">Réf Transaction</th>
+            <th class="py-3 border-0">Client & Contrat</th>
+            <th class="py-3 border-0">Date</th>
+            <th class="py-3 border-0">Type</th>
+            <th class="py-3 border-0">Montant</th>
+            <th class="py-3 border-0 rounded-end-pill">Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let tx of filteredTransactions; trackBy: trackByTransaction" class="border-bottom">
+            <td class="ps-3 py-3">
+              <strong class="text-midnight">{{ tx.id }}</strong>
+              <div class="small text-muted mt-1">{{ tx.description }}</div>
+            </td>
+            <td class="py-3">
+              <div class="fw-bold">{{ tx.client }}</div>
+              <span class="badge bg-light text-dark border mt-1"><i class="bi bi-folder2-open me-1"></i>{{ tx.contract }}</span>
+            </td>
+            <td class="py-3 text-stone">
+              {{ tx.date }}
+            </td>
+            <td class="py-3">
+              <span [ngClass]="getDirectionClass(tx.direction)" class="fw-bold d-flex align-items-center gap-1">
+                <i class="bi" [ngClass]="tx.direction === 'Incoming' ? 'bi-arrow-down-left-circle-fill' : 'bi-arrow-up-right-circle-fill'"></i>
+                {{ tx.direction === 'Incoming' ? 'Crédit' : 'Débit' }}
+              </span>
+            </td>
+            <td class="py-3">
+               <strong class="fs-5">{{ tx.amount }}</strong>
+            </td>
+            <td class="py-3">
+              <span class="px-3 py-2 rounded-pill small fw-bold" [ngClass]="getStatusClass(tx.status)">
+                {{ tx.status }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loading && !filteredTransactions.length" class="text-center py-5">
+      <i class="bi bi-journal-x display-1 text-light"></i>
+      <h3 class="mt-3 text-muted">Aucune transaction trouvée</h3>
+      <p class="text-stone">Modifiez vos filtres ou effectuez une nouvelle opération.</p>
+    </div>
+  </section>
+</div>

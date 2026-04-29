@@ -1,0 +1,276 @@
+<div class="page-wrapper">
+
+  <!-- PREMIUM HEADER -->
+  <div class="page-header animate-fade-in">
+    <div class="header-left">
+      <span class="badge-label">Engagement System</span>
+      <h1 class="page-title">Events Management</h1>
+      <p class="page-subtitle">Create, coordinate and track community engagements</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-add" (click)="openModal()">
+        <i class="fas fa-magic"></i> Add Event
+      </button>
+    </div>
+  </div>
+
+  <div class="glow-line"></div>
+
+  <!-- STATS GRID -->
+  <div class="stats-grid">
+    <div class="stat-card animate-fade-in">
+      <div class="stat-icon green"><i class="fas fa-calendar-check"></i></div>
+      <div class="stat-label">Active Events</div>
+      <div class="stat-val">{{ events.length }}</div>
+      <span class="stat-badge green">Live Platform</span>
+    </div>
+    <div class="stat-card animate-fade-in">
+      <div class="stat-icon accent"><i class="fas fa-clock"></i></div>
+      <div class="stat-label">Upcoming</div>
+      <div class="stat-val">{{ countByStatus('UPCOMING') }}</div>
+      <span class="stat-badge accent">Next 30 Days</span>
+    </div>
+    <div class="stat-card animate-fade-in">
+      <div class="stat-icon warning"><i class="fas fa-users"></i></div>
+      <div class="stat-label">Registrations</div>
+      <div class="stat-val">{{ totalRegistrations() }}</div>
+      <span class="stat-badge warning">Global Reach</span>
+    </div>
+    <div class="stat-card animate-fade-in">
+      <div class="stat-icon muted"><i class="fas fa-flag-checkered"></i></div>
+      <div class="stat-label">Completed</div>
+      <div class="stat-val">{{ countByStatus('COMPLETED') }}</div>
+      <span class="stat-badge muted">Historical Data</span>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <i class="fas fa-search search-icon"></i>
+      <input class="search-input" placeholder="Search by title..."
+             [(ngModel)]="searchTerm" (input)="applyFilter()">
+    </div>
+    <button class="filter-btn" [class.active]="activeFilter==='ALL'"        (click)="setFilter('ALL')">All</button>
+    <button class="filter-btn" [class.active]="activeFilter==='HACKATHON'"  (click)="setFilter('HACKATHON')">Hackathons</button>
+    <button class="filter-btn" [class.active]="activeFilter==='MEETUP'"     (click)="setFilter('MEETUP')">Meetups</button>
+    <button class="filter-btn" [class.active]="activeFilter==='WEBINAR'"    (click)="setFilter('WEBINAR')">Webinars</button>
+  </div>
+
+  <!-- TABLE CARD -->
+  <div class="table-card animate-slide-up">
+    <div class="card-head">
+      <span class="card-head-title">Platform Engagements</span>
+      <span class="card-head-count">{{ filteredEvents.length }} total items</span>
+    </div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Event Details</th>
+            <th>Type</th>
+            <th>Location</th>
+            <th>Participants / Capacity</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="loading">
+            <td colspan="6" class="empty-row">
+              <i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i> Synchronizing events...
+            </td>
+          </tr>
+          <tr *ngIf="!loading && filteredEvents.length === 0">
+            <td colspan="6" class="empty-row">No active events found for this filter.</td>
+          </tr>
+          <tr *ngFor="let ev of filteredEvents">
+            <!-- Event Info -->
+            <td>
+              <div class="ev-info">
+                <div class="ev-icon" [ngClass]="'ev-icon-' + ev.type.toLowerCase()">
+                  <i class="fas" [ngClass]="getEventIcon(ev.type)"></i>
+                </div>
+                <div>
+                  <div class="ev-title">{{ ev.title }}</div>
+                  <div class="ev-ref">ID #{{ ev.id }} · {{ ev.startDate | date:'d MMM, HH:mm' }}</div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Type -->
+            <td>
+              <div class="type-pill" [ngClass]="'type-' + ev.type.toLowerCase()">
+                {{ ev.type | lowercase }}
+              </div>
+            </td>
+
+            <!-- Location -->
+            <td>
+              <div class="loc-cell">
+                <span class="loc-dot" [class.online]="ev.online" [class.offline]="!ev.online"></span>
+                {{ ev.online ? 'Remote / Cloud' : ev.city }}
+              </div>
+            </td>
+
+            <!-- Participants & Capacity -->
+            <td>
+              <div class="participants-section">
+                <div class="participants-stack" *ngIf="ev.registeredUserIds && ev.registeredUserIds.length > 0; else noParticipants">
+                  <div *ngFor="let id of ev.registeredUserIds | slice:0:4"
+                       class="avatar-stack-item"
+                       [title]="getParticipantName(id) + ' (Click to remove)'">
+                    <img *ngIf="getParticipant(id)?.photo" [src]="getParticipant(id)?.photo" class="avatar-img" (click)="goToUserDetails(id)">
+                    <div *ngIf="!getParticipant(id)?.photo" class="avatar-placeholder" (click)="goToUserDetails(id)">
+                      {{ getParticipantName(id) | slice:0:1 }}
+                    </div>
+                    <div class="del-overlay" (click)="removeParticipant(ev.id!, id)">
+                      <i class="fas fa-times"></i>
+                    </div>
+                  </div>
+                  <div class="stack-more" *ngIf="ev.registeredUserIds.length > 4">
+                    +{{ ev.registeredUserIds.length - 4 }}
+                  </div>
+                </div>
+                <ng-template #noParticipants>
+                  <span class="text-muted small">No attendees</span>
+                </ng-template>
+
+                <div class="capacity-gauge">
+                  <div class="gauge-track">
+                    <div class="gauge-fill" [style.width.%]="ev.capacity > 0 ? (ev.registeredCount / ev.capacity * 100) : 0"></div>
+                  </div>
+                  <div class="gauge-label">{{ ev.registeredCount }} / {{ ev.capacity }}</div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Status -->
+            <td>
+              <span class="status-pill" [ngClass]="getStatusClass(ev.status)">
+                <span class="pill-dot"></span>
+                {{ ev.status | titlecase }}
+              </span>
+            </td>
+
+            <!-- Actions -->
+            <td class="text-end">
+              <div class="action-group">
+                <button class="btn-icon-modern edit" title="Modify Event" (click)="editEvent(ev)">
+                  <i class="fas fa-pen-nib"></i>
+                </button>
+                <button class="btn-icon-modern del" title="Archive Event" (click)="deleteEvent(ev.id!)">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div>
+        <span class="modal-badge">Event Configuration</span>
+        <h2>{{ isEditMode ? 'Modify Experience' : 'New Engagement' }}</h2>
+      </div>
+      <button class="modal-close" (click)="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Experience Title</label>
+        <div class="input-wrap">
+          <i class="fas fa-heading"></i>
+          <input type="text" placeholder="Event name..." [(ngModel)]="newEvent.title">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Narrative Description</label>
+        <div class="input-wrap">
+          <i class="fas fa-align-left"></i>
+          <textarea rows="3" placeholder="Briefly describe the goals..." [(ngModel)]="newEvent.description"></textarea>
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Category</label>
+          <select class="form-control" [(ngModel)]="newEvent.type">
+            <option value="HACKATHON">🏆 Hackathon</option>
+            <option value="MEETUP">👥 Meetup</option>
+            <option value="WEBINAR">🎥 Webinar</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Involvement Limit</label>
+          <div class="input-wrap">
+            <i class="fas fa-users"></i>
+            <input type="number" [(ngModel)]="newEvent.capacity">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>City Hub</label>
+          <div class="input-wrap">
+            <i class="fas fa-city"></i>
+            <input type="text" [(ngModel)]="newEvent.city">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Regional Zone</label>
+          <div class="input-wrap">
+            <i class="fas fa-map-marker-alt"></i>
+            <input type="text" [(ngModel)]="newEvent.governorate">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Launch Timestamp</label>
+          <div class="input-wrap">
+            <i class="fas fa-calendar-plus"></i>
+            <input type="datetime-local" [(ngModel)]="newEvent.startDate">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Closing Timestamp</label>
+          <div class="input-wrap">
+            <i class="fas fa-calendar-times"></i>
+            <input type="datetime-local" [(ngModel)]="newEvent.endDate">
+          </div>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-title">Virtualized Event</div>
+          <div class="toggle-sub">Event will be accessible via cloud platform</div>
+        </div>
+        <label class="toggle-wrap">
+          <input type="checkbox" [(ngModel)]="newEvent.online">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancel</button>
+      <button class="btn-add" (click)="saveEvent()">
+        <i class="fas" [ngClass]="isEditMode ? 'fa-save' : 'fa-plus'"></i>
+        {{ isEditMode ? 'Update Event' : 'Create Event' }}
+      </button>
+    </div>
+
+  </div>
+</div>

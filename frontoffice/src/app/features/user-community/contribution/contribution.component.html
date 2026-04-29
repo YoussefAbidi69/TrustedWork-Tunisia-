@@ -1,0 +1,90 @@
+<div class="cm-page">
+  <app-community-page-header
+    eyebrow="Community"
+    title="Contributions"
+    subtitle="Track how many courses you have shared and unlock downloads when you reach the threshold.">
+  </app-community-page-header>
+
+  <div class="cm-split cm-split--wide-aside">
+    <div class="cm-page-body">
+      <div *ngIf="loading" class="cm-state">Loading contributions…</div>
+      <div *ngIf="!loading && error" class="cm-state cm-state--error">{{ error }}</div>
+
+      <ng-container *ngIf="!loading && !error">
+        <div *ngIf="downloadError" class="cm-banner cm-banner--warn" style="margin-bottom: 16px">{{ downloadError }}</div>
+        <div class="cm-stat-grid">
+          <div class="cm-stat">
+            <div class="cm-stat__value">{{ contribution.sharedCourseCount }}</div>
+            <div class="cm-stat__label">Courses shared</div>
+          </div>
+          <div class="cm-panel" style="box-shadow: var(--shadow-soft)">
+            <div class="cm-panel__body">
+              <div *ngIf="contribution.sharedCourseCount >= 1" class="cm-banner cm-banner--success">
+                You can download published course files.
+              </div>
+              <div *ngIf="contribution.sharedCourseCount < 1" class="cm-banner cm-banner--warn">
+                Share at least one course to unlock downloads.
+              </div>
+              <button type="button" class="cm-btn cm-btn--primary" style="margin-top: 12px" (click)="recordShare()" [disabled]="shareBusy">
+                Record a course share
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <section class="cm-panel" style="margin-top: 20px">
+          <div class="cm-panel__head">
+            <h2 class="cm-panel__title">Published courses</h2>
+            <span class="cm-muted">{{ coursePosts.length }} items</span>
+          </div>
+          <div class="cm-panel__body">
+            <div *ngIf="coursePosts.length === 0" class="cm-state">No published courses returned by the API.</div>
+
+            <div class="cm-table-wrap" *ngIf="coursePosts.length > 0">
+              <table class="cm-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Community</th>
+                    <th>Author</th>
+                    <th style="text-align: right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let post of coursePosts">
+                    <td>
+                      <strong>{{ post.title }}</strong>
+                      <div class="cm-btn-group" style="margin-top: 8px">
+                        <span class="cm-badge cm-badge--course">{{ post.type }}</span>
+                        <span class="cm-badge cm-badge--published">{{ post.status }}</span>
+                      </div>
+                    </td>
+                    <td>#{{ post.communityId }}</td>
+                    <td>#{{ post.createdBy }}</td>
+                    <td style="text-align: right">
+                      <a class="cm-btn cm-btn--secondary cm-btn--sm" [routerLink]="['post', post.id]" [relativeTo]="route.parent">View</a>
+                      <button type="button" class="cm-btn cm-btn--primary cm-btn--sm" (click)="downloadPost(post)">Download</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </ng-container>
+    </div>
+
+    <aside class="cm-aside-stack">
+      <section class="cm-aside-card">
+        <h3 class="cm-aside-card__title">How it works</h3>
+        <div class="cm-aside-card__body">
+          <p class="cm-tip">Sharing increments your contribution score through the contributions API.</p>
+          <p class="cm-tip">After one share, download endpoints allow streaming course files you have access to.</p>
+          <hr class="cm-divider" />
+          <p class="cm-muted">Shared count</p>
+          <p style="font-size: 1.25rem; font-weight: 800">{{ contribution.sharedCourseCount }}</p>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>

@@ -1,0 +1,14 @@
+.jb-toast {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  margin: 0 0 1rem;
+  padding: 0.8rem 1.1rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(105deg, var(--olive-light), var(--azure-light));
+  color: var(--midnight);
+  border: 1px solid var(--olive);
+  box-shadow: var(--shadow-md);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}

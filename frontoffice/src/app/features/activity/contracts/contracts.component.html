@@ -1,0 +1,166 @@
+<div class="contracts-page animate-fade-in">
+
+  <!-- Header Section -->
+  <header class="page-hero">
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <span class="badge-kicker">Gestion d'activité</span>
+      <h1>Mes Contrats ✍️</h1>
+      <p>Suivez l'évolution de vos collaborations professionnelles et gérez vos jalons de livraison en toute sécurité.</p>
+      
+      <div class="hero-actions" *ngIf="isClient || isAdmin">
+        <a routerLink="/app/activity/contracts/new" class="btn-premium shadow-lg">
+          <i class="bi bi-plus-circle-fill"></i> Créer un nouveau contrat
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout-grid">
+    <!-- Contracts Main Feed -->
+    <main class="main-feed">
+      
+      <!-- Loading & Error -->
+      <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3 text-muted fw-bold">Synchronisation de vos contrats...</p>
+      </div>
+
+      <div *ngIf="error" class="alert alert-danger rounded-4 border-0 shadow-sm mb-4">
+        <i class="bi bi-exclamation-octagon-fill me-2"></i> {{ error }}
+      </div>
+
+      <!-- Filters -->
+      <div *ngIf="!loading && !error && contracts.length > 0" class="search-wrapper">
+        <i class="bi bi-search"></i>
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Rechercher par titre de projet..." class="search-input">
+      </div>
+
+      <!-- The List -->
+      <div *ngIf="!loading && !error" class="contracts-list">
+        
+        <article *ngFor="let contract of filteredContracts" 
+                 class="contract-card" 
+                 [ngClass]="'status-' + contract.status.toLowerCase()"
+                 [class.expanded]="expandedContracts[contract.id!]">
+          
+          <!-- Card Body Clickable -->
+          <div class="card-header-main" (click)="toggleMilestones(contract.id!)">
+            <div class="header-left">
+              <span class="ref-pill">{{ contract.reference }}</span>
+              <h3 class="project-title">{{ contract.projectTitle }}</h3>
+              
+              <div class="meta-group">
+                <div class="meta-item">
+                  <i class="bi bi-calendar3"></i>
+                  <span>{{ contract.createdAt | date:'dd MMM yyyy' }}</span>
+                </div>
+                <div class="meta-item">
+                  <i class="bi bi-person-circle"></i>
+                  <span>{{ isFreelancer ? 'Client: ' + contract.clientCin : 'Freelancer: ' + contract.freelancerCin }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="header-right">
+              <span class="price-tag">{{ contract.montantTotal | number:'1.2-2' }} <small class="fs-6">DT</small></span>
+              <span class="status-badge-premium" [ngClass]="contract.status.toLowerCase()">
+                <i class="bi bi-patch-check-fill" *ngIf="contract.status === 'COMPLETED'"></i>
+                <i class="bi bi-clock-history" *ngIf="contract.status === 'ACTIVE' || contract.status === 'PENDING_SIGNATURE'"></i>
+                {{ contract.status }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Milestones Drawer -->
+          <div class="milestones-drawer" *ngIf="expandedContracts[contract.id!]">
+            <div class="drawer-title">
+              <h4><i class="bi bi-list-task me-2"></i> Jalons & Livrables</h4>
+              <a class="btn-detail-premium" [routerLink]="['/app/activity/contracts', contract.id]">
+                Détails du dossier <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+
+            <!-- Loading Milestones -->
+            <div *ngIf="loadingMilestones[contract.id!]" class="text-center py-4">
+              <div class="spinner-border spinner-border-sm text-primary"></div>
+            </div>
+
+            <!-- Milestone Grid -->
+            <div *ngIf="!loadingMilestones[contract.id!] && milestonesMap[contract.id!]?.length" class="milestones-stack">
+              <div *ngFor="let m of milestonesMap[contract.id!]" class="milestone-item">
+                <div class="m-index">{{ m.ordre }}</div>
+                <div class="m-content">
+                  <div class="m-info">
+                    <strong>{{ m.titre }}</strong>
+                    <span><i class="bi bi-calendar-check me-1"></i> Échéance: {{ m.deadline | date:'dd/MM/yyyy' }}</span>
+                  </div>
+                  <div class="m-actions">
+                    <span class="status-badge-premium sm" [ngClass]="m.status.toLowerCase()">{{ m.status }}</span>
+                    <div class="btn-group-premium">
+                      <button *ngIf="isFreelancer && m.status === 'PENDING'" (click)="startMilestone(contract.id!, m.id!)" class="btn-action-premium primary">Démarrer</button>
+                      <button *ngIf="isFreelancer && (m.status === 'IN_PROGRESS' || m.status === 'STARTED')" (click)="submitMilestone(contract.id!, m.id!)" class="btn-action-premium success">Livrables</button>
+                      <button *ngIf="(isClient || isAdmin) && m.status === 'SUBMITTED'" (click)="approveMilestone(contract.id!, m.id!)" class="btn-action-premium success">Approuver</button>
+                      <button *ngIf="(isClient || isAdmin) && m.status === 'SUBMITTED'" (click)="rejectMilestone(contract.id!, m.id!)" class="btn-action-premium warning">Refuser</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="!loadingMilestones[contract.id!] && !milestonesMap[contract.id!]?.length" class="text-center py-3 opacity-50">
+              <p class="fst-italic mb-0">Aucun jalon configuré.</p>
+            </div>
+          </div>
+        </article>
+
+        <!-- Empty States -->
+        <div *ngIf="contracts.length > 0 && filteredContracts.length === 0" class="text-center py-5 bg-white rounded-5 shadow-sm border">
+          <i class="bi bi-search display-3 text-light mb-3 d-block"></i>
+          <h3 class="h4 fw-bold">Aucun résultat</h3>
+          <p class="text-muted">Aucun contrat ne correspond à "{{ searchTerm }}".</p>
+        </div>
+
+        <div *ngIf="contracts.length === 0" class="text-center py-5 bg-white rounded-5 shadow-sm border">
+          <i class="bi bi-file-earmark-lock display-3 text-light mb-3 d-block"></i>
+          <h3 class="h4 fw-bold">Aucun contrat actif</h3>
+          <p class="text-muted">C'est ici que vous gérerez vos futures collaborations.</p>
+          <a *ngIf="isClient || isAdmin" routerLink="/app/activity/contracts/new" class="btn btn-primary rounded-pill px-5 py-3 fw-bold mt-3 shadow">
+            Créer mon premier contrat
+          </a>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Sidebar Info -->
+    <aside class="sidebar-aside">
+      <div class="sidebar-panel">
+        <span class="badge-kicker">Performance</span>
+        <h3>Résumé Global</h3>
+        
+        <div class="stat-card-mini">
+          <label>Missions actives</label>
+          <strong>{{ contracts.length }}</strong>
+        </div>
+
+        <div class="stat-card-mini">
+          <label>Volume financier</label>
+          <strong>{{ 1250 | number:'1.0-0' }} DT</strong>
+        </div>
+
+        <div class="help-box">
+          <h4><i class="bi bi-lightbulb-fill me-2"></i> Astuce</h4>
+          <p>Cliquez sur un contrat pour gérer ses jalons. Chaque jalon validé libère automatiquement les fonds correspondants.</p>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 mt-5 text-success fw-bold">
+          <i class="bi bi-shield-check fs-4"></i>
+          <span>Protégé par TrustedWork Escrow</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Modals remain for logic (already handled) -->
+</div>

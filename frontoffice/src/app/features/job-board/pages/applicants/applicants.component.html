@@ -1,0 +1,235 @@
+<div class="applications-page">
+  <div class="error-state" *ngIf="error && !loading">
+    <i class="fas fa-exclamation-circle"></i>
+    <p>{{ error }}</p>
+  </div>
+
+  <section class="applications-hero" *ngIf="job">
+    <div class="applications-hero__glow applications-hero__glow--one"></div>
+    <div class="applications-hero__content">
+      <div class="applications-hero__copy">
+        <a routerLink="/app/job-board/my-jobs" class="hero-btn hero-btn--ghost btn-sm"><i class="fas fa-arrow-left"></i> Back to My Jobs</a>
+        <h1><i class="fas fa-users"></i> Applicants for '{{ job.title }}'</h1>
+        <p class="subtitle">{{ total }} total &middot; {{ pending }} pending review</p>
+      </div>
+      <div class="header-actions">
+        <span class="badge badge-opportunity">Opportunity Score: {{ job.opportunityScore | number:'1.0-0' }}</span>
+        <button class="hero-btn hero-btn--ghost btn-sm"><i class="fas fa-file-export"></i> Export</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-grid" *ngIf="!loading && !error">
+    <article class="stat-card">
+      <div class="stat-card__label"><i class="fas fa-users" style="margin-right: 6px; color: #6b7788;"></i> Total applicants</div>
+      <strong class="stat-value" [countUp]="total" [countUpDuration]="1000">0</strong>
+    </article>
+    <article class="stat-card">
+      <div class="stat-card__label"><i class="fas fa-star" style="margin-right: 6px; color: #f59e0b;"></i> Shortlisted</div>
+      <strong class="stat-value stat-value--warning" [countUp]="shortlisted" [countUpDuration]="1000">0</strong>
+    </article>
+    <article class="stat-card">
+      <div class="stat-card__label"><i class="fas fa-check-circle" style="margin-right: 6px; color: #10b981;"></i> Accepted</div>
+      <strong class="stat-value stat-value--success" [countUp]="accepted" [countUpDuration]="1000">0</strong>
+    </article>
+    <article class="stat-card">
+      <div class="stat-card__label"><i class="fas fa-times-circle" style="margin-right: 6px; color: #ef4444;"></i> Rejected</div>
+      <strong class="stat-value" [countUp]="rejected" [countUpDuration]="1000">0</strong>
+    </article>
+  </section>
+
+  <div class="filter-bar" *ngIf="!loading && !error">
+    <div class="filter-group">
+      <label>Status</label>
+      <select [(ngModel)]="statusFilter">
+        <option>All</option>
+        <option>Pending</option>
+        <option>Shortlisted</option>
+        <option>Accepted</option>
+        <option>Rejected</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Match Score</label>
+      <select [(ngModel)]="matchScoreFilter">
+        <option>Any</option>
+        <option>50%+</option>
+        <option>70%+</option>
+        <option>85%+</option>
+      </select>
+    </div>
+    <div class="filter-actions">
+      <button class="hero-btn hero-btn--ghost btn-sm" (click)="toggleSort()">
+        <i class="fas fa-sort"></i> Sort by Match
+      </button>
+    </div>
+  </div>
+
+  <section class="top-match" *ngIf="topMatch">
+    <div class="top-match-card">
+      <span class="card-kicker top-kicker">✦ AI Top Pick</span>
+      <div class="top-match-content">
+        <div class="top-match-score">
+          <div class="ring-wrapper">
+             <strong [countUp]="topMatch.matchScore?.totalScore ?? 0" [countUpDuration]="1500" [countUpDecimals]="0">0</strong>%
+          </div>
+          <span>Match Score</span>
+        </div>
+        <div class="top-match-info">
+          <h3>{{ topMatch.freelancerName || ('Freelancer #' + topMatch.freelancerId) }}</h3>
+          <p>Rate: ${{ topMatch.proposedRate | number }} &middot; Applied {{ topMatch.appliedAt | timeAgo }}</p>
+        </div>
+        <div class="top-match-actions">
+          <button type="button" class="hero-btn hero-btn--primary" (click)="updateStatus(topMatch, 'ACCEPTED')">Accept Top Pick</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="applications-layout">
+    <div class="applications-main">
+      <div class="panel-card">
+        <div class="panel-head">
+          <div>
+            <span class="card-kicker">Applicant list</span>
+            <h2>Proposals</h2>
+          </div>
+        </div>
+
+        <div class="jb-apps-skeleton" *ngIf="loading">
+          <div class="jb-apps-skeleton__row" *ngFor="let _ of [1, 2, 3]"></div>
+        </div>
+
+        <div class="application-list" *ngIf="!loading && !error && rows.length">
+          <article class="application-card" *ngFor="let app of rows" [ngClass]="{'border-shortlisted': app.status === 'SHORTLISTED', 'border-accepted': app.status === 'ACCEPTED'}">
+            <div class="app-grid">
+              
+              <!-- Avatar Column -->
+              <div class="app-col-avatar">
+                <div class="avatar avatar-md">
+                   {{ app.freelancerName ? app.freelancerName.charAt(0).toUpperCase() : 'F' }}
+                </div>
+              </div>
+              
+              <!-- Content Column -->
+              <div class="app-col-content">
+                <div class="name-row">
+                  <h3 class="freelancer-name">{{ app.freelancerName || ('Freelancer #' + app.freelancerId) }}</h3>
+                  <app-status-badge [status]="app.status" type="application"></app-status-badge>
+                  <span class="badge-ai-top" *ngIf="topMatch?.id === app.id">✦ AI Top Pick</span>
+                </div>
+                <div class="meta-row">
+                  <span><i class="far fa-clock"></i> Applied {{ app.appliedAt | timeAgo }}</span>
+                  <span><i class="fas fa-dollar-sign"></i> Proposed rate: ${{ app.proposedRate | number : '1.0-0' }}</span>
+                </div>
+                <div class="match-row">
+                  <span class="match-label"><i class="fas fa-percent"></i> Match Score</span>
+                  <div class="progress-bar-container">
+                    <div class="progress-bar" [style.width.%]="app.matchScore?.totalScore || 0"></div>
+                  </div>
+                  <span class="match-value">{{ app.matchScore?.totalScore || 0 | number:'1.0-0' }}%</span>
+                </div>
+                <div class="cover-row">
+                  <p class="cover-text" [class.expanded]="app._coverExpanded"><i>{{ app.coverLetter }}</i></p>
+                  <button class="toggle-btn hero-btn--ghost btn-sm" (click)="app._coverExpanded = !app._coverExpanded">
+                    {{ app._coverExpanded ? 'Show less' : 'Read full proposal' }}
+                  </button>
+                </div>
+                <div class="gauge-block" *ngIf="expandedId === app.id && predictions[app.freelancerId]">
+                  <strong style="margin-top: 1rem; display: block;">Success prediction</strong>
+                  <app-success-prediction-gauge [probability]="predictions[app.freelancerId]!.probability" [confidenceLabel]="predictions[app.freelancerId]!.confidenceLabel" size="compact"></app-success-prediction-gauge>
+                </div>
+              </div>
+              
+              <!-- Actions Column -->
+              <div class="app-col-actions">
+                <button type="button" class="hero-btn hero-btn--secondary full-width" *ngIf="app.status === 'PENDING'" (click)="updateStatus(app, 'SHORTLISTED')">
+                  <i class="fas fa-star"></i> Shortlist
+                </button>
+                <button type="button" class="hero-btn hero-btn--primary full-width" *ngIf="app.status === 'PENDING' || app.status === 'SHORTLISTED'" (click)="updateStatus(app, 'ACCEPTED')">
+                  <i class="fas fa-check"></i> Accept
+                </button>
+                <button type="button" class="hero-btn hero-btn--ghost full-width" *ngIf="app.status === 'PENDING' || app.status === 'SHORTLISTED'" (click)="updateStatus(app, 'REJECTED')">
+                  <i class="fas fa-times"></i> Reject
+                </button>
+                <button type="button" class="hero-btn hero-btn--ghost full-width" (click)="messageApplicant(app)">
+                  <i class="fas fa-comment"></i> Message
+                </button>
+                <button type="button" class="hero-btn hero-btn--ghost full-width" (click)="toggleExpand(app.id)">
+                  <i class="fas fa-user"></i> {{ expandedId === app.id ? 'Hide details' : 'AI Prediction' }}
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="empty-state" *ngIf="!loading && !error && !rows.length">
+          <i class="fas fa-inbox"></i>
+          <p>No proposals match the current filters.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Chat Drawer -->
+<div class="chat-drawer-overlay" *ngIf="chatOpen" (click)="closeChat()"></div>
+<div class="chat-drawer" [class.open]="chatOpen">
+  <div class="chat-header">
+    <div class="chat-header-info">
+      <h3><i class="fas fa-comment-dots"></i> {{ chatPeerLabel }}</h3>
+      <span class="chat-job-subtitle">{{ job?.title }}</span>
+    </div>
+    <button class="icon-btn" (click)="closeChat()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+  
+  <div class="chat-messages" #chatScroll>
+    <div class="chat-spinner" *ngIf="chatLoading">
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
+    
+    <div class="empty-chat" *ngIf="!chatLoading && !chatMessages.length">
+      <i class="fas fa-paper-plane"></i>
+      <p>No messages yet. Say hello!</p>
+    </div>
+
+    <div class="message-bubble" 
+         *ngFor="let msg of chatMessages" 
+         [class.me]="isMe(msg)" 
+         [class.them]="!isMe(msg)">
+      <div class="bubble-content">
+        {{ msg.content }}
+      </div>
+      <div class="bubble-meta">
+        {{ msg.sentAt | date:'shortTime' }}
+        <span *ngIf="isMe(msg) && msg.read" class="read-receipt">
+          <i class="fas fa-check-double"></i>
+        </span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="chat-input-area">
+    <div class="chat-attached-file" *ngIf="chatAttachedFile">
+      <span><i class="fas fa-file"></i> {{ chatAttachedFile.name }}</span>
+      <button class="icon-btn" (click)="removeAttachedFile()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="chat-composer">
+      <button class="icon-btn attach-btn" (click)="fileInput.click()">
+        <i class="fas fa-paperclip"></i>
+      </button>
+      <input type="file" #fileInput (change)="attachFile($event)" style="display: none">
+      <textarea 
+        [(ngModel)]="chatInput" 
+        placeholder="Type a message..." 
+        (keydown.enter)="$event.preventDefault(); sendChat()"
+        [disabled]="chatSending">
+      </textarea>
+      <button class="send-btn" (click)="sendChat()" [disabled]="(!chatInput.trim() && !chatAttachedFile) || chatSending">
+        <i class="fas" [class.fa-paper-plane]="!chatSending" [class.fa-spinner]="chatSending" [class.fa-spin]="chatSending"></i>
+      </button>
+    </div>
+  </div>
+</div>

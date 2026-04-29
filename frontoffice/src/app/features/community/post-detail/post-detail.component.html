@@ -1,0 +1,141 @@
+<div class="community-page" *ngIf="post">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ post.title }}</h1>
+      <p class="page-subtitle">{{ post.content | slice:0:100 }}...</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" routerLink="../../posts">
+        <i class="fas fa-arrow-left"></i> Back to List
+      </button>
+      <button class="btn btn-sm btn-danger" (click)="deletePost()">
+        <i class="fas fa-trash"></i> Delete Post
+      </button>
+    </div>
+  </div>
+
+  <!-- Metadata Card -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 20px; padding: 20px;">
+      <div>
+        <div style="color: var(--color-text-muted); font-size: 0.8rem; text-transform: uppercase;">ID</div>
+        <div style="font-weight: 500;">#{{ post.id }}</div>
+      </div>
+      <div>
+        <div style="color: var(--color-text-muted); font-size: 0.8rem; text-transform: uppercase;">Author</div>
+        <div style="display: flex; align-items: center; gap: 8px; font-weight: 500;">
+                  <div class="avatar-circle" style="width: 24px; height: 24px; font-size: 0.7rem; background: var(--color-primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    {{ userMap[post.authorId! || post.createdBy!] ? userMap[post.authorId! || post.createdBy!].charAt(0).toUpperCase() : 'U' }}
+                  </div>
+                  {{ userMap[post.authorId! || post.createdBy!] || 'User #' + (post.authorId || post.createdBy || 'N/A') }}
+                </div>
+      </div>
+      <div>
+        <div style="color: var(--color-text-muted); font-size: 0.8rem; text-transform: uppercase;">Community</div>
+        <div style="font-weight: 500;">#{{ post.communityId }}</div>
+      </div>
+      <div>
+        <div style="color: var(--color-text-muted); font-size: 0.8rem; text-transform: uppercase;">Status</div>
+        <div style="font-weight: 500;"><span class="badge badge-accent">{{ post.status }}</span></div>
+      </div>
+      <div>
+        <div style="color: var(--color-text-muted); font-size: 0.8rem; text-transform: uppercase;">Votes</div>
+        <div style="display: flex; gap: 8px; font-weight: 500; align-items: center;">
+          <span style="color: #6ee7b7;"><i class="fas fa-thumbs-up"></i> {{ post.upvoteCount ?? 0 }}</span>
+          <span style="color: #888;"><i class="fas fa-thumbs-down"></i> {{ post.downvoteCount ?? 0 }}</span>
+        </div>
+      </div>
+      <div>
+        <div style="color: var(--color-text-muted); font-size: 0.8rem; text-transform: uppercase;">Reports</div>
+        <div style="font-weight: 500;" [style.color]="(post.reportCount ?? 0) > 0 ? '#fca5a5' : 'inherit'">
+          <i class="fas fa-flag"></i> {{ post.reportCount ?? 0 }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs" style="display: flex; gap: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--color-border);">
+    <button class="btn btn-ghost" [ngClass]="{'active': activeTab === 'comments'}" (click)="setTab('comments')" style="border-bottom: 2px solid transparent; border-radius: 0;" [style.border-bottom-color]="activeTab === 'comments' ? 'var(--color-primary)' : 'transparent'">
+      Comments ({{ comments.length }})
+    </button>
+    <button class="btn btn-ghost" [ngClass]="{'active': activeTab === 'reports'}" (click)="setTab('reports')" style="border-bottom: 2px solid transparent; border-radius: 0;" [style.border-bottom-color]="activeTab === 'reports' ? 'var(--color-primary)' : 'transparent'">
+      Reports ({{ reports.length }})
+    </button>
+  </div>
+
+  <!-- Comments Tab -->
+  <div class="card" *ngIf="activeTab === 'comments'">
+    <div class="table-wrap">
+      <table class="tw-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Author</th>
+            <th>Content</th>
+            <th>Created At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of comments">
+            <td>{{ item.id }}</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="avatar-circle" style="width: 24px; height: 24px; font-size: 0.7rem; background: var(--color-primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                  {{ userMap[item.authorId!] ? userMap[item.authorId!].charAt(0).toUpperCase() : 'U' }}
+                </div>
+                <span>{{ userMap[item.authorId!] || 'User #' + item.authorId }}</span>
+              </div>
+            </td>
+            <td><strong>{{ item.content }}</strong></td>
+            <td>{{ item.createdAt | date:'MMM d, yyyy' }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="comments.length === 0"><p>No comments found.</p></div>
+    </div>
+  </div>
+
+  <!-- Reports Tab -->
+  <div class="card" *ngIf="activeTab === 'reports'">
+    <div class="table-wrap">
+      <table class="tw-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Reporter</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Created At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of reports">
+            <td>{{ item.id }}</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="avatar-circle" style="width: 24px; height: 24px; font-size: 0.7rem; background: var(--color-primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                  {{ userMap[item.reporterId!] ? userMap[item.reporterId!].charAt(0).toUpperCase() : 'U' }}
+                </div>
+                <span>{{ userMap[item.reporterId!] || 'User #' + item.reporterId }}</span>
+              </div>
+            </td>
+            <td><strong>{{ item.reason }}</strong></td>
+            <td>
+              <span class="badge" [ngClass]="item.status === 'OPEN' ? 'badge-warning' : (item.status === 'RESOLVED' ? 'badge-success' : 'badge-danger')">
+                {{ item.status }}
+              </span>
+            </td>
+            <td>{{ item.createdAt | date:'MMM d, yyyy' }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="reports.length === 0"><p>No reports found.</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="empty-state" *ngIf="loading && !post">
+  <i class="fas fa-spinner fa-spin"></i>
+  <p>Loading post details...</p>
+</div>

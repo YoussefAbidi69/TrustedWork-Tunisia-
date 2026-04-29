@@ -1,0 +1,97 @@
+<div class="cs-dashboard">
+  <!-- Interactive Background Blobs -->
+  <div class="cs-bg-blobs">
+    <div class="cs-blob cs-blob-1"></div>
+    <div class="cs-blob cs-blob-2"></div>
+    <div class="cs-blob cs-blob-3"></div>
+  </div>
+
+  <div class="cs-wrapper">
+    <nav class="cs-nav">
+      <div class="cs-nav-glass">
+        <div class="cs-nav-left">
+           <div class="cs-logo-icon"><i class="fas fa-layer-group"></i></div>
+           <span class="cs-breadcrumb">Creator Dashboard ✨</span>
+        </div>
+        <div class="cs-nav-right">
+           <a routerLink="/app/community/course/new" class="cs-btn cs-btn-gradient">
+              <i class="fas fa-plus"></i> New Course
+           </a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="cs-main">
+      <header class="cs-header">
+        <h1 class="cs-title">My Courses</h1>
+        <p class="cs-subtitle">Manage your published curriculum and active drafts.</p>
+      </header>
+
+      <div *ngIf="error" class="cs-alert-error">
+        <i class="fas fa-exclamation-triangle"></i> {{error}}
+      </div>
+
+      <div *ngIf="loading" class="cs-loading">
+        <div class="loading-bars"><span></span><span></span><span></span></div>
+        Loading your courses...
+      </div>
+
+      <ng-container *ngIf="!loading && !error">
+        
+        <div class="cs-tabs">
+          <button class="cs-tab-btn" [class.active]="activeTab === 'all'" (click)="setTab('all')">All Courses</button>
+          <button class="cs-tab-btn" [class.active]="activeTab === 'published'" (click)="setTab('published')">
+            Published <span class="cs-badge">{{published.length}}</span>
+          </button>
+          <button class="cs-tab-btn" [class.active]="activeTab === 'drafts'" (click)="setTab('drafts')">
+            Drafts <span class="cs-badge cs-badge-draft-count">{{drafts.length}}</span>
+          </button>
+        </div>
+
+        <div class="cs-grid">
+          <!-- Published Courses -->
+          <ng-container *ngIf="activeTab === 'all' || activeTab === 'published'">
+            <div *ngFor="let course of published" class="cs-card glass-panel published-card">
+              <div class="cs-card-header">
+                <span class="cs-status-indicator status-live"><i class="fas fa-circle"></i> Published</span>
+                <button class="cs-icon-btn"><i class="fas fa-ellipsis-v"></i></button>
+              </div>
+              <h3 class="cs-card-title">{{ course.title || 'Untitled Course' }}</h3>
+              <p class="cs-card-desc">{{ (course.description | slice:0:100) || 'No description provided.' }}...</p>
+              
+              <div class="cs-card-actions">
+                <a [routerLink]="['/app/community/course', course.id]" class="cs-btn-course">View Course</a>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Draft Courses -->
+          <ng-container *ngIf="activeTab === 'all' || activeTab === 'drafts'">
+            <div *ngFor="let course of drafts" class="cs-card glass-panel draft-card">
+              <div class="cs-card-header">
+                <span class="cs-status-indicator status-draft"><i class="far fa-edit"></i> Draft</span>
+                <button class="cs-icon-btn"><i class="fas fa-ellipsis-v"></i></button>
+              </div>
+              <h3 class="cs-card-title">{{ course.title || 'Untitled Draft' }}</h3>
+              <p class="cs-card-desc">{{ (course.description | slice:0:100) || 'Work in progress...' }}...</p>
+              
+              <div class="cs-card-actions">
+                <a [routerLink]="['/app/community/course/new']" [queryParams]="{edit: course.id}" class="cs-btn-course ghost">Continue Editing</a>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Empty State -->
+          <div *ngIf="drafts.length === 0 && published.length === 0" class="cs-empty-state glass-panel">
+            <div class="cs-empty-icon"><i class="fas fa-book-open"></i></div>
+            <h3>No courses found</h3>
+            <p>You haven't created any courses yet. Start sharing your knowledge today!</p>
+            <a routerLink="/app/community/course/new" class="cs-btn cs-btn-gradient mt-4">
+              Create First Course
+            </a>
+          </div>
+        </div>
+      </ng-container>
+    </main>
+  </div>
+</div>

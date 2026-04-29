@@ -1,0 +1,247 @@
+<div class="escrow-page">
+  <section class="escrow-hero">
+    <div class="escrow-hero__glow escrow-hero__glow--one"></div>
+    <div class="escrow-hero__glow escrow-hero__glow--two"></div>
+
+    <div class="escrow-hero__content">
+      <div class="escrow-hero__copy">
+        <div class="eyebrow-group">
+          <span class="eyebrow">Escrow Center</span>
+          <span class="eyebrow eyebrow--accent">Secure milestone payments</span>
+        </div>
+
+        <h1>Protect project payments with a transparent and premium escrow workflow.</h1>
+
+        <p>
+          Follow secured milestone funds, release readiness and review states through
+          a finance experience built around trust, clarity and dispute protection.
+        </p>
+
+        <div class="hero-actions">
+          <button type="button" class="hero-btn hero-btn--primary">
+            View release rules
+          </button>
+          <button type="button" class="hero-btn hero-btn--secondary">
+            Export escrow report
+          </button>
+        </div>
+      </div>
+
+      <div class="escrow-hero__panel">
+        <span class="card-kicker card-kicker--dark">Security overview</span>
+
+        <div class="hero-panel-list">
+          <article class="hero-panel-item">
+            <strong>100%</strong>
+            <span>Funds protected before approval</span>
+          </article>
+
+          <article class="hero-panel-item">
+            <strong>6</strong>
+            <span>Active secured milestones</span>
+          </article>
+
+          <article class="hero-panel-item">
+            <strong>2</strong>
+            <span>Cases requiring review attention</span>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="escrow-stats-grid">
+    <article
+      class="escrow-stat-card"
+      *ngFor="let stat of escrowStats; trackBy: trackByLabel"
+    >
+      <span>{{ stat.label }}</span>
+      <strong>{{ stat.value }}</strong>
+      <p>{{ stat.caption }}</p>
+    </article>
+  </section>
+
+  <section class="escrow-toolbar">
+    <div class="toolbar-copy">
+      <span>Escrow filters</span>
+      <strong>Refine by release state</strong>
+    </div>
+
+    <div class="filter-chip-group">
+      <button
+        type="button"
+        class="filter-chip"
+        *ngFor="let status of statusFilters"
+        [class.active]="selectedStatus === status"
+        (click)="selectStatus(status)"
+      >
+        {{ status }}
+      </button>
+    </div>
+  </section>
+
+  <section class="escrow-layout">
+    <div class="escrow-list-panel">
+      <div class="panel-head">
+        <div>
+          <span class="card-kicker">Escrow cases</span>
+          <h2>Protected project funds</h2>
+        </div>
+        <div class="panel-head__meta">
+          {{ filteredEscrowRecords.length }} case(s)
+        </div>
+      </div>
+
+      <div class="escrow-list" *ngIf="filteredEscrowRecords.length; else emptyEscrow">
+        <article
+          class="escrow-card"
+          *ngFor="let item of filteredEscrowRecords; trackBy: trackByEscrow"
+          [class.escrow-card--active]="selectedEscrow?.id === item.id"
+          (click)="selectEscrow(item)"
+        >
+          <div class="escrow-card__top">
+            <div>
+              <div class="escrow-card__id">{{ item.id }}</div>
+              <h3>{{ item.project }}</h3>
+              <p>{{ item.client }} · {{ item.milestone }}</p>
+            </div>
+
+            <div class="escrow-badges">
+              <span class="escrow-status" [ngClass]="getStatusClass(item.status)">
+                {{ item.status }}
+              </span>
+              <span class="escrow-priority" [ngClass]="getPriorityClass(item.priority)">
+                {{ item.priority }}
+              </span>
+            </div>
+          </div>
+
+          <p class="escrow-description">
+            {{ item.description }}
+          </p>
+
+          <div class="escrow-progress">
+            <div class="escrow-progress__bar">
+              <div
+                class="escrow-progress__fill"
+                [style.width.%]="item.progress"
+              ></div>
+            </div>
+
+            <div class="escrow-progress__meta">
+              <span>{{ item.progress }}% milestone completion</span>
+              <strong>Release {{ item.releaseDate }}</strong>
+            </div>
+          </div>
+
+          <div class="escrow-card__meta">
+            <div class="meta-box">
+              <span>Amount</span>
+              <strong>{{ item.amount }}</strong>
+            </div>
+
+            <div class="meta-box">
+              <span>Secured</span>
+              <strong>{{ item.securedAmount }}</strong>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <ng-template #emptyEscrow>
+        <div class="empty-panel">
+          <div class="empty-panel__icon">
+            <i class="fas fa-lock"></i>
+          </div>
+          <h3>No escrow cases found</h3>
+          <p>Try changing the selected status filter.</p>
+        </div>
+      </ng-template>
+    </div>
+
+    <aside class="escrow-details-panel" *ngIf="selectedEscrow">
+      <div class="panel-head">
+        <div>
+          <span class="card-kicker">Escrow details</span>
+          <h2>{{ selectedEscrow.id }}</h2>
+        </div>
+
+        <span
+          class="escrow-status"
+          [ngClass]="getStatusClass(selectedEscrow.status)"
+        >
+          {{ selectedEscrow.status }}
+        </span>
+      </div>
+
+      <div class="details-card">
+        <div class="details-card__header">
+          <div>
+            <h3>{{ selectedEscrow.project }}</h3>
+            <p>{{ selectedEscrow.client }}</p>
+          </div>
+
+          <span
+            class="escrow-priority"
+            [ngClass]="getPriorityClass(selectedEscrow.priority)"
+          >
+            {{ selectedEscrow.priority }} priority
+          </span>
+        </div>
+
+        <div class="details-grid">
+          <div class="detail-box">
+            <span>Protected amount</span>
+            <strong>{{ selectedEscrow.securedAmount }}</strong>
+          </div>
+
+          <div class="detail-box">
+            <span>Release target</span>
+            <strong>{{ selectedEscrow.releaseDate }}</strong>
+          </div>
+
+          <div class="detail-box">
+            <span>Milestone</span>
+            <strong>{{ selectedEscrow.milestone }}</strong>
+          </div>
+
+          <div class="detail-box">
+            <span>Completion</span>
+            <strong>{{ selectedEscrow.progress }}%</strong>
+          </div>
+        </div>
+
+        <div class="details-section">
+          <h4>Description</h4>
+          <p>{{ selectedEscrow.description }}</p>
+        </div>
+
+        <div class="details-section">
+          <h4>Security timeline</h4>
+          <div class="timeline-list">
+            <article
+              class="timeline-item"
+              *ngFor="let step of selectedEscrow.timeline"
+            >
+              <span class="timeline-item__dot"></span>
+              <div class="timeline-item__content">
+                <strong>{{ step.title }}</strong>
+                <small>{{ step.date }}</small>
+                <p>{{ step.description }}</p>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="details-actions">
+          <button type="button" class="hero-btn hero-btn--primary">
+            Open release details
+          </button>
+          <button type="button" class="hero-btn hero-btn--secondary">
+            Report escrow issue
+          </button>
+        </div>
+      </div>
+    </aside>
+  </section>
+</div>

@@ -1,0 +1,25 @@
+{
+  "name": "trustedwork-community-discord-bot",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Discord bot mirroring the TrustedWork Community app: posts, courses, feed sync, digests, and interactive embeds",
+  "scripts": {
+    "start": "node src/index.js",
+    "register-commands": "node scripts/register-commands.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "i18next": "^26.0.8",
+    "node-cron": "^3.0.3",
+    "openai": "^6.34.0",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^6.0.1",
+    "vectra": "^0.14.0"
+  }
+}

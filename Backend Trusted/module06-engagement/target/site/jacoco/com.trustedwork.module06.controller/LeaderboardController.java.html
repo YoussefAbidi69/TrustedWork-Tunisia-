@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LeaderboardController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">module06-engagement</a> &gt; <a href="index.source.html" class="el_package">com.trustedwork.module06.controller</a> &gt; <span class="el_source">LeaderboardController.java</span></div><h1>LeaderboardController.java</h1><pre class="source lang-java linenums">package com.trustedwork.module06.controller;
+
+import com.trustedwork.module06.dto.LeaderboardDTO;
+import com.trustedwork.module06.service.LeaderboardService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/leaderboard&quot;)
+@RequiredArgsConstructor
+@Tag(name = &quot;Leaderboard&quot;, description = &quot;Classement par gouvernorat&quot;)
+public class LeaderboardController {
+
+    private final LeaderboardService leaderboardService;
+
+    @GetMapping
+    public ResponseEntity&lt;List&lt;LeaderboardDTO&gt;&gt; getGlobal() {
+<span class="fc" id="L21">        return ResponseEntity.ok(leaderboardService.getGlobalLeaderboard());</span>
+    }
+
+    @GetMapping(&quot;/governorate/{gov}&quot;)
+    public ResponseEntity&lt;List&lt;LeaderboardDTO&gt;&gt; getByGov(@PathVariable String gov) {
+<span class="fc" id="L26">        return ResponseEntity.ok(leaderboardService.getLeaderboardByGovernorate(gov));</span>
+    }
+
+    @PostMapping(&quot;/recompute&quot;)
+    public ResponseEntity&lt;Void&gt; recompute() {
+<span class="fc" id="L31">        leaderboardService.recomputeAllRanks();</span>
+<span class="fc" id="L32">        return ResponseEntity.ok().build();</span>
+    }
+
+    @GetMapping(&quot;/debug&quot;)
+    public ResponseEntity&lt;String&gt; debug() {
+        try {
+<span class="fc" id="L38">            leaderboardService.getGlobalLeaderboard();</span>
+<span class="fc" id="L39">            return ResponseEntity.ok(&quot;OK&quot;);</span>
+<span class="fc" id="L40">        } catch (Exception e) {</span>
+<span class="fc" id="L41">            java.io.StringWriter sw = new java.io.StringWriter();</span>
+<span class="fc" id="L42">            e.printStackTrace(new java.io.PrintWriter(sw));</span>
+<span class="fc" id="L43">            return ResponseEntity.status(500).body(sw.toString());</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

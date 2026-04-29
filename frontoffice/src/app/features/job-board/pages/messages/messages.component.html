@@ -1,0 +1,186 @@
+<div class="messages-page">
+  <div class="messages-container full-height">
+    <aside class="left-panel">
+      <header class="left-header">
+        <h2>Messages</h2>
+        <button class="icon-btn" type="button" aria-label="Compose">
+          <i class="fas fa-edit"></i>
+        </button>
+      </header>
+      <div class="search-wrap">
+        <i class="fas fa-search"></i>
+        <input
+          type="text"
+          [ngModel]="searchQuery"
+          (ngModelChange)="onSearch($event)"
+          placeholder="Search conversations..."
+        />
+      </div>
+      <div class="conversation-list">
+        <div class="chat-empty-state" *ngIf="filteredConversations.length === 0">
+          <i class="fas fa-inbox"></i>
+          <p>No conversations yet.</p>
+        </div>
+        <button
+          type="button"
+          class="conversation-row"
+          *ngFor="let conv of filteredConversations"
+          [class.active]="selectedConv?.id === conv.id"
+          (click)="selectConversation(conv)"
+        >
+          <div class="avatar avatar-md">{{ getInitials(conv.otherPartyName) }}</div>
+          <div class="row-body">
+            <div class="row-top">
+              <strong>{{ conv.otherPartyName }}</strong>
+              <span class="time">{{ formatConversationTime(conv.lastMessageAt) }}</span>
+            </div>
+            <div class="job-title">{{ conv.jobTitle }}</div>
+            <div class="row-bottom">
+              <span class="last-message">{{ conv.lastMessage }}</span>
+              <span *ngIf="conv.unreadCount > 0" class="badge badge-accent">
+                {{ conv.unreadCount }}
+              </span>
+            </div>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <section class="right-panel">
+      <ng-container *ngIf="selectedConv; else noConversation">
+        <header class="chat-header sticky">
+          <div class="header-user">
+            <div class="avatar avatar-md">{{ getInitials(selectedConv.otherPartyName) }}</div>
+            <div>
+              <strong>{{ selectedConv.otherPartyName }}</strong>
+              <div class="muted">{{ selectedConv.jobTitle }}</div>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button class="icon-btn" type="button" (click)="openMeetModal()" title="Schedule Meet">
+              <i class="fas fa-calendar-plus"></i>
+            </button>
+            <button class="icon-btn" type="button" (click)="triggerFilePicker()" title="Attach file">
+              <i class="fas fa-paperclip"></i>
+            </button>
+            <div class="menu-wrap">
+              <button class="icon-btn" type="button" (click)="isActionMenuOpen = !isActionMenuOpen">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+              <div *ngIf="isActionMenuOpen" class="menu-dropdown">
+                <button type="button">Archive</button>
+                <button type="button">Mark as unread</button>
+                <button type="button">Report</button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="chat-messages" #chatScroll>
+          <div class="chat-empty-state" *ngIf="!chatLoading && chatMessages.length === 0">
+            <i class="fas fa-comments"></i>
+            <p>No messages yet. Start the conversation.</p>
+          </div>
+          <ng-container *ngFor="let msg of chatMessages; let i = index">
+            <div class="date-separator" *ngIf="getDateSeparator(i)">{{ getDateSeparator(i) }}</div>
+            <div class="message-row" [class.me]="isMe(msg)">
+              <div class="message-bubble" [class.me]="isMe(msg)" [class.meet]="msg.type === 'meet'">
+                <ng-container [ngSwitch]="msg.type">
+                  <ng-container *ngSwitchCase="'file'">
+                    <i class="fas fa-file"></i>
+                    <span>{{ msg.content }}</span>
+                    <a *ngIf="msg.fileUrl" href="#" (click)="downloadAttachment(msg, $event)">Download</a>
+                    <span *ngIf="!msg.fileUrl" class="muted">No file link</span>
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'meet'">
+                    <i class="fas fa-video"></i>
+                    <span>{{ msg.content }}</span>
+                    <a *ngIf="msg.meetUrl" [href]="msg.meetUrl" target="_blank" rel="noopener">{{ msg.meetUrl }}</a>
+                    <button
+                      *ngIf="!msg.meetUrl"
+                      type="button"
+                      class="meet-generate-btn"
+                      [disabled]="meetSubmitting"
+                      (click)="generateMeetLink(msg.content)"
+                    >
+                      {{ meetSubmitting ? 'Generating...' : 'Generate link' }}
+                    </button>
+                  </ng-container>
+                  <span *ngSwitchDefault>{{ msg.content }}</span>
+                </ng-container>
+              </div>
+              <div class="timestamp muted">{{ msg.createdAt | date:'shortTime' }}</div>
+            </div>
+          </ng-container>
+        </div>
+
+        <footer class="composer sticky-bottom">
+          <input #fileInput type="file" hidden (change)="onFileSelected($event)" />
+          <div *ngIf="attachedFileName" class="file-chip">
+            <span>{{ attachedFileName }}</span>
+            <button type="button" (click)="removeAttachedFile()"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="composer-row">
+            <button class="icon-btn" type="button" (click)="triggerFilePicker()">
+              <i class="fas fa-paperclip"></i>
+            </button>
+            <textarea
+              #composerTextarea
+              rows="1"
+              [ngModel]="composerContent"
+              (ngModelChange)="composerContent = $event"
+              (input)="onComposerInput()"
+              (keydown)="onComposerKeydown($event)"
+              placeholder="Type your message"
+            ></textarea>
+            <button class="send-btn" type="button" (click)="sendChat()" [disabled]="!canSend()">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </footer>
+      </ng-container>
+      <ng-template #noConversation>
+        <div class="chat-empty-state">
+          <i class="fas fa-comments"></i>
+          <h3>Select a conversation</h3>
+        </div>
+      </ng-template>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="isMeetModalOpen">
+    <div class="meet-modal">
+      <h3>Schedule Meet</h3>
+      <label>Title</label>
+      <input type="text" [(ngModel)]="meetForm.title" />
+      <div class="row-2">
+        <div>
+          <label>Date</label>
+          <input type="date" [(ngModel)]="meetForm.date" [min]="getMinDate()" />
+        </div>
+        <div>
+          <label>Time</label>
+          <input type="time" [(ngModel)]="meetForm.time" />
+        </div>
+      </div>
+      <label>Duration</label>
+      <select [(ngModel)]="meetForm.duration">
+        <option [ngValue]="30">30 min</option>
+        <option [ngValue]="45">45 min</option>
+        <option [ngValue]="60">1 hour</option>
+        <option [ngValue]="90">1.5 hours</option>
+        <option [ngValue]="120">2 hours</option>
+      </select>
+      <label>Optional note</label>
+      <textarea rows="3" [(ngModel)]="meetForm.note"></textarea>
+      <div class="modal-footer">
+        <button type="button" class="btn-muted" (click)="closeMeetModal()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="button" class="btn-primary" (click)="createMeet()" [disabled]="meetSubmitting">
+          <i class="fas fa-calendar-check"></i> Create Meet Link
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

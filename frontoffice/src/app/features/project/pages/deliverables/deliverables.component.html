@@ -1,0 +1,319 @@
+<div class="deliverables-page" *ngIf="!loading">
+
+  <!-- ══ HEADER ══ -->
+  <div class="del-header">
+    <div class="del-header__left">
+      <button class="back-btn" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1><i class="fas fa-file-arrow-up"></i> Livrables</h1>
+        <p>{{ project.title }} — {{ deliverables.length }} livrable(s)</p>
+      </div>
+    </div>
+<!-- Dans del-header, remplace le bouton -->
+<button class="btn-submit" (click)="openSubmitModal()" *ngIf="isFreelancer || isAdmin">
+  <i class="fas fa-plus"></i> Soumettre un livrable
+</button>
+  </div>
+
+  <!-- ══ STATS ROW ══ -->
+  <div class="del-stats">
+    <div class="del-stat">
+      <div class="del-stat__icon del-stat__icon--all"><i class="fas fa-layer-group"></i></div>
+      <div>
+        <strong>{{ countByStatus['ALL'] }}</strong>
+        <span>Total</span>
+      </div>
+    </div>
+    <div class="del-stat">
+      <div class="del-stat__icon del-stat__icon--pending"><i class="fas fa-hourglass-half"></i></div>
+      <div>
+        <strong>{{ countByStatus['SUBMITTED'] }}</strong>
+        <span>En attente</span>
+      </div>
+    </div>
+    <div class="del-stat">
+      <div class="del-stat__icon del-stat__icon--approved"><i class="fas fa-circle-check"></i></div>
+      <div>
+        <strong>{{ countByStatus['APPROVED'] }}</strong>
+        <span>Approuvés</span>
+      </div>
+    </div>
+    <div class="del-stat">
+      <div class="del-stat__icon del-stat__icon--rejected"><i class="fas fa-circle-xmark"></i></div>
+      <div>
+        <strong>{{ countByStatus['REJECTED'] }}</strong>
+        <span>Rejetés</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ FILTER TABS ══ -->
+  <div class="del-filters">
+    <button class="filter-tab" [class.filter-tab--active]="activeFilter === 'ALL'" (click)="setFilter('ALL')">
+      Tous <span class="filter-count">{{ countByStatus['ALL'] }}</span>
+    </button>
+    <button class="filter-tab filter-tab--pending" [class.filter-tab--active]="activeFilter === 'SUBMITTED'" (click)="setFilter('SUBMITTED')">
+      En attente <span class="filter-count">{{ countByStatus['SUBMITTED'] }}</span>
+    </button>
+    <button class="filter-tab filter-tab--approved" [class.filter-tab--active]="activeFilter === 'APPROVED'" (click)="setFilter('APPROVED')">
+      Approuvés <span class="filter-count">{{ countByStatus['APPROVED'] }}</span>
+    </button>
+    <button class="filter-tab filter-tab--rejected" [class.filter-tab--active]="activeFilter === 'REJECTED'" (click)="setFilter('REJECTED')">
+      Rejetés <span class="filter-count">{{ countByStatus['REJECTED'] }}</span>
+    </button>
+  </div>
+
+  <!-- ══ DELIVERABLES LIST ══ -->
+  <div class="del-list" *ngIf="filteredDeliverables.length > 0">
+    <div class="del-card" *ngFor="let del of filteredDeliverables" (click)="openDetail(del)">
+
+      <!-- Status indicator -->
+      <div class="del-card__status-bar" [ngClass]="getStatusClass(del.status)"></div>
+
+      <div class="del-card__body">
+        <div class="del-card__top">
+          <div class="del-card__icon" [ngClass]="getStatusClass(del.status)">
+            <i class="fas" [ngClass]="getStatusIcon(del.status)"></i>
+          </div>
+          <div class="del-card__info">
+            <h3>{{ del.title }}</h3>
+            <p>{{ del.description | slice:0:120 }}{{ del.description && del.description.length > 120 ? '...' : '' }}</p>
+          </div>
+          <span class="del-badge" [ngClass]="getStatusClass(del.status)">
+            {{ getStatusLabel(del.status) }}
+          </span>
+        </div>
+
+        <!-- Meta -->
+        <div class="del-card__meta">
+          <span class="meta-item">
+            <i class="fas fa-link"></i>
+            <a [href]="del.fileUrl" target="_blank" (click)="$event.stopPropagation()" class="file-link">
+              <i class="fas" [ngClass]="getFileIcon(del.fileUrl)"></i>
+              {{ del.fileUrl | slice:0:40 }}{{ del.fileUrl && del.fileUrl.length > 40 ? '...' : '' }}
+            </a>
+          </span>
+          <span class="meta-item" *ngIf="del.taskId">
+            <i class="fas fa-list-check"></i> {{ getTaskTitle(del.taskId) }}
+          </span>
+          <span class="meta-item">
+            <i class="fas fa-calendar"></i> {{ formatDate(del.submittedAt) }}
+          </span>
+        </div>
+
+        <!-- Review comment -->
+        <div class="del-card__review" *ngIf="del.reviewComment">
+          <i class="fas fa-comment"></i>
+          <div>
+            <strong>Commentaire du client :</strong>
+            <p>{{ del.reviewComment }}</p>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="del-card__actions">
+          <!-- Client : review si SUBMITTED -->
+<!-- Dans del-card__actions, remplace le bouton review -->
+<button *ngIf="del.status === 'SUBMITTED' && (isClient || isAdmin)"
+        class="btn-review"
+        (click)="openReviewModal(del); $event.stopPropagation()">
+  <i class="fas fa-gavel"></i> Reviewer
+</button>
+
+          <!-- Ouvrir le fichier -->
+          <a *ngIf="del.fileUrl" [href]="del.fileUrl" target="_blank"
+             class="btn-open" (click)="$event.stopPropagation()">
+            <i class="fas fa-external-link"></i> Ouvrir
+          </a>
+
+          <!-- Supprimer -->
+<!-- Remplace le bouton supprimer -->
+<button class="btn-del" (click)="deleteDeliverable(del, $event)"
+        *ngIf="isAdmin || (isFreelancer && del.status === 'SUBMITTED')">
+  <i class="fas fa-trash"></i>
+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ EMPTY STATE ══ -->
+  <div *ngIf="!loading && filteredDeliverables.length === 0" class="del-empty">
+    <div class="del-empty__icon"><i class="fas fa-folder-open"></i></div>
+    <h3 *ngIf="activeFilter === 'ALL'">Aucun livrable soumis</h3>
+    <h3 *ngIf="activeFilter !== 'ALL'">Aucun livrable {{ getStatusLabel(activeFilter).toLowerCase() }}</h3>
+    <p>Les livrables sont soumis par le freelancer et validés par le client.</p>
+<button class="btn-submit" (click)="openSubmitModal()" *ngIf="isFreelancer || isAdmin">
+  <i class="fas fa-plus"></i> Soumettre un livrable
+</button>
+  </div>
+</div>
+
+<!-- ══ LOADING ══ -->
+<div *ngIf="loading" class="loading-full">
+  <i class="fas fa-spinner fa-spin"></i> Chargement des livrables...
+</div>
+
+<!-- ══ MODAL SOUMISSION ══ -->
+<div class="modal-overlay" *ngIf="showSubmitModal" (click)="closeSubmitModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-file-arrow-up"></i> Soumettre un livrable</h3>
+      <button class="modal-close" (click)="closeSubmitModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <div class="modal-body">
+      <div class="field">
+        <label>Titre du livrable <span class="req">*</span></label>
+        <input type="text" [(ngModel)]="newDeliverable.title" placeholder="Ex: Maquettes Figma v2" class="finput">
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea [(ngModel)]="newDeliverable.description" placeholder="Décrivez ce livrable..." class="finput ftextarea" rows="3"></textarea>
+      </div>
+      <div class="field">
+        <label>Lien du fichier <span class="req">*</span></label>
+        <div class="url-input-wrap">
+          <i class="fas fa-link"></i>
+          <input type="url" [(ngModel)]="newDeliverable.fileUrl" placeholder="https://figma.com/file/..." class="finput finput--url">
+        </div>
+        <span class="field-hint">Google Drive, Figma, Dropbox, GitHub, ou tout lien direct</span>
+      </div>
+      <div class="field">
+        <label>Tâche liée <span class="optional">(optionnel)</span></label>
+        <select [(ngModel)]="newDeliverable.taskId" class="finput">
+          <option [ngValue]="undefined">— Aucune tâche —</option>
+          <option *ngFor="let task of tasks" [ngValue]="task.id">{{ task.title }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeSubmitModal()">Annuler</button>
+      <button class="btn-primary" (click)="submitDeliverable()"
+              [disabled]="!newDeliverable.title.trim() || !newDeliverable.fileUrl.trim()">
+        <i class="fas fa-paper-plane"></i> Soumettre
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL REVIEW ══ -->
+<div class="modal-overlay" *ngIf="showReviewModal && reviewingDeliverable" (click)="closeReviewModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-gavel"></i> Reviewer le livrable</h3>
+      <button class="modal-close" (click)="closeReviewModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <div class="modal-body">
+      <div class="review-info">
+        <h4>{{ reviewingDeliverable.title }}</h4>
+        <p>{{ reviewingDeliverable.description }}</p>
+        <a [href]="reviewingDeliverable.fileUrl" target="_blank" class="review-link">
+          <i class="fas fa-external-link"></i> Voir le fichier
+        </a>
+      </div>
+
+      <div class="field">
+        <label>Votre décision</label>
+        <div class="decision-btns">
+          <button class="decision-btn decision-btn--approve"
+                  [class.decision-btn--selected]="reviewStatus === 'APPROVED'"
+                  (click)="reviewStatus = 'APPROVED'">
+            <i class="fas fa-circle-check"></i> Approuver
+          </button>
+          <button class="decision-btn decision-btn--reject"
+                  [class.decision-btn--selected]="reviewStatus === 'REJECTED'"
+                  (click)="reviewStatus = 'REJECTED'">
+            <i class="fas fa-circle-xmark"></i> Rejeter
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Commentaire {{ reviewStatus === 'REJECTED' ? '' : '' }}</label>
+        <textarea [(ngModel)]="reviewComment"
+                  [placeholder]="reviewStatus === 'APPROVED' ? 'Excellent travail ! (optionnel)' : 'Raison du rejet...'"
+                  class="finput ftextarea" rows="3"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeReviewModal()">Annuler</button>
+      <button class="btn-primary" [ngClass]="reviewStatus === 'REJECTED' ? 'btn-primary--reject' : ''"
+              (click)="submitReview()">
+        <i class="fas" [ngClass]="reviewStatus === 'APPROVED' ? 'fa-check' : 'fa-xmark'"></i>
+        {{ reviewStatus === 'APPROVED' ? 'Approuver' : 'Rejeter' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL DÉTAIL ══ -->
+<div class="modal-overlay" *ngIf="showDetailModal && selectedDeliverable" (click)="closeDetail()">
+  <div class="modal-card modal-card--wide" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-file"></i> Détail du livrable</h3>
+      <button class="modal-close" (click)="closeDetail()"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <div class="modal-body">
+      <div class="detail-row">
+        <span class="detail-label">Titre</span>
+        <strong>{{ selectedDeliverable.title }}</strong>
+      </div>
+      <div class="detail-row" *ngIf="selectedDeliverable.description">
+        <span class="detail-label">Description</span>
+        <p>{{ selectedDeliverable.description }}</p>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Statut</span>
+        <span class="del-badge" [ngClass]="getStatusClass(selectedDeliverable.status)">
+          <i class="fas" [ngClass]="getStatusIcon(selectedDeliverable.status)"></i>
+          {{ getStatusLabel(selectedDeliverable.status) }}
+        </span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Fichier</span>
+        <a [href]="selectedDeliverable.fileUrl" target="_blank" class="review-link">
+          <i class="fas" [ngClass]="getFileIcon(selectedDeliverable.fileUrl)"></i>
+          {{ selectedDeliverable.fileUrl }}
+        </a>
+      </div>
+      <div class="detail-row" *ngIf="selectedDeliverable.taskId">
+        <span class="detail-label">Tâche liée</span>
+        <span>{{ getTaskTitle(selectedDeliverable.taskId) }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Soumis le</span>
+        <span>{{ formatDate(selectedDeliverable.submittedAt) }}</span>
+      </div>
+      <div class="detail-row" *ngIf="selectedDeliverable.reviewedAt">
+        <span class="detail-label">Reviewé le</span>
+        <span>{{ formatDate(selectedDeliverable.reviewedAt) }}</span>
+      </div>
+      <div class="detail-row" *ngIf="selectedDeliverable.reviewComment">
+        <span class="detail-label">Commentaire</span>
+        <div class="review-comment-box">
+          <i class="fas fa-comment"></i>
+          <p>{{ selectedDeliverable.reviewComment }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+<!-- Dans modal-footer du détail -->
+<button *ngIf="selectedDeliverable.status === 'SUBMITTED' && (isClient || isAdmin)"
+        class="btn-review" (click)="closeDetail(); openReviewModal(selectedDeliverable)">
+  <i class="fas fa-gavel"></i> Reviewer
+</button>
+      <a *ngIf="selectedDeliverable.fileUrl" [href]="selectedDeliverable.fileUrl" target="_blank" class="btn-open-lg">
+        <i class="fas fa-external-link"></i> Ouvrir le fichier
+      </a>
+      <button class="btn-cancel" (click)="closeDetail()">Fermer</button>
+    </div>
+  </div>
+</div>

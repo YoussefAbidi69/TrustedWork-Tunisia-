@@ -1,0 +1,105 @@
+@import '../../styles/job-board-ai.scss';
+
+.fs {
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--stone);
+  background: var(--white);
+  box-shadow: var(--shadow-soft);
+}
+
+.fs--compact {
+  padding: 0.45rem 0.65rem;
+  font-size: 0.85rem;
+}
+
+.fs__head {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+}
+
+.fs__icon {
+  font-size: 1.25rem;
+}
+
+.fs--low .fs__icon {
+  color: var(--olive);
+}
+
+.fs--mid .fs__icon {
+  color: var(--gold);
+}
+
+.fs--high .fs__icon {
+  color: var(--danger);
+}
+
+.fs__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.fs__msg {
+  margin-top: 0.15rem;
+  color: var(--midnight);
+}
+
+.fs__msg--bold {
+  font-weight: 800;
+}
+
+.fs__expand {
+  margin-top: 0.65rem;
+  border: none;
+  background: transparent;
+  color: var(--azure);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.fs__panel {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--sand);
+  padding-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.fs__signal-head {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--charcoal);
+}
+
+.fs__bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--sand);
+  margin-top: 0.25rem;
+  overflow: hidden;
+}
+
+.fs__bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--danger);
+  transition: width 1s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fs__bar-fill {
+    transition: none;
+  }
+}
+
+.fs--high {
+  border-color: var(--danger);
+}

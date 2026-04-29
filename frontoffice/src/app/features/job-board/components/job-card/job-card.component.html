@@ -1,0 +1,29 @@
+<article class="jc" (click)="emit()" (keyup.enter)="emit()" tabindex="0" role="button">
+  <div class="jc__head">
+    <h3 class="jc__title">{{ job.title }}</h3>
+    <span class="jc__cat">{{ job.category }}</span>
+  </div>
+  <p class="jc__meta">
+    {{ job.budgetMin | number }} – {{ job.budgetMax | number }} TND ·
+    {{ job.remote ? 'Remote' : (job.location || 'On-site') }}
+  </p>
+  <div class="jc__skills">
+    <app-skill-tag *ngFor="let s of skillsPreview(job)" [skillName]="s" [isAiDetected]="false"></app-skill-tag>
+  </div>
+  <div class="jc__ai" (click)="$event.stopPropagation()">
+    <app-fraud-shield
+      *ngIf="showFraudShield"
+      [fraudRiskScore]="job.fraudRiskScore"
+      [signals]="job.fraudSignals || []"
+      size="compact">
+    </app-fraud-shield>
+    <app-opportunity-score-card
+      *ngIf="showOpportunityScore"
+      [opportunity]="opportunityView(job)"
+      size="compact">
+    </app-opportunity-score-card>
+  </div>
+  <div class="jc__foot" *ngIf="job.publishedAt">
+    <small>Published {{ job.publishedAt | date : 'mediumDate' }}</small>
+  </div>
+</article>

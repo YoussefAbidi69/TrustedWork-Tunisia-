@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BadgeServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">module06-engagement</a> &gt; <a href="index.source.html" class="el_package">com.trustedwork.module06.service.impl</a> &gt; <span class="el_source">BadgeServiceImpl.java</span></div><h1>BadgeServiceImpl.java</h1><pre class="source lang-java linenums">package com.trustedwork.module06.service.impl;
+
+import com.trustedwork.module06.dto.BadgeDTO;
+import com.trustedwork.module06.entity.Badge;
+import com.trustedwork.module06.exception.ResourceNotFoundException;
+import com.trustedwork.module06.mapper.BadgeMapper;
+import com.trustedwork.module06.repository.BadgeRepository;
+import com.trustedwork.module06.repository.UserBadgeRepository;
+import com.trustedwork.module06.service.BadgeService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class BadgeServiceImpl implements BadgeService {
+
+    private final BadgeRepository badgeRepository;
+    private final UserBadgeRepository userBadgeRepository;
+
+    @Override
+    public List&lt;BadgeDTO&gt; getAllBadges() {
+<span class="fc" id="L25">        return badgeRepository.findAll().stream()</span>
+<span class="fc" id="L26">                .map(badge -&gt; {</span>
+<span class="fc" id="L27">                    var ownerships = userBadgeRepository.findByBadgeId(badge.getId());</span>
+<span class="fc" id="L28">                    return BadgeMapper.toDto(badge, ownerships);</span>
+                })
+<span class="fc" id="L30">                .toList();</span>
+    }
+
+    @Override
+    public BadgeDTO getBadgeById(Long id) {
+<span class="fc" id="L35">        Badge badge = badgeRepository.findById(id)</span>
+<span class="pc" id="L36">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Badge not found: &quot; + id));</span>
+<span class="fc" id="L37">        var ownerships = userBadgeRepository.findByBadgeId(badge.getId());</span>
+<span class="fc" id="L38">        return BadgeMapper.toDto(badge, ownerships);</span>
+    }
+
+    @Override
+    public BadgeDTO createBadge(BadgeDTO dto) {
+<span class="nc" id="L43">        Badge badge = BadgeMapper.toEntity(dto);</span>
+<span class="nc" id="L44">        return BadgeMapper.toDto(badgeRepository.save(badge));</span>
+    }
+
+    @Override
+    public BadgeDTO updateBadge(Long id, BadgeDTO dto) {
+<span class="nc" id="L49">        Badge badge = badgeRepository.findById(id)</span>
+<span class="nc" id="L50">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Badge not found: &quot; + id));</span>
+        
+<span class="nc" id="L52">        badge.setName(dto.getName());</span>
+<span class="nc" id="L53">        badge.setCode(dto.getCode());</span>
+<span class="nc" id="L54">        badge.setDescription(dto.getDescription());</span>
+<span class="nc" id="L55">        badge.setRarity(dto.getRarity());</span>
+<span class="nc" id="L56">        badge.setXpReward(dto.getXpReward());</span>
+<span class="nc" id="L57">        badge.setIconUrl(dto.getIconUrl());</span>
+        
+<span class="nc" id="L59">        return BadgeMapper.toDto(badgeRepository.save(badge));</span>
+    }
+
+    @Override
+    public void deleteBadge(Long id) {
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        if (!badgeRepository.existsById(id)) {</span>
+<span class="nc" id="L65">            throw new ResourceNotFoundException(&quot;Badge not found: &quot; + id);</span>
+        }
+<span class="nc" id="L67">        badgeRepository.deleteById(id);</span>
+<span class="nc" id="L68">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

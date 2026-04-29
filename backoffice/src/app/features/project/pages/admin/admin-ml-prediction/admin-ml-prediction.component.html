@@ -1,0 +1,215 @@
+<div class="ml-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fas fa-brain text-accent"></i> Prédiction ML — Risques de Retard</h1>
+      <p class="page-subtitle">Analyse Random Forest — probabilité de retard par projet</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" (click)="goBack()"><i class="fas fa-arrow-left"></i> Retour</button>
+      <button class="btn btn-ghost btn-sm" (click)="loadAll()"><i class="fas fa-rotate-right"></i> Refresh</button>
+    </div>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="ml-stats-row" *ngIf="!loading">
+    <div class="ml-stat ml-stat--total">
+      <i class="fas fa-layer-group"></i>
+      <div>
+        <span class="ml-stat-value">{{ entries.length }}</span>
+        <span class="ml-stat-label">Projets analysés</span>
+      </div>
+    </div>
+    <div class="ml-stat ml-stat--ok">
+      <i class="fas fa-circle-check"></i>
+      <div>
+        <span class="ml-stat-value">{{ totalOnTime }}</span>
+        <span class="ml-stat-label">Dans les délais</span>
+      </div>
+    </div>
+    <div class="ml-stat ml-stat--risk">
+      <i class="fas fa-triangle-exclamation"></i>
+      <div>
+        <span class="ml-stat-value">{{ totalAtRisk }}</span>
+        <span class="ml-stat-label">À risque</span>
+      </div>
+    </div>
+    <div class="ml-stat ml-stat--loaded">
+      <i class="fas fa-robot"></i>
+      <div>
+        <span class="ml-stat-value">{{ totalLoaded }}/{{ entries.length }}</span>
+        <span class="ml-stat-label">Modèle chargé</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar" *ngIf="!loading">
+    <div class="filter-chips">
+      <span class="chip-label">Verdict :</span>
+      <span class="chip"
+            *ngFor="let v of verdictList"
+            [class.active]="filterVerdict === v"
+            (click)="filterVerdict = v; applyFilters()">
+        {{ v === 'ALL' ? 'Tous' : v === 'AT_RISK' ? '⚠ À risque' : '✓ Dans les délais' }}
+      </span>
+    </div>
+    <div class="filter-chips">
+      <span class="chip-label">Statut :</span>
+      <span class="chip"
+            *ngFor="let s of statusList"
+            [class.active]="filterStatus === s"
+            (click)="filterStatus = s; applyFilters()">
+        {{ s === 'ALL' ? 'Tous' : statusLabel(s) }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="empty-state" *ngIf="loading">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Chargement des projets...</p>
+  </div>
+
+  <!-- Grid -->
+  <div class="ml-grid" *ngIf="!loading">
+
+    <div class="ml-card" *ngFor="let entry of filtered"
+         [class.ml-card--risk]="entry.prediction?.willBeLate"
+         [class.ml-card--ok]="entry.prediction && !entry.prediction.willBeLate">
+
+      <!-- Card Header -->
+      <div class="ml-card-header">
+        <div class="ml-card-meta">
+          <span class="ml-card-title">{{ entry.project.title }}</span>
+          <span class="ml-card-sub">
+            Projet #{{ entry.project.id }}
+            <span *ngIf="entry.project.freelancerFirstName">
+              · {{ entry.project.freelancerFirstName }} {{ entry.project.freelancerLastName }}
+            </span>
+          </span>
+        </div>
+        <div class="ml-card-header-right">
+          <span class="badge" [ngClass]="statusBadge(entry.project.status)">{{ statusLabel(entry.project.status) }}</span>
+          <button class="btn-refresh" (click)="refreshOne(entry)" [disabled]="entry.loading" title="Relancer l'analyse">
+            <i class="fas" [ngClass]="entry.loading ? 'fa-spinner fa-spin' : 'fa-rotate-right'"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading skeleton -->
+      <div class="ml-loading" *ngIf="entry.loading">
+        <i class="fas fa-spinner fa-spin"></i>
+        <span>Analyse ML en cours...</span>
+      </div>
+
+      <!-- Error state -->
+      <div class="ml-error" *ngIf="entry.error && !entry.loading">
+        <i class="fas fa-robot"></i>
+        <span>Modèle non disponible pour ce projet</span>
+      </div>
+
+      <!-- ML Content -->
+      <ng-container *ngIf="entry.prediction && !entry.loading">
+
+        <!-- Probability Bar -->
+        <div class="ml-prob-section">
+          <div class="ml-prob-header">
+            <span class="ml-prob-label">Probabilité de retard</span>
+            <strong class="ml-prob-pct" [style.color]="getProbabilityColor(entry.prediction)">
+              {{ getProbabilityPercent(entry.prediction) }}%
+            </strong>
+          </div>
+          <div class="ml-prob-track">
+            <div class="ml-prob-fill"
+                 [style.width.%]="getProbabilityPercent(entry.prediction)"
+                 [style.background]="getProbabilityColor(entry.prediction)">
+            </div>
+          </div>
+        </div>
+
+        <!-- Verdict Badge -->
+        <div class="ml-verdict" [class.ml-verdict--late]="entry.prediction.willBeLate" [class.ml-verdict--ok]="!entry.prediction.willBeLate">
+          <i class="fas" [ngClass]="entry.prediction.willBeLate ? 'fa-triangle-exclamation' : 'fa-circle-check'"></i>
+          <span>{{ entry.prediction.willBeLate ? 'Retard probable' : 'Dans les délais' }}</span>
+        </div>
+
+        <!-- AI Message -->
+        <div class="ml-message">
+          <p>{{ entry.prediction.message }}</p>
+        </div>
+
+        <!-- Feature Grid -->
+        <div class="ml-features">
+
+          <div class="ml-feat" [ngClass]="getFeatStatus(entry.prediction.daysElapsedRatio, entry.prediction.tasksDoneRatio, 'time')">
+            <i class="fas fa-calendar-clock ml-feat-icon"></i>
+            <div class="ml-feat-body">
+              <span class="ml-feat-name">Temps / Avancement</span>
+              <span class="ml-feat-verdict">{{ getTimeVerdict(entry.prediction.daysElapsedRatio, entry.prediction.tasksDoneRatio) }}</span>
+            </div>
+            <div class="ml-feat-dot" [ngClass]="getDotClass(entry.prediction.daysElapsedRatio, entry.prediction.tasksDoneRatio, 'time')"></div>
+          </div>
+
+          <div class="ml-feat" [ngClass]="getFeatStatus(entry.prediction.assigneePerfScore, null, 'perf')">
+            <i class="fas fa-user-check ml-feat-icon"></i>
+            <div class="ml-feat-body">
+              <span class="ml-feat-name">Fiabilité freelancer</span>
+              <span class="ml-feat-verdict">{{ getPerfVerdict(entry.prediction.assigneePerfScore) }}</span>
+            </div>
+            <div class="ml-feat-dot" [ngClass]="getDotClass(entry.prediction.assigneePerfScore, null, 'perf')"></div>
+          </div>
+
+          <div class="ml-feat" [ngClass]="getFeatStatus(entry.prediction.scopeCreepRatio, null, 'scope')">
+            <i class="fas fa-expand ml-feat-icon"></i>
+            <div class="ml-feat-body">
+              <span class="ml-feat-name">Stabilité périmètre</span>
+              <span class="ml-feat-verdict">{{ getScopeVerdict(entry.prediction.scopeCreepRatio) }}</span>
+            </div>
+            <div class="ml-feat-dot" [ngClass]="getDotClass(entry.prediction.scopeCreepRatio, null, 'scope')"></div>
+          </div>
+
+          <div class="ml-feat" [ngClass]="getFeatStatus(entry.prediction.bottleneckDaysAvg, null, 'bottleneck')">
+            <i class="fas fa-traffic-light ml-feat-icon"></i>
+            <div class="ml-feat-body">
+              <span class="ml-feat-name">Tâches bloquées</span>
+              <span class="ml-feat-verdict">{{ getBottleneckVerdict(entry.prediction.bottleneckDaysAvg) }}</span>
+            </div>
+            <div class="ml-feat-dot" [ngClass]="getDotClass(entry.prediction.bottleneckDaysAvg, null, 'bottleneck')"></div>
+          </div>
+
+        </div>
+
+        <!-- Footer mini-stats -->
+        <div class="ml-footer-stats">
+          <div class="ml-footer-stat">
+            <span class="ml-footer-val">{{ entry.prediction.activeRisksCount }}</span>
+            <span class="ml-footer-key">Risques actifs</span>
+          </div>
+          <div class="ml-footer-stat">
+            <span class="ml-footer-val">{{ entry.prediction.openDeliverablesCount }}</span>
+            <span class="ml-footer-key">Livrables ouverts</span>
+          </div>
+          <div class="ml-footer-stat">
+            <span class="ml-footer-val">{{ (entry.prediction.tasksDoneRatio * 100) | number:'1.0-0' }}%</span>
+            <span class="ml-footer-key">Tâches complètes</span>
+          </div>
+          <div class="ml-footer-stat">
+            <span class="ml-footer-val">{{ (entry.prediction.budgetConsumptionRatio * 100) | number:'1.0-0' }}%</span>
+            <span class="ml-footer-key">Budget consommé</span>
+          </div>
+        </div>
+
+      </ng-container>
+
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div class="empty-state" *ngIf="!loading && filtered.length === 0">
+    <i class="fas fa-brain"></i>
+    <p>Aucun projet ne correspond aux filtres sélectionnés</p>
+  </div>
+
+</div>

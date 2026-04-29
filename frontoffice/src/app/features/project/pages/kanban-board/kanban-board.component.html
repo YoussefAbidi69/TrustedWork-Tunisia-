@@ -1,0 +1,294 @@
+<div class="kanban-page" *ngIf="!loading">
+
+  <!-- ══ HEADER ══ -->
+  <div class="kanban-header">
+    <div class="kanban-header__left">
+      <button class="back-btn" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div>
+        <h1>{{ project.title }}</h1>
+        <p>
+          <span class="completion-tag">{{ project.completionRate }}% complété</span>
+          <span class="task-count">{{ allTasks.length }} tâche(s)</span>
+        </p>
+      </div>
+    </div>
+<!-- Remplace le bouton dans kanban-header -->
+<button class="btn-add" (click)="openTaskModal()" *ngIf="canEditTasks">
+  <i class="fas fa-plus"></i> Nouvelle tâche
+</button>
+  </div>
+
+  <!-- ══ PROGRESS BAR MINI ══ -->
+  <div class="kanban-progress">
+    <div class="kanban-progress__fill" [style.width.%]="project.completionRate || 0"></div>
+  </div>
+
+  <!-- ══ KANBAN BOARD ══ -->
+  <div class="kanban-board">
+
+    <div class="kanban-col" *ngFor="let col of columns">
+
+      <!-- Colonne Header -->
+      <div class="kanban-col__head">
+        <div class="col-title">
+          <i class="fas" [ngClass]="col.icon" [style.color]="col.color"></i>
+          <span>{{ col.label }}</span>
+        </div>
+        <span class="col-count">{{ tasksByColumn[col.key].length }}</span>
+      </div>
+
+      <!-- Drop Zone -->
+      <div class="kanban-col__body"
+           cdkDropList
+           [id]="'col-' + col.key"
+           [cdkDropListData]="tasksByColumn[col.key]"
+           [cdkDropListConnectedTo]="columnIds"
+           (cdkDropListDropped)="onDrop($event, col.key)">
+
+        <!-- Task Card -->
+<!-- Remplace la ligne cdkDrag sur task-card -->
+<div class="task-card" *ngFor="let task of tasksByColumn[col.key]"
+     [cdkDragDisabled]="!canDragTasks"
+     cdkDrag
+     [class.task-card--overdue]="isOverdue(task)">
+
+          <!-- Drag Handle (visible au survol) -->
+          <div class="drag-handle" cdkDragHandle>
+            <i class="fas fa-grip-vertical"></i>
+          </div>
+
+          <!-- Card Content -->
+          <div class="task-card__top">
+            <span class="priority-dot" [ngClass]="getPriorityClass(task.priority)"
+                  [title]="getPriorityLabel(task.priority)">
+              <i class="fas" [ngClass]="getPriorityIcon(task.priority)"></i>
+            </span>
+<!-- Remplace task-card__actions -->
+<div class="task-card__actions" *ngIf="canEditTasks">
+  <button class="card-action" (click)="openEditModal(task, $event)" title="Modifier">
+    <i class="fas fa-pen"></i>
+  </button>
+  <button class="card-action card-action--del" (click)="deleteTask(task, $event)" title="Supprimer">
+    <i class="fas fa-trash"></i>
+  </button>
+</div>
+          </div>
+
+          <h4 class="task-card__title">{{ task.title }}</h4>
+          <p class="task-card__desc" *ngIf="task.description">{{ task.description | slice:0:80 }}{{ task.description.length > 80 ? '...' : '' }}</p>
+
+          <!-- Deadline -->
+          <div class="task-card__deadline" *ngIf="task.deadline" [class.overdue]="isOverdue(task)">
+            <i class="fas fa-calendar-day"></i> {{ task.deadline }}
+          </div>
+
+          <!-- SubTask progress bar -->
+          <div class="subtask-bar" *ngIf="subTasksMap[task.id]?.length">
+            <div class="subtask-bar__fill"
+                 [style.width.%]="getSubTaskProgress(task.id).total ? (getSubTaskProgress(task.id).done / getSubTaskProgress(task.id).total * 100) : 0">
+            </div>
+            <span>{{ getSubTaskProgress(task.id).done }}/{{ getSubTaskProgress(task.id).total }}</span>
+          </div>
+
+          <!-- Footer : heures + expand -->
+          <div class="task-card__footer">
+            <span *ngIf="task.estimatedHours" class="hours-tag">
+              <i class="fas fa-clock"></i> {{ task.estimatedHours }}h
+            </span>
+            <button class="expand-btn" (click)="toggleExpand(task.id); $event.stopPropagation()">
+              <i class="fas" [ngClass]="expandedTaskId === task.id ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+            </button>
+          </div>
+
+          <!-- ── Sous-tâches (expanded) ── -->
+          <div class="subtask-section" *ngIf="expandedTaskId === task.id" (click)="$event.stopPropagation()">
+            <div class="subtask-list" *ngIf="subTasksMap[task.id]?.length">
+              <div class="subtask-item" *ngFor="let sub of subTasksMap[task.id]" [class.subtask-item--done]="sub.done">
+                <button class="subtask-check" (click)="toggleSubTask(sub)">
+                  <i class="fas" [ngClass]="sub.done ? 'fa-square-check' : 'fa-square'"></i>
+                </button>
+                <span class="subtask-title">{{ sub.title }}</span>
+<!-- Remplace subtask-del -->
+<button class="subtask-del" (click)="deleteSubTask(sub)" *ngIf="canEditTasks">
+  <i class="fas fa-xmark"></i>
+</button>
+              </div>
+            </div>
+
+            <!-- Ajouter sous-tâche -->
+<!-- Remplace subtask-add -->
+<div class="subtask-add" *ngIf="canEditTasks">
+  <input type="text"
+         [(ngModel)]="newSubTaskTitle[task.id]"
+         placeholder="Ajouter une sous-tâche..."
+         (keyup.enter)="addSubTask(task.id)"
+         class="subtask-input">
+  <button class="subtask-add-btn" (click)="addSubTask(task.id)">
+    <i class="fas fa-plus"></i>
+  </button>
+</div>
+          </div>
+
+        </div>
+
+        <!-- Empty column -->
+        <div class="kanban-empty" *ngIf="tasksByColumn[col.key].length === 0">
+          <i class="fas fa-inbox"></i>
+          <span>Glissez une tâche ici</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LOADING ══ -->
+<div *ngIf="loading" class="loading-full">
+  <i class="fas fa-spinner fa-spin"></i> Chargement du Kanban...
+</div>
+
+<!-- ══ MODAL NOUVELLE TÂCHE ══ -->
+<div class="modal-overlay" *ngIf="showTaskModal" (click)="closeTaskModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-plus-circle"></i> Nouvelle tâche</h3>
+      <button class="modal-close" (click)="closeTaskModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Titre <span class="req">*</span></label>
+        <input type="text" [(ngModel)]="newTask.title" placeholder="Ex: Intégration API paiement" class="finput">
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea [(ngModel)]="newTask.description" placeholder="Détails de la tâche..." class="finput ftextarea" rows="3"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Priorité</label>
+          <select [(ngModel)]="newTask.priority" class="finput">
+            <option value="LOW">Basse</option>
+            <option value="MEDIUM">Moyenne</option>
+            <option value="HIGH">Haute</option>
+            <option value="CRITICAL">Critique</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Deadline</label>
+          <input type="date" [(ngModel)]="newTask.deadline" class="finput">
+        </div>
+        <div class="field">
+          <label>Heures</label>
+          <input type="number" [(ngModel)]="newTask.estimatedHours" min="1" class="finput">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeTaskModal()">Annuler</button>
+      <button class="btn-primary" (click)="submitNewTask()" [disabled]="!newTask.title.trim()">
+        <i class="fas fa-check"></i> Créer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL IA SUGGESTION ══ -->
+<div class="modal-overlay" *ngIf="showAiModal" (click)="dismissAiModal()">
+  <div class="modal-card modal-card--ai" (click)="$event.stopPropagation()">
+
+    <div class="modal-header modal-header--ai">
+      <div>
+        <h3><i class="fas fa-robot"></i> Suggestions IA</h3>
+        <p class="ai-subtitle">
+          Type détecté : <span class="ai-type-badge">{{ formatAiType(aiDetectedType) }}</span>
+          · {{ aiSuggestions.length }} tâches recommandées
+        </p>
+      </div>
+      <button class="modal-close" (click)="dismissAiModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <div class="ai-selbar">
+      <button class="ai-link" (click)="selectAllAi()">Tout sélectionner</button>
+      <span>·</span>
+      <button class="ai-link" (click)="deselectAllAi()">Tout décocher</button>
+    </div>
+
+    <div class="modal-body ai-task-list">
+      <div class="ai-task-item"
+           *ngFor="let task of aiSuggestions; let i = index"
+           [class.ai-task-item--on]="aiSelected[i]"
+           (click)="toggleAiTask(i)">
+        <i class="fas ai-check" [ngClass]="aiSelected[i] ? 'fa-square-check' : 'fa-square'"></i>
+        <div class="ai-task-info">
+          <div class="ai-task-title">{{ task.title }}</div>
+          <div class="ai-task-desc">{{ task.description }}</div>
+          <div class="ai-task-meta">
+            <span class="ai-badge">Étape {{ task.order }}</span>
+            <span class="ai-badge"><i class="fas fa-clock"></i> {{ task.estimatedHours }}h</span>
+            <span class="ai-badge"><i class="fas fa-calendar"></i> {{ task.deadline }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="dismissAiModal()">Ignorer</button>
+      <button class="btn-primary" (click)="acceptAiSuggestions()" [disabled]="aiSelectedCount === 0">
+        <i class="fas fa-wand-magic-sparkles"></i>
+        Ajouter {{ aiSelectedCount }} tâche{{ aiSelectedCount > 1 ? 's' : '' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ MODAL ÉDITION TÂCHE ══ -->
+<div class="modal-overlay" *ngIf="showEditModal && editingTask" (click)="closeEditModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-pen"></i> Modifier la tâche</h3>
+      <button class="modal-close" (click)="closeEditModal()"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Titre <span class="req">*</span></label>
+        <input type="text" [(ngModel)]="editingTask.title" class="finput">
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea [(ngModel)]="editingTask.description" class="finput ftextarea" rows="3"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Priorité</label>
+          <select [(ngModel)]="editingTask.priority" class="finput">
+            <option value="LOW">Basse</option>
+            <option value="MEDIUM">Moyenne</option>
+            <option value="HIGH">Haute</option>
+            <option value="CRITICAL">Critique</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Deadline</label>
+          <input type="date" [(ngModel)]="editingTask.deadline" class="finput">
+        </div>
+        <div class="field">
+          <label>Heures estimées</label>
+          <input type="number" [(ngModel)]="editingTask.estimatedHours" min="1" class="finput">
+        </div>
+      </div>
+      <div class="field">
+        <label>Heures réelles</label>
+        <input type="number" [(ngModel)]="editingTask.actualHours" min="0" class="finput">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeEditModal()">Annuler</button>
+      <button class="btn-primary" (click)="submitEditTask()">
+        <i class="fas fa-check"></i> Enregistrer
+      </button>
+    </div>
+  </div>
+</div>

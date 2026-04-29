@@ -1,0 +1,17 @@
+.cm-comment-form {
+  display: flex;
+  flex-direction: column;
+  background: var(--cm-bg-secondary);
+  border: 1px solid var(--cm-border);
+  border-radius: var(--cm-radius);
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.cm-comment-form .cm-field {
+  margin-bottom: 12px;
+}
+
+.cm-comment-form .cm-btn {
+  align-self: flex-end;
+}

@@ -1,0 +1,86 @@
+<div class="cm-shell">
+  <header class="cm-shell__bar" aria-label="Community navigation">
+    <div class="cm-shell__brand">
+      <i class="fas fa-users cm-shell__brand-icon" aria-hidden="true"></i>
+      <span class="cm-shell__title">Community Hub</span>
+    </div>
+
+    <nav class="cm-shell__nav">
+      <a
+        [routerLink]="['/app/community']"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="cm-shell__link"
+        (click)="closeMenus()">
+        <i class="fas fa-house" aria-hidden="true"></i>
+        Feed
+      </a>
+
+      <a
+        [routerLink]="['browse']"
+        [relativeTo]="route"
+        routerLinkActive="active"
+        class="cm-shell__link"
+        (click)="closeMenus()">
+        <i class="fas fa-compass" aria-hidden="true"></i>
+        Explore
+      </a>
+
+      <a
+        *ngIf="authService.isLoggedIn()"
+        [routerLink]="['contributions']"
+        [relativeTo]="route"
+        routerLinkActive="active"
+        class="cm-shell__link"
+        (click)="closeMenus()">
+        <i class="fas fa-hand-holding-heart" aria-hidden="true"></i>
+        Contributions
+      </a>
+
+      <div class="cm-shell__dropdown" [class.cm-shell__dropdown--open]="communityMenuOpen">
+        <button
+          type="button"
+          class="cm-shell__nav-trigger"
+          (click)="toggleCommunityMenu($event)"
+          [attr.aria-expanded]="communityMenuOpen">
+          Create
+          <i class="fas fa-chevron-down" aria-hidden="true"></i>
+        </button>
+        <div class="cm-shell__dropdown-panel" role="menu">
+          <a
+            [routerLink]="['create']"
+            [relativeTo]="route"
+            routerLinkActive="active"
+            class="cm-shell__dropdown-item"
+            (click)="closeMenus()">
+            <i class="fas fa-plus-circle" aria-hidden="true"></i>
+            New community
+          </a>
+          <a
+            [routerLink]="['post', 'new']"
+            [relativeTo]="route"
+            routerLinkActive="active"
+            class="cm-shell__dropdown-item"
+            (click)="closeMenus()">
+            <i class="fas fa-file-circle-plus" aria-hidden="true"></i>
+            New post
+          </a>
+          <a
+            *ngIf="authService.isLoggedIn()"
+            [routerLink]="['course', 'new']"
+            [queryParams]="parentCommunityId ? { communityId: parentCommunityId } : null"
+            [relativeTo]="route"
+            class="cm-shell__dropdown-item"
+            (click)="closeMenus()">
+            <i class="fas fa-graduation-cap" aria-hidden="true"></i>
+            New learning course
+          </a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="cm-shell__outlet">
+    <router-outlet></router-outlet>
+  </main>
+</div>

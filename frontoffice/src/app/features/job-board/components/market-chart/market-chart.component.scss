@@ -1,0 +1,60 @@
+@import '../../styles/job-board-ai.scss';
+
+.mc {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.mc__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 3fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.mc__label {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  color: var(--charcoal);
+  font-weight: 600;
+}
+
+.mc__track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--sand);
+  overflow: hidden;
+}
+
+.mc__fill {
+  height: 100%;
+  border-radius: inherit;
+  width: 0;
+  transition: width 1s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc__fill {
+    transition: none;
+  }
+}
+
+.mc__fill.mc-bar--rise {
+  background: var(--olive);
+}
+
+.mc__fill.mc-bar--fall {
+  background: var(--danger);
+}
+
+.mc__fill.mc-bar--stable {
+  background: var(--stone);
+}
+
+.mc__count {
+  font-weight: 700;
+  color: var(--midnight);
+}

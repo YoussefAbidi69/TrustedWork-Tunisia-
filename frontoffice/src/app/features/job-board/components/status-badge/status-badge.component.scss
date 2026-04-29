@@ -1,0 +1,41 @@
+.jb-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.jb-badge--success {
+  background: var(--olive-light);
+  color: var(--olive);
+}
+
+.jb-badge--danger {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.jb-badge--warn {
+  background: var(--gold-light);
+  color: var(--terracotta-dark);
+}
+
+.jb-badge--muted {
+  background: var(--sand);
+  color: var(--slate);
+}
+
+.jb-badge--info {
+  background: var(--azure-light);
+  color: var(--azure);
+}
+
+.jb-badge--accent {
+  background: var(--terracotta-light);
+  color: var(--terracotta-dark);
+  border: 1px solid var(--terracotta);
+}

@@ -1,0 +1,202 @@
+<div class="jobs-page">
+  <section class="jobs-hero">
+    <div class="jobs-hero__glow jobs-hero__glow--one"></div>
+    <div class="jobs-hero__content">
+      <div class="jobs-hero__copy">
+        <div class="eyebrow-group">
+          <span class="eyebrow">Client Portal</span>
+        </div>
+        <h1>Post a New Opportunity</h1>
+        <p>Describe your project, set the budget, and let our AI Trust Engine find the perfect match.</p>
+        <div class="hero-actions">
+          <button type="button" class="hero-btn hero-btn--secondary" (click)="loadTemplate()">
+            <i class="fas fa-magic"></i> Load Template
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="jobs-layout">
+    <form class="jobs-main" [formGroup]="form" (ngSubmit)="$event.preventDefault()">
+      <div class="error-state" *ngIf="error">
+        <i class="fas fa-exclamation-circle"></i>
+        <p>{{ error }}</p>
+      </div>
+
+      <div *ngIf="published">
+        <div class="panel-card publish-success">
+          <i class="fas fa-check-circle publish-success__icon text-success"></i>
+          <h2>Opportunity Published Successfully!</h2>
+          <p>Your job is now live and visible to freelancers. AI fraud analysis has been automatically run.</p>
+          <div class="hero-actions" style="justify-content: center; margin-top: 1.5rem;">
+            <a routerLink="/app/job-board/my-jobs" class="hero-btn hero-btn--ghost">View My Jobs</a>
+            <button type="button" class="hero-btn hero-btn--primary" (click)="resetForm()"><i class="fas fa-plus"></i> Post Another</button>
+          </div>
+        </div>
+      </div>
+
+      <ng-container *ngIf="!published">
+        <!-- Basic Info Card -->
+        <div class="panel-card">
+          <div class="panel-head">
+            <div>
+              <span class="card-kicker">Step 1</span>
+              <h2>Basic Information</h2>
+            </div>
+          </div>
+          
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Job Title <span class="required">*</span></label>
+              <input class="form-control" formControlName="title" placeholder="e.g. Senior React Developer" />
+              <div class="field-error" *ngIf="form.get('title')?.touched && form.get('title')?.invalid">
+                Title must be at least 10 characters
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Category <span class="required">*</span></label>
+              <select class="form-control" formControlName="category">
+                <option value="">Select category...</option>
+                <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Location <span class="required">*</span></label>
+              <input class="form-control" formControlName="location" placeholder="e.g. Tunis, Tunisia" />
+            </div>
+
+            <div class="form-group flex-align">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="remote" />
+                <span class="checkbox-text">Remote position</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skills & Description Card -->
+        <div class="panel-card mt-4">
+          <div class="panel-head">
+            <div>
+              <span class="card-kicker">Step 2</span>
+              <h2>Description & Skills</h2>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Description <span class="required">*</span></label>
+            <textarea
+              class="form-control"
+              formControlName="description"
+              rows="6"
+              placeholder="Describe the project, requirements, and expectations in detail..."
+            ></textarea>
+            <div class="char-count">
+              {{ form.get('description')?.value?.length ?? 0 }} / minimum 100 characters
+            </div>
+          </div>
+
+          <div class="ai-extraction-section" *ngIf="form.get('description')?.value?.length >= 100">
+            <div class="ai-extraction-loading" *ngIf="extracting">
+              <i class="fas fa-spinner fa-spin"></i>
+              <span>AI is analyzing your description for skills...</span>
+            </div>
+            <div *ngIf="!extracting && extractedSkills.length > 0">
+              <div class="ai-label"><i class="fas fa-sparkles"></i> Skills detected by AI</div>
+              <div class="job-tags mt-2">
+                <span class="job-tag job-tag--ai" *ngFor="let s of extractedSkills">
+                  <i class="fas fa-bolt"></i> {{ s }}
+                  <button type="button" class="tag-remove" (click)="removeSkill(s)"><i class="fas fa-times"></i></button>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mt-4">
+            <label>Required Skills</label>
+            <div class="skill-tags-input">
+              <span class="job-tag" *ngFor="let s of requiredSkills">
+                {{ s }}
+                <button type="button" class="tag-remove" (click)="removeSkill(s)"><i class="fas fa-times"></i></button>
+              </span>
+              <input type="text" placeholder="Type a skill & press Enter" [(ngModel)]="manualSkill" [ngModelOptions]="{standalone: true}" (keydown.enter)="addManualSkill(); $event.preventDefault()" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget & Duration Card -->
+        <div class="panel-card mt-4">
+          <div class="panel-head">
+            <div>
+              <span class="card-kicker">Step 3</span>
+              <h2>Budget & Timeline</h2>
+            </div>
+          </div>
+          
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Minimum Budget ($)</label>
+              <input type="number" class="form-control" formControlName="budgetMin" placeholder="500" />
+            </div>
+            <div class="form-group">
+              <label>Maximum Budget ($)</label>
+              <input type="number" class="form-control" formControlName="budgetMax" placeholder="2000" />
+            </div>
+          </div>
+          <div class="field-error" *ngIf="form.get('budgetMax')?.touched && budgetInvalid" style="margin-top: -10px; margin-bottom: 16px;">
+            Maximum budget must be greater than minimum
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Duration (days)</label>
+              <input class="form-control" type="number" formControlName="durationDays" placeholder="90" />
+            </div>
+            <div class="form-group">
+              <label>Expires At <span class="required">*</span></label>
+              <input type="date" class="form-control" formControlName="expiresAt" [min]="tomorrow" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions mt-4">
+          <button type="button" class="hero-btn hero-btn--ghost" (click)="saveDraft()" [disabled]="saving"><i class="fas fa-save"></i> Save as Draft</button>
+          <button type="button" class="hero-btn hero-btn--primary" (click)="publishNow()" [disabled]="saving || form.invalid">
+            <i class="fas" [class.fa-paper-plane]="!saving" [class.fa-spinner]="saving" [class.fa-spin]="saving"></i>
+            {{ saving ? 'Publishing...' : 'Publish Job' }}
+          </button>
+        </div>
+      </ng-container>
+    </form>
+
+    <aside class="jobs-side">
+      <div class="panel-card panel-card--dark" style="position: sticky; top: 24px;">
+        <div class="panel-head panel-head--dark">
+          <div>
+            <span class="card-kicker card-kicker--dark">✦ AI Trust Engine</span>
+            <h2>Automatic Fraud Scanning</h2>
+          </div>
+        </div>
+        <div class="insight-list">
+          <div class="insight-item">
+            <div class="insight-item__icon"><i class="fas fa-shield-alt"></i></div>
+            <div>
+              <strong>Maximum Security</strong>
+              <p>When you publish this job, our AI will automatically scan the content to ensure it meets platform guidelines and detect anomalies.</p>
+            </div>
+          </div>
+          <div class="insight-item">
+            <div class="insight-item__icon" style="background: linear-gradient(145deg, #10b981, #059669); box-shadow: 0 14px 24px rgba(16, 185, 129, 0.18);"><i class="fas fa-check-double"></i></div>
+            <div>
+              <strong>Quality Assured</strong>
+              <p>Freelancers see verified badges on opportunities that pass the AI screening.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>

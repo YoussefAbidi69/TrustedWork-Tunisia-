@@ -1,0 +1,105 @@
+<section class="jb-page" *ngIf="!loading && job">
+  <div class="jb-details">
+    <div class="jb-details__main">
+      <button type="button" class="jb-back" (click)="router.navigate(['/app/job-board/marketplace'])">
+        ← Back to Job Marketplace
+      </button>
+      <h1>{{ job.title }}</h1>
+      <p class="jb-meta">
+        <app-status-badge [status]="job.status" type="job"></app-status-badge>
+        <span>{{ job.category }}</span>
+      </p>
+      <p class="jb-budget">
+        Budget {{ job.budgetMin | number }} – {{ job.budgetMax | number }} TND · {{ job.remote ? 'Remote' : job.location }}
+      </p>
+      <h2>Required skills</h2>
+      <div class="jb-tags">
+        <app-skill-tag *ngFor="let s of job.requiredSkills" [skillName]="s" [isAiDetected]="false"></app-skill-tag>
+      </div>
+      <h2>AI-extracted skills</h2>
+      <div class="jb-tags">
+        <app-skill-tag *ngFor="let s of job.extractedSkills" [skillName]="s" [isAiDetected]="true"></app-skill-tag>
+      </div>
+      <h2>Description</h2>
+      <p class="jb-desc">{{ job.description }}</p>
+    </div>
+    <aside class="jb-details__side">
+      <app-fraud-shield [fraudRiskScore]="job.fraudRiskScore" [signals]="job.fraudSignals || []" size="full">
+      </app-fraud-shield>
+      <app-opportunity-score-card [opportunity]="opportunityView(job)" size="full"></app-opportunity-score-card>
+
+      <div class="jb-prediction" *ngIf="isFreelancer() && livePrediction">
+        <h2>AI success outlook</h2>
+        <app-success-prediction-gauge
+          [probability]="livePrediction.probability"
+          [confidenceLabel]="livePrediction.confidenceLabel"
+          size="full"
+        >
+        </app-success-prediction-gauge>
+        <div class="prediction-why">
+          <h5>Why this prediction?</h5>
+          <ul class="prediction-factors">
+            <li>
+              <i class="fas fa-code"></i>
+              <span>Skill overlap: </span>
+              <strong [countUp]="livePrediction.skillOverlapPercent ?? 0" [countUpDuration]="800" [countUpDecimals]="0"
+                >0</strong
+              >% of required skills matched
+            </li>
+            <li>
+              <i class="fas fa-star"></i>
+              <span>Reputation: </span>
+              <strong [countUp]="livePrediction.reputationScore ?? 0" [countUpDuration]="800" [countUpDecimals]="0"
+                >0</strong
+              >/100
+            </li>
+            <li>
+              <i class="fas fa-trophy"></i>
+              <span>Success rate: </span>
+              <strong [countUp]="livePrediction.successRateScore ?? 0" [countUpDuration]="800" [countUpDecimals]="0"
+                >0</strong
+              >%
+            </li>
+          </ul>
+          <p class="prediction-summary">{{ livePrediction.predictionSummary }}</p>
+        </div>
+      </div>
+
+      <div class="jb-apply-block" *ngIf="isFreelancer() && job.status === 'PUBLISHED'">
+        <button type="button" class="jb-btn" (click)="toggleApply()" *ngIf="!submitted">Apply now</button>
+        <div class="jb-applied" *ngIf="submitted">✓ Application submitted!</div>
+        <div *ngIf="submitted" class="jb-success-gauge">
+          <app-success-prediction-gauge
+            [probability]="submitted.successProbability ?? 0"
+            [confidenceLabel]="submitted.predictionConfidence"
+            size="full">
+          </app-success-prediction-gauge>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="jb-apply-drawer" *ngIf="applyOpen" @applyPanel>
+    <form [formGroup]="applyForm" (ngSubmit)="submitApply()" class="jb-apply-form">
+      <div class="form-group">
+        <div class="form-group-header">
+          <label>Cover letter (min 50 characters)</label>
+          <button type="button" class="ai-write-btn" (click)="generateAiCoverLetter()" [disabled]="generatingCoverLetter">
+            <i class="fas fa-magic" [class.fa-spin]="generatingCoverLetter"></i> 
+            {{ generatingCoverLetter ? 'Writing...' : 'Help me write this' }}
+          </button>
+        </div>
+        <textarea rows="6" formControlName="coverLetter"></textarea>
+      </div>
+      <label>
+        Proposed rate (TND)
+        <input type="number" formControlName="proposedRate" />
+      </label>
+      <div class="jb-error" *ngIf="applyError">{{ applyError }}</div>
+      <button type="submit" class="jb-btn" [disabled]="applying">{{ applying ? 'Submitting…' : 'Submit application' }}</button>
+    </form>
+  </div>
+</section>
+
+<div class="jb-page" *ngIf="loading">Loading job…</div>
+<div class="jb-page" *ngIf="error">{{ error }}</div>

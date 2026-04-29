@@ -1,0 +1,177 @@
+<div class="market-dashboard">
+  <header class="dashboard-head">
+    <div>
+      <h1><i class="fas fa-chart-line"></i> Market Insights</h1>
+      <div class="live-badge"><i class="fas fa-circle"></i> Live - updates every 5 min</div>
+    </div>
+    <button type="button" class="btn-refresh" (click)="refreshMarketData()">
+      <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> Refresh
+    </button>
+  </header>
+
+  <nav class="tab-nav">
+    <button [class.active]="activeTab==='overview'" (click)="switchTab('overview')"><i class="fas fa-tachometer-alt"></i> Overview</button>
+    <button [class.active]="activeTab==='skill-trends'" (click)="switchTab('skill-trends')"><i class="fas fa-chart-line"></i> Skill Trends</button>
+    <button [class.active]="activeTab==='salary-intelligence'" (click)="switchTab('salary-intelligence')"><i class="fas fa-dollar-sign"></i> Salary Intelligence</button>
+    <button [class.active]="activeTab==='demand-forecast'" (click)="switchTab('demand-forecast')"><i class="fas fa-chart-bar"></i> Demand Forecast</button>
+    <button [class.active]="activeTab==='career-opportunities'" (click)="switchTab('career-opportunities')"><i class="fas fa-briefcase"></i> Career Opportunities</button>
+  </nav>
+
+  <div class="error" *ngIf="error">{{ error }}</div>
+
+  <section *ngIf="activeTab==='overview' && !error">
+    <div class="stats-grid-4">
+      <article class="kpi"><i class="fas fa-fire"></i><div><span>Hottest Skill</span><strong>{{ hottestSkill?.skill || '-' }}</strong></div></article>
+      <article class="kpi"><i class="fas fa-arrow-up"></i><div><span>Fastest Rising</span><strong class="success">{{ fastestRising?.skill || '-' }} <small *ngIf="fastestRising">+{{ fastestRising.changePercent | number:'1.0-0' }}%</small></strong></div></article>
+      <article class="kpi"><i class="fas fa-briefcase"></i><div><span>Active Job Postings</span><strong>{{ overview.activeJobPostings }}</strong></div></article>
+      <article class="kpi"><i class="fas fa-users"></i><div><span>Avg Competition</span><strong>{{ overview.avgCompetition | number:'1.1-1' }}</strong></div></article>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <h3><i class="fas fa-star"></i> Top 20 Skills</h3>
+        <div class="h-bars">
+          <div class="h-row" *ngFor="let row of topBarSkills; trackBy: trackBySkill">
+            <span>{{ row.skill }}</span>
+            <div class="track"><div class="fill" [ngClass]="trendClass(row.trend)" [style.width.%]="animate ? barWidthPct(row.count) : 0"></div></div>
+            <strong>{{ row.count }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3><i class="fas fa-stream"></i> Trend Summary</h3>
+        <details open>
+          <summary>Rising</summary>
+          <div class="chips"><span class="chip chip-up" *ngFor="let s of risingSkills">{{ s.skill }} (+{{ s.changePercent | number:'1.0-0' }}%)</span></div>
+        </details>
+        <details>
+          <summary>Declining</summary>
+          <div class="chips"><span class="chip chip-down" *ngFor="let s of decliningSkills">{{ s.skill }} ({{ s.changePercent | number:'1.0-0' }}%)</span></div>
+        </details>
+        <details>
+          <summary>Stable</summary>
+          <div class="chips"><span class="chip chip-stable" *ngFor="let s of stableSkills">{{ s.skill }}</span></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section *ngIf="activeTab==='skill-trends' && !error">
+    <div class="table-toolbar">
+      <input type="text" placeholder="Search skill..." [(ngModel)]="searchTerm" />
+      <button type="button" (click)="exportCsv()"><i class="fas fa-download"></i> Export CSV</button>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th (click)="sortCycle('skill','skills')">Skill</th>
+          <th (click)="sortCycle('thisMonth','skills')">This Month</th>
+          <th (click)="sortCycle('lastMonth','skills')">Last Month</th>
+          <th (click)="sortCycle('change','skills')">Change</th>
+          <th>Trend</th>
+          <th (click)="sortCycle('jobCount','skills')">Job Count</th>
+          <th (click)="sortCycle('avgBudget','skills')">Avg Budget</th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let row of filteredSkillRows; trackBy: trackBySkill">
+          <tr (click)="toggleSkillDetails(row.skill)">
+            <td>{{ row.skill }}</td>
+            <td>{{ row.count }}</td>
+            <td>{{ row.lastPeriodCount || 0 }}</td>
+            <td>{{ (row.changePercent || 0) > 0 ? '+' : '' }}{{ row.changePercent | number:'1.0-1' }}%</td>
+            <td><span [ngClass]="trendClass(row.trend)"><i class="fas" [class.fa-arrow-up]="row.trend==='RISING'" [class.fa-arrow-down]="row.trend==='DECLINING'" [class.fa-minus]="row.trend==='STABLE'"></i> {{ row.trend }}</span></td>
+            <td>{{ row.count }}</td>
+            <td>${{ avgBudgetForSkill(row.skill) }}</td>
+          </tr>
+          <tr class="detail-row" *ngIf="expandedSkill===row.skill">
+            <td colspan="7">
+              <div class="detail-grid">
+                <svg viewBox="0 0 100 40" class="sparkline"><path [attr.d]="sparkPath(row)"></path></svg>
+                <div><strong>Top categories</strong><p>{{ topCategoriesForSkill().join(', ') || 'N/A' }}</p></div>
+                <div><strong>Co-occurrence</strong><p>{{ cooccurrenceSkills(row.skill).join(', ') || 'N/A' }}</p></div>
+                <div><strong>Avg proposed rate</strong><p>${{ avgBudgetForSkill(row.skill) }}</p></div>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </section>
+
+  <section *ngIf="activeTab==='salary-intelligence' && !error">
+    <div class="salary-cards">
+      <article class="salary-card" *ngFor="let s of salaryRows" [ngClass]="salaryBand(s.medianRate)">
+        <header><h4>{{ s.skill }}</h4><span>{{ s.sampleCount }} samples</span></header>
+        <div class="bar-track">
+          <div class="bar-fill" [style.width.%]="(s.maxRate ? (s.avgProposedRate / s.maxRate) * 100 : 0)"></div>
+          <div class="median-marker" [style.left.%]="(s.maxRate ? (s.medianRate / s.maxRate) * 100 : 0)"></div>
+        </div>
+        <p>Min: ${{ s.minRate }} - Median: ${{ s.medianRate }} - Max: ${{ s.maxRate }}</p>
+      </article>
+    </div>
+  </section>
+
+  <section *ngIf="activeTab==='demand-forecast' && !error">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Skill</th>
+          <th>Current Demand</th>
+          <th>+1 Month</th>
+          <th (click)="sortCycle('forecast','forecast')">+3 Months</th>
+          <th>Confidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of forecastViewRows">
+          <td>{{ row.skill }}</td>
+          <td>{{ row.currentDemand }}</td>
+          <td [class.positive]="demandDelta(row.currentDemand,row.forecastNextMonth)>0" [class.negative]="demandDelta(row.currentDemand,row.forecastNextMonth)<0">
+            <i class="fas" [class.fa-arrow-up]="demandDelta(row.currentDemand,row.forecastNextMonth)>0" [class.fa-arrow-down]="demandDelta(row.currentDemand,row.forecastNextMonth)<0"></i>
+            {{ demandDeltaText(row.currentDemand,row.forecastNextMonth) }}
+          </td>
+          <td [class.positive]="demandDelta(row.currentDemand,row.forecastIn3Months)>0" [class.negative]="demandDelta(row.currentDemand,row.forecastIn3Months)<0">
+            <i class="fas" [class.fa-arrow-up]="demandDelta(row.currentDemand,row.forecastIn3Months)>0" [class.fa-arrow-down]="demandDelta(row.currentDemand,row.forecastIn3Months)<0"></i>
+            {{ row.forecastIn3Months }}
+          </td>
+          <td><span class="confidence" [ngClass]="confidenceClass(row.confidence)">{{ row.confidence }}</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="info-card"><i class="fas fa-info-circle"></i> Forecast uses linear extrapolation from the last three monthly demand windows.</div>
+  </section>
+
+  <section *ngIf="activeTab==='career-opportunities' && !error">
+    <div class="info-card" *ngIf="!isFreelancer">This tab is available only for freelancer accounts.</div>
+    <ng-container *ngIf="isFreelancer">
+      <div class="panel">
+        <h3><i class="fas fa-bullseye"></i> Skill Match Rate</h3>
+        <div class="h-bars">
+          <div class="h-row" *ngFor="let row of skillMatchRows">
+            <span>{{ row.skill }}</span>
+            <div class="track"><div class="fill trend-up" [style.width.%]="row.pct"></div></div>
+            <strong>{{ row.pct }}%</strong>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3><i class="fas fa-lightbulb"></i> Skills Worth Adding</h3>
+        <div class="trajectory-scroll">
+          <div class="traj-node" *ngFor="let step of trajectory?.steps; let i = index">
+            <span class="badge">{{ i + 1 }}</span>
+            <strong>{{ step.title }}</strong>
+            <small>{{ step.demandLevel }}</small>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3><i class="fas fa-layer-group"></i> Hottest Categories</h3>
+        <div class="chips">
+          <button class="chip chip-action" *ngFor="let cat of categoryRows" (click)="goToCategory(cat.category)">{{ cat.category }} ({{ cat.jobCount }})</button>
+        </div>
+      </div>
+    </ng-container>
+  </section>
+</div>

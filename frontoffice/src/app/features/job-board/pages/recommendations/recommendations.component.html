@@ -1,0 +1,226 @@
+<section class="jb-page jobs-page rec-page">
+  <header class="ci-panel-head rec-header" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 0;">
+    <div>
+      <h1 style="margin: 0 0 6px; font-size: 28px; display: inline-flex; gap: 8px; align-items: center; color: rgba(255, 255, 255, 0.96);"><i class="fas fa-stars" style="color: var(--terracotta);"></i> AI Job Recommendations</h1>
+      <p class="jb-sub" style="margin: 0;">Personalized matches ranked by compatibility, opportunity, and freshness</p>
+    </div>
+    <div class="head-actions">
+      <span class="mi-updated">Updated {{ updatedLabel }}</span>
+      <button type="button" class="hero-btn hero-btn--secondary why-match-toggle" (click)="refreshRecommendations()">
+        <i class="fas fa-rotate"></i> Refresh
+      </button>
+    </div>
+  </header>
+
+  <div class="filter-bar">
+    <select [(ngModel)]="scoreFilter" class="jb-filters-toggle" style="border-radius:12px; padding:10px 14px; outline:none; font-weight:600; font-size:14px; cursor:pointer;">
+      <option value="ALL">All match scores</option>
+      <option value="50">50%+</option>
+      <option value="70">70%+</option>
+      <option value="85">85%+</option>
+    </select>
+    <select [(ngModel)]="sortBy" class="jb-filters-toggle" style="border-radius:12px; padding:10px 14px; outline:none; font-weight:600; font-size:14px; cursor:pointer;">
+      <option value="MATCH">Best Match</option>
+      <option value="OPPORTUNITY">Best Opportunity</option>
+      <option value="RECENT">Most Recent</option>
+    </select>
+  </div>
+
+  <div class="error-state jb-error" *ngIf="error && !loading" style="border-radius:24px;">
+    <i class="fas fa-exclamation-circle" style="font-size:24px; margin-bottom:12px; display:block;"></i>
+    <p style="margin-bottom:16px;">{{ error }}</p>
+    <button type="button" class="hero-btn hero-btn--secondary" (click)="retry()">Try again</button>
+  </div>
+
+  <div class="jobs-skeleton-list" *ngIf="loading">
+    <article class="job-card job-card--skeleton" *ngFor="let _ of [1, 2, 3]">
+      <div class="shimmer-bar skel-line"></div>
+      <div class="shimmer-bar skel-line short" style="margin-top:12px;"></div>
+    </article>
+  </div>
+
+  <div class="rec-list" *ngIf="!loading && !error && filteredRows.length" [@slideUpStagger]="filteredRows.length">
+    <article class="job-card rec-card-custom" *ngFor="let row of filteredRows; let i = index; trackBy: trackByRow" [attr.data-jobid]="row.jobOfferId">
+      <div class="rank-badge">{{ rankBadge(i) }}</div>
+      <div class="card-main">
+        <div class="left">
+          <h3>{{ row.job?.title || row.title }}</h3>
+          <div class="meta">
+            <span><i class="fas fa-tag" style="color:#b65839;"></i> {{ row.job?.category || row.category }}</span>
+            <span><i class="fas fa-dollar-sign" style="color:#2d8b67;"></i> ${{ row.job?.budgetMin || 0 }} - ${{ row.job?.budgetMax || 0 }}</span>
+            <span><i class="fas fa-clock" style="color:#3d7ec7;"></i> {{ row.job?.publishedAt | timeAgo }}</span>
+            <span class="opp">{{ oppPct(row) }}% opportunity</span>
+          </div>
+          <div class="skills-row">
+            <label>You have:</label>
+            <div class="chips" style="display:flex; gap:8px; flex-wrap:wrap;">
+              <span class="chip chip-have" *ngFor="let s of hasSkills(row.job, row)">{{ s }}</span>
+            </div>
+          </div>
+          <div class="skills-row">
+            <label>You're missing:</label>
+            <div class="chips" style="display:flex; gap:8px; flex-wrap:wrap;">
+              <span class="chip chip-miss" *ngFor="let s of missingSkills(row.job, row)">{{ s }}</span>
+            </div>
+          </div>
+
+          <!-- Inline Success Prediction Badge -->
+          <div class="prediction-inline" *ngIf="inlineProbability(row) > 0">
+            <i class="fas fa-brain" [style.color]="inlineProbColor(row)"></i>
+            <span class="prediction-inline-label">
+              Success Prediction:
+              <strong [style.color]="inlineProbColor(row)">{{ inlineProbability(row) }}%</strong>
+            </span>
+            <span class="prediction-confidence-badge" [ngClass]="confidenceClass(row.confidence)">
+              {{ inlineConfidence(row) }}
+            </span>
+          </div>
+
+          <div class="expand-toggles">
+            <button type="button" class="why-toggle" (click)="toggleExpand(row.jobOfferId)">
+              <i class="fas fa-circle-info"></i> Why this match?
+            </button>
+            <button type="button" class="why-toggle prediction-toggle" (click)="togglePrediction(row.jobOfferId)">
+              <i class="fas fa-brain"></i>
+              {{ isPredictionExpanded(row.jobOfferId) ? 'Hide Prediction' : 'ML Prediction Detail' }}
+            </button>
+          </div>
+
+          <div class="why-text" *ngIf="isExpanded(row.jobOfferId)" [@accordionExpand]>
+            {{ whyMatchText(row) }}
+          </div>
+
+          <!-- ML Success Prediction Expanded Panel -->
+          <div class="prediction-panel" *ngIf="isPredictionExpanded(row.jobOfferId)" [@accordionExpand]>
+            <!-- Loading state -->
+            <div class="prediction-loading" *ngIf="predictionLoading[row.jobOfferId]">
+              <i class="fas fa-spinner fa-spin"></i>
+              <span>Running ML model...</span>
+            </div>
+
+            <!-- Prediction results -->
+            <ng-container *ngIf="predictionMap[row.jobOfferId] && !predictionLoading[row.jobOfferId]">
+              <div class="prediction-header">
+                <i class="fas fa-robot"></i>
+                <span>ML Success Prediction</span>
+              </div>
+
+              <div class="prediction-body">
+                <!-- Gauge Ring -->
+                <div class="prediction-gauge">
+                  <svg viewBox="0 0 90 90">
+                    <circle cx="45" cy="45" r="38" class="gauge-bg"></circle>
+                    <circle cx="45" cy="45" r="38" class="gauge-fg"
+                      [style.stroke]="predictionColor(row.jobOfferId)"
+                      [style.strokeDashoffset]="predictionGaugeOffset(row.jobOfferId)">
+                    </circle>
+                  </svg>
+                  <div class="gauge-label">
+                    <strong [style.color]="predictionColor(row.jobOfferId)">
+                      {{ predictionPct(row.jobOfferId) }}%
+                    </strong>
+                    <small>success</small>
+                  </div>
+                </div>
+
+                <!-- Breakdown Metrics -->
+                <div class="prediction-breakdown">
+                  <div class="prediction-metric" *ngIf="predictionMap[row.jobOfferId].skillOverlapPercent != null">
+                    <div class="pm-icon"><i class="fas fa-puzzle-piece"></i></div>
+                    <div class="pm-info">
+                      <span class="pm-label">Skill Overlap</span>
+                      <strong class="pm-value">{{ predictionMap[row.jobOfferId].skillOverlapPercent }}%</strong>
+                    </div>
+                    <div class="pm-bar">
+                      <div class="pm-bar-fill" [style.width.%]="predictionMap[row.jobOfferId].skillOverlapPercent"
+                        style="background: linear-gradient(90deg, #3d7ec7, #599aea);"></div>
+                    </div>
+                  </div>
+
+                  <div class="prediction-metric" *ngIf="predictionMap[row.jobOfferId].reputationScore != null">
+                    <div class="pm-icon"><i class="fas fa-star"></i></div>
+                    <div class="pm-info">
+                      <span class="pm-label">Reputation</span>
+                      <strong class="pm-value">{{ predictionMap[row.jobOfferId].reputationScore }}/100</strong>
+                    </div>
+                    <div class="pm-bar">
+                      <div class="pm-bar-fill" [style.width.%]="predictionMap[row.jobOfferId].reputationScore"
+                        style="background: linear-gradient(90deg, #c4841d, #e5a336);"></div>
+                    </div>
+                  </div>
+
+                  <div class="prediction-metric" *ngIf="predictionMap[row.jobOfferId].successRateScore != null">
+                    <div class="pm-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="pm-info">
+                      <span class="pm-label">Success Rate</span>
+                      <strong class="pm-value">{{ predictionMap[row.jobOfferId].successRateScore }}%</strong>
+                    </div>
+                    <div class="pm-bar">
+                      <div class="pm-bar-fill" [style.width.%]="predictionMap[row.jobOfferId].successRateScore"
+                        style="background: linear-gradient(90deg, #2d8b67, #42b88c);"></div>
+                    </div>
+                  </div>
+
+                  <!-- Confidence Badge -->
+                  <div class="prediction-confidence-row">
+                    <span class="pm-label">Model Confidence:</span>
+                    <span class="prediction-confidence-badge"
+                      [ngClass]="confidenceClass(predictionMap[row.jobOfferId].confidenceLabel)">
+                      <i class="fas fa-shield-halved"></i>
+                      {{ predictionMap[row.jobOfferId].confidenceLabel || 'N/A' }}
+                    </span>
+                  </div>
+
+                  <!-- Summary -->
+                  <div class="prediction-summary" *ngIf="predictionMap[row.jobOfferId].predictionSummary">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>{{ predictionMap[row.jobOfferId].predictionSummary }}</span>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+
+        </div>
+        <div class="right">
+          <div class="ring">
+            <svg viewBox="0 0 90 90">
+              <circle cx="45" cy="45" r="38" class="bg"></circle>
+              <circle cx="45" cy="45" r="38" class="fg" [style.strokeDashoffset]="strokeOffset(row)"></circle>
+            </svg>
+            <span>{{ animatedScores[row.jobOfferId] || 0 }}<small style="font-size:12px;">%</small></span>
+          </div>
+          <div class="bar"><label>Match</label><div class="track"><div class="fill match" [style.width.%]="matchPct(row)"></div></div><strong>{{ matchPct(row) }}%</strong></div>
+          <div class="bar"><label>Opportunity</label><div class="track"><div class="fill opp" [style.width.%]="oppPct(row)"></div></div><strong>{{ oppPct(row) }}%</strong></div>
+          <div class="bar"><label>Freshness</label><div class="track"><div class="fill fresh" [style.width.%]="freshPct(row)"></div></div><strong>{{ freshPct(row) }}%</strong></div>
+
+          <!-- Compact prediction in sidebar -->
+          <div class="prediction-sidebar-compact" *ngIf="inlineProbability(row) > 0">
+            <div class="bar">
+              <label><i class="fas fa-brain" style="margin-right:4px;"></i>ML Pred.</label>
+              <div class="track">
+                <div class="fill prediction-fill" [style.width.%]="inlineProbability(row)"
+                     [style.background]="'linear-gradient(90deg,' + inlineProbColor(row) + ', ' + inlineProbColor(row) + '88)'">
+                </div>
+              </div>
+              <strong [style.color]="inlineProbColor(row)">{{ inlineProbability(row) }}%</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer>
+        <button type="button" (click)="openJob(row.jobOfferId)"><i class="fas fa-eye"></i> View Job</button>
+        <button type="button" (click)="quickApply(row.jobOfferId)"><i class="fas fa-bolt"></i> Quick Apply</button>
+        <button type="button" style="margin-left:auto;" (click)="save(row, $event)"><i class="far fa-bookmark"></i> Save</button>
+      </footer>
+    </article>
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && !error && !filteredRows.length">
+    <i class="fas fa-inbox"></i>
+    <p>No recommendations match your current filters.</p>
+    <button type="button" class="hero-btn hero-btn--secondary why-match-toggle" (click)="scoreFilter='ALL'; sortBy='MATCH'">
+      <i class="fas fa-sliders"></i> Clear Filters
+    </button>
+  </div>
+</section>

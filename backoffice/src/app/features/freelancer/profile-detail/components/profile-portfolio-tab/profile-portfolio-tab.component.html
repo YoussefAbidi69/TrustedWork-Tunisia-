@@ -1,0 +1,139 @@
+<div class="card section-card">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="fas fa-briefcase"></i> Portfolio ({{ portfolio.length }})
+      </span>
+  
+      <div class="text-muted" style="font-size:12px;">
+        {{ pinnedPortfolioCount }} projet(s) épinglé(s)
+      </div>
+    </div>
+  
+    <ng-container *ngIf="portfolio.length > 0; else emptyPortfolio">
+  
+      <div *ngIf="pinnedPortfolio.length > 0" class="portfolio-block">
+        <div class="portfolio-block-title">
+          <i class="fas fa-thumbtack"></i> Projets épinglés
+        </div>
+  
+        <div class="portfolio-grid">
+          <div class="portfolio-item portfolio-item--pinned" *ngFor="let item of pinnedPortfolio">
+            <div class="portfolio-item-header">
+              <div class="portfolio-item-title-wrap">
+                <h4>{{ item.title }}</h4>
+                <span class="badge badge-warning">📌 Épinglé</span>
+                <span class="badge" [ngClass]="getProjectScoreClass(item.projectScore)">
+                  {{ item.projectScore }}% · {{ getProjectScoreLabel(item.projectScore) }}
+                </span>
+              </div>
+  
+              <div class="action-btns">
+                <button
+                  class="btn btn-ghost btn-sm"
+                  title="Désépingler"
+                  (click)="unpin.emit(item.id)">
+                  <i class="fas fa-thumbtack"></i> Désépingler
+                </button>
+  
+                <button
+                  class="btn btn-danger btn-sm btn-icon"
+                  title="Supprimer"
+                  (click)="delete.emit(item.id)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+  
+            <p class="text-secondary" *ngIf="item.description">{{ item.description }}</p>
+            <p class="text-muted" *ngIf="!item.description">Aucune description fournie.</p>
+  
+            <div *ngIf="item.technologies" class="chip-list" style="margin-top:10px;">
+              <span class="chip chip-info" *ngFor="let tech of getTechArray(item.technologies)">
+                {{ tech }}
+              </span>
+            </div>
+  
+            <div class="text-muted" style="font-size:12px; margin-top:10px;" *ngIf="item.completionDate">
+              <i class="fas fa-calendar-alt"></i> {{ item.completionDate | date:'MMM yyyy' }}
+            </div>
+  
+            <div class="portfolio-links">
+              <a
+                *ngIf="item.projectUrl"
+                [href]="item.projectUrl"
+                target="_blank"
+                class="btn btn-ghost btn-sm">
+                <i class="fas fa-external-link-alt"></i> Voir le projet
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <div *ngIf="regularPortfolio.length > 0" class="portfolio-block">
+        <div class="portfolio-block-title">
+          <i class="fas fa-layer-group"></i> Tous les projets
+        </div>
+  
+        <div class="portfolio-grid">
+          <div class="portfolio-item" *ngFor="let item of regularPortfolio">
+            <div class="portfolio-item-header">
+              <div class="portfolio-item-title-wrap">
+                <h4>{{ item.title }}</h4>
+                <span class="badge" [ngClass]="getProjectScoreClass(item.projectScore)">
+                  {{ item.projectScore }}% · {{ getProjectScoreLabel(item.projectScore) }}
+                </span>
+              </div>
+  
+              <div class="action-btns">
+                <button
+                  class="btn btn-ghost btn-sm"
+                  title="Épingler"
+                  (click)="pin.emit(item.id)">
+                  <i class="fas fa-thumbtack"></i> Épingler
+                </button>
+  
+                <button
+                  class="btn btn-danger btn-sm btn-icon"
+                  title="Supprimer"
+                  (click)="delete.emit(item.id)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+  
+            <p class="text-secondary" *ngIf="item.description">{{ item.description }}</p>
+            <p class="text-muted" *ngIf="!item.description">Aucune description fournie.</p>
+  
+            <div *ngIf="item.technologies" class="chip-list" style="margin-top:10px;">
+              <span class="chip chip-info" *ngFor="let tech of getTechArray(item.technologies)">
+                {{ tech }}
+              </span>
+            </div>
+  
+            <div class="text-muted" style="font-size:12px; margin-top:10px;" *ngIf="item.completionDate">
+              <i class="fas fa-calendar-alt"></i> {{ item.completionDate | date:'MMM yyyy' }}
+            </div>
+  
+            <div class="portfolio-links">
+              <a
+                *ngIf="item.projectUrl"
+                [href]="item.projectUrl"
+                target="_blank"
+                class="btn btn-ghost btn-sm">
+                <i class="fas fa-external-link-alt"></i> Voir le projet
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+    </ng-container>
+  
+    <ng-template #emptyPortfolio>
+      <div class="empty-state-inline">
+        <i class="fas fa-briefcase"></i>
+        <span>Aucun projet portfolio.</span>
+      </div>
+    </ng-template>
+  </div>

@@ -1,0 +1,12 @@
+<div class="mc" *ngIf="sorted.length">
+  <div class="mc__row" *ngFor="let row of sorted; let i = index">
+    <div class="mc__label">
+      <i class="fas" [ngClass]="icon(row.trend)"></i>
+      {{ row.skill }}
+    </div>
+    <div class="mc__track">
+      <div class="mc__fill" [ngClass]="barClass(row.trend)" [style.width.%]="(row.count / maxCount) * 100" [style.transitionDelay.ms]="i * 40"></div>
+    </div>
+    <div class="mc__count">{{ row.count }}</div>
+  </div>
+</div>

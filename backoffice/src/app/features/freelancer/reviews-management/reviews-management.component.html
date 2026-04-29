@@ -1,0 +1,296 @@
+<div class="reviews-admin-page">
+
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Reviews Management</h1>
+        <p class="page-subtitle">Supervision des avis liés aux profils freelancers</p>
+      </div>
+  
+      <div class="page-actions">
+        <button class="btn btn-ghost btn-sm" (click)="resetFilters()">
+          <i class="fas fa-filter-circle-xmark"></i>
+          Réinitialiser
+        </button>
+  
+        <button class="btn btn-primary btn-sm" (click)="loadReviews()">
+          <i class="fas fa-rotate-right"></i>
+          Rafraîchir
+        </button>
+      </div>
+    </div>
+  
+    <!-- Message succès -->
+    <div class="alert alert-success" *ngIf="successMsg">
+      <i class="fas fa-check-circle"></i> {{ successMsg }}
+    </div>
+  
+    <!-- Message erreur -->
+    <div class="alert alert-danger" *ngIf="errorMsg">
+      <i class="fas fa-exclamation-triangle"></i> {{ errorMsg }}
+    </div>
+  
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="card stat-card">
+        <div class="stat-icon accent"><i class="fas fa-star"></i></div>
+        <div class="stat-content">
+          <span class="stat-label">Total reviews</span>
+          <strong class="stat-value">{{ totalReviews }}</strong>
+        </div>
+      </div>
+  
+      <div class="card stat-card">
+        <div class="stat-icon success"><i class="fas fa-chart-line"></i></div>
+        <div class="stat-content">
+          <span class="stat-label">Moyenne</span>
+          <strong class="stat-value">{{ averageRating.toFixed(1) }}/5</strong>
+        </div>
+      </div>
+  
+      <div class="card stat-card">
+        <div class="stat-icon success"><i class="fas fa-eye"></i></div>
+        <div class="stat-content">
+          <span class="stat-label">Visibles</span>
+          <strong class="stat-value">{{ visibleCount }}</strong>
+        </div>
+      </div>
+  
+      <div class="card stat-card">
+        <div class="stat-icon danger"><i class="fas fa-flag"></i></div>
+        <div class="stat-content">
+          <span class="stat-label">Signalées</span>
+          <strong class="stat-value">{{ flaggedCount }}</strong>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Filtres -->
+    <div class="card filters-card">
+      <div class="filters-grid">
+        <div class="search-box">
+          <i class="fas fa-magnifying-glass"></i>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="applyFilters()"
+            placeholder="Rechercher par client, freelancer, headline ou commentaire..."
+          />
+        </div>
+  
+        <select [(ngModel)]="selectedRegion" (change)="applyFilters()">
+          <option value="ALL">Toutes les régions</option>
+          <option *ngFor="let region of availableRegions" [value]="region">{{ region }}</option>
+        </select>
+  
+        <select [(ngModel)]="selectedRating" (change)="applyFilters()">
+          <option value="ALL">Toutes les notes</option>
+          <option value="5">5 étoiles</option>
+          <option value="4">4 étoiles</option>
+          <option value="3">3 étoiles</option>
+          <option value="2">2 étoiles</option>
+          <option value="1">1 étoile</option>
+        </select>
+  
+        <select [(ngModel)]="selectedStatus" (change)="applyFilters()">
+          <option value="ALL">Tous les statuts</option>
+          <option value="VISIBLE">Visible</option>
+          <option value="HIDDEN">Masqué</option>
+          <option value="FLAGGED">Signalé</option>
+        </select>
+      </div>
+    </div>
+  
+    <!-- Chargement -->
+    <div class="card" *ngIf="loading">
+      <div class="empty-state">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Chargement des reviews...</p>
+      </div>
+    </div>
+  
+    <!-- Liste vide -->
+    <div class="card" *ngIf="!loading && !errorMsg && filteredReviews.length === 0">
+      <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <p>Aucune review trouvée.</p>
+      </div>
+    </div>
+  
+    <!-- Tableau -->
+    <div class="card table-card" *ngIf="!loading && filteredReviews.length > 0">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Freelancer</th>
+            <th>Headline</th>
+            <th>Note</th>
+            <th>Statut</th>
+            <th>Région</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+  
+        <tbody>
+          <ng-container *ngFor="let review of filteredReviews; trackBy: trackByReview">
+            <tr [class.row-flagged]="review.flagged">
+              <td>
+                <div class="user-cell">
+                  <div class="avatar avatar-sm avatar-accent">{{ review.clientInitials }}</div>
+                  <div class="user-meta">
+                    <strong>{{ review.clientFullName }}</strong>
+                    <span>Client</span>
+                  </div>
+                </div>
+              </td>
+  
+              <td>
+                <div class="user-cell">
+                  <div class="avatar avatar-sm avatar-accent">{{ review.freelancerInitials }}</div>
+                  <div class="user-meta">
+                    <strong>{{ review.freelancerFullName }}</strong>
+                    <span>#{{ review.profileUserId }}</span>
+                  </div>
+                </div>
+              </td>
+  
+              <td>
+                <div class="headline-cell">
+                  <strong>{{ review.headline }}</strong>
+                  <span>{{ getShortComment(review.comment) }}</span>
+                </div>
+              </td>
+  
+              <td>
+                <div class="rating-cell" [ngClass]="getRatingClass(review.rating)">
+                  <span class="stars">
+                    <ng-container *ngFor="let star of getRatingStars(review.rating)">
+                      {{ star === 'full' ? '★' : '☆' }}
+                    </ng-container>
+                  </span>
+                  <strong>{{ review.rating }}/5</strong>
+                </div>
+              </td>
+  
+              <td>
+                <!-- Badge ML Flagged -->
+                <span class="badge badge-ml-flagged" *ngIf="review.flagged"
+                      [title]="review.flagReason || 'Suspect'">
+                  🤖 ML Suspect
+                </span>
+                <span class="badge" [ngClass]="'badge-' + getStatusClass(review.status)">
+                  {{ getStatusLabel(review.status) }}
+                </span>
+              </td>
+  
+              <td>{{ review.region || '—' }}</td>
+              <td>{{ review.reviewedAt | date:'dd MMM yyyy' }}</td>
+  
+              <td>
+                <div class="action-btns">
+                  <!-- Détails -->
+                  <button
+                    class="btn btn-ghost btn-sm"
+                    (click)="toggleExpand(review.id)"
+                    title="Voir les détails">
+                    <i class="fas" [ngClass]="expandedId === review.id ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                  </button>
+              
+                  <!-- Masquer si review visible ou signalée -->
+                  <button
+                    *ngIf="review.status === 'VISIBLE' || review.status === 'FLAGGED'"
+                    class="btn btn-warning btn-sm"
+                    [disabled]="processingId === review.id"
+                    (click)="hideReview(review)"
+                    title="Masquer cet avis">
+                    <i class="fas fa-eye-slash"></i>
+                  </button>
+              
+                  <!-- Rendre visible si review masquée -->
+                  <button
+                    *ngIf="review.status === 'HIDDEN'"
+                    class="btn btn-success btn-sm"
+                    [disabled]="processingId === review.id"
+                    (click)="restoreReview(review)"
+                    title="Rendre cet avis visible">
+                    <i class="fas fa-eye"></i>
+                  </button>
+              
+                  <!-- Supprimer -->
+                  <button
+                    class="btn btn-danger btn-sm"
+                    [disabled]="processingId === review.id"
+                    (click)="deleteReview(review)"
+                    title="Supprimer définitivement">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+  
+            <!-- Panneau de détails -->
+            <tr class="detail-row" *ngIf="expandedId === review.id">
+              <td colspan="8">
+                <div class="detail-panel">
+                  <div class="detail-grid">
+  
+                    <div class="detail-item">
+                      <span class="detail-label">Commentaire complet</span>
+                      <p class="detail-value">"{{ review.comment || 'Aucun commentaire' }}"</p>
+                    </div>
+  
+                    <!-- Réponse freelancer -->
+                    <div class="detail-item" *ngIf="review.freelancerReply">
+                      <span class="detail-label">
+                        <i class="fas fa-reply"></i> Réponse du freelancer
+                      </span>
+                      <p class="detail-value reply-value">{{ review.freelancerReply }}</p>
+                    </div>
+                    <div class="detail-item" *ngIf="!review.freelancerReply">
+                      <span class="detail-label">Réponse du freelancer</span>
+                      <p class="detail-value text-muted">Aucune réponse</p>
+                    </div>
+  
+                    <!-- Motif flag -->
+                    <div class="detail-item" *ngIf="review.flagged">
+                      <span class="detail-label text-danger">
+                        <i class="fas fa-triangle-exclamation"></i> Motif du flag
+                      </span>
+                      <p class="detail-value text-danger">
+                        {{ review.flagReason || 'INCONSISTENT_RATING_COMMENT' }}
+                      </p>
+                    </div>
+  
+                    <div class="detail-item">
+                      <span class="detail-label">Complétude profil</span>
+                      <p class="detail-value">{{ review.completenessScore }}%</p>
+                    </div>
+  
+                    <div class="detail-item">
+                      <span class="detail-label">Vues profil</span>
+                      <p class="detail-value">{{ review.totalViews }}</p>
+                    </div>
+  
+                    <div class="detail-item" *ngIf="review.updatedAt">
+                      <span class="detail-label">Dernière mise à jour</span>
+                      <p class="detail-value">{{ review.updatedAt | date:'dd MMM yyyy HH:mm' }}</p>
+                    </div>
+                  </div>
+  
+                  <div class="detail-actions">
+                    <a
+                      class="btn btn-primary btn-sm"
+                      [routerLink]="['/admin/freelancers', review.profileId]">
+                      <i class="fas fa-eye"></i>
+                      Voir le profil
+                    </a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+  </div>

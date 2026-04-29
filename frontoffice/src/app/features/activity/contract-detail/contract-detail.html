@@ -1,0 +1,348 @@
+<div class="container mt-4 animate-fade-in">
+  
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-terracotta" role="status" style="width: 3rem; height: 3rem;"></div>
+    <p class="mt-3 text-stone">Initialisation de votre workspace sécurisé...</p>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger shadow-sm border-0 rounded-4 p-3">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+  </div>
+
+  <div *ngIf="contract && !loading">
+    
+    <!-- Page Header Hero -->
+    <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center shadow-lg">
+      <div class="header-content">
+        <span class="badge-kicker">Référence: {{ contract.reference || 'REF-' + contract.id }}</span>
+        <h2 class="display-6">{{ contract.projectTitle }}</h2>
+        <p class="mb-0 opacity-75">Contrat #{{ contract.id }} • Créé le {{ contract.createdAt | date:'dd MMM yyyy' }}</p>
+      </div>
+      
+      <div class="header-actions mt-3 mt-md-0 d-flex flex-wrap gap-3">
+        <!-- New Step 1: Finalize & Send -->
+        <button *ngIf="isClient && contract.status === 'DRAFT'" 
+                (click)="finalizeAndSend()" 
+                [disabled]="!isDraftReady()"
+                [class.opacity-50]="!isDraftReady()"
+                [title]="!isDraftReady() ? draftStatusMessage : ''"
+                class="btn-premium primary shadow-lg hover-up">
+          <i class="bi bi-send-fill me-2"></i> Finaliser &amp; Demander Signature
+        </button>
+
+        <!-- New Step 2: Pay (only after both have signed) -->
+        <button *ngIf="isClient && contract.status === 'PENDING_PAYMENT'" 
+                (click)="goToPayment()" 
+                [disabled]="isPaymentBlocked()"
+                [title]="isPaymentBlocked() ? 'Montant incohérent — corrigez les jalons avant de payer' : ''"
+                class="btn-premium success shadow-lg hover-up"
+                [class.opacity-50]="isPaymentBlocked()">
+          <i class="bi bi-shield-lock-fill me-2"></i> Payer (Dépôt Escrow)
+        </button>
+
+        <a *ngIf="contract.status === 'PENDING_SIGNATURE'" 
+           [routerLink]="['/app/activity/contracts', contract.id, 'sign']" 
+           class="btn-premium info shadow-lg hover-up">
+          <i class="bi bi-vector-pen me-2"></i> Voir État Signatures
+        </a>
+        
+        <button *ngIf="contract.status !== 'DRAFT'" 
+                (click)="downloadContractPDF()" 
+                class="btn-premium secondary shadow-lg hover-up">
+          <i class="bi bi-file-earmark-pdf-fill me-2"></i> Document Contractuel
+        </button>
+
+        <a routerLink="/app/activity/contracts" class="btn-ghost-cancel bg-white bg-opacity-10">
+          <i class="bi bi-arrow-left me-2"></i> Retour
+        </a>
+      </div>
+    </div>
+
+    <!-- Overview Bar -->
+    <div class="info-card mb-4 overflow-hidden">
+      <div class="summary-bar">
+        <div class="border-end pe-md-4">
+          <span class="info-label">Statut du contrat</span>
+          <span class="status-pill signed mt-1" [ngClass]="contract.status.toLowerCase()">
+            {{ contract.status }}
+          </span>
+        </div>
+        <div class="border-end px-md-4">
+          <span class="info-label">Budget Global</span>
+          <span class="info-value h3 mb-0">{{ contract.montantTotal | number:'1.0-2' }} DT</span>
+        </div>
+        <div class="ps-md-4">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="info-label mb-0">Escrow Libéré ({{ (getReleasedAmount() / contract.montantTotal) * 100 | number:'1.0-0' }}%)</span>
+            <span class="fw-bold text-success">{{ getReleasedAmount() | number:'1.2-2' }} / {{ contract.montantTotal }} DT</span>
+          </div>
+          <div class="progress-premium">
+            <div class="progress-bar-premium" 
+                 [style.width.%]="(getReleasedAmount() / contract.montantTotal) * 100">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DRAFT Premium Status Dashboard -->
+    <div *ngIf="contract.status === 'DRAFT'" class="premium-draft-dashboard mb-4">
+      <!-- Warning Banner if not ready -->
+      <div *ngIf="!isDraftReady() && draftStatusMessage" 
+           class="draft-warning-banner d-flex align-items-center gap-3">
+        <div class="warning-icon-wrapper">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <div class="warning-text">
+          <h6 class="mb-1 fw-bold">Finalisation bloquée</h6>
+          <p class="mb-0 small">{{ draftStatusMessage }}</p>
+        </div>
+      </div>
+
+      <!-- Ready Banner if ready -->
+      <div *ngIf="isDraftReady()" 
+           class="draft-ready-banner d-flex align-items-center gap-3">
+        <div class="success-icon-wrapper">
+          <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <div class="success-text">
+          <h6 class="mb-1 fw-bold">Prêt pour la finalisation</h6>
+          <p class="mb-0 small">Le budget est entièrement alloué. Vous pouvez maintenant finaliser le contrat.</p>
+        </div>
+      </div>
+
+      <!-- Budget Breakdown -->
+      <div class="budget-breakdown-wrapper p-4">
+        <div class="row g-4 text-center">
+          <div class="col-md-4">
+            <div class="budget-stat-box primary-box">
+              <div class="stat-icon"><i class="bi bi-wallet2"></i></div>
+              <div class="stat-label">Budget Contrat</div>
+              <div class="stat-value">{{ contract.montantTotal | number:'1.2-2' }} <span class="currency">DT</span></div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="budget-stat-box success-box">
+              <div class="stat-icon"><i class="bi bi-layers"></i></div>
+              <div class="stat-label">Somme Jalons</div>
+              <div class="stat-value">{{ getTotalMilestonesAmount() | number:'1.2-2' }} <span class="currency">DT</span></div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="budget-stat-box" 
+                 [ngClass]="{'danger-box': (contract.montantTotal - getTotalMilestonesAmount()) < -0.01,
+                             'success-box': (contract.montantTotal - getTotalMilestonesAmount()) >= -0.01 && (contract.montantTotal - getTotalMilestonesAmount()) <= 0.01,
+                             'warning-box': (contract.montantTotal - getTotalMilestonesAmount()) > 0.01}">
+              <div class="stat-icon"><i class="bi bi-pie-chart-fill"></i></div>
+              <div class="stat-label">Restant à Allouer</div>
+              <div class="stat-value">
+                {{ (contract.montantTotal - getTotalMilestonesAmount()) | number:'1.2-2' }} <span class="currency">DT</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="allocation-progress-container mt-4">
+          <div class="d-flex justify-content-between align-items-end mb-2">
+            <span class="progress-label fw-bold text-muted small text-uppercase tracking-wider">Taux d'allocation</span>
+            <span class="progress-percentage fw-bold" 
+                  [ngClass]="getTotalMilestonesAmount() > contract.montantTotal ? 'text-danger' : 'text-primary'">
+              {{ contract.montantTotal > 0 ? ((getTotalMilestonesAmount() / contract.montantTotal) * 100 | number:'1.0-0') : 0 }}%
+            </span>
+          </div>
+          <div class="progress premium-progress">
+            <div class="progress-bar premium-progress-bar"
+                 [ngClass]="getTotalMilestonesAmount() > contract.montantTotal ? 'bg-danger' : 'bg-primary'"
+                 [style.width.%]="contract.montantTotal > 0 ? (getTotalMilestonesAmount() / contract.montantTotal) * 100 : 0">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Financial Mismatch Warning (PENDING_PAYMENT) -->
+    <div *ngIf="financialMetrics?.mismatch && contract.status === 'PENDING_PAYMENT'" 
+         class="alert border-0 rounded-4 shadow-sm mb-4 px-4 py-3 d-flex align-items-start gap-3"
+         style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-left: 4px solid #f39c12 !important;">
+      <i class="bi bi-exclamation-triangle-fill fs-4 mt-1" style="color:#e67e22;"></i>
+      <div>
+        <strong style="color:#b7570a;">Montant total incohérent — Paiement bloqué</strong>
+        <p class="mb-1 small" style="color:#7d4a05;">
+          Le montant stocké <strong>{{ financialMetrics?.storedMontantTotal | number:'1.2-2' }} DT</strong>
+          ne correspond pas à la somme des jalons <strong>{{ financialMetrics?.computedMontantTotal | number:'1.2-2' }} DT</strong>
+          (écart : {{ financialMetrics?.delta | number:'1.2-2' }} DT).
+        </p>
+        <p class="mb-0 small" style="color:#7d4a05;">Merci de corriger les montants des jalons avant de procéder au paiement.</p>
+      </div>
+    </div>
+
+    <!-- Milestones Section -->
+    <div class="milestones-section mb-5">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="section-title-modern mb-0">Workflow des Jalons</h3>
+        <div *ngIf="contract.status === 'DRAFT' && (isClient || isAdmin) && getTotalMilestonesAmount() < contract.montantTotal">
+           <a [routerLink]="['/app/activity/contracts', contract.id, 'milestones', 'new']" 
+              class="btn-premium primary shadow-lg hover-up">
+             <i class="bi bi-plus-lg me-2"></i> Nouveau Jalon
+           </a>
+        </div>
+      </div>
+
+      <div class="milestone-stack">
+        <div *ngFor="let milestone of milestones" class="milestone-modern-card shadow-sm">
+          
+          <div class="milestone-content">
+            <div class="d-flex align-items-center gap-3 mb-2">
+              <h4 class="mb-0">{{ milestone.titre }}</h4>
+              <span class="status-pill px-2 py-1" [ngClass]="milestone.status.toLowerCase()">{{ milestone.status }}</span>
+            </div>
+            
+            <p class="milestone-desc">{{ milestone.description }}</p>
+            
+            <div class="milestone-meta">
+              <span class="meta-pill"><i class="bi bi-calendar3 me-2"></i>{{ milestone.deadline | date:'dd MMM yyyy' }}</span>
+              <span *ngIf="milestone.startedAt" class="meta-pill"><i class="bi bi-play-fill me-1"></i>Démarre le {{ milestone.startedAt | date:'dd MMM' }}</span>
+            </div>
+
+            <!-- Rejection Alert -->
+            <div *ngIf="milestone.status === 'REJECTED' && milestone.rejectionReason" class="alert alert-danger border-0 rounded-4 mt-3 p-3 small">
+              <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>Rework demandé:</strong> 
+              {{ milestone.rejectionReason }}
+            </div>
+
+            <!-- Proof of Delivery -->
+            <div *ngIf="deliveryProofs[milestone.id!] && (milestone.status === 'SUBMITTED' || milestone.status === 'APPROVED' || milestone.status === 'REJECTED')" 
+                 class="proof-block mt-4">
+              <span class="proof-title">Preuve de Livraison Soumise le {{ deliveryProofs[milestone.id!]?.submittedAt | date:'dd/MM/yyyy' }}</span>
+              
+              <div class="proof-body small">
+                <p *ngIf="deliveryProofs[milestone.id!]?.commentaire" class="fst-italic mb-3">
+                  "{{ deliveryProofs[milestone.id!]?.commentaire }}"
+                </p>
+                <div class="proof-links">
+                  <a *ngIf="deliveryProofs[milestone.id!]?.lienDemo" [href]="formatUrl(deliveryProofs[milestone.id!]?.lienDemo)" target="_blank" class="btn-proof">
+                    <i class="bi bi-eye-fill me-1"></i> Démo
+                  </a>
+                  <a *ngIf="deliveryProofs[milestone.id!]?.repoGit" [href]="formatUrl(deliveryProofs[milestone.id!]?.repoGit)" target="_blank" class="btn-proof">
+                    <i class="bi bi-github me-1"></i> Repository
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="milestone-right">
+            <div class="milestone-amount">{{ milestone.montant | number:'1.2-2' }} DT</div>
+            
+            <div class="action-buttons d-flex flex-column gap-2">
+              <!-- Freelancer Actions -->
+              <button *ngIf="isFreelancer && (milestone.status === 'PENDING' || milestone.status === 'REJECTED') && contract.status === 'ACTIVE'" 
+                      (click)="startMilestone(milestone.id!)" 
+                      class="btn btn-premium primary w-100">
+                Démarrer
+              </button>
+              
+              <button *ngIf="isFreelancer && (milestone.status === 'IN_PROGRESS' || milestone.status === 'STARTED')" 
+                      (click)="submitMilestone(milestone.id!)" 
+                      class="btn btn-premium success w-100">
+                Soumettre
+              </button>
+
+              <!-- Client Actions -->
+              <div *ngIf="(isClient || isAdmin) && milestone.status === 'SUBMITTED'" class="d-flex flex-column gap-2">
+                <button (click)="approveMilestone(milestone.id!)" class="btn btn-premium success w-100">Approuver</button>
+                <button (click)="rejectMilestone(milestone.id!)" class="btn btn-premium danger w-100">Rejeter</button>
+              </div>
+
+              <!-- Delete Action (Draft only) -->
+              <button *ngIf="(isClient || isAdmin) && contract.status === 'DRAFT'" 
+                      (click)="deleteMilestone(milestone.id!)" 
+                      class="btn btn-outline-danger rounded-pill py-2">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+        
+        <div *ngIf="milestones.length === 0" class="text-center py-5 text-dark fw-medium">
+          Aucun jalon défini pour ce contrat.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rejection Modal -->
+  <div class="modal-backdrop fade show" *ngIf="showRejectModal"></div>
+  <div class="modal fade show d-block" *ngIf="showRejectModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+      <div class="modal-content shadow-xl border-0 overflow-hidden" style="border-radius: 24px;">
+        <div class="modal-header border-0 pb-0 pt-4 px-4">
+          <h4 class="modal-title fw-bold text-midnight">Rejeter le jalon 🛑</h4>
+          <button type="button" class="btn-close" (click)="closeRejectModal()"></button>
+        </div>
+        <div class="modal-body py-4 px-4">
+          <p class="text-stone mb-4 fs-6">Veuillez indiquer le motif du rejet et les corrections attendues.</p>
+          
+          <div class="mb-4">
+            <label class="form-label small-kicker">Motif du rejet *</label>
+            <textarea class="form-control premium-input" [(ngModel)]="rejectionReason" rows="4" placeholder="Décrivez les corrections attendues..."></textarea>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small-kicker">Nouvelle Deadline</label>
+            <input type="date" class="form-control premium-input" [(ngModel)]="newDeadline" [min]="minDate">
+          </div>
+        </div>
+        <div class="modal-footer border-0 pb-4 px-4 gap-3 justify-content-center">
+          <button type="button" class="btn-ghost-cancel" (click)="closeRejectModal()">Annuler</button>
+          <button type="button" class="btn btn-premium danger px-5 rounded-pill shadow-sm" [disabled]="!rejectionReason.trim()" (click)="confirmReject()">Confirmer le Rejet</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submission Modal -->
+  <div class="modal-backdrop fade show" *ngIf="showSubmitModal"></div>
+  <div class="modal fade show d-block" *ngIf="showSubmitModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 550px;">
+      <div class="modal-content shadow-xl border-0 overflow-hidden" style="border-radius: 24px;">
+        <div class="modal-header border-0 pb-0 pt-4 px-4">
+          <h4 class="modal-title fw-bold text-midnight">Soumettre le jalon 🚀</h4>
+          <button type="button" class="btn-close" (click)="closeSubmitModal()"></button>
+        </div>
+        <form [formGroup]="submissionForm" (ngSubmit)="confirmSubmitWithProof()">
+          <div class="modal-body py-4 px-4">
+            <p class="text-stone mb-4 fs-6">Bravo pour le travail ! Veuillez fournir les preuves de livraison ci-dessous.</p>
+            
+            <div class="mb-4">
+              <label class="form-label small-kicker">Lien de Démo</label>
+              <input type="url" class="form-control premium-input" formControlName="lienDemo" placeholder="https://demo...">
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label small-kicker">Repository Git</label>
+              <input type="url" class="form-control premium-input" formControlName="repoGit" placeholder="https://github...">
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label small-kicker">Livrables (Textuel / Cloud)</label>
+              <textarea class="form-control premium-input" formControlName="fichiers" rows="2" placeholder="Ex: PDF, Documents Google Drive..."></textarea>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small-kicker">Commentaires additionnels</label>
+              <textarea class="form-control premium-input" formControlName="commentaire" rows="3" placeholder="Notes pour le client..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-0 pb-4 px-4 gap-3 justify-content-center">
+            <button type="button" class="btn-ghost-cancel" (click)="closeSubmitModal()">Annuler</button>
+            <button type="submit" class="btn btn-premium success px-5 rounded-pill shadow-sm">Soumettre la livraison</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</div>
