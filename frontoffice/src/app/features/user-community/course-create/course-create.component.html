@@ -1,0 +1,392 @@
+<!-- Animated Background Blobs -->
+<div class="cs-bg-blobs">
+  <div class="cs-blob cs-blob-1"></div>
+  <div class="cs-blob cs-blob-2"></div>
+  <div class="cs-blob cs-blob-3"></div>
+</div>
+
+<section class="cs-wrapper">
+  <!-- Top Navigation / Actions -->
+  <nav class="cs-nav">
+    <div class="cs-nav-glass">
+      <div class="cs-nav-left">
+         <div class="cs-logo-icon"><i class="fas fa-layer-group"></i></div>
+         <span class="cs-breadcrumb">Course Studio ✨</span>
+         <span class="cs-status">
+           <ng-container *ngIf="saving; else saveStatus">
+             <i class="fas fa-circle-notch fa-spin"></i> Saving...
+           </ng-container>
+           <ng-template #saveStatus>
+             <span *ngIf="saveError; else defaultStatus" class="cs-error"><i class="fas fa-exclamation-triangle"></i> {{saveError}}</span>
+           </ng-template>
+           <ng-template #defaultStatus><span class="cs-badge-draft">Draft</span></ng-template>
+         </span>
+      </div>
+      <div class="cs-nav-right">
+         <div class="cs-select-community">
+           <i class="fas fa-users cs-select-icon"></i>
+           <select [(ngModel)]="communityId">
+              <option [ngValue]="null">Select Community</option>
+              <option *ngFor="let community of communities" [ngValue]="community.id">
+                {{ community.name || ('Community #' + community.id) }}
+              </option>
+           </select>
+         </div>
+         <button class="cs-btn cs-btn-ghost" (click)="cancel()" [disabled]="saving">Cancel</button>
+         <button class="cs-btn cs-btn-ghost" (click)="saveCourse(false)" [disabled]="saving">Save as Draft</button>
+        <button class="cs-btn cs-btn-gradient" (click)="openPublishReview()" [disabled]="saving">
+          Publish Course <i class="fas fa-rocket"></i>
+         </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="cs-editor">
+    <!-- Header Area -->
+    <header class="cs-header">
+      <input type="text" [(ngModel)]="title" (ngModelChange)="onTitleChanged($event)" class="cs-title-input" placeholder="Give your course a brilliant title..." />
+      <textarea [(ngModel)]="description" (ngModelChange)="onDescriptionChanged($event)" class="cs-desc-input" placeholder="What extraordinary things will your students learn? Add a compelling description here..."></textarea>
+
+      <div class="cs-quality-controls">
+        <button class="cs-btn cs-btn-ghost" type="button" (click)="onAnalyseQuality()" [disabled]="qualityLoading">
+          <i *ngIf="qualityLoading" class="fas fa-spinner fa-spin"></i>
+          {{ qualityLoading ? 'Analysing...' : 'Analyse quality' }}
+        </button>
+        <button class="cs-btn cs-btn-ghost" type="button" (click)="onCheckPlagiarism()" [disabled]="plagiarismChecking" style="margin-left: 8px;">
+          <i *ngIf="plagiarismChecking" class="fas fa-spinner fa-spin"></i>
+          <i *ngIf="!plagiarismChecking" class="fas fa-shield-alt"></i>
+          {{ plagiarismChecking ? 'Checking...' : 'Check Plagiarism' }}
+        </button>
+        <span class="cs-quality-validation" *ngIf="qualityValidationMessage">{{ qualityValidationMessage }}</span>
+      </div>
+
+      <!-- Plagiarism Result Panel -->
+      <div class="cs-quality-panel" *ngIf="plagiarismChecking || plagiarismResult || plagiarismError">
+        <div class="cs-quality-heading"><i class="fas fa-shield-alt"></i> Plagiarism Check</div>
+
+        <div *ngIf="plagiarismChecking" class="cs-quality-loading">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Scanning for duplicate content...</span>
+        </div>
+
+        <div *ngIf="plagiarismError" class="cs-alert-error" style="margin: 8px 0;">
+          <i class="fas fa-exclamation-triangle"></i> {{ plagiarismError }}
+        </div>
+
+        <ng-container *ngIf="!plagiarismChecking && plagiarismResult">
+          <div *ngIf="plagiarismResult.is_plagiarized" style="padding: 12px; border-radius: 8px; background: rgba(255,59,48,0.12); border: 1px solid rgba(255,59,48,0.3); color: #ff6b6b; margin-top: 8px;">
+            <i class="fas fa-times-circle"></i>
+            <strong>Duplicate detected!</strong> This course matches an existing course by <strong>{{ plagiarismResult.max_similarity }}%</strong>.
+            <span *ngIf="plagiarismResult.matched_course_id"> (Course #{{ plagiarismResult.matched_course_id }})</span>
+          </div>
+          <div *ngIf="!plagiarismResult.is_plagiarized" style="padding: 12px; border-radius: 8px; background: rgba(52,199,89,0.12); border: 1px solid rgba(52,199,89,0.3); color: #34c759; margin-top: 8px;">
+            <i class="fas fa-check-circle"></i>
+            <strong>Original content!</strong> No duplicates found. Similarity: {{ plagiarismResult.max_similarity }}%.
+          </div>
+        </ng-container>
+      </div>
+
+      <div class="cs-quality-panel" *ngIf="qualityLoading || qualityPrediction || qualityUnavailable">
+        <div class="cs-quality-heading">Course quality</div>
+
+        <div *ngIf="qualityLoading" class="cs-quality-loading">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Analysing quality...</span>
+        </div>
+
+        <ng-container *ngIf="!qualityLoading && qualityPrediction">
+          <div class="cs-quality-top">
+            <div class="cs-quality-progress">
+              <div class="cs-quality-track">
+                <div class="cs-quality-fill" [class.cs-quality-fill--positive]="qualityTone === 'positive'" [class.cs-quality-fill--neutral]="qualityTone === 'neutral'" [class.cs-quality-fill--negative]="qualityTone === 'negative'" [style.width.%]="qualityScore"></div>
+              </div>
+              <span class="cs-quality-score">{{ qualityScore }}/100</span>
+            </div>
+            <div class="cs-quality-label" [class.cs-quality-label--positive]="qualityTone === 'positive'" [class.cs-quality-label--neutral]="qualityTone === 'neutral'" [class.cs-quality-label--negative]="qualityTone === 'negative'">
+              {{ qualityPrediction.label_display }}
+            </div>
+          </div>
+
+          <ul class="cs-quality-feedback">
+            <li *ngFor="let item of qualityPrediction.feedback || []" [class.cs-quality-feedback--positive]="item.type === 'positive'" [class.cs-quality-feedback--neutral]="item.type === 'neutral'" [class.cs-quality-feedback--negative]="item.type === 'negative'">
+              <i *ngIf="item.type === 'positive'" class="fas fa-check"></i>
+              <i *ngIf="item.type === 'neutral'" class="fas fa-minus"></i>
+              <i *ngIf="item.type === 'negative'" class="fas fa-xmark"></i>
+              <span>{{ item.message }}</span>
+            </li>
+          </ul>
+
+        </ng-container>
+
+        <div *ngIf="qualityUnavailable" class="cs-quality-note">
+          Quality analysis is currently unavailable. You can still publish your course.
+        </div>
+      </div>
+    </header>
+
+    <!-- Sections Area -->
+    <div class="cs-content" cdkDropList [cdkDropListData]="sections" (cdkDropListDropped)="dropSection($event)">
+      <div 
+        class="cs-section glass-panel" 
+        *ngFor="let section of sections; let sIdx = index; trackBy: trackBySectionId" 
+        cdkDrag>
+        
+        <div class="cs-section-header">
+           <div class="cs-drag-handle cs-handle-zone" cdkDragHandle title="Reorder Section">
+              <i class="fas fa-grip-vertical"></i>
+           </div>
+           
+           <div class="cs-section-badge">Section {{sIdx + 1}}</div>
+           <input type="text" [(ngModel)]="section.title" class="cs-section-title" placeholder="Untited Section" />
+           
+           <button class="cs-icon-btn cs-danger-hover transition-bounce" (click)="removeSection(section.id)" title="Delete Section">
+             <i class="fas fa-trash-alt"></i>
+           </button>
+        </div>
+
+        <div class="cs-blocks" cdkDropList [cdkDropListData]="section.blocks" (cdkDropListDropped)="dropBlock(section, $event)">
+          <div 
+            class="cs-block-wrapper" 
+            *ngFor="let block of section.blocks; let bIdx = index; trackBy: trackByBlockId"
+            cdkDrag
+            (mouseenter)="selectBlock(block.id); selectSection(section.id)"
+            [class.is-active]="selectedBlockId === block.id">
+            
+            <!-- Block Action Menu Floating Left -->
+            <div class="cs-block-actions glass-pill">
+              <button class="cs-icon-btn" cdkDragHandle title="Drag"><i class="fas fa-grip-lines"></i></button>
+              
+              <div class="cs-type-picker-wrap">
+                <i class="fas fa-chevron-down cs-type-picker-arrow"></i>
+                <select [(ngModel)]="block.type" class="cs-type-select" (change)="onBlockTypeChange(block)">
+                  <option *ngFor="let type of blockTypes" [ngValue]="type">{{ type }}</option>
+                </select>
+              </div>
+
+              <button class="cs-icon-btn cs-danger-hover" (click)="removeBlock(section.id, block.id)" title="Remove"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Block Connecting Line (Visual) -->
+            <div class="cs-block-timeline"></div>
+
+            <div class="cs-block-header-title">
+              <input type="text" [(ngModel)]="block.title" class="cs-block-title-input" placeholder="Block Title (e.g. Introduction)">
+            </div>
+
+            <!-- Block Content Renderers -->
+            <div class="cs-block-content" [ngSwitch]="block.type">
+              
+              <!-- TEXT -->
+              <div *ngSwitchCase="'TEXT'" class="cs-type-text">
+                <textarea [(ngModel)]="block.content" class="cs-textarea-auto" placeholder="Start typing your rich content here..."></textarea>
+              </div>
+
+              <!-- CODE -->
+              <div *ngSwitchCase="'CODE'" class="cs-type-code window-frame">
+                 <div class="window-header">
+                    <div class="window-dots"><span></span><span></span><span></span></div>
+                    <input type="text" [(ngModel)]="block.title" placeholder="app.ts" class="window-title-input">
+                 </div>
+                 <div class="window-body">
+                   <textarea [(ngModel)]="block.content" class="cs-code-textarea" placeholder="console.log('Hello World!');"></textarea>
+                 </div>
+              </div>
+
+              <!-- VIDEO / IMAGE / PDF (Media) -->
+              <div *ngSwitchCase="'VIDEO'" class="cs-type-media floating-card">
+                 <div class="media-input-row">
+                   <div class="media-icon bg-red"><i class="fas fa-play"></i></div>
+                   <input type="file" #fileInput (change)="onBlockFileSelected($event, block)" accept="video/*" style="display: none;">
+                   <button class="cs-btn cs-btn-upload" (click)="fileInput.click()" [disabled]="block.uploadingFile">
+                     <i class="fas" [ngClass]="block.uploadingFile ? 'fa-spinner fa-spin' : 'fa-upload'"></i> 
+                     {{ block.uploadingFile ? 'Uploading...' : (block.fileUrl ? 'Replace Video' : 'Upload Video File') }}
+                   </button>
+                   <span class="cs-upload-error" *ngIf="block.uploadError">{{ block.uploadError }}</span>
+                 </div>
+                 <div class="cs-media-preview video-gradient" *ngIf="block.fileUrl && !block.uploadingFile">
+                    <div class="play-btn-glow"><i class="fas fa-play"></i></div>
+                    <span>{{ block.fileUrl.split('/').pop() }}</span>
+                 </div>
+              </div>
+
+              <div *ngSwitchCase="'IMAGE'" class="cs-type-media floating-card">
+                 <div class="media-input-row">
+                   <div class="media-icon bg-blue"><i class="fas fa-image"></i></div>
+                   <input type="file" #fileInputImg (change)="onBlockFileSelected($event, block)" accept="image/*" style="display: none;">
+                   <button class="cs-btn cs-btn-upload" (click)="fileInputImg.click()" [disabled]="block.uploadingFile">
+                     <i class="fas" [ngClass]="block.uploadingFile ? 'fa-spinner fa-spin' : 'fa-upload'"></i> 
+                     {{ block.uploadingFile ? 'Uploading...' : (block.fileUrl ? 'Replace Image' : 'Upload Image File') }}
+                   </button>
+                   <span class="cs-upload-error" *ngIf="block.uploadError">{{ block.uploadError }}</span>
+                 </div>
+                 <div class="cs-media-preview image-container" *ngIf="block.fileUrl && !block.uploadingFile">
+                    <img [src]="block.fileUrl" onerror="this.style.display='none'">
+                 </div>
+              </div>
+
+              <div *ngSwitchCase="'PDF'" class="cs-type-media floating-card">
+                 <div class="media-input-row">
+                   <div class="media-icon bg-orange"><i class="fas fa-file-pdf"></i></div>
+                   <input type="file" #fileInputPdf (change)="onBlockFileSelected($event, block)" accept="application/pdf" style="display: none;">
+                   <button class="cs-btn cs-btn-upload" (click)="fileInputPdf.click()" [disabled]="block.uploadingFile">
+                     <i class="fas" [ngClass]="block.uploadingFile ? 'fa-spinner fa-spin' : 'fa-upload'"></i> 
+                     {{ block.uploadingFile ? 'Uploading...' : (block.fileUrl ? 'Replace PDF' : 'Upload PDF Document') }}
+                   </button>
+                   <span class="cs-upload-error" *ngIf="block.uploadError">{{ block.uploadError }}</span>
+                 </div>
+                 <div class="cs-media-preview pdf-minimal" *ngIf="block.fileUrl && !block.uploadingFile">
+                    <i class="fas fa-file-pdf"></i> Document Attached: {{ block.fileUrl.split('/').pop() }}
+                 </div>
+              </div>
+
+              <!-- QUIZ -->
+              <div *ngSwitchCase="'QUIZ'" class="cs-type-quiz floating-card relative-overflow">
+                 <div class="quiz-decorator"></div>
+                 <div class="quiz-header">
+                   <i class="fas fa-brain"></i> Quiz Module
+                 </div>
+                 <textarea [(ngModel)]="block.quizQuestion" (ngModelChange)="onQuizQuestionChange(block, $event)" class="cs-quiz-question" placeholder="E.g. What is the main principle of...?"></textarea>
+                 
+                 <div class="cs-quiz-options">
+                    <div class="cs-quiz-option" *ngFor="let option of block.quizOptions; let i = index" [class.option-correct]="option.correct">
+                       <label class="custom-radio">
+                         <input type="radio" [checked]="option.correct" (change)="onQuizOptionToggleCorrect(block, option)" name="quiz-{{block.id}}">
+                         <span class="radio-mark"></span>
+                       </label>
+                       <input type="text" [(ngModel)]="option.text" (ngModelChange)="onQuizOptionTextChange(block, option, $event)" class="cs-option-input" placeholder="Option {{ i + 1 }}">
+                       <button class="cs-icon-btn del-opt" (click)="removeQuizOption(block, option.id)"><i class="fas fa-times"></i></button>
+                    </div>
+                 </div>
+                 <button class="cs-btn cs-btn-outline-dashed mt-3" (click)="addQuizOption(block)">
+                    <i class="fas fa-plus"></i> Add Answer Option
+                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Block to Section -->
+        <div class="cs-add-block-row">
+           <button class="cs-btn-add-block" (click)="addBlock(section.id)">
+             <div class="add-circle"><i class="fas fa-plus"></i></div>
+             <span>Add block</span>
+           </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Add Section -->
+    <div class="cs-add-section-row">
+      <button class="cs-btn-glow" (click)="addSection()">
+        <i class="fas fa-layer-group"></i> Add New Section
+      </button>
+    </div>
+
+    <!-- Premium Floating AI Assistant -->
+    <div class="cs-ai-widget glass-panel">
+        <div class="cs-ai-header">
+           <div class="animated-sparkle"><i class="fas fa-wand-magic-sparkles"></i></div>
+           <span>AI Co-Pilot</span>
+        </div>
+        <div class="cs-ai-actions">
+           <button class="cs-ai-btn" (click)="onSuggestSection()" [disabled]="aiBusy" title="Generate Section Titles">
+             <i class="fas fa-heading"></i> Section
+           </button>
+           <button class="cs-ai-btn" (click)="onSuggestBlock()" [disabled]="aiBusy" title="Generate Content">
+             <i class="fas fa-pen-nib"></i> Content
+           </button>
+           <button class="cs-ai-btn" (click)="onSummarizeBlock()" [disabled]="aiBusy" title="Summarize">
+             <i class="fas fa-compress-alt"></i> Summarize
+           </button>
+           <button class="cs-ai-btn" (click)="onRewriteBlock()" [disabled]="aiBusy" title="Rewrite">
+             <i class="fas fa-redo"></i> Rewrite
+           </button>
+        </div>
+        
+        <div *ngIf="aiBusy" class="cs-ai-loading">
+          <div class="loading-bars"><span></span><span></span><span></span></div>
+          Thinking creatively...
+        </div>
+        
+        <div *ngIf="aiError" class="cs-alert-error">
+          <i class="fas fa-exclamation-triangle"></i> {{aiError}}
+        </div>
+
+        <div class="cs-ai-result-panel" *ngIf="aiSuggestion">
+           <div class="cs-ai-result-text">{{aiSuggestion}}</div>
+           <div class="cs-ai-result-actions">
+             <button class="cs-btn-success" (click)="applyAiSuggestion()"><i class="fas fa-check"></i> Accept</button>
+             <button class="cs-btn-ghost-sm" (click)="clearAiSuggestion()">Discard</button>
+           </div>
+        </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="cs-modal-backdrop" *ngIf="publishReviewVisible" (click)="closePublishReview()">
+  <div class="cs-modal" (click)="$event.stopPropagation()">
+    <div class="cs-modal-header">
+      <h3>Ready to publish?</h3>
+      <button class="cs-icon-btn" type="button" (click)="closePublishReview()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="cs-modal-body">
+      <div class="cs-modal-summary">
+        <div><strong>Title:</strong> {{ title || 'Untitled course' }}</div>
+        <div><strong>Description words:</strong> {{ descriptionWordCount }}</div>
+        <div><strong>Sections:</strong> {{ sections.length }}</div>
+        <div><strong>Blocks:</strong> {{ totalBlockCount }}</div>
+      </div>
+
+      <div class="cs-quality-panel">
+        <div class="cs-quality-heading">Course quality</div>
+
+        <div *ngIf="publishReviewLoading || qualityLoading" class="cs-quality-loading">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Analysing quality...</span>
+        </div>
+
+        <ng-container *ngIf="!publishReviewLoading && !qualityLoading && qualityPrediction">
+          <div class="cs-quality-top">
+            <div class="cs-quality-progress">
+              <div class="cs-quality-track">
+                <div
+                  class="cs-quality-fill"
+                  [class.cs-quality-fill--positive]="qualityTone === 'positive'"
+                  [class.cs-quality-fill--neutral]="qualityTone === 'neutral'"
+                  [class.cs-quality-fill--negative]="qualityTone === 'negative'"
+                  [style.width.%]="qualityScore"></div>
+              </div>
+              <span class="cs-quality-score">{{ qualityScore }}/100</span>
+            </div>
+            <div class="cs-quality-label" [class.cs-quality-label--positive]="qualityTone === 'positive'" [class.cs-quality-label--neutral]="qualityTone === 'neutral'" [class.cs-quality-label--negative]="qualityTone === 'negative'">
+              {{ qualityPrediction.label_display }}
+            </div>
+          </div>
+
+          <ul class="cs-quality-feedback">
+            <li *ngFor="let item of qualityPrediction.feedback || []" [class.cs-quality-feedback--positive]="item.type === 'positive'" [class.cs-quality-feedback--neutral]="item.type === 'neutral'" [class.cs-quality-feedback--negative]="item.type === 'negative'">
+              <i *ngIf="item.type === 'positive'" class="fas fa-check"></i>
+              <i *ngIf="item.type === 'neutral'" class="fas fa-minus"></i>
+              <i *ngIf="item.type === 'negative'" class="fas fa-xmark"></i>
+              <span>{{ item.message }}</span>
+            </li>
+          </ul>
+        </ng-container>
+
+        <div *ngIf="!publishReviewLoading && !qualityLoading && qualityUnavailable" class="cs-quality-note">
+          Quality analysis is currently unavailable. You can still publish your course.
+        </div>
+      </div>
+    </div>
+
+    <div class="cs-modal-actions">
+      <button class="cs-btn cs-btn-ghost" type="button" (click)="closePublishReview()" [disabled]="saving">Cancel</button>
+      <button class="cs-btn cs-btn-gradient" type="button" (click)="confirmPublishFromReview()" [disabled]="saving || publishReviewLoading || qualityLoading">
+        <i *ngIf="saving" class="fas fa-circle-notch fa-spin"></i>
+        Publish now
+      </button>
+    </div>
+  </div>
+</div>

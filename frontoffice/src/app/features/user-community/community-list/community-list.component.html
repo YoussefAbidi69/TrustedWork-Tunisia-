@@ -1,0 +1,91 @@
+<div class="cm-page">
+  <app-community-page-header
+    eyebrow="Community"
+    title="Communities"
+    subtitle="Browse every space, or focus on communities you created. Open a community to view posts and create new ones.">
+    <a cmActions class="cm-btn cm-btn--primary" routerLink="../create" *ngIf="authService.isLoggedIn()">
+      <i class="fas fa-plus" aria-hidden="true"></i>
+      New community
+    </a>
+  </app-community-page-header>
+
+  <div class="cm-split cm-split--wide-aside">
+    <div class="cm-page-body">
+      <div class="cm-toolbar">
+        <div class="cm-toolbar__left">
+          <div class="cm-seg" role="group" aria-label="List filter">
+            <button
+              type="button"
+              class="cm-seg__btn"
+              [class.cm-seg__btn--active]="listFilter === 'all'"
+              (click)="listFilter = 'all'">
+              All
+            </button>
+            <button
+              type="button"
+              class="cm-seg__btn"
+              [class.cm-seg__btn--active]="listFilter === 'mine'"
+              (click)="listFilter = 'mine'">
+              Mine
+            </button>
+          </div>
+        </div>
+        <div class="cm-toolbar__right cm-muted" *ngIf="!loading && !error">
+          {{ filteredCommunities.length }} communit{{ filteredCommunities.length === 1 ? 'y' : 'ies' }}
+        </div>
+      </div>
+
+      <div *ngIf="loading" class="cm-state">Loading communities…</div>
+      <div *ngIf="!loading && error" class="cm-state cm-state--error">{{ error }}</div>
+
+      <div *ngIf="!loading && !error && filteredCommunities.length === 0" class="cm-state">
+        No communities match this filter yet.
+      </div>
+
+      <div *ngIf="!loading && !error && filteredCommunities.length > 0" class="cm-table-wrap">
+        <table class="cm-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Created by</th>
+              <th scope="col" style="width: 120px; text-align: right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of filteredCommunities">
+              <td>
+                <strong>{{ c.name }}</strong>
+                <div class="cm-muted" style="margin-top: 4px">ID {{ c.id }}</div>
+              </td>
+              <td>{{ truncate(c.description, 140) }}</td>
+              <td>User #{{ c.createdBy }}</td>
+              <td style="text-align: right">
+                <a class="cm-btn cm-btn--secondary cm-btn--sm" [routerLink]="['../communities', c.id]">Open</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <aside class="cm-aside-stack">
+      <section class="cm-aside-card">
+        <h3 class="cm-aside-card__title">Quick actions</h3>
+        <div class="cm-aside-card__body">
+          <p class="cm-muted">Communities are listed from the live API. Use Open to see posts, votes, and reports.</p>
+          <a *ngIf="authService.isLoggedIn()" class="cm-btn cm-btn--primary" style="width: 100%" routerLink="../create">
+            Create community
+          </a>
+        </div>
+      </section>
+      <section class="cm-aside-card">
+        <h3 class="cm-aside-card__title">Posting tips</h3>
+        <div class="cm-aside-card__body">
+          <p class="cm-tip">Use the COURSE type when sharing downloadable material.</p>
+          <p class="cm-tip">Published posts may be validated before they appear to everyone.</p>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>

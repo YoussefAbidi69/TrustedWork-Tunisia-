@@ -1,0 +1,20 @@
+<form class="cm-comment-form" (ngSubmit)="onSubmit()">
+  <div class="cm-field">
+    <label class="cm-label" for="comment-body">Your comment</label>
+    <textarea
+      id="comment-body"
+      class="cm-textarea"
+      name="content"
+      [(ngModel)]="content"
+      [disabled]="disabled || submitting"
+      rows="3"
+      placeholder="Share context, questions, or feedback…">
+    </textarea>
+    <span class="cm-error" *ngIf="touched && !content.trim()">Comment cannot be empty.</span>
+  </div>
+  <button type="submit" class="cm-btn cm-btn--primary" [disabled]="disabled || submitting || !content.trim()">
+    <i class="fas fa-paper-plane" aria-hidden="true"></i>
+    {{ submitting ? 'Posting…' : 'Post comment' }}
+  </button>
+  <div class="error-text" *ngIf="error" style="margin-top: 12px; color: var(--error)">{{ error }}</div>
+</form>

@@ -1,0 +1,73 @@
+.cm-post-row {
+  display: flex;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--cm-border);
+}
+
+.cm-post-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.cm-vote-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--cm-bg-secondary);
+  padding: 8px;
+  border-radius: var(--cm-radius-sm);
+  border: 1px solid var(--cm-border);
+}
+
+.cm-vote-stack__btn {
+  background: transparent;
+  border: none;
+  color: var(--cm-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: var(--cm-transition);
+  font-size: 16px;
+}
+
+.cm-vote-stack__btn:hover {
+  color: var(--cm-text-primary);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.cm-vote-stack__btn--active[title="Upvote"] {
+  color: var(--cm-accent-primary);
+}
+
+.cm-vote-stack__btn--active[title="Downvote"] {
+  color: var(--cm-accent-secondary);
+}
+
+.cm-report-box {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: var(--cm-bg-secondary);
+  border-radius: var(--cm-radius-sm);
+  border: 1px solid var(--cm-border);
+}
+
+.cm-lesson-link {
+  display: block;
+  padding: 12px 16px;
+  background-color: var(--cm-bg-secondary);
+  border: 1px solid var(--cm-border);
+  border-radius: var(--cm-radius-sm);
+  color: var(--cm-text-primary);
+  text-decoration: none;
+  transition: var(--cm-transition);
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.cm-lesson-link:hover {
+  border-color: rgba(232, 98, 42, 0.3);
+  transform: translateY(-1px);
+  color: var(--cm-accent-primary);
+}

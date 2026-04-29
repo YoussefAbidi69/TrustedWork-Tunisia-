@@ -1,0 +1,38 @@
+.cm-comment-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.cm-comment-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cm-comment-card {
+  background-color: var(--cm-bg-secondary);
+  border: 1px solid var(--cm-border);
+  border-radius: var(--cm-radius);
+  padding: 16px;
+}
+
+.cm-comment-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.cm-comment-card__author {
+  font-weight: 600;
+  color: var(--cm-text-primary);
+  font-size: 14px;
+}
+
+.cm-comment-card__body {
+  color: var(--cm-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+}

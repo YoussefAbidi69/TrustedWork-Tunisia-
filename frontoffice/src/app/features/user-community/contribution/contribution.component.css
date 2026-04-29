@@ -1,0 +1,34 @@
+.cm-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.cm-stat {
+  background-color: var(--cm-bg-card);
+  border: 1px solid var(--cm-border);
+  border-radius: var(--cm-radius);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: var(--cm-shadow);
+  text-align: center;
+}
+
+.cm-stat__value {
+  font-size: 48px;
+  font-weight: 800;
+  color: var(--cm-text-primary);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.cm-stat__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--cm-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

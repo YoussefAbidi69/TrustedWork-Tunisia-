@@ -15,7 +15,6 @@ import { CompleteProfileComponent } from './features/auth/complete-profile/compl
 import { OverviewComponent } from './features/dashboard/overview/overview.component';
 import { FreelancersListComponent } from './features/freelancers/freelancers-list/freelancers-list.component';
 import { ContractSignComponent } from './features/activity/contract-sign/contract-sign.component';
-
 import { authGuard } from './core/guards/auth.guard';
 import { completeProfileGuard } from './core/guards/complete-profile.guard';
 
@@ -89,6 +88,11 @@ const routes: Routes = [
         path: 'projects',
         loadChildren: () =>
           import('./features/project/project.module').then(m => m.ProjectModule)
+      },
+      {
+        path: 'community',
+        loadChildren: () =>
+          import('./features/user-community/community.module').then(m => m.UserCommunityModule)
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]

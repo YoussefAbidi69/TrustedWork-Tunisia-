@@ -116,6 +116,16 @@ export class SidebarComponent implements OnInit {
         { label: 'Leaderboard',     icon: 'fa-trophy', route: '/app/engagement/leaderboard' },
         { label: 'Gamification',    icon: 'fa-medal', route: '/app/engagement/gamification' }
       ]
+    },
+    {
+      label: 'Communauté',
+      icon: 'fa-users',
+      expanded: false,
+      children: [
+        { label: 'Posts Feed',    icon: 'fa-rss',               route: '/app/community' },
+        { label: 'Contributions', icon: 'fa-share-from-square', route: '/app/community/contributions' },
+        { label: 'My Courses',    icon: 'fa-book-open',         route: '/app/community/my-courses' }
+      ]
     }
   ];
 
