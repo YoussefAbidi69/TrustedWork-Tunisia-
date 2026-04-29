@@ -167,6 +167,49 @@ export class SidebarComponent implements OnInit {
       label: 'Burndown',
       icon: 'fa-chart-line',
       route: '/admin/projects/admin/burndown'
+    },
+
+    // ── Community Admin ──
+    {
+      sectionLabel: 'Community',
+      label: 'Communities',
+      icon: 'fa-users-rectangle',
+      route: '/admin/community/communities'
+    },
+    {
+      label: 'Posts',
+      icon: 'fa-newspaper',
+      route: '/admin/community/posts'
+    },
+    {
+      label: 'Comments',
+      icon: 'fa-comments',
+      route: '/admin/community/comments'
+    },
+    {
+      label: 'Reports',
+      icon: 'fa-flag',
+      route: '/admin/community/reports'
+    },
+    {
+      label: 'Votes',
+      icon: 'fa-thumbs-up',
+      route: '/admin/community/votes'
+    },
+    {
+      label: 'Courses',
+      icon: 'fa-graduation-cap',
+      route: '/admin/community/courses'
+    },
+    {
+      label: 'Course Reports',
+      icon: 'fa-circle-exclamation',
+      route: '/admin/community/course-reports'
+    },
+    {
+      label: 'Contributions',
+      icon: 'fa-hand-holding-heart',
+      route: '/admin/community/contributions'
     }
   ];
 
@@ -321,6 +364,16 @@ export class SidebarComponent implements OnInit {
         return currentUrl === '/admin/projects/admin/ml-prediction';
       case '/admin/projects/admin/burndown':
         return currentUrl === '/admin/projects/admin/burndown';
+
+      case '/admin/community/communities':
+      case '/admin/community/posts':
+      case '/admin/community/comments':
+      case '/admin/community/reports':
+      case '/admin/community/votes':
+      case '/admin/community/courses':
+      case '/admin/community/course-reports':
+      case '/admin/community/contributions':
+        return currentUrl.startsWith(route);
 
       default:
         return currentUrl === route;

@@ -14,7 +14,7 @@
            <span class="cs-breadcrumb">Creator Dashboard ✨</span>
         </div>
         <div class="cs-nav-right">
-           <a routerLink="/community/course-create" class="cs-btn cs-btn-gradient">
+           <a routerLink="/app/community/course/new" class="cs-btn cs-btn-gradient">
               <i class="fas fa-plus"></i> New Course
            </a>
         </div>
@@ -60,7 +60,7 @@
               <p class="cs-card-desc">{{ (course.description | slice:0:100) || 'No description provided.' }}...</p>
               
               <div class="cs-card-actions">
-                <a [routerLink]="['/community/course', course.id]" class="cs-btn-course">View Course</a>
+                <a [routerLink]="['/app/community/course', course.id]" class="cs-btn-course">View Course</a>
               </div>
             </div>
           </ng-container>
@@ -76,7 +76,7 @@
               <p class="cs-card-desc">{{ (course.description | slice:0:100) || 'Work in progress...' }}...</p>
               
               <div class="cs-card-actions">
-                <a [routerLink]="['/community/course-create']" [queryParams]="{edit: course.id}" class="cs-btn-course ghost">Continue Editing</a>
+                <a [routerLink]="['/app/community/course/new']" [queryParams]="{edit: course.id}" class="cs-btn-course ghost">Continue Editing</a>
               </div>
             </div>
           </ng-container>
@@ -86,7 +86,7 @@
             <div class="cs-empty-icon"><i class="fas fa-book-open"></i></div>
             <h3>No courses found</h3>
             <p>You haven't created any courses yet. Start sharing your knowledge today!</p>
-            <a routerLink="/community/course-create" class="cs-btn cs-btn-gradient mt-4">
+            <a routerLink="/app/community/course/new" class="cs-btn cs-btn-gradient mt-4">
               Create First Course
             </a>
           </div>

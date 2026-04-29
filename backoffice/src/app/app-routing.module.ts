@@ -73,6 +73,13 @@ const routes: Routes = [
         loadChildren: () => import('./features/project/project.module').then(m => m.ProjectModule)
       },
 
+      // ── Module Community : Community Admin ──
+      {
+        path: 'community',
+        loadChildren: () =>
+          import('./features/community/community.module').then(m => m.CommunityModule)
+      },
+
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

@@ -10,5 +10,7 @@
 */
 export const environment = {
   apiGateway: 'http://localhost:8089',
-  msCommunity: 'http://localhost:8089'
+  msCommunity: 'http://localhost:8089',
+  communityUrl: 'http://localhost:8089/api'
+
 };

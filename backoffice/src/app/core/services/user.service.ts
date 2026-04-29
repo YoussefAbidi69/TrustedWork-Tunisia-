@@ -165,4 +165,24 @@ export class UserService {
       headers: this.getHeaders()
     });
   }
+
+  getUserNameMap(): Observable<Record<number, string>> {
+    return new Observable(observer => {
+      this.getAllUsers().subscribe({
+        next: (users) => {
+          const map: Record<number, string> = {};
+          users.forEach(u => {
+            map[u.id] = `${u.firstName} ${u.lastName}`;
+          });
+          observer.next(map);
+          observer.complete();
+        },
+        error: (err) => {
+          console.error('Failed to get users for name map:', err);
+          observer.next({});
+          observer.complete();
+        }
+      });
+    });
+  }
 }

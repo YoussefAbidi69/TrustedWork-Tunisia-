@@ -1,0 +1,58 @@
+<div class="community-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Course Votes</h1>
+      <p class="page-subtitle">{{ filteredItems.length }} votes found</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" (click)="loadData()">
+        <i class="fas fa-rotate-right"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-bar" style="margin-bottom: 20px; display: flex; gap: 10px;">
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" class="form-control" placeholder="Search by Voter ID..." [(ngModel)]="searchQuery" (input)="onSearch()">
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Loading...</p>
+  </div>
+
+  <div class="card" *ngIf="!loading">
+    <div class="table-wrap">
+      <table class="tw-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Type</th>
+            <th>Voter ID</th>
+            <th>Course ID</th>
+            <th>Created At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of filteredItems">
+            <td>{{ item.id }}</td>
+            <td>
+              <span class="badge" [ngClass]="item.type === 'UPVOTE' ? 'badge-success' : 'badge-danger'">
+                <i class="fas" [ngClass]="item.type === 'UPVOTE' ? 'fa-arrow-up' : 'fa-arrow-down'"></i> {{ item.type }}
+              </span>
+            </td>
+            <td><strong>#{{ item.voterId }}</strong></td>
+            <td>#{{ item.courseId }}</td>
+            <td>{{ item.createdAt | date:'MMM d, yyyy' }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="filteredItems.length === 0">
+        <i class="fas fa-folder-open"></i>
+        <p>No items found</p>
+      </div>
+    </div>
+  </div>
+</div>
