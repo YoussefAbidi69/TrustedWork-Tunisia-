@@ -1,0 +1,176 @@
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Gestion des Jalons</h2>
+    <div *ngIf="isClient || isAdmin" class="d-flex gap-2">
+      <a routerLink="/app/activity/contracts" class="btn btn-secondary me-2">Contrats</a>
+      <a *ngIf="contractId" [routerLink]="['/app/activity/contracts', contractId, 'milestones', 'new']" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Nouveau Jalon
+      </a>
+    </div>
+  </div>
+
+  <!-- Budget Summary Bar -->
+  <div *ngIf="contractId && contractBudget > 0" class="card shadow-sm mb-4 border-0" style="border-radius:16px; overflow:hidden;">
+    <div class="card-body p-0">
+      <div class="row g-0 text-center">
+        <div class="col-4 p-3" style="background:#f0f9ff; border-right:1px solid #e2e8f0;">
+          <div class="small text-muted mb-1"><i class="bi bi-file-earmark-text me-1"></i>Budget contrat</div>
+          <div class="fw-bold text-primary fs-5">{{ contractBudget | number:'1.2-2' }} DT</div>
+        </div>
+        <div class="col-4 p-3" style="background:#f0fdf4; border-right:1px solid #e2e8f0;">
+          <div class="small text-muted mb-1"><i class="bi bi-layers me-1"></i>Jalons alloués</div>
+          <div class="fw-bold text-success fs-5">{{ totalAllocated | number:'1.2-2' }} DT</div>
+        </div>
+        <div class="col-4 p-3"
+             [style.background]="remainingBudget < -0.01 ? '#fef2f2' : remainingBudget < 0.01 ? '#f0fdf4' : '#fefce8'">
+          <div class="small text-muted mb-1"><i class="bi bi-wallet2 me-1"></i>Budget restant</div>
+          <div class="fw-bold fs-5"
+               [class.text-danger]="remainingBudget < -0.01"
+               [class.text-success]="remainingBudget >= -0.01 && remainingBudget < 0.01"
+               [class.text-warning]="remainingBudget >= 0.01">
+            {{ remainingBudget | number:'1.2-2' }} DT
+          </div>
+        </div>
+      </div>
+      <!-- Progress bar: allocated vs total -->
+      <div class="px-3 pb-3 pt-2" style="background:#f8fafc;">
+        <div class="d-flex justify-content-between small text-muted mb-1">
+          <span>Allocation</span>
+          <span>{{ contractBudget > 0 ? ((totalAllocated / contractBudget) * 100 | number:'1.0-0') : 0 }}%</span>
+        </div>
+        <div class="progress" style="height:8px; border-radius:99px;">
+          <div class="progress-bar"
+               [class.bg-success]="totalAllocated <= contractBudget"
+               [class.bg-danger]="totalAllocated > contractBudget"
+               [style.width.%]="contractBudget > 0 ? (totalAllocated / contractBudget) * 100 : 0"
+               style="border-radius:99px; transition: width 0.4s ease;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Chargement...</span>
+        </div>
+      </div>
+
+      <div *ngIf="error" class="alert alert-danger alert-dismissible d-flex align-items-start gap-2 mb-3">
+        <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+        <div class="flex-grow-1">{{ error }}</div>
+        <button type="button" class="btn-close" (click)="error = ''"></button>
+      </div>
+
+      <div *ngIf="!loading && !error">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Contrat ID</th>
+                <th>Ordre</th>
+                <th>Titre</th>
+                <th>Montant</th>
+                <th>Deadline</th>
+                <th>Statut</th>
+                <th *ngIf="isAdmin">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let milestone of milestones">
+                <td>{{ milestone.id }}</td>
+                <td>{{ milestone.contractId }}</td>
+                <td>{{ milestone.ordre }}</td>
+                <td>
+                  <div class="fw-bold">{{ milestone.titre }}</div>
+                  <div *ngIf="milestone.status === 'REJECTED'" class="text-danger small mt-1">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Cause: {{ milestone.rejectionReason }}
+                  </div>
+                </td>
+                <td>{{ milestone.montant }} DT</td>
+                <td>{{ milestone.deadline | date:'dd/MM/yyyy' }}</td>
+                <td>
+                  <span [class]="getStatusClass(milestone.status)">
+                    {{ milestone.status }}
+                  </span>
+                </td>
+                <td class="table-actions" *ngIf="isAdmin">
+                  <div class="d-flex flex-wrap gap-2">
+                    <a [routerLink]="['/milestones', milestone.id]" class="btn btn-sm btn-outline-info rounded-pill px-3">
+                      <i class="bi bi-eye me-1"></i> Détails
+                    </a>
+                    
+                    <button *ngIf="isFreelancer && (milestone.status === 'PENDING' || milestone.status === 'REJECTED')" 
+                            (click)="startMilestone(milestone.id!)" 
+                            class="btn btn-sm btn-primary rounded-pill px-3">
+                      <i class="bi bi-play-fill me-1"></i> {{ milestone.status === 'REJECTED' ? 'Reprendre le travail' : 'Démarrer' }}
+                    </button>
+                            
+                    <button *ngIf="isFreelancer && (milestone.status === 'IN_PROGRESS' || milestone.status === 'STARTED')" 
+                            (click)="submitMilestone(milestone.id!)" 
+                            class="btn btn-sm btn-success rounded-pill px-3">
+                      <i class="bi bi-send-check me-1"></i> Soumettre
+                    </button>
+  
+                    <button *ngIf="(isClient || isAdmin) && milestone.status === 'SUBMITTED'" 
+                            (click)="approveMilestone(milestone.id!)" 
+                            class="btn btn-sm btn-success rounded-pill px-3">
+                      <i class="bi bi-check-circle me-1"></i> Approuver
+                    </button>
+                            
+                    <button *ngIf="(isClient || isAdmin) && milestone.status === 'SUBMITTED'" 
+                            (click)="rejectMilestone(milestone.id!)" 
+                            class="btn btn-sm btn-danger rounded-pill px-3">
+                      <i class="bi bi-x-circle-fill me-1"></i> Rejeter
+                    </button>
+  
+                    <button *ngIf="isClient || isAdmin" 
+                            (click)="deleteMilestone(milestone.id!)" 
+                            class="btn btn-sm btn-outline-danger rounded-pill px-2">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="milestones.length === 0">
+                <td colspan="8" class="text-center text-muted py-4">
+                  Aucun jalon trouvé
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Rejection Modal -->
+  <div class="modal-backdrop fade show" *ngIf="showRejectModal"></div>
+  <div class="modal fade show d-block" *ngIf="showRejectModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Rejeter le jalon</h5>
+          <button type="button" class="btn-close" (click)="closeRejectModal()"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Cause du rejet <span class="text-danger">*</span></label>
+            <textarea class="form-control" [(ngModel)]="rejectionReason" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nouvelle Deadline (Optionnel)</label>
+            <input type="date" class="form-control" [(ngModel)]="newDeadline" [min]="minDate">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeRejectModal()">Annuler</button>
+          <button type="button" class="btn btn-danger" [disabled]="!rejectionReason.trim()" (click)="confirmReject()">Confirmer le Rejet</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

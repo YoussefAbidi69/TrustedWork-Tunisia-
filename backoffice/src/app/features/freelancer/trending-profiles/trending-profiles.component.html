@@ -1,0 +1,203 @@
+<div class="trending-page">
+
+    <!-- ═══ HEADER ═══ -->
+    <div class="trending-header">
+      <div class="trending-header__left">
+        <h1><i class="fas fa-fire"></i> Tendances des Profils</h1>
+        <p>Classements en temps réel basés sur les données de la plateforme</p>
+      </div>
+      <button class="btn-refresh" (click)="loadData()">
+        <i class="fas fa-rotate-right"></i> Actualiser
+      </button>
+    </div>
+  
+    <!-- ═══ LOADING ═══ -->
+    <div class="trending-loading" *ngIf="loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <span>Analyse des tendances en cours...</span>
+    </div>
+  
+    <ng-container *ngIf="!loading">
+  
+      <!-- ═══ STAT CARDS GLOBALES ═══ -->
+      <div class="global-stats">
+        <div class="gstat">
+          <i class="fas fa-users" style="color:#3b82f6"></i>
+          <div>
+            <strong>{{ allProfiles.length }}</strong>
+            <span>Profils total</span>
+          </div>
+        </div>
+        <div class="gstat">
+          <i class="fas fa-eye" style="color:#8b5cf6"></i>
+          <div>
+            <strong>{{ totalViews }}</strong>
+            <span>Vues cumulées</span>
+          </div>
+        </div>
+        <div class="gstat">
+          <i class="fas fa-chart-line" style="color:#22c55e"></i>
+          <div>
+            <strong>{{ avgViews }}</strong>
+            <span>Vues moyennes / profil</span>
+          </div>
+        </div>
+        <div class="gstat">
+          <i class="fas fa-ban" style="color:#f97316"></i>
+          <div>
+            <strong>{{ suspendedCount }}</strong>
+            <span>Profils suspendus</span>
+          </div>
+        </div>
+        <div class="gstat">
+          <i class="fas fa-triangle-exclamation" style="color:#ef4444"></i>
+          <div>
+            <strong>{{ highRiskCount }}</strong>
+            <span>Risque critique (≥60)</span>
+          </div>
+        </div>
+      </div>
+  
+      <!-- ═══ ONGLETS ═══ -->
+      <div class="tabs-bar">
+        <button
+          class="tab-btn"
+          *ngFor="let tab of tabs"
+          [class.tab-btn--active]="activeTab === tab.id"
+          [style.--tab-color]="tab.color"
+          (click)="activeTab = tab.id">
+          <i class="fas" [ngClass]="tab.icon"></i>
+          {{ tab.label }}
+          <span class="tab-count">
+            {{ tab.id === 'views'        ? topByViews.length
+             : tab.id === 'rating'       ? topByRating.length
+             : tab.id === 'endorsements' ? topByEndorsements.length
+             : atRisk.length }}
+          </span>
+        </button>
+      </div>
+  
+      <!-- ═══ ÉTAT VIDE ═══ -->
+      <div class="empty-state" *ngIf="activeList.length === 0">
+        <i class="fas fa-chart-bar"></i>
+        <p>Aucun profil dans cette catégorie pour le moment.</p>
+      </div>
+  
+      <!-- ═══ GRILLE DES PROFILS ═══ -->
+      <div class="profiles-grid" *ngIf="activeList.length > 0">
+        <div
+          class="profile-card"
+          *ngFor="let p of activeList; let i = index; trackBy: trackById"
+          (click)="goToProfile(p.profileId)">
+  
+          <!-- Badge de rang -->
+          <div class="rank-badge"
+               [class.rank-badge--gold]="i === 0"
+               [class.rank-badge--silver]="i === 1"
+               [class.rank-badge--bronze]="i === 2">
+            #{{ i + 1 }}
+          </div>
+  
+          <!-- Badge suspendu -->
+          <div class="suspended-badge" *ngIf="p.suspended">
+            <i class="fas fa-ban"></i> Suspendu
+          </div>
+  
+          <!-- Avatar -->
+          <div class="profile-card__avatar">
+            <span>{{ p.initials }}</span>
+            <span class="avail-dot"
+                  [style.background]="getAvailabilityColor(p.availabilityStatus)">
+            </span>
+          </div>
+  
+          <!-- Info principale -->
+          <div class="profile-card__info">
+            <strong class="profile-card__headline">{{ p.headline }}</strong>
+            <span class="profile-card__region">
+              <i class="fas fa-location-dot"></i> {{ p.region }}
+            </span>
+            <span class="profile-card__rate" *ngIf="p.hourlyRate > 0">
+              {{ p.hourlyRate }} TND/h
+            </span>
+          </div>
+  
+          <!-- Métriques selon l'onglet actif -->
+          <div class="profile-card__metrics">
+  
+            <!-- Vues -->
+            <ng-container *ngIf="activeTab === 'views'">
+              <div class="metric metric--primary">
+                <i class="fas fa-eye"></i>
+                <strong>{{ p.totalViews }}</strong>
+                <span>vues</span>
+              </div>
+              <div class="metric-bar">
+                <div class="metric-bar__fill metric-bar__fill--blue"
+                     [style.width]="getViewsBarWidth(p.totalViews)">
+                </div>
+              </div>
+            </ng-container>
+  
+            <!-- Note -->
+            <ng-container *ngIf="activeTab === 'rating'">
+              <div class="metric metric--primary">
+                <div class="stars">
+                  <i class="fas fa-star"
+                     *ngFor="let s of getStars(p.averageRating)"
+                     [class.star-full]="s === 'full'"
+                     [class.star-empty]="s === 'empty'">
+                  </i>
+                </div>
+                <strong>{{ p.averageRating.toFixed(1) }}</strong>
+              </div>
+            </ng-container>
+  
+            <!-- Endorsements -->
+            <ng-container *ngIf="activeTab === 'endorsements'">
+              <div class="metric metric--primary">
+                <i class="fas fa-thumbs-up"></i>
+                <strong>{{ p.totalEndorsements }}</strong>
+                <span>endorsements</span>
+              </div>
+              <div class="metric-sub">
+                {{ p.skillCount }} compétence(s)
+              </div>
+            </ng-container>
+  
+            <!-- Risque -->
+            <ng-container *ngIf="activeTab === 'risk'">
+              <div class="metric" [ngClass]="getRiskClass(p.riskScore)">
+                <i class="fas fa-shield-halved"></i>
+                <strong>{{ p.riskScore }}/100</strong>
+                <span>{{ getRiskLabel(p.riskScore) }}</span>
+              </div>
+              <div class="risk-bar">
+                <div class="risk-bar__fill"
+                     [style.width]="p.riskScore + '%'"
+                     [ngClass]="getRiskClass(p.riskScore)">
+                </div>
+              </div>
+            </ng-container>
+  
+          </div>
+  
+          <!-- Footer -->
+          <div class="profile-card__footer">
+            <span class="completeness-pill">
+              <i class="fas fa-circle-check"></i>
+              {{ p.completenessScore }}%
+            </span>
+            <span class="avail-label" [style.color]="getAvailabilityColor(p.availabilityStatus)">
+              {{ getAvailabilityLabel(p.availabilityStatus) }}
+            </span>
+            <button class="btn-view" (click)="$event.stopPropagation(); goToProfile(p.profileId)">
+              <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+  
+        </div>
+      </div>
+  
+    </ng-container>
+  </div>

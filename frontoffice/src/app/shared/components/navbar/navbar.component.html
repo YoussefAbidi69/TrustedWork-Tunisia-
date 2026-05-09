@@ -1,0 +1,138 @@
+﻿<header class="premium-navbar">
+  <div class="premium-navbar__left">
+    <button
+      type="button"
+      class="icon-btn icon-btn--sidebar"
+      title="Basculer la sidebar"
+      (click)="onToggleSidebar()">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <a routerLink="/app/dashboard" class="brand-link" *ngIf="showBrand">
+      <div class="brand-mark">TW</div>
+      <div class="brand-text">
+        <strong>TrustedWork</strong>
+        <span>Freelancer Space</span>
+      </div>
+    </a>
+  </div>
+
+  <nav class="premium-navbar__center">
+    <div
+      class="nav-item"
+      *ngFor="let item of navItems"
+      [class.has-dropdown]="hasChildren(item)"
+      (mouseenter)="hasChildren(item) ? openDropdown(item.label) : null"
+      (mouseleave)="hasChildren(item) ? closeDropdown() : null">
+
+      <a
+        *ngIf="item.route; else dropdownParent"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        class="nav-link"
+        (click)="closeDropdown()">
+        {{ item.label }}
+      </a>
+
+      <ng-template #dropdownParent>
+        <button
+          type="button"
+          class="nav-link nav-link--button"
+          [class.active]="isDropdownOpen(item.label)">
+          <span>{{ item.label }}</span>
+          <i
+            class="fas fa-chevron-down"
+            *ngIf="hasChildren(item)"
+            [class.rotated]="isDropdownOpen(item.label)">
+          </i>
+        </button>
+      </ng-template>
+
+      <div
+        class="dropdown-panel"
+        *ngIf="hasChildren(item) && isDropdownOpen(item.label)">
+        <div class="dropdown-panel__inner">
+          <ng-container *ngFor="let child of item.children">
+            <a
+              *ngIf="!child.disabled; else disabledChild"
+              [routerLink]="child.route"
+              routerLinkActive="active"
+              class="dropdown-link"
+              (click)="closeDropdown()">
+              <div class="dropdown-link__content">
+                <strong>{{ child.label }}</strong>
+                <span *ngIf="child.description">{{ child.description }}</span>
+              </div>
+            </a>
+
+            <ng-template #disabledChild>
+              <div class="dropdown-link dropdown-link--disabled">
+                <div class="dropdown-link__content">
+                  <strong>{{ child.label }}</strong>
+                  <span *ngIf="child.description">{{ child.description }}</span>
+                </div>
+              </div>
+            </ng-template>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Dans la section premium-navbar__right, remplace le bouton recherche seul par : -->
+
+  <div class="premium-navbar__right">
+    <button class="icon-btn" type="button" title="Recherche" (click)="toggleSearch()">
+      <i class="fas fa-magnifying-glass"></i>
+    </button>
+
+    <!-- Cloche de notification temps réel WebSocket -->
+    <app-notification-bell></app-notification-bell>
+
+    <div class="user-chip">
+      <div class="user-chip__avatar">{{ authService.getUserInitials() }}</div>
+      <div class="user-chip__meta">
+        <strong>{{ displayName }}</strong>
+        <span>Connecté</span>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="icon-btn icon-btn--logout"
+      title="Deconnexion"
+      (click)="onLogout()">
+      <i class="fas fa-right-from-bracket"></i>
+    </button>
+  </div>
+</header>
+
+<div class="search-overlay" *ngIf="searchOpen" (click)="closeSearch()">
+  <div class="search-panel" (click)="stopProp($event)">
+    <div class="search-panel__head">
+      <strong>Recherche rapide</strong>
+      <button type="button" class="search-close" (click)="closeSearch()">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="search-panel__input">
+      <i class="fas fa-magnifying-glass"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Rechercher une page..."
+        autofocus />
+    </div>
+
+    <div class="search-panel__suggestions">
+      <a
+        *ngFor="let item of quickSearchItems; trackBy: trackByLabel"
+        [routerLink]="item.route"
+        class="search-suggestion"
+        (click)="onQuickNavigate()">
+        {{ item.label }}
+      </a>
+    </div>
+  </div>
+</div>

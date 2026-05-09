@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LeaderboardServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">module06-engagement</a> &gt; <a href="index.source.html" class="el_package">com.trustedwork.module06.service.impl</a> &gt; <span class="el_source">LeaderboardServiceImpl.java</span></div><h1>LeaderboardServiceImpl.java</h1><pre class="source lang-java linenums">package com.trustedwork.module06.service.impl;
+
+import com.trustedwork.module06.dto.LeaderboardDTO;
+import com.trustedwork.module06.entity.Leaderboard;
+import com.trustedwork.module06.repository.LeaderboardRepository;
+import com.trustedwork.module06.repository.GrowthProfileRepository;
+import com.trustedwork.module06.service.LeaderboardService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import java.util.Comparator;
+import java.util.List;
+
+<span class="fc" id="L14">@Slf4j</span>
+@Service
+@RequiredArgsConstructor
+public class LeaderboardServiceImpl implements LeaderboardService {
+
+    private final LeaderboardRepository leaderboardRepository;
+    private final GrowthProfileRepository growthProfileRepository;
+    private final org.springframework.web.client.RestTemplate loadBalancedRestTemplate;
+
+    private static final String USER_SERVICE_URL = &quot;http://user-service/api/identity/users/&quot;;
+
+    @Override
+    public List&lt;LeaderboardDTO&gt; getGlobalLeaderboard() {
+<span class="fc" id="L27">        return leaderboardRepository.findAllByOrderByEngagementRankAsc()</span>
+<span class="fc" id="L28">                .stream().map(this::toDTO).toList();</span>
+    }
+
+    @Override
+    public List&lt;LeaderboardDTO&gt; getLeaderboardByGovernorate(String governorate) {
+<span class="nc" id="L33">        return leaderboardRepository.findByGovernorateOrderByEngagementRankAsc(governorate)</span>
+<span class="nc" id="L34">                .stream().map(this::toDTO).toList();</span>
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public void recomputeAllRanks() {
+        // 1. Fetch all GrowthProfiles
+<span class="fc" id="L42">        List&lt;com.trustedwork.module06.entity.GrowthProfile&gt; profiles = </span>
+<span class="fc" id="L43">            growthProfileRepository.findAll();</span>
+        
+        // 2. Sync with Leaderboard table and ensure scores are updated
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        for (com.trustedwork.module06.entity.GrowthProfile gp : profiles) {</span>
+<span class="fc" id="L47">            String location = &quot;Tunis&quot;; // Fallback</span>
+            try {
+                // Fetch real location from Identity service
+<span class="fc" id="L50">                java.util.Map&lt;String, Object&gt; userData = loadBalancedRestTemplate.getForObject(USER_SERVICE_URL + gp.getUserId(), java.util.Map.class);</span>
+<span class="pc bpc" id="L51" title="3 of 4 branches missed.">                if (userData != null &amp;&amp; userData.get(&quot;location&quot;) != null) {</span>
+<span class="nc" id="L52">                    location = userData.get(&quot;location&quot;).toString().trim();</span>
+<span class="nc" id="L53">                    log.info(&quot;&gt;&gt;&gt; [LEADERBOARD] Fetched real location for User {}: [{}]&quot;, gp.getUserId(), location);</span>
+                } else {
+<span class="fc" id="L55">                    log.info(&quot;&gt;&gt;&gt; [LEADERBOARD] No location found for User {}, using fallback: [{}]&quot;, gp.getUserId(), location);</span>
+                }
+<span class="fc" id="L57">            } catch (Exception e) {</span>
+<span class="fc" id="L58">                log.error(&quot;&gt;&gt;&gt; [LEADERBOARD] API Error fetching location for User {}: {}&quot;, gp.getUserId(), e.getMessage());</span>
+<span class="fc" id="L59">            }</span>
+
+<span class="fc" id="L61">            Leaderboard lb = leaderboardRepository.findByUserId(gp.getUserId())</span>
+<span class="fc" id="L62">                .orElse(Leaderboard.builder()</span>
+<span class="fc" id="L63">                            .userId(gp.getUserId())</span>
+<span class="fc" id="L64">                            .build());</span>
+            
+<span class="fc" id="L66">            lb.setGovernorate(location);</span>
+            
+            // Nouvelle Logique
+<span class="fc" id="L69">            double calculatedScore = gp.getXpPoints() + (gp.getLevel() * 250.0);</span>
+<span class="fc" id="L70">            lb.setEngagementScore(calculatedScore);</span>
+            
+<span class="fc" id="L72">            leaderboardRepository.save(lb);</span>
+<span class="fc" id="L73">        }</span>
+
+        // 3. Sort and assign numeric ranks
+<span class="fc" id="L76">        List&lt;Leaderboard&gt; all = leaderboardRepository.findAll();</span>
+<span class="pc" id="L77">        all.sort((a, b) -&gt; Double.compare(b.getEngagementScore(), a.getEngagementScore()));</span>
+        
+<span class="fc bfc" id="L79" title="All 2 branches covered.">        for (int i = 0; i &lt; all.size(); i++) {</span>
+<span class="fc" id="L80">            Leaderboard lb = all.get(i);</span>
+<span class="fc" id="L81">            lb.setEngagementRank(i + 1);</span>
+<span class="fc" id="L82">            log.info(&quot;&gt;&gt;&gt; [LEADERBOARD] User {} rank {} in region {}&quot;, lb.getUserId(), lb.getEngagementRank(), lb.getGovernorate());</span>
+        }
+        
+<span class="fc" id="L85">        leaderboardRepository.saveAll(all);</span>
+<span class="fc" id="L86">        leaderboardRepository.flush();</span>
+<span class="fc" id="L87">    }</span>
+
+    private LeaderboardDTO toDTO(Leaderboard l) {
+<span class="fc" id="L90">        String firstName = &quot;Champion&quot;;</span>
+<span class="fc" id="L91">        String lastName  = &quot;#&quot; + l.getUserId();</span>
+<span class="fc" id="L92">        String photo     = null;</span>
+
+        try {
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L96">            java.util.Map&lt;String, Object&gt; userData = loadBalancedRestTemplate.getForObject(</span>
+<span class="fc" id="L97">                    USER_SERVICE_URL + l.getUserId(), java.util.Map.class);</span>
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">            if (userData != null) {</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">                if (userData.get(&quot;firstName&quot;) != null) firstName = userData.get(&quot;firstName&quot;).toString();</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">                if (userData.get(&quot;lastName&quot;)  != null) lastName  = userData.get(&quot;lastName&quot;).toString();</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">                if (userData.get(&quot;photo&quot;)     != null) photo     = userData.get(&quot;photo&quot;).toString();</span>
+            }
+<span class="nc" id="L103">        } catch (Exception e) {</span>
+<span class="nc" id="L104">            log.warn(&quot;&gt;&gt;&gt; [LEADERBOARD] Could not fetch user info for userId={}: {}&quot;, l.getUserId(), e.getMessage());</span>
+<span class="fc" id="L105">        }</span>
+
+<span class="fc" id="L107">        return LeaderboardDTO.builder()</span>
+<span class="fc" id="L108">                .userId(l.getUserId())</span>
+<span class="fc" id="L109">                .governorate(l.getGovernorate())</span>
+<span class="fc" id="L110">                .engagementScore(l.getEngagementScore())</span>
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">                .rank(l.getEngagementRank() != null ? l.getEngagementRank() : 0)</span>
+<span class="fc" id="L112">                .firstName(firstName)</span>
+<span class="fc" id="L113">                .lastName(lastName)</span>
+<span class="fc" id="L114">                .photo(photo)</span>
+<span class="fc" id="L115">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,98 @@
+<div class="participations-page">
+  <section class="hero">
+    <div class="hero__content">
+      <div class="hero__copy">
+        <div class="eyebrow-group">
+          <span class="eyebrow">Professional Presence</span>
+          <span class="eyebrow eyebrow--accent">Participations Hub</span>
+        </div>
+
+        <h1>Track your professional participations and visibility opportunities in one premium workspace.</h1>
+        <p>
+          Manage events, showcases, speaking opportunities and community participation
+          with a structured activity layer that strengthens your professional authority.
+        </p>
+      </div>
+
+      <div class="hero-card">
+        <span class="card-kicker">Authority signal</span>
+        <strong>09</strong>
+        <p>Confirmed participations supporting your professional visibility.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <article class="stat-card" *ngFor="let stat of stats">
+      <span>{{ stat.label }}</span>
+      <strong [ngClass]="getStatToneClass(stat.tone)">{{ stat.value }}</strong>
+    </article>
+  </section>
+
+  <section class="layout">
+    <div class="main">
+      <div class="panel-card">
+        <div class="panel-head">
+          <span class="card-kicker">Participation stream</span>
+          <h2>My participations</h2>
+        </div>
+
+        <div class="participation-list">
+          <article
+            class="participation-card"
+            *ngFor="let item of participations"
+            [class.participation-card--active]="item.id === selectedParticipationId"
+            (click)="selectParticipation(item.id)"
+          >
+            <div class="participation-card__top">
+              <div>
+                <div class="title-row">
+                  <h3>{{ item.eventTitle }}</h3>
+                  <span [ngClass]="getStatusClass(item.status)">{{ item.status }}</span>
+                </div>
+                <p>{{ item.organizer }} • {{ item.role }}</p>
+              </div>
+
+              <strong>{{ item.date }}</strong>
+            </div>
+
+            <p class="summary">{{ item.summary }}</p>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="panel-card">
+        <div class="panel-head">
+          <span class="card-kicker">Selected participation</span>
+          <h2>{{ selectedParticipation.eventTitle }}</h2>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-row">
+            <span>Organizer</span>
+            <strong>{{ selectedParticipation.organizer }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Role</span>
+            <strong>{{ selectedParticipation.role }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Status</span>
+            <strong>{{ selectedParticipation.status }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Date</span>
+            <strong class="accent-value">{{ selectedParticipation.date }}</strong>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Participation note</h3>
+          <p>{{ selectedParticipation.summary }}</p>
+        </div>
+      </div>
+    </aside>
+  </section>
+</div>

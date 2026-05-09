@@ -1,0 +1,170 @@
+<div class="admin-dash">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">
+        <i class="fas fa-diagram-project text-accent"></i>
+        Project Management — Admin
+      </h1>
+      <p class="page-subtitle">Supervision de tous les projets de la plateforme TrustedWork</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" (click)="load()">
+        <i class="fas fa-rotate-right"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="empty-state" *ngIf="loading">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Chargement du tableau de bord...</p>
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- ═══ KPI Cards ═══ -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon-wrap stat-icon--accent"><i class="fas fa-diagram-project"></i></div>
+          <span class="trend-flat">Total</span>
+        </div>
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-label">Projets</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon-wrap stat-icon--success"><i class="fas fa-play-circle"></i></div>
+          <span class="trend-flat">{{ pct(stats.active) }}%</span>
+        </div>
+        <div class="stat-value">{{ stats.active }}</div>
+        <div class="stat-label">Actifs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon-wrap stat-icon--info"><i class="fas fa-check-double"></i></div>
+          <span class="trend-flat">{{ pct(stats.completed) }}%</span>
+        </div>
+        <div class="stat-value">{{ stats.completed }}</div>
+        <div class="stat-label">Terminés</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon-wrap stat-icon--warning"><i class="fas fa-chart-line"></i></div>
+          <span class="trend-flat">Moyenne</span>
+        </div>
+        <div class="stat-value">{{ stats.avgCompletion }}%</div>
+        <div class="stat-label">Complétion</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon-wrap stat-icon--gold"><i class="fas fa-coins"></i></div>
+          <span class="trend-flat">DT</span>
+        </div>
+        <div class="stat-value">{{ stats.totalBudget | number:'1.0-0' }}</div>
+        <div class="stat-label">Budget total</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon-wrap stat-icon--danger"><i class="fas fa-triangle-exclamation"></i></div>
+          <span class="badge badge-danger" *ngIf="stats.criticalRisks">{{ stats.criticalRisks }} critical</span>
+        </div>
+        <div class="stat-value">{{ stats.totalRisks }}</div>
+        <div class="stat-label">Risques actifs</div>
+      </div>
+    </div>
+
+    <!-- ═══ Navigation rapide ═══ -->
+    <div class="card quick-actions-card">
+      <div class="card-header">
+        <div class="card-title">Gestion Module 08</div>
+      </div>
+      <div class="quick-actions-grid">
+        <a class="qa-btn" (click)="nav('list')">
+          <i class="fas fa-table-list"></i><span>Tous les Projets</span>
+        </a>
+        <a class="qa-btn" (click)="nav('tasks')">
+          <i class="fas fa-tasks"></i><span>Toutes les Tâches</span>
+        </a>
+        <a class="qa-btn" (click)="nav('deliverables')">
+          <i class="fas fa-file-circle-check"></i><span>Livrables</span>
+        </a>
+        <a class="qa-btn" (click)="nav('risks')">
+          <i class="fas fa-shield-halved"></i><span>Risques IA</span>
+        </a>
+        <a class="qa-btn" (click)="nav('reports')">
+          <i class="fas fa-chart-bar"></i><span>Rapports & Export</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- ═══ Main grid ═══ -->
+    <div class="main-grid">
+
+      <!-- Derniers projets -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Derniers projets</div>
+            <div class="card-subtitle">Les 6 projets les plus récents</div>
+          </div>
+          <span class="badge badge-accent">{{ stats.total }} total</span>
+        </div>
+        <div class="recent-list">
+          <div class="recent-item" *ngFor="let p of recentProjects" (click)="goProject(p.id)">
+            <div class="recent-left">
+              <div class="avatar avatar-sm avatar-accent">P{{ p.id }}</div>
+              <div class="recent-info">
+                <strong>{{ p.title }}</strong>
+                <span>{{ p.budget | number:'1.0-0' }} DT · {{ p.startDate | date:'dd MMM yyyy' }}</span>
+              </div>
+            </div>
+            <div class="recent-right">
+              <div class="mini-progress">
+                <div class="mini-bar"><div class="mini-fill" [style.width.%]="p.completionRate"></div></div>
+                <span>{{ p.completionRate }}%</span>
+              </div>
+              <span class="badge" [ngClass]="statusBadge(p.status)">{{ statusLabel(p.status) }}</span>
+            </div>
+          </div>
+          <div class="empty-state" *ngIf="recentProjects.length === 0" style="padding:30px">
+            <p>Aucun projet enregistré</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Risques critiques -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Risques actifs</div>
+            <div class="card-subtitle">Alertes IA sur les projets</div>
+          </div>
+          <span class="badge badge-danger" *ngIf="allRisks.length">{{ allRisks.length }}</span>
+        </div>
+        <div class="risk-list">
+          <div class="risk-item" *ngFor="let r of allRisks | slice:0:8">
+            <div class="risk-left">
+              <div class="risk-icon-wrap" [ngClass]="severityBadge(r.severity)">
+                <i class="fas" [ngClass]="riskIcon(r.riskType)"></i>
+              </div>
+              <div class="risk-info">
+                <strong>Projet #{{ r.projectId }}</strong>
+                <span>{{ r.message | slice:0:60 }}{{ r.message.length > 60 ? '...' : '' }}</span>
+              </div>
+            </div>
+            <span class="badge" [ngClass]="severityBadge(r.severity)">{{ r.severity }}</span>
+          </div>
+          <div class="empty-state" *ngIf="allRisks.length === 0" style="padding:30px">
+            <i class="fas fa-shield-check" style="font-size:24px"></i>
+            <p>Aucun risque actif</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </ng-container>
+</div>

@@ -1,0 +1,132 @@
+<div class="eng-page">
+
+  <div class="eng-header">
+    <h1><i class="fas fa-bolt"></i> Engagement</h1>
+    <p>Votre tableau de bord d'activité et de gamification</p>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="dash-stats-row">
+    <div class="dash-stat-card">
+      <div class="dash-stat-icon dash-stat-icon--xp"><i class="fas fa-star"></i></div>
+      <div>
+        <span class="dash-stat-label">Points XP</span>
+        <strong class="dash-stat-value">{{ profile?.xpPoints ?? 0 }}</strong>
+      </div>
+    </div>
+    <div class="dash-stat-card">
+      <div class="dash-stat-icon dash-stat-icon--level"><i class="fas fa-layer-group"></i></div>
+      <div>
+        <span class="dash-stat-label">Niveau</span>
+        <strong class="dash-stat-value">{{ profile?.level ?? 1 }}</strong>
+      </div>
+    </div>
+    <div class="dash-stat-card">
+      <div class="dash-stat-icon dash-stat-icon--score"><i class="fas fa-chart-line"></i></div>
+      <div>
+        <span class="dash-stat-label">Score Engagement</span>
+        <strong class="dash-stat-value">{{ getScorePercent() }}%</strong>
+      </div>
+    </div>
+    <div class="dash-stat-card">
+      <div class="dash-stat-icon dash-stat-icon--events"><i class="fas fa-calendar-check"></i></div>
+      <div>
+        <span class="dash-stat-label">Événements à venir</span>
+        <strong class="dash-stat-value">{{ upcomingEvents.length }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- XP Bar -->
+  <div class="dash-xp-bar-wrap">
+    <div class="dash-xp-label">
+      <span>Niveau {{ profile?.level ?? 1 }}</span>
+      <span>Niveau {{ (profile?.level ?? 1) + 1 }}</span>
+    </div>
+    <div class="dash-xp-bar">
+      <div class="dash-xp-fill" [style.width.%]="getXpProgress()"></div>
+    </div>
+    <small>{{ (profile?.xpPoints ?? 0) % 500 }} / 500 XP vers le niveau suivant</small>
+  </div>
+
+  <!-- Two columns -->
+  <div class="dash-columns">
+
+    <!-- Upcoming Events -->
+    <div class="dash-col">
+      <div class="dash-section-header">
+        <h2><i class="fas fa-calendar-days"></i> Prochains Événements</h2>
+        <a routerLink="/app/engagement/events" class="dash-link-all">Voir tout →</a>
+      </div>
+      <div class="dash-event-mini-card" *ngFor="let e of upcomingEvents">
+        <div class="dash-event-mini__type">
+          <i class="fas fa-laptop-code" *ngIf="e.type === 'HACKATHON'"></i>
+          <i class="fas fa-people-group" *ngIf="e.type === 'MEETUP'"></i>
+          <i class="fas fa-video" *ngIf="e.type === 'WEBINAR'"></i>
+        </div>
+        <div class="dash-event-mini__info">
+          <strong>{{ e.title }}</strong>
+          <span><i class="fas fa-location-dot"></i> {{ e.city }} · <i class="fas fa-clock"></i> {{ e.startDate | date:'dd MMM' }}</span>
+        </div>
+        <div class="dash-event-mini__meta">
+          <span class="cap-pill">{{ e.registeredCount }}/{{ e.capacity }}</span>
+        </div>
+      </div>
+      <div class="eng-empty" *ngIf="upcomingEvents.length === 0">
+        <i class="fas fa-calendar-xmark"></i>
+        <p>Aucun événement à venir</p>
+      </div>
+    </div>
+
+    <!-- Top Leaderboard -->
+    <div class="dash-col">
+      <div class="dash-section-header">
+        <h2><i class="fas fa-ranking-star"></i> Top 5 Classement</h2>
+        <a routerLink="/app/engagement/leaderboard" class="dash-link-all">Voir tout →</a>
+      </div>
+      <div class="dash-lb-row-card" *ngFor="let e of topLeaders">
+        <div class="dash-lb-rank">
+          {{ e.rank <= 3 ? ['🥇','🥈','🥉'][e.rank-1] : '#' + e.rank }}
+        </div>
+        <div class="dash-lb-avatar" *ngIf="e.photo">
+          <img [src]="e.photo" [alt]="e.firstName">
+        </div>
+        <div class="dash-lb-info">
+          <strong>{{ e.firstName }} {{ e.lastName }}</strong>
+          <span>{{ e.governorate }}</span>
+        </div>
+        <div class="dash-lb-score-tag">{{ Math.round(e.engagementScore * 100) }}%</div>
+      </div>
+      <div class="eng-empty" *ngIf="topLeaders.length === 0">
+        <i class="fas fa-users"></i>
+        <p>Classement vide</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Quick Nav -->
+  <div class="dash-quick-nav">
+    <a routerLink="/app/engagement/events" class="dash-quick-btn">
+      <div class="dash-quick-icon"><i class="fas fa-calendar-days"></i></div>
+      <span>Événements</span>
+      <small>Participez & Gagnez</small>
+    </a>
+    <a routerLink="/app/engagement/gamification" class="dash-quick-btn">
+      <div class="dash-quick-icon"><i class="fas fa-trophy"></i></div>
+      <span>Ma Progression</span>
+      <small>Niveaux & Badges</small>
+    </a>
+    <a routerLink="/app/engagement/leaderboard" class="dash-quick-btn">
+      <div class="dash-quick-icon"><i class="fas fa-ranking-star"></i></div>
+      <span>Classement</span>
+      <small>Top Talents</small>
+    </a>
+    <a routerLink="/app/engagement/missions" class="dash-quick-btn dash-quick-btn--accent">
+      <div class="dash-quick-icon"><i class="fas fa-rocket"></i></div>
+      <span>Missions</span>
+      <small>Défis Quotidiens</small>
+    </a>
+  </div>
+
+</div>

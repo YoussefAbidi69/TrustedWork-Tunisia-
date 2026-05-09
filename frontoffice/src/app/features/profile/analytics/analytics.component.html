@@ -1,0 +1,371 @@
+<div class="fifa-analytics">
+  
+  <!-- ════════════════════════════════════════
+       HERO CARD - Style FIFA Ultimate Team
+  ════════════════════════════════════════ -->
+  <div class="fifa-hero-card" *ngIf="!loading">
+    
+    <!-- Left: Profile Visual -->
+    <div class="hero-card__visual">
+      <div class="player-avatar">
+        <i class="fas fa-user-astronaut"></i>
+      </div>
+      <div class="player-badge">
+        <span class="badge__overall">{{ completeness >= 70 ? 'ELITE' : completeness >= 40 ? 'PRO' : 'ROOKIE' }}</span>
+        <span class="badge__tier">FREELANCER</span>
+      </div>
+    </div>
+
+    <!-- Center: Main Stats -->
+    <div class="hero-card__stats">
+      <div class="overall-rating"
+           [class.rating--elite]="completeness >= 70"
+           [class.rating--pro]="completeness >= 40 && completeness < 70"
+           [class.rating--rookie]="completeness < 40">
+        <svg class="rating-svg" viewBox="0 0 120 120">
+          <circle class="rating-bg" cx="60" cy="60" r="54"/>
+          <circle class="rating-fill" cx="60" cy="60" r="54"
+                  [style.stroke-dasharray]="completeness * 3.39 + ' 339'"/>
+        </svg>
+        <div class="rating-content">
+          <span class="rating-number">{{ completeness }}</span>
+          <span class="rating-label">OVR</span>
+        </div>
+      </div>
+
+      <div class="core-attributes">
+        <div class="attr-item" *ngFor="let axis of dnaAxes">
+          <span class="attr-value" [style.color]="axis.color">{{ axis.value }}</span>
+          <span class="attr-label">{{ axis.label }}</span>
+          <div class="attr-bar">
+            <div class="attr-bar__fill" 
+                 [style.width]="axis.value + '%'"
+                 [style.background]="axis.color"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Info Panel -->
+    <div class="hero-card__info">
+      <div class="info-header">
+        <h1><i class="fas fa-chart-line"></i> PROFIL DNA</h1>
+        <div class="trend-indicator"
+             [class.trend--up]="viewTrend === 'EN_HAUSSE'"
+             [class.trend--down]="viewTrend === 'EN_BAISSE'"
+             [class.trend--stable]="viewTrend === 'STABLE'">
+          <i [ngClass]="viewTrend === 'EN_HAUSSE' ? 'fa-arrow-trend-up' :
+                        viewTrend === 'EN_BAISSE' ? 'fa-arrow-trend-down' : 'fa-minus'"></i>
+          {{ viewTrend }}
+        </div>
+      </div>
+
+      <div class="hero-export-actions">
+        <button class="pdf-export-btn" (click)="downloadPdf()">
+          <i class="fas fa-file-pdf"></i>
+          Exporter PDF
+        </button>
+      </div>
+
+      <div class="info-stats-grid">
+        <div class="mini-stat">
+          <i class="fas fa-eye" style="color: #00d9ff;"></i>
+          <span class="mini-stat__value">{{ totalViews }}</span>
+          <span class="mini-stat__label">VUES</span>
+        </div>
+        <div class="mini-stat">
+          <i class="fas fa-users" style="color: #a855f7;"></i>
+          <span class="mini-stat__value">{{ uniqueViewers }}</span>
+          <span class="mini-stat__label">VISITEURS</span>
+        </div>
+        <div class="mini-stat">
+          <i class="fas fa-star" style="color: #fbbf24;"></i>
+          <span class="mini-stat__value">{{ averageRating || 'N/A' }}</span>
+          <span class="mini-stat__label">NOTE</span>
+        </div>
+        <div class="mini-stat">
+          <i class="fas fa-shield-halved" style="color: #22c55e;"></i>
+          <span class="mini-stat__value">{{ trustLevel }}/5</span>
+          <span class="mini-stat__label">TRUST</span>
+        </div>
+      </div>
+
+      <div class="skill-boosts">
+        <div class="boost-header">
+          <i class="fas fa-bolt"></i> SKILL BOOSTS
+        </div>
+        <div class="boost-list">
+          <div class="boost-item" *ngFor="let skill of topSkills.slice(0, 3)">
+            <span class="boost-name">{{ skill.name }}</span>
+            <span class="boost-value">+{{ skill.endorsementCount }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       LOADING STATE
+  ════════════════════════════════════════ -->
+  <div class="fifa-loading" *ngIf="loading">
+    <div class="loading-card">
+      <div class="loading-spinner"></div>
+      <p>CHARGEMENT DU PROFIL...</p>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- ════════════════════════════════════════
+         STAT CARDS GRID
+    ════════════════════════════════════════ -->
+    <div class="stats-hexgrid">
+      <div class="hex-card" *ngFor="let card of statCards; let i = index"
+           [style.animation-delay]="i * 0.1 + 's'">
+        <div class="hex-card__glow" [style.background]="card.color"></div>
+        <div class="hex-card__content">
+          <div class="hex-icon" [style.background]="card.color + '20'" [style.color]="card.color">
+            <i class="fas" [ngClass]="card.icon"></i>
+          </div>
+          <div class="hex-data">
+            <span class="hex-value">{{ card.value }}</span>
+            <span class="hex-label">{{ card.label }}</span>
+            <span class="hex-sub" *ngIf="card.sub">{{ card.sub }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════
+         MAIN CONTENT GRID
+    ════════════════════════════════════════ -->
+    <div class="main-grid">
+
+      <!-- LEFT COLUMN -->
+      <div class="grid-col">
+
+        <!-- ════════════════════════════════════════
+             DNA RADAR CARD - STYLE FIFA ULTIMATE TEAM
+        ════════════════════════════════════════ -->
+        <div class="panel panel--dna">
+          <div class="panel__header">
+            <div class="panel__icon"><i class="fas fa-dna"></i></div>
+            <h2>ATTRIBUTES</h2>
+            <div class="dna-toggle">
+              <button class="toggle-btn toggle-btn--active">DNA</button>
+              <button class="toggle-btn">DETAILS</button>
+              <i class="fas fa-chevron-down toggle-arrow"></i>
+            </div>
+          </div>
+
+          <div class="fifa-radar-wrapper">
+            <canvas #radarCanvas 
+                    class="fifa-radar-canvas"
+                    width="320" 
+                    height="320">
+            </canvas>
+
+            <div class="radar-center-overlay">
+              <span class="center-score">{{ calculateDNAAverage() }}</span>
+              <span class="center-label">AVERAGE</span>
+            </div>
+
+            <div class="axis-labels">
+              <div class="axis-label axis-label--top" [style.color]="dnaAxes[0].color">
+                {{ dnaAxes[0].label || 'TECHNICAL' }}
+                <span class="axis-value">{{ dnaAxes[0].value || 0 }}</span>
+              </div>
+              <div class="axis-label axis-label--right" [style.color]="dnaAxes[1].color">
+                {{ dnaAxes[1].label || 'CREATIVE' }}
+                <span class="axis-value">{{ dnaAxes[1].value || 0 }}</span>
+              </div>
+              <div class="axis-label axis-label--bottom" [style.color]="dnaAxes[2].color">
+                {{ dnaAxes[2].label || 'RELIABLE' }}
+                <span class="axis-value">{{ dnaAxes[2].value || 0 }}</span>
+              </div>
+              <div class="axis-label axis-label--left" [style.color]="dnaAxes[3].color">
+                {{ dnaAxes[3].label || 'DELIVERY' }}
+                <span class="axis-value">{{ dnaAxes[3].value || 0 }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="dna-bars-grid">
+            <div class="dna-bar-item" *ngFor="let axis of dnaAxes; let i = index"
+                 [style.animation-delay]="(i * 0.1) + 's'">
+              <div class="bar-header">
+                <span class="bar-dot" [style.background]="axis.color"></span>
+                <span class="bar-name">{{ axis.label.toUpperCase() }}</span>
+                <span class="bar-score" [style.color]="axis.color">{{ axis.value }}</span>
+              </div>
+              
+              <div class="bar-track-fifa">
+                <div class="bar-fill-fifa"
+                     [style.background]="'linear-gradient(90deg, ' + axis.color + 'cc, ' + axis.color + ')'"
+                     [style.width]="axis.value + '%'">
+                  <div class="bar-glow-effect" [style.box-shadow]="'0 0 12px ' + axis.color"></div>
+                </div>
+                <div class="bar-tick-marks">
+                  <span *ngFor="let tick of [25, 50, 75]" 
+                        [style.left]="tick + '%'"
+                        class="tick-mark"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEWS TIMELINE -->
+        <div class="panel panel--views">
+          <div class="panel__header">
+            <div class="panel__icon"><i class="fas fa-eye"></i></div>
+            <h2>VIEWS PERFORMANCE</h2>
+          </div>
+
+          <div class="views-big-numbers">
+            <div class="views-big">
+              <span class="views-big__num">{{ totalViews.toLocaleString() }}</span>
+              <span class="views-big__label">TOTAL VUES</span>
+            </div>
+            <div class="views-sparkline">
+              <svg viewBox="0 0 200 60" class="sparkline-svg">
+                <polyline fill="none" stroke="#00d9ff" stroke-width="2"
+                          points="0,50 30,35 60,45 90,20 120,30 150,15 180,25 200,10"/>
+                <polygon fill="url(#sparkGradient)" 
+                         points="0,50 30,35 60,45 90,20 120,30 150,15 180,25 200,10 200,60 0,60"/>
+                <defs>
+                  <linearGradient id="sparkGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#00d9ff;stop-opacity:0.3"/>
+                    <stop offset="100%" style="stop-color:#00d9ff;stop-opacity:0"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
+
+          <div class="views-metrics">
+            <div class="metric-row">
+              <span class="metric-label">7 DERNIERS JOURS</span>
+              <span class="metric-value highlight-blue">{{ viewsLast7Days }}</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">VISITEURS UNIQUES</span>
+              <span class="metric-value highlight-purple">{{ uniqueViewers }}</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">TENDANCE</span>
+              <span class="metric-value" [ngClass]="'highlight-' + (viewTrend === 'EN_HAUSSE' ? 'green' : viewTrend === 'EN_BAISSE' ? 'red' : 'yellow')">
+                {{ trendIcon }} {{ viewTrend }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="grid-col">
+
+        <!-- TOP SKILLS LEADERBOARD -->
+        <div class="panel panel--skills">
+          <div class="panel__header">
+            <div class="panel__icon"><i class="fas fa-trophy"></i></div>
+            <h2>TOP COMPÉTENCES</h2>
+            <span class="panel__tag">{{ skillCount }} SKILLS</span>
+          </div>
+
+          <div class="leaderboard" *ngIf="topSkills.length > 0">
+            <div class="leaderboard-item" *ngFor="let skill of topSkills; let i = index"
+                 [class.leaderboard-item--gold]="i === 0"
+                 [class.leaderboard-item--silver]="i === 1"
+                 [class.leaderboard-item--bronze]="i === 2">
+              <div class="rank-badge">
+                <span>#{{ i + 1 }}</span>
+              </div>
+              <div class="skill-main">
+                <strong>{{ skill.name }}</strong>
+                <div class="skill-bars">
+                  <div class="skill-bar-group">
+                    <span class="bar-label"><i class="fas fa-thumbs-up"></i></span>
+                    <div class="bar-track">
+                      <div class="bar-fill bar-fill--blue"
+                           [style.width]="topSkills[0].endorsementCount > 0 ?
+                             (skill.endorsementCount / topSkills[0].endorsementCount * 100) + '%' : '0%'"></div>
+                    </div>
+                    <span class="bar-num">{{ skill.endorsementCount }}</span>
+                  </div>
+                  <div class="skill-bar-group">
+                    <span class="bar-label"><i class="fas fa-shield-check"></i></span>
+                    <div class="bar-track">
+                      <div class="bar-fill"
+                           [style.background]="getAuthenticityColor(skill.authenticityScore)"
+                           [style.width]="skill.authenticityScore + '%'"></div>
+                    </div>
+                    <span class="bar-num">{{ skill.authenticityScore }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="empty-leaderboard" *ngIf="topSkills.length === 0">
+            <i class="fas fa-code"></i>
+            <p>AUCUNE COMPÉTENCE</p>
+            <a routerLink="/app/profile/skills" class="cta-btn">
+              <i class="fas fa-plus"></i> AJOUTER DES SKILLS
+            </a>
+          </div>
+        </div>
+
+        <!-- COMPLETENESS GAUGE -->
+        <div class="panel panel--completeness">
+          <div class="panel__header">
+            <div class="panel__icon"><i class="fas fa-circle-check"></i></div>
+            <h2>COMPLÉTUDE DU PROFIL</h2>
+          </div>
+
+          <div class="gauge-container">
+            <div class="gauge-ring"
+                 [class.gauge--excellent]="completeness >= 80"
+                 [class.gauge--good]="completeness >= 50 && completeness < 80"
+                 [class.gauge--poor]="completeness < 50">
+              <svg viewBox="0 0 160 160">
+                <defs>
+                  <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" [style.stop-color]="completeness >= 80 ? '#00d9ff' : completeness >= 50 ? '#a855f7' : '#ef4444'"/>
+                    <stop offset="100%" [style.stop-color]="completeness >= 80 ? '#00ff88' : completeness >= 50 ? '#ec4899' : '#f97316'"/>
+                  </linearGradient>
+                </defs>
+                <circle class="gauge-bg" cx="80" cy="80" r="70"/>
+                <circle class="gauge-fill" cx="80" cy="80" r="70"
+                        [style.stroke]="'url(#gaugeGrad)'"
+                        [style.stroke-dasharray]="completeness * 4.4 + ' 440'"/>
+              </svg>
+              <div class="gauge-inner">
+                <span class="gauge-percent">{{ completeness }}<small>%</small></span>
+                <span class="gauge-status">{{ completeness >= 80 ? 'EXCELLENT' : completeness >= 50 ? 'EN PROGRÈS' : 'À AMÉLIORER' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="completeness-actions">
+            <a routerLink="/app/profile/skills" class="action-pill" *ngIf="skillCount === 0">
+              <i class="fas fa-plus-circle"></i> Skills
+            </a>
+            <a routerLink="/app/profile/portfolio" class="action-pill">
+              <i class="fas fa-images"></i> Portfolio
+            </a>
+            <a routerLink="/app/profile/certifications" class="action-pill">
+              <i class="fas fa-certificate"></i> Certifications
+            </a>
+            <a routerLink="/app/profile/kyc" class="action-pill">
+              <i class="fas fa-id-card"></i> KYC
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </ng-container>
+</div>

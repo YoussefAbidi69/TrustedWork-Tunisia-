@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Review Livrable — TrustedWork</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; color: #333; }
+        .wrapper { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .header { padding: 36px 40px; text-align: center; }
+        .header-approved { background: linear-gradient(135deg, #1a1a2e, #0f3460); }
+        .header-rejected  { background: linear-gradient(135deg, #2d1515, #5c1a1a); }
+        .header .logo { color: #e94560; font-size: 22px; font-weight: 800; letter-spacing: 2px; margin-bottom: 16px; }
+        .status-icon { font-size: 52px; margin-bottom: 12px; }
+        .header h1 { color: #ffffff; font-size: 20px; font-weight: 700; }
+        .header .subtitle { color: #a0aec0; font-size: 13px; margin-top: 6px; }
+        .banner { padding: 18px 40px; text-align: center; font-weight: 700; font-size: 15px; }
+        .banner-approved { background: #c6f6d5; color: #276749; border-bottom: 2px solid #9ae6b4; }
+        .banner-rejected  { background: #fed7d7; color: #9b2c2c; border-bottom: 2px solid #feb2b2; }
+        .section { padding: 24px 40px; }
+        .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #718096; margin-bottom: 12px; }
+        .info-card { background: #f7fafc; border-radius: 8px; padding: 16px 20px; border: 1px solid #e2e8f0; margin-bottom: 12px; }
+        .info-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .info-row:last-child { margin-bottom: 0; }
+        .info-label { font-size: 12px; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; min-width: 130px; }
+        .info-value { font-size: 13px; color: #2d3748; font-weight: 600; text-align: right; flex: 1; }
+        .comment-box { border-radius: 8px; padding: 16px 20px; }
+        .comment-box.approved { background: #f0fff4; border: 1px solid #9ae6b4; border-left: 4px solid #38a169; }
+        .comment-box.rejected  { background: #fff5f5; border: 1px solid #feb2b2; border-left: 4px solid #e53e3e; }
+        .comment-box.neutral   { background: #f7fafc; border: 1px solid #e2e8f0; border-left: 4px solid #a0aec0; }
+        .comment-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .comment-label.approved { color: #276749; }
+        .comment-label.rejected  { color: #9b2c2c; }
+        .comment-text { font-size: 14px; color: #4a5568; line-height: 1.7; }
+        .action-box { background: #fff8f0; border: 1px solid #fbd38d; border-radius: 8px; padding: 16px 20px; margin-top: 12px; }
+        .action-title { font-size: 13px; font-weight: 700; color: #c05621; margin-bottom: 8px; }
+        .action-list { list-style: none; padding: 0; }
+        .action-list li { font-size: 13px; color: #4a5568; padding: 4px 0; }
+        .action-list li::before { content: "-> "; color: #e94560; font-weight: 700; }
+        .divider { height: 1px; background: #edf2f7; margin: 0 40px; }
+        .cta-section { text-align: center; padding: 24px 40px; }
+        .cta-button { display: inline-block; text-decoration: none; padding: 14px 36px; border-radius: 8px; font-weight: 700; font-size: 14px; }
+        .cta-approved { background: #38a169; color: #ffffff; }
+        .cta-rejected  { background: #e94560; color: #ffffff; }
+        .footer { background: #f7fafc; padding: 20px 40px; text-align: center; border-top: 1px solid #edf2f7; }
+        .footer p { font-size: 12px; color: #a0aec0; line-height: 1.6; }
+        .footer .brand { color: #e94560; font-weight: 700; }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+
+    <div class="header" th:classappend="${estApprouve ? 'header-approved' : 'header-rejected'}">
+        <div class="logo">TRUSTEDWORK</div>
+        <div class="status-icon" th:text="${estApprouve ? '✅' : '❌'}">✅</div>
+        <h1 th:text="${estApprouve ? 'Livrable Approuve !' : 'Livrable Rejete'}">Livrable Approuve !</h1>
+        <div class="subtitle" th:text="${'Bonjour ' + prenomFreelancer + ', voici la decision du client.'}">
+            Bonjour Freelancer, voici la decision du client.
+        </div>
+    </div>
+
+    <div class="banner"
+         th:classappend="${estApprouve ? 'banner-approved' : 'banner-rejected'}"
+         th:text="${statut}">APPROUVE</div>
+
+    <div class="section">
+        <div class="section-title">Details du Livrable</div>
+        <div class="info-card">
+            <div class="info-row">
+                <span class="info-label">Livrable</span>
+                <span class="info-value" th:text="${livrableTitre}">Maquettes Figma v1</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Projet</span>
+                <span class="info-value" th:text="${projetTitre}">Site E-commerce TuniShop</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Date de decision</span>
+                <span class="info-value" th:text="${dateReview}">15/04/2026 a 14:30</span>
+            </div>
+            <div class="info-row" th:if="${fileUrl != null and !#strings.isEmpty(fileUrl)}">
+                <span class="info-label">Fichier soumis</span>
+                <span class="info-value">
+                    <a th:href="${fileUrl}" style="color: #e94560;">Voir le livrable</a>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+        <div class="section-title">Commentaire du Client</div>
+
+        <div th:if="${reviewComment != null and !#strings.isEmpty(reviewComment)}">
+            <div class="comment-box" th:classappend="${estApprouve ? 'approved' : 'rejected'}">
+                <div class="comment-label"
+                     th:classappend="${estApprouve ? 'approved' : 'rejected'}"
+                     th:text="${estApprouve ? 'Retour positif' : 'Motif de rejet'}">Retour positif</div>
+                <div class="comment-text" th:text="${reviewComment}">
+                    Excellent travail, les maquettes sont conformes.
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${reviewComment == null or #strings.isEmpty(reviewComment)}">
+            <div class="comment-box neutral">
+                <div class="comment-text" style="color: #a0aec0; font-style: italic;">
+                    Aucun commentaire fourni par le client.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section" th:if="${!estApprouve}">
+        <div class="action-box">
+            <div class="action-title">Que faire maintenant ?</div>
+            <ul class="action-list">
+                <li>Relisez attentivement le commentaire du client ci-dessus</li>
+                <li>Effectuez les corrections demandees sur votre livrable</li>
+                <li>Soumettez une nouvelle version via le tableau de bord</li>
+                <li>Contactez le client si le retour n'est pas suffisamment clair</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="cta-section">
+        <a href="http://localhost:4200/projects"
+           class="cta-button"
+           th:classappend="${estApprouve ? 'cta-approved' : 'cta-rejected'}"
+           th:text="${estApprouve ? 'Voir le projet' : 'Corriger le livrable'}">
+            Voir le projet
+        </a>
+    </div>
+
+    <div class="footer">
+        <p>
+            Cet email a ete envoye automatiquement par <span class="brand">TrustedWork Tunisia</span>.<br/>
+            Module 08 — Project Management &amp; Delivery Intelligence
+        </p>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdvancedAnalyticsServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">module06-engagement</a> &gt; <a href="index.source.html" class="el_package">com.trustedwork.module06.service.impl</a> &gt; <span class="el_source">AdvancedAnalyticsServiceImpl.java</span></div><h1>AdvancedAnalyticsServiceImpl.java</h1><pre class="source lang-java linenums">package com.trustedwork.module06.service.impl;
+
+import com.trustedwork.module06.entity.GrowthProfile;
+import com.trustedwork.module06.entity.Streak;
+import com.trustedwork.module06.repository.ChallengeParticipationRepository;
+import com.trustedwork.module06.repository.EventRegistrationRepository;
+import com.trustedwork.module06.repository.GrowthProfileRepository;
+import com.trustedwork.module06.repository.StreakRepository;
+import com.trustedwork.module06.repository.UserBadgeRepository;
+import com.trustedwork.module06.service.AdvancedAnalyticsService;
+import com.trustedwork.module06.service.AiRecommendationService;
+import com.trustedwork.module06.service.MlPredictionService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+
+@Service
+@RequiredArgsConstructor
+public class AdvancedAnalyticsServiceImpl implements AdvancedAnalyticsService {
+
+    private final GrowthProfileRepository growthRepo;
+    private final UserBadgeRepository userBadgeRepo;
+    private final StreakRepository streakRepo;
+    private final EventRegistrationRepository eventRegistrationRepo;
+    private final ChallengeParticipationRepository challengeParticipationRepo;
+    private final AiRecommendationService aiRecommendationService;
+    private final MlPredictionService mlPredictionService;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Influence Score : formule basée sur Badges, XP et Streak
+    // ─────────────────────────────────────────────────────────────────────────
+    @Override
+    public double computeInfluenceScore(Long userId) {
+<span class="fc" id="L37">        long badgeCount = userBadgeRepo.findByUserId(userId).size();</span>
+<span class="fc" id="L38">        int xp = growthRepo.findByUserId(userId).map(GrowthProfile::getXpPoints).orElse(0);</span>
+<span class="fc" id="L39">        int streak = streakRepo.findByUserId(userId).map(Streak::getCurrentStreak).orElse(0);</span>
+<span class="fc" id="L40">        long eventsCount = eventRegistrationRepo.countByUserId(userId);</span>
+<span class="fc" id="L41">        long challengesCount = challengeParticipationRepo.findByUserId(userId).size();</span>
+
+<span class="fc" id="L43">        double score = (badgeCount * 50.0) + (xp * 0.1) + (streak * 20.0) </span>
+                     + (eventsCount * 30.0) + (challengesCount * 40.0);
+        
+<span class="fc" id="L46">        return Math.round(score * 100.0) / 100.0;</span>
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Churn Risk simple (formule mathématique — conservé pour compatibilité)
+    // ─────────────────────────────────────────────────────────────────────────
+    @Override
+    public double predictChurnRisk(Long userId) {
+<span class="fc" id="L54">        LocalDate lastActivity = streakRepo.findByUserId(userId)</span>
+<span class="fc" id="L55">                .map(Streak::getLastActivityDate)</span>
+<span class="fc" id="L56">                .orElse(LocalDate.now().minusDays(30));</span>
+
+<span class="fc" id="L58">        long daysInactive = ChronoUnit.DAYS.between(lastActivity, LocalDate.now());</span>
+<span class="fc" id="L59">        double risk = Math.min(daysInactive / 30.0, 1.0);</span>
+<span class="fc" id="L60">        return Math.round(risk * 100.0) / 100.0;</span>
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Prédiction ML complète via le modèle Random Forest Python (NOUVEAU)
+    // ─────────────────────────────────────────────────────────────────────────
+    @Override
+    public Map&lt;String, Object&gt; getChurnPrediction(Long userId) {
+<span class="fc" id="L68">        return mlPredictionService.predictChurnRisk(userId);</span>
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Métriques académiques du modèle entraîné (NOUVEAU)
+    // ─────────────────────────────────────────────────────────────────────────
+    @Override
+    public Map&lt;String, Object&gt; getModelStats() {
+<span class="fc" id="L76">        return mlPredictionService.getModelStats();</span>
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Recommandations Groq (inchangé)
+    // ─────────────────────────────────────────────────────────────────────────
+    @Override
+    public Map&lt;String, Object&gt; getAiRecommendations(Long userId) {
+<span class="fc" id="L84">        return aiRecommendationService.getSmartRecommendations(userId);</span>
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

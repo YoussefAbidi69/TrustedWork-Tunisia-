@@ -1,0 +1,236 @@
+version: '3.8'
+
+services:
+
+  # ===== INFRASTRUCTURE =====
+  eureka-server:
+    image: youssefabidi1/eureka-server:1.0
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+
+  # ===== DATABASES =====
+  mysql-user:
+    image: mysql:8.0
+    container_name: mysql-user
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: trustedwork_user_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-user-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  mysql-project:
+    image: mysql:8.0
+    container_name: mysql-project
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: trustedwork_project_db
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql-project-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  mysql-profile:
+    image: mysql:8.0
+    container_name: mysql-profile
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: trustedwork_profile_db
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql-profile-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  mysql-contract:
+    image: mysql:8.0
+    container_name: mysql-contract
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: trustedwork_contract_db
+    ports:
+      - "3310:3306"
+    volumes:
+      - mysql-contract-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  mysql-engagement:
+    image: mysql:8.0
+    container_name: mysql-engagement
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: trustedwork_events_db
+    ports:
+      - "3311:3306"
+    volumes:
+      - mysql-engagement-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ===== BACKEND SERVICES =====
+  user-service:
+    image: youssefabidi1/user-service:1.0
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    environment:
+      DB_URL: jdbc:mysql://mysql-user:3306/trustedwork_user_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      EUREKA_URL: http://eureka-server:8761/eureka/
+      JWT_SECRET: PiCloudSuperSecretKeyForJWTTokenGenerationMustBeAtLeast256Bits!!
+      MAIL_USERNAME: omsehli@gmail.com
+      MAIL_PASSWORD: bvpdmpzanyfjzkjp
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      CLOUDINARY_CLOUD_NAME: ds81to3fj
+      CLOUDINARY_API_KEY: "975734423766575"
+      CLOUDINARY_API_SECRET: 2GbeoTyQw8prqCjPAKThPiG6qzI
+      TWO_FA_ISSUER: PICloud-TrustedWork
+    depends_on:
+      mysql-user:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+
+  ms-project-service:
+    image: youssefabidi1/ms-project:1.0
+    container_name: ms-project-service
+    ports:
+      - "8090:8090"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-project:3306/trustedwork_project_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: PiCloudSuperSecretKeyForJWTTokenGenerationMustBeAtLeast256Bits!!
+      USER_SERVICE_BASE_URL: http://user-service:8081/api
+      SPRING_MAIL_USERNAME: youssefabidi441@gmail.com
+      SPRING_MAIL_PASSWORD: ayre cecg mcft lfjg
+    depends_on:
+      mysql-project:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+
+  freelancer-profile-service:
+    image: youssefabidi1/freelancer-profile:1.0
+    container_name: freelancer-profile-service
+    ports:
+      - "8082:8082"
+    environment:
+      DB_URL: jdbc:mysql://mysql-profile:3306/trustedwork_profile_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      EUREKA_URL: http://eureka-server:8761/eureka/
+      JWT_SECRET: PiCloudSuperSecretKeyForJWTTokenGenerationMustBeAtLeast256Bits!!
+      MAIL_USERNAME: omsehli@gmail.com
+      MAIL_PASSWORD: bvpdmpzanyfjzkjp
+    depends_on:
+      mysql-profile:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+
+  ms-contract-service:
+    image: youssefabidi1/ms-contract:1.0
+    container_name: ms-contract-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-contract:3306/trustedwork_contract_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_DEFAULT_ZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: PiCloudSuperSecretKeyForJWTTokenGenerationMustBeAtLeast256Bits!!
+      USER_SERVICE_URL: http://user-service:8081/api
+      MAIL_USERNAME: shiliamine117@gmail.com
+      MAIL_PASSWORD: "jvbd dfil reaq clsp"
+    depends_on:
+      mysql-contract:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+
+  module06-engagement:
+    image: youssefabidi1/module06-engagement:1.0
+    container_name: module06-engagement
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-engagement:3306/trustedwork_events_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: PiCloudSuperSecretKeyForJWTTokenGenerationMustBeAtLeast256Bits!!
+      GROQ_API_KEY: ""
+    depends_on:
+      mysql-engagement:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+
+  api-gateway:
+    image: youssefabidi1/api-gateway:1.0
+    container_name: api-gateway
+    ports:
+      - "8089:8089"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - eureka-server
+      - user-service
+      - ms-project-service
+      - freelancer-profile-service
+
+  # ===== FRONTEND =====
+  frontoffice:
+    image: youssefabidi1/frontoffice:1.0
+    container_name: frontoffice
+    ports:
+      - "4200:80"
+    depends_on:
+      - api-gateway
+
+  backoffice:
+    image: youssefabidi1/backoffice:1.0
+    container_name: backoffice
+    ports:
+      - "4201:80"
+    depends_on:
+      - api-gateway
+
+volumes:
+  mysql-user-data:
+  mysql-project-data:
+  mysql-profile-data:
+  mysql-contract-data:
+  mysql-engagement-data:

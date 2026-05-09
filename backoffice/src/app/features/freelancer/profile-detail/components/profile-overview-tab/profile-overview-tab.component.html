@@ -1,0 +1,119 @@
+<ng-container *ngIf="profile">
+
+    <div class="card overview-card">
+      <div class="profile-header">
+        <div class="avatar avatar-lg avatar-accent">
+          {{ (profile.headline || 'U').charAt(0).toUpperCase() }}
+        </div>
+  
+        <div class="profile-header-info">
+          <h1 class="page-title">{{ profile.headline || 'Sans titre' }}</h1>
+  
+          <p class="page-subtitle">
+            {{ profileOwnerName }} · {{ profile.region || 'Région non définie' }}
+            · Rang régional #{{ profile.regionalRank || '—' }}
+            · {{ profile.totalViews || 0 }} vues
+          </p>
+  
+          <div class="profile-badges">
+            <span class="badge" [ngClass]="getStatusBadge(profile.availabilityStatus)">
+              {{ profile.availabilityStatus }}
+            </span>
+  
+            <span *ngIf="profile.hourlyRate" class="badge badge-info">
+              {{ profile.hourlyRate }} TND/h
+            </span>
+  
+            <span *ngIf="profile.visibility" class="badge badge-muted">
+              {{ getVisibilityLabel(profile.visibility) }}
+            </span>
+  
+            <span *ngIf="profile.projectType" class="badge badge-accent">
+              {{ getProjectTypeLabel(profile.projectType) }}
+            </span>
+          </div>
+        </div>
+      </div>
+  
+      <div class="divider"></div>
+  
+      <p class="profile-bio">
+        {{ profile.bio || 'Aucune bio renseignée.' }}
+      </p>
+    </div>
+  
+    <div class="stats-grid">
+      <div class="card stat-mini">
+        <div class="stat-mini-label">Complétude</div>
+        <div class="stat-mini-value" [ngClass]="getScoreClass(profile.completenessScore)">
+          {{ profile.completenessScore }}%
+        </div>
+      </div>
+  
+      <div class="card stat-mini">
+        <div class="stat-mini-label">Note moyenne</div>
+        <div class="stat-mini-value">
+          <span *ngFor="let star of getStars(averageRating)">
+            <i [class]="star" style="color: var(--warning); font-size: 14px;"></i>
+          </span>
+          <span style="margin-left: 6px;">{{ averageRating | number:'1.1-1' }}</span>
+        </div>
+        <div class="stat-mini-hint">{{ reviewsCount }} avis</div>
+      </div>
+  
+      <div class="card stat-mini">
+        <div class="stat-mini-label">Compétences</div>
+        <div class="stat-mini-value">{{ skillsCount }}</div>
+      </div>
+  
+      <div class="card stat-mini">
+        <div class="stat-mini-label">Certifications</div>
+        <div class="stat-mini-value">{{ certificationsCount }}</div>
+      </div>
+    </div>
+  
+    <div class="card section-card" *ngIf="completeness">
+      <div class="card-header">
+        <span class="card-title">
+          <i class="fas fa-chart-pie text-accent"></i> Résumé de complétude
+        </span>
+      </div>
+  
+      <div class="overview-completeness-grid">
+        <div class="overview-score-box">
+          <div class="overview-score-label">Score global</div>
+          <div class="overview-score-value" [ngClass]="getScoreClass(completeness.score)">
+            {{ completeness.score }}%
+          </div>
+        </div>
+  
+        <div class="overview-score-list">
+          <div class="overview-score-row">
+            <span>Bio</span>
+            <strong>{{ completeness.bioScore }}%</strong>
+          </div>
+          <div class="overview-score-row">
+            <span>Avatar</span>
+            <strong>{{ completeness.avatarScore }}%</strong>
+          </div>
+          <div class="overview-score-row">
+            <span>Skills</span>
+            <strong>{{ completeness.skillsScore }}%</strong>
+          </div>
+          <div class="overview-score-row">
+            <span>Portfolio</span>
+            <strong>{{ completeness.portfolioScore }}%</strong>
+          </div>
+          <div class="overview-score-row">
+            <span>Certifications</span>
+            <strong>{{ completeness.certifScore }}%</strong>
+          </div>
+          <div class="overview-score-row">
+            <span>Expérience</span>
+            <strong>{{ completeness.workExpScore }}%</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+  </ng-container>

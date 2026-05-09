@@ -1,0 +1,86 @@
+<div class="admin-risks">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fas fa-shield-halved text-accent"></i> Supervision IA — Risques</h1>
+      <p class="page-subtitle">{{ filtered.length }} risque(s) actif(s) sur la plateforme</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" (click)="goBack()"><i class="fas fa-arrow-left"></i> Retour</button>
+      <button class="btn btn-ghost btn-sm" (click)="loadAll()"><i class="fas fa-rotate-right"></i> Refresh</button>
+      <button class="btn btn-primary btn-sm" (click)="analyzeAll()" [disabled]="analyzing">
+        <i class="fas" [ngClass]="analyzing ? 'fa-spinner fa-spin' : 'fa-brain'"></i>
+        {{ analyzing ? 'Analyse en cours...' : 'Lancer l\'analyse IA' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <div class="filter-group">
+      <span class="filter-label">Sévérité :</span>
+      <div class="filter-chips">
+        <button *ngFor="let s of severityList" class="chip" [class.active]="filterSeverity === s"
+                (click)="filterSeverity = s; applyFilters()">
+          {{ s === 'ALL' ? 'Toutes' : s }}
+        </button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Type :</span>
+      <div class="filter-chips">
+        <button *ngFor="let t of typeList" class="chip" [class.active]="filterType === t"
+                (click)="filterType = t; applyFilters()">
+          {{ t === 'ALL' ? 'Tous' : riskLabel(t) }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading"><i class="fas fa-spinner fa-spin"></i><p>Chargement des risques...</p></div>
+
+  <div class="card" *ngIf="!loading">
+    <div class="table-wrap">
+      <table class="tw-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Projet</th>
+            <th>Type</th>
+            <th>Sévérité</th>
+            <th>Message</th>
+            <th>Tâche liée</th>
+            <th>Détecté le</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of filtered">
+            <td>#{{ r.id }}</td>
+            <td style="font-weight:500">{{ projectTitle(r.projectId) }}</td>
+            <td>
+              <span class="badge badge-muted">
+                <i class="fas" [ngClass]="riskIcon(r.riskType)" style="margin-right:4px"></i>
+                {{ riskLabel(r.riskType) }}
+              </span>
+            </td>
+            <td><span class="badge" [ngClass]="severityBadge(r.severity)">{{ r.severity }}</span></td>
+            <td class="text-secondary" style="max-width:280px;font-size:12px">{{ r.message }}</td>
+            <td>{{ r.affectedTaskId ? '#' + r.affectedTaskId : '—' }}</td>
+            <td>{{ r.detectedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              <button class="btn btn-sm btn-success" (click)="resolveRisk(r.id)">
+                <i class="fas fa-check"></i> Résoudre
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="filtered.length === 0">
+        <i class="fas fa-shield-check" style="color:var(--success);font-size:32px"></i>
+        <p>Aucun risque actif — tous les projets sont sains</p>
+      </div>
+    </div>
+  </div>
+
+</div>

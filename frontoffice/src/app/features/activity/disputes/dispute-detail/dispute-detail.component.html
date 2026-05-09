@@ -1,0 +1,313 @@
+<div class="dispute-detail-wrapper animate-fade-in">
+  
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-3 text-muted">Analyse du dossier en cours...</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="alert alert-danger rounded-4 border-0 shadow-sm mb-4">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+  </div>
+
+  <div *ngIf="!loading && dispute">
+    
+    <!-- Hero Section -->
+    <section class="dispute-detail-hero">
+      <div class="dispute-hero__glow dispute-hero__glow--one"></div>
+      <div class="dispute-hero__glow dispute-hero__glow--two"></div>
+
+      <div class="dispute-hero__content">
+        <div class="hero-text">
+          <div class="eyebrow-group">
+            <span class="eyebrow">Dossier Litige</span>
+            <span class="eyebrow eyebrow--accent">{{ dispute.reference || '#' + dispute.id }}</span>
+          </div>
+
+          <h1>Détails & Résolution</h1>
+
+          <div class="hero-status-pills mt-4">
+            <span class="status-pill-premium" [ngClass]="getStatusClass(dispute.status)">
+              <i class="bi" [ngClass]="{
+                'bi-shield-exclamation': dispute.status === 'OPEN',
+                'bi-hourglass-split': dispute.status === 'UNDER_REVIEW',
+                'bi-patch-check-fill': dispute.status.includes('RESOLVED'),
+                'bi-x-circle-fill': dispute.status === 'DISMISSED'
+              }"></i>
+              {{ getStatusLabel(dispute.status) }}
+            </span>
+            <span class="hero-date">
+              <i class="bi bi-calendar3 me-1"></i> {{ dispute.openedAt | date:'dd MMMM yyyy, HH:mm' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="hero-actions">
+          <button class="btn btn-ghost-white" (click)="goBack()">
+            <i class="bi bi-arrow-left me-2"></i> Liste des litiges
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Content Layout -->
+    <div class="dispute-grid">
+      
+      <!-- Left Column: Core Data -->
+      <div class="dispute-main">
+        
+        <!-- Context Card -->
+        <div class="premium-card">
+          <h3 class="card-title"><i class="bi bi-info-circle me-2"></i> Contexte Contractuel</h3>
+          <div class="info-row">
+            <div class="info-item">
+              <label>Contrat Parent</label>
+              <strong>#{{ dispute.contractId }}</strong>
+            </div>
+            <div class="info-item">
+              <label>Périmètre</label>
+              <strong>{{ dispute.milestoneId ? 'Jalon #' + dispute.milestoneId : 'Contrat Global' }}</strong>
+            </div>
+            <div class="info-item" *ngIf="dispute.arbitreId">
+              <label>Arbitre Assigné</label>
+              <strong>{{ dispute.arbitreId }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Problem Statement -->
+        <div class="premium-card">
+          <h3 class="card-title"><i class="bi bi-chat-left-dots me-2"></i> Motif de la plainte</h3>
+          <div class="content-block motif">
+            {{ dispute.motif }}
+          </div>
+        </div>
+
+        <!-- Evidence Blocks -->
+        <div class="premium-card" *ngIf="dispute.preuvesPlaignant">
+          <h3 class="card-title text-primary"><i class="bi bi-person-exclamation me-2"></i> Arguments du Plaignant</h3>
+          <div class="content-block">
+            {{ dispute.preuvesPlaignant }}
+          </div>
+        </div>
+
+        <div class="premium-card" *ngIf="dispute.preuvesDefense">
+          <h3 class="card-title text-success"><i class="bi bi-person-check me-2"></i> Réponse du Défendeur</h3>
+          <div class="content-block">
+            {{ dispute.preuvesDefense }}
+          </div>
+        </div>
+
+        <!-- Resolution Result -->
+        <div class="premium-card resolved-card" *ngIf="isResolved && dispute.decision">
+          <h3 class="card-title"><i class="bi bi-gavel me-2"></i> Verdict Final</h3>
+          <div class="content-block highlight">
+            {{ dispute.decision }}
+          </div>
+          
+          <div class="financial-summary mt-4" *ngIf="dispute.montantRembourse || dispute.montantLibere">
+            <div class="fin-box refund">
+              <label>Remboursé au client</label>
+              <span class="amount">{{ dispute.montantRembourse | number:'1.2-2' }} DT</span>
+            </div>
+            <div class="fin-box payout">
+              <label>Libéré au freelancer</label>
+              <span class="amount">{{ dispute.montantLibere | number:'1.2-2' }} DT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Actions & Files -->
+      <aside class="dispute-sidebar">
+        
+        <!-- Actions Panel -->
+        <div class="premium-card actions-card" *ngIf="!isResolved">
+          <h3 class="card-title"><i class="bi bi-lightning-charge me-2"></i> Actions Disponibles</h3>
+          <div class="action-list">
+            
+            <button class="action-btn-premium" (click)="openRespondModal()" *ngIf="dispute.status === 'OPEN'">
+              <div class="btn-icon"><i class="bi bi-reply-all-fill"></i></div>
+              <div class="btn-text">
+                <strong>Répondre</strong>
+                <span>Fournir votre défense</span>
+              </div>
+            </button>
+
+            <button class="action-btn-premium" (click)="openAssignModal()" *ngIf="isAdmin">
+              <div class="btn-icon"><i class="bi bi-person-plus-fill"></i></div>
+              <div class="btn-text">
+                <strong>Assigner</strong>
+                <span>Choisir un arbitre</span>
+              </div>
+            </button>
+
+            <button class="action-btn-premium resolve" (click)="openResolveModal()" *ngIf="isAdmin && isResolvable">
+              <div class="btn-icon"><i class="bi bi-check-all"></i></div>
+              <div class="btn-text">
+                <strong>Résoudre</strong>
+                <span>Rendre un verdict</span>
+              </div>
+            </button>
+
+          </div>
+        </div>
+
+        <!-- Resolution Badge (Closed) -->
+        <div class="premium-card resolved-status" *ngIf="isResolved">
+          <div class="success-seal">
+            <i class="bi bi-patch-check"></i>
+          </div>
+          <h4>Dossier Clos</h4>
+          <p class="text-muted">Ce litige a été résolu définitivement.</p>
+        </div>
+
+        <!-- Evidence Management -->
+        <div class="premium-card">
+          <h3 class="card-title"><i class="bi bi-files me-2"></i> Documents ({{ evidences.length }})</h3>
+          
+          <div class="file-list" *ngIf="evidences.length > 0">
+            <div class="file-item" *ngFor="let ev of evidences; let i = index">
+              <div class="file-icon"><i class="bi bi-file-earmark-medical"></i></div>
+              <div class="file-info">
+                <span class="file-name" (click)="downloadEvidence(ev.id!, ev)">
+                  {{ ev.originalFilename || ev.fileName || 'Document #' + (i+1) }}
+                </span>
+                <span class="file-meta">Fichier joint</span>
+              </div>
+              <button class="btn-file-dl" (click)="downloadEvidence(ev.id!, ev)">
+                <i class="bi bi-download"></i>
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="evidences.length === 0" class="empty-files">
+            <i class="bi bi-folder2"></i>
+            <span>Aucune pièce jointe</span>
+          </div>
+
+          <div class="upload-area mt-4" *ngIf="!isResolved">
+            <label for="fileInput" class="upload-trigger">
+              <i class="bi bi-plus-circle me-2"></i>
+              {{ selectedFile ? selectedFile.name : 'Ajouter une pièce' }}
+            </label>
+            <input type="file" id="fileInput" class="d-none" (change)="onFileSelected($event)">
+            
+            <button class="btn-premium-upload w-100 mt-2" *ngIf="selectedFile" (click)="uploadEvidence()" [disabled]="uploading">
+              <span *ngIf="!uploading">Confirmer l'envoi</span>
+              <span *ngIf="uploading"><div class="spinner-border spinner-border-sm me-2"></div> Envoi...</span>
+            </button>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+  </div>
+
+  <!-- ═══ MODALS ═══ -->
+
+  <!-- Respond Modal -->
+  <div class="modal-overlay" *ngIf="showRespondModal" (click)="closeRespondModal()">
+    <div class="premium-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="bi bi-reply-fill me-2"></i> Votre défense</h3>
+        <button class="btn-close" (click)="closeRespondModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group mb-4">
+          <label class="form-label-modal">Explications détaillées</label>
+          <textarea [(ngModel)]="responseText" class="form-control-modal" rows="4" placeholder="Donnez votre version des faits..."></textarea>
+        </div>
+        <div class="form-group mb-4">
+          <label class="form-label-modal">Preuves textuelles (liens, etc.)</label>
+          <textarea [(ngModel)]="respondProof" class="form-control-modal" rows="2" placeholder="Liens drive, emails, logs..."></textarea>
+        </div>
+        
+        <div class="upload-modal-zone" (click)="respondFileInput.click()">
+          <i class="bi bi-cloud-upload"></i>
+          <span>Ajouter des documents joints</span>
+          <input type="file" #respondFileInput (change)="onRespondFilesSelected($event)" multiple hidden>
+        </div>
+
+        <div class="modal-file-list mt-3" *ngIf="respondFiles.length > 0">
+          <div *ngFor="let file of respondFiles; let i = index" class="modal-file-item">
+            <i class="bi bi-file-earmark-check me-2"></i>
+            <span>{{ file.name }}</span>
+            <button class="btn-remove" (click)="removeRespondFile(i); $event.stopPropagation()"><i class="bi bi-trash"></i></button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeRespondModal()">Annuler</button>
+        <button class="btn btn-primary" (click)="submitResponse()" [disabled]="responding || !responseText.trim()">
+          Soumettre ma réponse
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resolve Modal -->
+  <div class="modal-overlay" *ngIf="showResolveModal" (click)="closeResolveModal()">
+    <div class="premium-modal modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="bi bi-gavel me-2"></i> Décision de Résolution</h3>
+        <button class="btn-close" (click)="closeResolveModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <label class="form-label-modal">Verdict</label>
+            <select [(ngModel)]="resolveForm.status" class="form-select-modal">
+              <option value="RESOLVED_CLIENT">Faveur Client</option>
+              <option value="RESOLVED_FREELANCER">Faveur Freelancer</option>
+              <option value="SPLIT">Partage 50/50 ou Custom</option>
+              <option value="DISMISSED">Rejeté</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <div class="row">
+              <div class="col-6">
+                <label class="form-label-modal">Rembourser Client</label>
+                <input type="number" [(ngModel)]="resolveForm.montantRembourse" class="form-control-modal">
+              </div>
+              <div class="col-6">
+                <label class="form-label-modal">Libérer Freelancer</label>
+                <input type="number" [(ngModel)]="resolveForm.montantLibere" class="form-control-modal">
+              </div>
+            </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label-modal">Motivation du verdict (Public)</label>
+            <textarea [(ngModel)]="resolveForm.decision" class="form-control-modal" rows="5" placeholder="Détaillez les raisons de cette décision..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeResolveModal()">Annuler</button>
+        <button class="btn btn-resolve" (click)="submitResolve()" [disabled]="resolving || !resolveForm.decision.trim()">
+          Confirmer & Clôturer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assign Modal -->
+  <div class="modal-overlay" *ngIf="showAssignModal" (click)="closeAssignModal()">
+    <div class="premium-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="bi bi-person-badge-fill me-2"></i> Assignation Arbitre</h3>
+        <button class="btn-close" (click)="closeAssignModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label-modal">ID ou CIN de l'arbitre</label>
+        <input type="text" [(ngModel)]="arbitreId" class="form-control-modal" placeholder="Laisser vide pour auto-assignation">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeAssignModal()">Annuler</button>
+        <button class="btn btn-primary" (click)="submitAssign()" [disabled]="assigning">Assigner le dossier</button>
+      </div>
+    </div>
+  </div>
+
+</div>

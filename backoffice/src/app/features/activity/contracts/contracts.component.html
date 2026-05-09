@@ -1,0 +1,190 @@
+<div class="contracts-page">
+
+  <!-- Header Hero Section -->
+  <section class="page-hero">
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <span class="badge-kicker">Espace Activité</span>
+      <h1>Mes Contrats ✍️</h1>
+      <p>Gérez vos engagements professionnels, suivez l'avancement des jalons et assurez le bon déroulement de vos projets.</p>
+    </div>
+  </section>
+
+  <div class="layout-grid">
+    <!-- Main Content: Contracts List -->
+    <div class="main-content">
+      
+      <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2">Chargement de vos contrats...</p>
+      </div>
+
+      <div *ngIf="error" class="alert alert-danger">
+        {{ error }}
+      </div>
+
+      <div *ngIf="!loading && !error" class="contracts-list">
+        
+        <div *ngFor="let contract of contracts" class="contract-card" [class.expanded]="expandedContracts[contract.id!]">
+          <div class="contract-card__header" (click)="toggleMilestones(contract.id!)">
+            <div class="header-info">
+              <span class="contract-ref">{{ contract.reference }}</span>
+              <h3>{{ contract.projectTitle }}</h3>
+              <div class="header-meta">
+                <span>Créé le {{ contract.createdAt | date:'dd MMM yyyy' }}</span>
+                <span class="dot">•</span>
+                <span class="user-role">{{ isFreelancer ? 'Client: ' + contract.clientCin : 'Freelancer: ' + contract.freelancerCin }}</span>
+              </div>
+            </div>
+            
+            <div class="header-status">
+              <div class="amount">{{ contract.montantTotal | number:'1.2-2' }} DT</div>
+              <span class="status-pill" [ngClass]="contract.status.toLowerCase()">{{ contract.status }}</span>
+            </div>
+          </div>
+
+          <!-- Milestones Drawer -->
+          <div class="milestones-drawer" *ngIf="expandedContracts[contract.id!]">
+            <div class="drawer-head">
+              <h4>Jalons de la mission</h4>
+              <button class="btn-text" [routerLink]="['/admin/activity/contracts', contract.id]">
+                Détails complets →
+              </button>
+            </div>
+
+            <div *ngIf="loadingMilestones[contract.id!]" class="text-center py-2">
+              <div class="spinner-border spinner-border-sm text-primary"></div>
+            </div>
+
+            <div *ngIf="!loadingMilestones[contract.id!] && milestonesMap[contract.id!]?.length" class="milestone-steps">
+              <div *ngFor="let m of milestonesMap[contract.id!]" class="milestone-step">
+                <div class="step-num">{{ m.ordre }}</div>
+                <div class="step-body">
+                  <div class="step-info">
+                    <strong>{{ m.titre }}</strong>
+                    <span>Échéance: {{ m.deadline | date:'dd/MM/yyyy' }}</span>
+                  </div>
+                  <div class="step-actions">
+                    <span class="status-small" [ngClass]="m.status.toLowerCase()">{{ m.status }}</span>
+                    <div class="action-buttons">
+                      <button *ngIf="isFreelancer && m.status === 'PENDING'" (click)="startMilestone(contract.id!, m.id!)" class="btn-action">Démarrer</button>
+                      <button *ngIf="isFreelancer && (m.status === 'IN_PROGRESS' || m.status === 'STARTED')" (click)="submitMilestone(contract.id!, m.id!)" class="btn-action success ms-1">Soumettre</button>
+                      <button *ngIf="(isClient || isAdmin) && m.status === 'SUBMITTED'" (click)="approveMilestone(contract.id!, m.id!)" class="btn-action success ms-1">Approuver</button>
+                      <button *ngIf="(isClient || isAdmin) && m.status === 'SUBMITTED'" (click)="rejectMilestone(contract.id!, m.id!)" class="btn-action warning ms-1">Rejeter</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="!loadingMilestones[contract.id!] && !milestonesMap[contract.id!]?.length" class="text-muted fst-italic py-2">
+              Aucun jalon défini pour ce contrat.
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="contracts.length === 0" class="text-center py-5 rounded-4" style="background: var(--bg-card); border: 1px solid var(--border);">
+          <h3 class="h5">Aucun contrat actif</h3>
+          <p class="text-muted">Vous n'avez pas encore de contrats enregistrés dans votre espace.</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Sidebar: Stats & Actions -->
+    <aside class="sidebar-content">
+      <div class="profile-card">
+        <span class="badge-kicker">Votre Activité</span>
+        <h3>Résumé Global</h3>
+        
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span>En cours</span>
+            <strong>{{ contracts.length }}</strong>
+          </div>
+          <div class="stat-item">
+            <span>Total engagé</span>
+            <strong>{{ 1250 | number:'1.0-0' }} DT</strong>
+          </div>
+        </div>
+
+        <div class="info-note">
+          <h4>💡 Aide au suivi</h4>
+          <p>Cliquez sur un contrat pour voir les jalons associés et effectuer des actions.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Submission Modal -->
+  <div class="modal-backdrop fade show" *ngIf="showSubmitModal"></div>
+  <div class="modal fade show d-block" *ngIf="showSubmitModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 550px;">
+      <div class="modal-content shadow-xl border-0 overflow-hidden" style="border-radius: 24px;">
+        <div class="modal-header border-0 pb-0 pt-4 px-4">
+          <h4 class="modal-title fw-bold text-midnight">Soumettre le jalon 🚀</h4>
+          <button type="button" class="btn-close" (click)="closeSubmitModal()"></button>
+        </div>
+        <form [formGroup]="submissionForm" (ngSubmit)="confirmSubmitWithProof()">
+          <div class="modal-body py-4 px-4">
+            <p class="text-stone mb-4 fs-6">Bravo pour le travail ! Veuillez fournir les preuves de livraison ci-dessous.</p>
+            
+            <div class="mb-4">
+              <label class="form-label small-kicker">Lien de Démo</label>
+              <input type="url" class="form-control premium-input" formControlName="lienDemo" placeholder="https://demo...">
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label small-kicker">Repository Git</label>
+              <input type="url" class="form-control premium-input" formControlName="repoGit" placeholder="https://github...">
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label small-kicker">Livrables (Textuel / Cloud)</label>
+              <textarea class="form-control premium-input" formControlName="fichiers" rows="2" placeholder="Ex: PDF, Documents Google Drive..."></textarea>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small-kicker">Commentaires additionnels</label>
+              <textarea class="form-control premium-input" formControlName="commentaire" rows="3" placeholder="Notes pour le client..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-0 pb-4 px-4 gap-3 justify-content-center">
+            <button type="button" class="btn-ghost-cancel" (click)="closeSubmitModal()">Annuler</button>
+            <button type="submit" class="btn-premium success px-5 rounded-pill shadow-sm">Soumettre la livraison</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rejection Modal -->
+  <div class="modal-backdrop fade show" *ngIf="showRejectModal"></div>
+  <div class="modal fade show d-block" *ngIf="showRejectModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+      <div class="modal-content shadow-xl border-0 overflow-hidden" style="border-radius: 24px;">
+        <div class="modal-header border-0 pb-0 pt-4 px-4">
+          <h4 class="modal-title fw-bold text-midnight">Rejeter le jalon 🛑</h4>
+          <button type="button" class="btn-close" (click)="closeRejectModal()"></button>
+        </div>
+        <div class="modal-body py-4 px-4">
+          <p class="text-stone mb-4 fs-6">Veuillez indiquer le motif du rejet et les corrections attendues.</p>
+          
+          <div class="mb-4">
+            <label class="form-label small-kicker">Motif du rejet *</label>
+            <textarea class="form-control premium-input" [(ngModel)]="rejectionReason" rows="4" placeholder="Ex: La démo ne fonctionne pas sur mobile..."></textarea>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small-kicker">Nouvelle Deadline (Optionnel)</label>
+            <input type="date" class="form-control premium-input" [(ngModel)]="newDeadline" [min]="minDate">
+          </div>
+        </div>
+        <div class="modal-footer border-0 pb-4 px-4 gap-3 justify-content-center">
+          <button type="button" class="btn-ghost-cancel" (click)="closeRejectModal()">Annuler</button>
+          <button type="button" class="btn btn-premium danger px-5 rounded-pill shadow-sm" [disabled]="!rejectionReason.trim()" (click)="confirmReject()">Confirmer le Rejet</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

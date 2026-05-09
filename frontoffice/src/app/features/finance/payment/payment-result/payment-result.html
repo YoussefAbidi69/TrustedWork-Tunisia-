@@ -1,0 +1,55 @@
+<div class="result-container animate-fade-in">
+  <div class="result-card shadow-lg" [class.success]="status === 'success'" [class.cancel]="status === 'cancel'">
+    
+    <!-- SUCCESS CONTENT -->
+    <div *ngIf="status === 'success'" class="animate-float">
+      <div class="icon-wrapper">
+        <i class="bi bi-check-circle-fill"></i>
+      </div>
+      <h1 class="result-title">Paiement Réussi !</h1>
+      <p class="result-subtitle">
+        Votre dépôt en séquestre a été validé avec succès par Stripe.<br>
+        Le contrat est désormais <strong>actif</strong> et le freelancer peut commencer à travailler sur les jalons.
+      </p>
+      
+      <a [routerLink]="['/contracts', contractId]" class="btn btn-result">
+        <i class="bi bi-rocket-takeoff-fill"></i> Accéder au Contrat
+      </a>
+    </div>
+
+    <!-- CANCEL / ERROR CONTENT -->
+    <div *ngIf="status === 'cancel'" class="animate-shake">
+      <div class="icon-wrapper">
+        <i class="bi bi-x-circle-fill"></i>
+      </div>
+      <h1 class="result-title">Paiement Annulé</h1>
+      <p class="result-subtitle">
+        La transaction a été interrompue ou déclinée par votre banque.<br>
+        Aucun fond n'a été prélevé sur votre compte. Vous pouvez réessayer à tout moment.
+      </p>
+      
+      <a [routerLink]="['/contracts', contractId]" class="btn btn-result">
+        <i class="bi bi-arrow-left-circle-fill"></i> Retourner au Contrat
+      </a>
+    </div>
+
+    <!-- DEFAULT / LOADING STATE (if status not set yet) -->
+    <div *ngIf="!status" class="py-5">
+      <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">Traitement...</span>
+      </div>
+      <h3 class="mt-4 fw-bold">Traitement de votre transaction...</h3>
+      <p class="text-muted small">Veuillez ne pas fermer cette page.</p>
+    </div>
+
+    <!-- Result Footer -->
+    <div class="footer-note">
+      <p class="mb-2">Besoin d'aide avec cette transaction ?</p>
+      <div class="d-flex justify-content-center gap-3">
+        <a href="mailto:support@trustedwork.tn">Support technique</a>
+        <a routerLink="/faq">Centre d'aide</a>
+      </div>
+    </div>
+
+  </div>
+</div>

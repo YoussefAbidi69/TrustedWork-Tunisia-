@@ -1,0 +1,94 @@
+:host {
+  display: block;
+}
+
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  padding: 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(244, 248, 255, 0.91));
+  box-shadow:
+    0 24px 60px rgba(1, 8, 20, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.54);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 28px 70px rgba(1, 8, 20, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62);
+}
+
+.stat-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.stat-card__icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background: linear-gradient(145deg, #10203a, #1f3d6d);
+  box-shadow: 0 14px 24px rgba(16, 32, 58, 0.18);
+}
+
+.stat-card__trend {
+  padding: 8px 11px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  background: rgba(15, 27, 45, 0.07);
+  color: #667487;
+}
+
+.stat-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-card__label {
+  color: #6c798c;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.stat-card__value {
+  color: #0f1b2d;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.stat-card__hint {
+  margin: 0;
+  color: #69778b;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.stat-card--accent .stat-card__value,
+.stat-card--accent .stat-card__trend {
+  color: #b65839;
+}
+
+.stat-card--success .stat-card__value,
+.stat-card--success .stat-card__trend {
+  color: #1f8f49;
+}
+
+.stat-card--warning .stat-card__value,
+.stat-card--warning .stat-card__trend {
+  color: #b9770e;
+}
